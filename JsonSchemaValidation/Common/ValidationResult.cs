@@ -1,0 +1,26 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace JsonSchemaValidation.Common
+{
+    public class ValidationResult
+    {
+        public bool IsValid { get; private set; } = true;
+        public List<string> Errors { get; } = new List<string>();
+
+        public void AddError(string error)
+        {
+            IsValid = false;
+            Errors.Add(error);
+        }
+
+        public void Merge(ValidationResult other)
+        {
+            IsValid &= other.IsValid;
+            Errors.AddRange(other.Errors);
+        }
+    }
+}
