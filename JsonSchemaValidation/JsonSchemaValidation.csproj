@@ -6,4 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Draft202012\Keywords\" />
+  </ItemGroup>
+
 </Project>

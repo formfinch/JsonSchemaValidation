@@ -6,10 +6,10 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-namespace JsonSchemaValidation.Abstractions
+namespace JsonSchemaValidation.Abstractions.Keywords
 {
-    public interface ISchemaValidator
+    public interface IKeywordValidator
     {
-        ValidationResult Validate(Uri schemaUri, JsonDocument jsonData);
+        ValidationResult Validate(JsonElement instance);
     }
 }

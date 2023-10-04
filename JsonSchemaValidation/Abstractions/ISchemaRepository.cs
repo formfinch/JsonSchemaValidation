@@ -9,7 +9,7 @@ namespace JsonSchemaValidation.Abstractions
 {
     public interface ISchemaRepository
     {
-        void RegisterSchema(Uri uri, JsonDocument schema);
+        void AddSchema(JsonDocument schema);
         JsonDocument GetSchema(Uri uri);
     }
 }
