@@ -9,6 +9,6 @@ namespace JsonSchemaValidation.Abstractions.Keywords
 {
     public interface IKeywordValidatorFactory
     {
-        IKeywordValidator Create(JsonElement schema);
+        IKeywordValidator? Create(JsonElement schema);
     }
 }

@@ -10,6 +10,13 @@ namespace JsonSchemaValidationTests.TestCases
 {
     internal class TestCaseLoader
     {
+        private readonly IEnumerable<string> descriptions;
+
+        public TestCaseLoader(IEnumerable<string> descriptions)
+        {
+            this.descriptions = descriptions;
+        }
+
         public IEnumerable<object[]> LoadTestCases(string path)
         {
             var files = Directory.GetFiles(path, "*.json", SearchOption.AllDirectories);
@@ -21,7 +28,10 @@ namespace JsonSchemaValidationTests.TestCases
                 {
                     foreach (var test in tests)
                     {
-                        yield return new object[] { test };
+                        if (descriptions == null || descriptions.Contains(test.Description))
+                        {
+                            yield return new object[] { test };
+                        }
                     }
                 }
             }

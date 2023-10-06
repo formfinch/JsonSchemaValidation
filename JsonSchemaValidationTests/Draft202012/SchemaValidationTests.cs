@@ -1,6 +1,7 @@
 ﻿using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidation.Validation;
+using JsonSchemaValidation.Draft202012;
 using JsonSchemaValidationTests.TestCases;
 using System;
 using System.Collections.Generic;
@@ -20,8 +21,7 @@ namespace JsonSchemaValidationTests.Draft202012
         {
             var schemaRepository = new SchemaRepository();
             Uri schemaUri = schemaRepository.AddSchema(testCase.Schema, SchemaRepositoryHelpers.GenerateRandomSchemaId());
-            IEnumerable<IKeywordValidatorFactory> draft202012Factories = new List<IKeywordValidatorFactory>();
-            var schemaValidator = new SchemaValidator(schemaRepository, draft202012Factories);
+            var schemaValidator = new SchemaValidator(schemaRepository, JsonSchemaDraft.Factories);
 
             foreach (var test in testCase.Tests)
             {
@@ -32,7 +32,12 @@ namespace JsonSchemaValidationTests.Draft202012
         }
 
         public static IEnumerable<object[]> GetDraft202012Tests()
-            => new TestCaseLoader().LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
+            => new TestCaseLoader(new string[] {  
+                /* implemented keyword tests */
+                "maximum validation", "maximum validation with unsigned integer",
+                "minimum validation", "minimum validation with signed integer"
 
+
+            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
     }
 }
