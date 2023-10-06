@@ -25,8 +25,4 @@
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Draft202012\" />
-  </ItemGroup>
-
 </Project>

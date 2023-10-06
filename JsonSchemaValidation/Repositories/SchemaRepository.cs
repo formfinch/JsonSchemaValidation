@@ -11,17 +11,19 @@ namespace JsonSchemaValidation.Repositories
 {
     public class SchemaRepository : ISchemaRepository
     {
-        private readonly ConcurrentDictionary<Uri, JsonDocument> _schemas = new();
+        private readonly ConcurrentDictionary<Uri, JsonElement> _schemas = new();
 
-        public void AddSchema(JsonDocument schema)
+        public Uri AddSchema(JsonElement schema, Uri? fallbackUri = null)
         {
-            if (schema == null) throw new ArgumentNullException(nameof(schema));
+            if (schema.ValueKind == JsonValueKind.Undefined)
+                throw new ArgumentNullException(nameof(schema));
 
-            Uri schemaUri = ExtractSchemaUri(schema);
+            Uri schemaUri = ExtractSchemaUri(schema, fallbackUri);
             _schemas[schemaUri] = schema;
+            return schemaUri;
         }
 
-        public JsonDocument GetSchema(Uri schemaUri)
+        public JsonElement GetSchema(Uri schemaUri)
         {
             if (_schemas.TryGetValue(schemaUri, out var schema))
                 return schema;
@@ -29,18 +31,24 @@ namespace JsonSchemaValidation.Repositories
             throw new ArgumentException($"Schema with URI {schemaUri} not found.");
         }
 
-        private static Uri ExtractSchemaUri(JsonDocument schema)
+        private static Uri ExtractSchemaUri(JsonElement schema, Uri? fallbackUri)
         {
             // The schemaUri should be stored under the "$id" property in the schema.
-            if (schema.RootElement.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
+            if (schema.ValueKind == JsonValueKind.Object 
+                && schema.TryGetProperty("$id", out var idElement) 
+                && idElement.ValueKind == JsonValueKind.String)
             {
                 string? idValue = idElement.GetString();
-                if(!string.IsNullOrWhiteSpace(idValue))
+                if (!string.IsNullOrWhiteSpace(idValue))
                 {
                     return new Uri(idValue);
                 }
             }
-            throw new ArgumentException("The provided schema does not contain a valid URI.");
+
+            if (fallbackUri != null)
+                return fallbackUri;
+
+            throw new ArgumentException("The provided schema does not contain a valid URI and no fallback URI was provided.");
         }
     }
 }

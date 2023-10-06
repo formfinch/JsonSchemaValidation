@@ -18,27 +18,21 @@ namespace JsonSchemaValidation.Validation
             _keywordFactories = keywordFactories ?? throw new ArgumentNullException(nameof(keywordFactories));
         }
 
-        public ValidationResult Validate(Uri schemaUri, JsonDocument jsonData)
+        public ValidationResult Validate(Uri schemaUri, JsonElement jsonData)
         {
             if (schemaUri == null) throw new ArgumentNullException(nameof(schemaUri));
-            if (jsonData == null) throw new ArgumentNullException(nameof(jsonData));
+            if (jsonData.ValueKind == JsonValueKind.Undefined)
+                throw new ArgumentNullException(nameof(jsonData));
 
             // Check cache
             if (!_validatorCache.TryGetValue(schemaUri, out var validators))
             {
                 var schema = _schemaRepository.GetSchema(schemaUri);
-                if (schema == null)
-                {
-                    var errorResult = new ValidationResult();
-                    errorResult.AddError($"Schema not found for URI: {schemaUri}");
-                    return errorResult;
-                }
-
-                validators = DetermineValidators(schema.RootElement);
+                validators = DetermineValidators(schema);
                 _validatorCache[schemaUri] = validators;
             }
 
-            return ValidateUsingValidators(validators, jsonData.RootElement);
+            return ValidateUsingValidators(validators, jsonData);
         }
 
         private List<IKeywordValidator> DetermineValidators(JsonElement schema)

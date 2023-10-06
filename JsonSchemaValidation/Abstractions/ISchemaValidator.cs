@@ -10,6 +10,6 @@ namespace JsonSchemaValidation.Abstractions
 {
     public interface ISchemaValidator
     {
-        ValidationResult Validate(Uri schemaUri, JsonDocument jsonData);
+        ValidationResult Validate(Uri schemaUri, JsonElement jsonData);
     }
 }
