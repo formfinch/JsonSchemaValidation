@@ -13,14 +13,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         public IKeywordValidator? Create(JsonElement schema)
         {
-            if(schema.ValueKind == JsonValueKind.Object
-                && schema.TryGetProperty("maximum", out var maximumElement)
-                && maximumElement.TryGetDouble(out var maximum))
+            if (schema.ValueKind != JsonValueKind.Object)
             {
-                return new MaximumValidator(maximum);
+                return null;
             }
 
-            return null;
+            if (!schema.TryGetProperty("maximum", out var maximumElement))
+            {
+                return null;
+            }
+
+            if (!maximumElement.TryGetDouble(out var maximum))
+            {
+                return null;
+            }
+
+            return new MaximumValidator(maximum);
         }
     }
 }

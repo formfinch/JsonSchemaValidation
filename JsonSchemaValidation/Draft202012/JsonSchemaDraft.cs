@@ -12,8 +12,13 @@ namespace JsonSchemaValidation.Draft202012
     {
         private static readonly IEnumerable<IKeywordValidatorFactory> factories = new IKeywordValidatorFactory[]
         {
+            new ExclusiveMaximumValidatorFactory(),
+            new ExclusiveMinimumValidatorFactory(),
+            new MaximumValidatorFactory(),
+            new MaxLengthValidatorFactory(),
             new MinimumValidatorFactory(),
-            new MaximumValidatorFactory()
+            new MinLengthValidatorFactory(),
+            new MultipleOfValidatorFactory(),
         };
 
         public static IEnumerable<IKeywordValidatorFactory> Factories

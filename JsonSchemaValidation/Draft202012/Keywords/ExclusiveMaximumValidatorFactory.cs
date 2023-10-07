@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MinimumValidatorFactory : IKeywordValidatorFactory
+    internal class ExclusiveMaximumValidatorFactory : IKeywordValidatorFactory
     {
         public IKeywordValidator? Create(JsonElement schema)
         {
@@ -18,17 +18,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (!schema.TryGetProperty("minimum", out var minimumElement))
+            if (!schema.TryGetProperty("exclusiveMaximum", out var exclusiveMaximumElement))
             {
                 return null;
             }
 
-            if (!minimumElement.TryGetDouble(out var minimum))
+            if (!exclusiveMaximumElement.TryGetDouble(out var maximum))
             {
                 return null;
             }
 
-            return new MinimumValidator(minimum);
+            return new ExclusiveMaximumValidator(maximum);
         }
     }
 }

@@ -34,10 +34,13 @@ namespace JsonSchemaValidationTests.Draft202012
         public static IEnumerable<object[]> GetDraft202012Tests()
             => new TestCaseLoader(new string[] {  
                 /* implemented keyword tests */
-                "maximum validation", "maximum validation with unsigned integer",
-                "minimum validation", "minimum validation with signed integer"
-
-
+                "exclusiveMaximum", 
+                "exclusiveMinimum",
+                "maximum",
+                "maxLength",
+                "minimum",
+                "minLength",
+                "multipleOf", 
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
     }
 }

@@ -1,5 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Draft202012.Keywords;
+using JsonSchemaValidation.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MinimumValidatorFactory : IKeywordValidatorFactory
+    internal class MultipleOfValidatorFactory : IKeywordValidatorFactory
     {
         public IKeywordValidator? Create(JsonElement schema)
         {
@@ -18,17 +18,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (!schema.TryGetProperty("minimum", out var minimumElement))
+            if (!schema.TryGetProperty("multipleOf", out var multipleOfElement))
             {
                 return null;
             }
 
-            if (!minimumElement.TryGetDouble(out var minimum))
+            if (!multipleOfElement.TryGetDouble(out var divisor))
             {
                 return null;
             }
 
-            return new MinimumValidator(minimum);
+            if (divisor <= 0)
+            {
+                throw new InvalidSchemaException("The 'multipleOf' keyword must have a number value greater than 0.");
+            }
+
+            return new MultipleOfValidator(divisor);
         }
     }
 }

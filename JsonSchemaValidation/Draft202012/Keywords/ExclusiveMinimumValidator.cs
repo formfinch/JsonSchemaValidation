@@ -9,12 +9,12 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MinimumValidator : IKeywordValidator
+    internal class ExclusiveMinimumValidator : IKeywordValidator
     {
-        private const string keyword = "minimum";
+        private const string keyword = "exclusiveMinimum";
         private readonly double minimum;
 
-        public MinimumValidator(double minimum)
+        public ExclusiveMinimumValidator(double minimum)
         {
             this.minimum = minimum;
         }
@@ -22,7 +22,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         public ValidationResult Validate(JsonElement instance)
         {
             if (instance.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
-            if (instance.GetDouble() >= minimum) return ValidationResult.Ok;
+            if (instance.GetDouble() > minimum) return ValidationResult.Ok;
             return new ValidationResult(keyword);
         }
     }
