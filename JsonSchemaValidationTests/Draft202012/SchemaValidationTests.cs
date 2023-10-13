@@ -35,13 +35,16 @@ namespace JsonSchemaValidationTests.Draft202012
             => new TestCaseLoader(new string[] {  
                 /* implemented keyword tests */
                 "const",
-                "exclusiveMaximum", 
+                "exclusiveMaximum",
                 "exclusiveMinimum",
                 "maximum",
+                "maxItems",
                 "maxLength",
                 "minimum",
+                "minItems",
                 "minLength",
-                "multipleOf", 
+                "multipleOf",
+                // "uniqueItems" : Disabled, test cases require that items and prefixItems keywords are implemented
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
     }
 }

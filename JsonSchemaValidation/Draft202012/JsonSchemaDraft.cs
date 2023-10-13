@@ -16,10 +16,13 @@ namespace JsonSchemaValidation.Draft202012
             new ExclusiveMaximumValidatorFactory(),
             new ExclusiveMinimumValidatorFactory(),
             new MaximumValidatorFactory(),
+            new MaxItemsValidatorFactory(),
             new MaxLengthValidatorFactory(),
             new MinimumValidatorFactory(),
+            new MinItemsValidatorFactory(),
             new MinLengthValidatorFactory(),
             new MultipleOfValidatorFactory(),
+            new UniqueItemsValidatorFactory(),
         };
 
         public static IEnumerable<IKeywordValidatorFactory> Factories
