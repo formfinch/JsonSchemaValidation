@@ -1,15 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
+﻿using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Abstractions
 {
     public interface ISchemaRepository
     {
-        Uri AddSchema(JsonElement schema, Uri? fallbackUri = null);
-        JsonElement GetSchema(Uri schemaUri);
+        SchemaMetadata AddSchema(SchemaMetadata schemaData);
+        SchemaMetadata GetSchema(Uri schemaUri);
     }
 }

@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Validation;
+﻿using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Validation;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +11,7 @@ namespace JsonSchemaValidation.Abstractions
 {
     public interface ISchemaValidator
     {
-        ValidationResult Validate(Uri schemaUri, JsonElement jsonData);
+        void AddKeywordValidator(IKeywordValidator keywordValidator);
+        ValidationResult Validate(JsonElement jsonData);
     }
 }

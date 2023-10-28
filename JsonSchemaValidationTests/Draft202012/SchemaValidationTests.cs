@@ -10,22 +10,44 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Xunit.Abstractions;
+using Microsoft.Extensions.DependencyInjection;
+using JsonSchemaValidation.DependencyInjection;
+using JsonSchemaValidation.Abstractions;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
     public class SchemaValidationTests
     {
+        private readonly IServiceProvider _serviceProvider;
+
+        public SchemaValidationTests()
+        {
+            // Initialize DI container
+            var services = new ServiceCollection();
+
+            // Add your services
+            services.AddJsonSchemaValidation(opt =>
+            {
+                opt.EnableDraft202012 = true;
+            });
+
+            // Build service provider
+            _serviceProvider = services.BuildServiceProvider();
+        }
+
         [Theory]
         [MemberData(nameof(GetDraft202012Tests))]
         public void Draft202012Tests(TestCase testCase)
         {
-            var schemaRepository = new SchemaRepository();
-            Uri schemaUri = schemaRepository.AddSchema(testCase.Schema, SchemaRepositoryHelpers.GenerateRandomSchemaId());
-            var schemaValidator = new SchemaValidator(schemaRepository, JsonSchemaDraft.Factories);
+            var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
+            var schemaData = schemaRepository.AddSchema(new SchemaMetadata(testCase.Schema));
+
+            var schemaValidatorFactory = _serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
+            var schemaValidator = schemaValidatorFactory.GetValidator(schemaData.SchemaUri!);
 
             foreach (var test in testCase.Tests)
             {
-                var validationResult = schemaValidator.Validate(schemaUri, test.GetProperty("data"));
+                var validationResult = schemaValidator.Validate(test.GetProperty("data"));
                 var expectedResult = test.GetProperty("valid").GetBoolean();
                 Assert.Equal(expectedResult, validationResult.IsValid);
             }
