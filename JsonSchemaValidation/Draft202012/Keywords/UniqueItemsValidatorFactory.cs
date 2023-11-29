@@ -2,6 +2,7 @@
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords;
 using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,8 +14,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class UniqueItemsValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
-        public IKeywordValidator? Create(JsonElement schema)
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
+            var schema = schemaData.Schema;
+
             if (schema.ValueKind != JsonValueKind.Object)
             {
                 return null;

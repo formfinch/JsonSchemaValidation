@@ -13,13 +13,14 @@ namespace JsonSchemaValidation.DependencyInjection
 {
     public static class SchemaValidationSetup
     {
-        public static IServiceCollection AddJsonSchemaValidation(this IServiceCollection services, Action<SchemaValidationOptions> setupAction = null)
+        public static IServiceCollection AddJsonSchemaValidation(this IServiceCollection services, Action<SchemaValidationOptions>? setupAction = null)
         {
             var options = new SchemaValidationOptions();
             setupAction?.Invoke(options);
             services.AddSingleton(options);
 
             services.AddSingleton<ISchemaRepository, SchemaRepository>();
+            services.AddSingleton<ISchemaFactory, SchemaFactory>();
             services.AddSingleton<ISchemaValidatorFactory, SchemaValidatorFactory>();
 
             if (options.EnableDraft202012)

@@ -9,7 +9,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private const string keyword = "const";
         private readonly JsonElement _expectedValue;
-        private static readonly JsonElementComparison _comparison = new JsonElementComparison();
+        private static readonly JsonElementComparison _comparison = new();
 
         public ConstValidator(JsonElement expectedValue)
         {

@@ -1,6 +1,7 @@
 ﻿using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
-using JsonSchemaValidation.Draft202012.Keywords;
+using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
 using System;
 using System.Collections.Generic;
@@ -11,8 +12,10 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MaximumValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    internal class TypeValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        private static readonly JsonElementComparison _comparison = new();
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;
@@ -22,17 +25,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (!schema.TryGetProperty("maximum", out var maximumElement))
+            if (!schema.TryGetProperty("type", out var typeElement))
             {
                 return null;
             }
 
-            if (!maximumElement.TryGetDouble(out var maximum))
+            if (typeElement.ValueKind != JsonValueKind.String)
             {
                 return null;
             }
 
-            return new MaximumValidator(maximum);
+            string? typeSpecification = typeElement.GetString();
+            return TypeValidatorSharedFactory.CreateFromTypeSpecification(typeSpecification);
         }
     }
 }

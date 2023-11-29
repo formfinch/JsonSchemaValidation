@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JsonSchemaValidation.Repositories;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -7,9 +8,9 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Abstractions
 {
-    public interface ISchemaDraftFactory
+    public interface ISchemaDraftValidatorFactory
     {
         string DraftVersion { get; }
-        ISchemaValidator CreateValidator(JsonElement schema);
+        ISchemaValidator CreateValidator(SchemaMetadata schemaData);
     }
 }

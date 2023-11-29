@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JsonSchemaValidation.Repositories;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -9,6 +10,6 @@ namespace JsonSchemaValidation.Abstractions.Keywords
 {
     public interface IKeywordValidatorFactory
     {
-        IKeywordValidator? Create(JsonElement schema);
+        IKeywordValidator? Create(SchemaMetadata schemaData);
     }
 }

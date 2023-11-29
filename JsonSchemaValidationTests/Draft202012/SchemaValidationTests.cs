@@ -66,6 +66,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "minItems",
                 "minLength",
                 "multipleOf",
+                "type"
                 // "uniqueItems" : Disabled, test cases require that items and prefixItems keywords are implemented
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
     }
