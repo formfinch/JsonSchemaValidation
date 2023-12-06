@@ -1,4 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidation.Validation;
@@ -20,7 +21,7 @@ namespace JsonSchemaValidation.Draft202012
 
         public SchemaDraft202012ValidatorFactory(IEnumerable<ISchemaDraftKeywordValidatorFactory> keywordFactories)
         {
-            this._keywordFactories = keywordFactories;
+            _keywordFactories = keywordFactories;
         }
 
         public ISchemaValidator CreateValidator(SchemaMetadata schemaData)

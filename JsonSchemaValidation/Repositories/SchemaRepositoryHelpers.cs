@@ -60,6 +60,5 @@ namespace JsonSchemaValidation.Repositories
 
             return draftVersionElement.GetString();
         }
-
     }
 }

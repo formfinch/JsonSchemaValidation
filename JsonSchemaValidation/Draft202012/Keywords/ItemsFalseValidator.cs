@@ -5,14 +5,12 @@ using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class ItemsValidator : IKeywordValidator
+    internal class ItemsFalseValidator : IKeywordValidator
     {
-        private readonly IEnumerable<ISchemaValidator> _validators;
         private readonly int _nPrefixItems;
 
-        public ItemsValidator(IEnumerable<ISchemaValidator> validators, int nPrefixItems)
+        public ItemsFalseValidator(int nPrefixItems)
         {
-            _validators = validators;
             _nPrefixItems = nPrefixItems;
         }
 
@@ -24,21 +22,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Ok;
             }
 
-            int idxValidators = 0;
             int idxItem = 0;
             foreach (JsonElement item in instance.EnumerateArray())
             {
                 if (idxItem++ >= _nPrefixItems)
                 {
-                    var validator = _validators.ElementAt(idxValidators++);
-                    var itemValidationResult = validator.Validate(item);
-                    if (itemValidationResult != ValidationResult.Ok)
-                    {
-                        return itemValidationResult;
-                    }
-
-                    if (idxValidators >= _validators.Count())
-                        break;
+                    return new ValidationResult("Invalid items");
                 }
             }
             return ValidationResult.Ok;

@@ -8,10 +8,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class ItemValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _validator;
+        private readonly int _nPrefixItems;
 
-        public ItemValidator(ISchemaValidator validator)
+        public ItemValidator(ISchemaValidator validator, int nPrefixItems)
         {
             _validator = validator;
+            _nPrefixItems = nPrefixItems;
         }
 
         public ValidationResult Validate(JsonElement instance)
@@ -22,12 +24,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Ok;
             }
 
-            foreach (JsonElement element in instance.EnumerateArray())
+            int idxItem = 0;
+            foreach (JsonElement item in instance.EnumerateArray())
             {
-                var itemValidationResult = _validator.Validate(instance);
-                if (itemValidationResult != ValidationResult.Ok)
+                if (idxItem++ >= _nPrefixItems)
                 {
-                    return itemValidationResult;
+                    var itemValidationResult = _validator.Validate(item);
+                    if (itemValidationResult != ValidationResult.Ok)
+                    {
+                        return itemValidationResult;
+                    }
                 }
             }
             return ValidationResult.Ok;

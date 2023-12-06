@@ -33,6 +33,7 @@ namespace JsonSchemaValidationTests.Draft202012
 
             // Build service provider
             _serviceProvider = services.BuildServiceProvider();
+            _serviceProvider.InitializeSingletonServices();
         }
 
         [Theory]
@@ -59,6 +60,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "const",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
+                "items",
                 "maximum",
                 "maxItems",
                 "maxLength",
@@ -66,7 +68,13 @@ namespace JsonSchemaValidationTests.Draft202012
                 "minItems",
                 "minLength",
                 "multipleOf",
+
+                // todo: tests contain boolean item schemas which are not yet supported
+                // "prefixItems",
+
+                "required",
                 "type"
+
                 // "uniqueItems" : Disabled, test cases require that items and prefixItems keywords are implemented
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
     }

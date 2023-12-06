@@ -22,6 +22,8 @@ namespace JsonSchemaValidation.DependencyInjection
             services.AddSingleton<ISchemaRepository, SchemaRepository>();
             services.AddSingleton<ISchemaFactory, SchemaFactory>();
             services.AddSingleton<ISchemaValidatorFactory, SchemaValidatorFactory>();
+            services.AddSingleton<ILazySchemaValidatorFactory, LazySchemaValidatorFactory>();
+            services.AddSingleton<ResolveLazyInterfaces>();
 
             if (options.EnableDraft202012)
             {

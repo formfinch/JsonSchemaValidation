@@ -37,6 +37,10 @@ namespace JsonSchemaValidation.Common
             string reference = refElement.GetString() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(reference) || reference == "#")
             {
+                // todo: empty string and "#" are different things.
+                // empty string should return the current schemaData
+                // "#" and schemaData.uri.fragment
+                // should return _schemaRepository.GetSchema(
                 return schemaData;
             }
 

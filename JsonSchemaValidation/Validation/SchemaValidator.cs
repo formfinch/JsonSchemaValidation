@@ -24,7 +24,13 @@ namespace JsonSchemaValidation.Validation
                 var validatorResult = validator.Validate(jsonData);
                 result.Merge(validatorResult);
             }
-            return result;
+
+            if (!result.IsValid)
+            {
+                return result;
+            }
+
+            return ValidationResult.Ok;
         }
     }
 }

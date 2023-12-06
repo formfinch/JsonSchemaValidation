@@ -1,4 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using System;
 using System.Collections.Concurrent;
@@ -45,16 +46,25 @@ namespace JsonSchemaValidation.Repositories
             {
                 throw new ArgumentException($"Schema with URI {schemaUri} not found.");
             }
-            return metadata;
+
+            if (string.IsNullOrWhiteSpace(schemaUri.Fragment))
+            {
+                return metadata;
+            }
+
+            SchemaMetadata innerSchemaData = new(metadata);
+            innerSchemaData.Schema = metadata.Schema.GetElementByJsonPointer(schemaUri.Fragment);
+            innerSchemaData.SchemaUri = schemaUri;
+            return innerSchemaData;
         }
 
-        private void InitDraftVersion(SchemaMetadata target)
+        private void InitDraftVersion(SchemaMetadata targetSchemaData)
         {
-            var draftVersion = SchemaRepositoryHelpers.ExtractDraftVersion(target.Schema);
+            var draftVersion = SchemaRepositoryHelpers.ExtractDraftVersion(targetSchemaData.Schema);
             if (draftVersion == null)
             {
                 // use fallback if provided
-                draftVersion = target.DraftVersion;
+                draftVersion = targetSchemaData.DraftVersion;
             }
 
             if (draftVersion == null)
@@ -63,20 +73,20 @@ namespace JsonSchemaValidation.Repositories
                 draftVersion = _options.DefaultDraftVersion;
             }
 
-            target.DraftVersion = draftVersion;
-            if (string.IsNullOrWhiteSpace(target.DraftVersion))
+            targetSchemaData.DraftVersion = draftVersion;
+            if (string.IsNullOrWhiteSpace(targetSchemaData.DraftVersion))
             {
                 throw new InvalidOperationException(@$"Json Schema Draft version could not be determined.");
             }
         }
 
-        private void InitSchemaUri(SchemaMetadata target)
+        private void InitSchemaUri(SchemaMetadata targetSchemaData)
         {
-            var schemaUri = SchemaRepositoryHelpers.ExtractSchemaUri(target.Schema);
+            var schemaUri = SchemaRepositoryHelpers.ExtractSchemaUri(targetSchemaData.Schema);
             if (schemaUri == null)
             {
                 // use fallback if provided
-                schemaUri = target.SchemaUri;
+                schemaUri = targetSchemaData.SchemaUri;
             }
 
             if (schemaUri == null)
@@ -85,10 +95,15 @@ namespace JsonSchemaValidation.Repositories
                 schemaUri = SchemaRepositoryHelpers.GenerateRandomSchemaId();
             }
 
-            target.SchemaUri = schemaUri!;
-            if (_schemas.ContainsKey(target.SchemaUri))
+            if(!string.IsNullOrWhiteSpace(schemaUri.Fragment))
             {
-                throw new InvalidOperationException(@$"A schema with uri {target.SchemaUri} has already been registered.");
+                throw new InvalidOperationException($"Schema id cannot contain a uri fragment.");
+            }
+
+            targetSchemaData.SchemaUri = schemaUri!;
+            if (_schemas.ContainsKey(targetSchemaData.SchemaUri))
+            {
+                throw new InvalidOperationException(@$"A schema with uri {targetSchemaData.SchemaUri} has already been registered.");
             }
         }
     }

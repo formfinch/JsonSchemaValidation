@@ -6,6 +6,7 @@ using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
@@ -16,9 +17,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class ItemsValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
         private readonly ISchemaFactory _schemaFactory;
-        private readonly ISchemaValidatorFactory _schemaValidatorFactory;
+        private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
 
-        public ItemsValidatorFactory(ISchemaFactory schemaFactory, ISchemaValidatorFactory schemaValidatorFactory)
+        public ItemsValidatorFactory(ISchemaFactory schemaFactory, ILazySchemaValidatorFactory schemaValidatorFactory)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
@@ -27,30 +28,74 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;
+            int nPrefixItems = 0;
 
-            if(schema.ValueKind == JsonValueKind.Object)
+            if (schema.ValueKind != JsonValueKind.Object)
             {
-                SchemaMetadata itemSchemaData = _schemaFactory.CreateDereferencedSchema(schemaData);
-                var validator = _schemaValidatorFactory.CreateValidator(itemSchemaData);
-                return new ItemValidator(validator);
+                return null;
             }
 
-            if (schema.ValueKind == JsonValueKind.Array)
+            if (!schema.TryGetProperty("items", out var itemsElement))
+            {
+                return null;
+            }
+
+            if (schema.TryGetProperty("prefixItems", out var prefixItemsElement))
+            {
+                if (prefixItemsElement.ValueKind == JsonValueKind.Array)
+                {
+                    nPrefixItems = prefixItemsElement.GetArrayLength();
+                }
+            }
+
+            if (itemsElement.ValueKind == JsonValueKind.Object)
+            {
+                var itemSchemaValidator = CreateValidator(schemaData, itemsElement);
+                return new ItemValidator(itemSchemaValidator, nPrefixItems);
+            }
+
+            if (itemsElement.ValueKind == JsonValueKind.Array)
             {
                 List<ISchemaValidator> validators = new();
-                foreach (JsonElement element in schema.EnumerateArray())
+                foreach (JsonElement itemSchemaElement in itemsElement.EnumerateArray())
                 {
-                    SchemaMetadata itemSchema = new(schemaData);
-                    itemSchema.Schema = schema;
+                    if(itemSchemaElement.ValueKind != JsonValueKind.Object)
+                    {
+                        throw new InvalidSchemaException("Invalid schema item in items array");
 
-                    SchemaMetadata itemSchemaData = _schemaFactory.CreateDereferencedSchema(itemSchema);
-                    var validator = _schemaValidatorFactory.CreateValidator(itemSchemaData);
+                    }
+                    var validator = CreateValidator(schemaData, itemSchemaElement);
                     validators.Add(validator);
                 }
-                return new ItemsValidator(validators);
+                return new ItemsValidator(validators, nPrefixItems);
             }
 
-            throw new InvalidSchemaException("Item content must be an array or an object");
+            if (itemsElement.ValueKind == JsonValueKind.False)
+            {
+                return new ItemsFalseValidator(nPrefixItems);
+            }
+
+            if (itemsElement.ValueKind == JsonValueKind.True)
+            {
+                return new ItemsTrueValidator();
+            }
+
+            throw new InvalidSchemaException("Items has invalid content");
+        }
+
+        ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
+        {
+            SchemaMetadata itemsRawSchemaData = new(schemaData)
+            {
+                Schema = itemSchemaElement
+            };
+
+            var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
+            if(_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+            return _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
         }
     }
 }

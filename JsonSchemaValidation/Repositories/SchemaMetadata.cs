@@ -1,4 +1,5 @@
-﻿using System;
+﻿using JsonSchemaValidation.Common;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -22,23 +23,23 @@ namespace JsonSchemaValidation.Repositories
             References = new HashSet<Uri>();
         }
 
-        public SchemaMetadata(SchemaMetadata original)
+        public SchemaMetadata(SchemaMetadata originalSchemaData)
         {
-            if (original == null) throw new ArgumentNullException(nameof(original));
+            if (originalSchemaData == null) throw new ArgumentNullException(nameof(originalSchemaData));
 
-            Schema = original.Schema;
-            DraftVersion = original.DraftVersion;
-            if (original.SchemaUri != null)
+            Schema = originalSchemaData.Schema;
+            DraftVersion = originalSchemaData.DraftVersion;
+            if (originalSchemaData.SchemaUri != null)
             {
-                SchemaUri = new Uri(original.SchemaUri.ToString());
+                SchemaUri = new Uri(originalSchemaData.SchemaUri.ToString());
             }
-            if(original.References != null && original.References.Count != 0)
+            if(originalSchemaData.References != null && originalSchemaData.References.Count != 0)
             {
-                References = original.References.ToHashSet<Uri>();
+                References = originalSchemaData.References.ToHashSet<Uri>(new UriWithFragmentComparer());
             }
             else
             {
-                References = new HashSet<Uri>();
+                References = new HashSet<Uri>(new UriWithFragmentComparer());
             }
         }
     }
