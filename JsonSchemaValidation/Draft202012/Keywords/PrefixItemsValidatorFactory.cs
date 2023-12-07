@@ -39,23 +39,54 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
+            if (prefixItemsElement.ValueKind == JsonValueKind.Object)
+            {
+                var itemSchemaValidator = CreateValidator(schemaData, prefixItemsElement);
+                return new ItemValidator(itemSchemaValidator, 0);
+            }
+
             if (prefixItemsElement.ValueKind == JsonValueKind.Array)
             {
                 List<ISchemaValidator> validators = new();
+                
+                int idx = 0;
                 foreach (JsonElement prefixItemSchemaElement in prefixItemsElement.EnumerateArray())
                 {
-                    if(prefixItemSchemaElement.ValueKind != JsonValueKind.Object)
+                    ++idx;
+                    if (prefixItemSchemaElement.ValueKind == JsonValueKind.False)
+                    {
+                        return new PrefixItemFalseValidator(idx - 1);
+                    }
+
+                    if (prefixItemSchemaElement.ValueKind == JsonValueKind.True)
+                    {
+                        // ignore: doesnt do anything
+                        continue;
+                    }
+
+                    if (prefixItemSchemaElement.ValueKind != JsonValueKind.Object)
                     {
                         throw new InvalidSchemaException("Invalid schema item in prefixItems array");
-
                     }
+
                     var validator = CreateValidator(schemaData, prefixItemSchemaElement);
                     validators.Add(validator);
                 }
-                return new PrefixItemsValidator(validators);
+                return new ItemsValidator(validators, 0);
             }
 
-            throw new InvalidSchemaException("Items has invalid content");
+            if (prefixItemsElement.ValueKind == JsonValueKind.False)
+            {
+                return new PrefixItemFalseValidator(0);
+            }
+
+            if (prefixItemsElement.ValueKind == JsonValueKind.True)
+            {
+                // ignore: doesnt do anything
+                return null;
+            }
+
+            throw new InvalidSchemaException("PrefixItems has invalid content");
         }
 
         ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement prefixItemSchemaElement)

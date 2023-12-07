@@ -68,10 +68,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "minItems",
                 "minLength",
                 "multipleOf",
-
-                // todo: tests contain boolean item schemas which are not yet supported
-                // "prefixItems",
-
+                "prefixItems",
                 "required",
                 "type"
 

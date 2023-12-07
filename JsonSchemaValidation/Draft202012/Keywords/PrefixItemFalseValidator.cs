@@ -5,26 +5,26 @@ using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class ItemsFalseValidator : IKeywordValidator
+    internal class PrefixItemFalseValidator : IKeywordValidator
     {
-        private readonly int _nPrefixItems;
+        private readonly int _prefixItemIndex;
 
-        public ItemsFalseValidator(int nPrefixItems)
+        public PrefixItemFalseValidator(int prefixItemIndex)
         {
-            _nPrefixItems = nPrefixItems;
+            _prefixItemIndex = prefixItemIndex;
         }
 
         public ValidationResult Validate(JsonElement instance)
         {
             if (instance.ValueKind != JsonValueKind.Array)
             {
-                // If the instance is not an array, it's considered valid with respect to the Items keyword
+                // If the instance is not an array, it's considered valid with respect to the PrefixItems keyword
                 return ValidationResult.Ok;
             }
 
-            if(_nPrefixItems < instance.GetArrayLength())
+            if(_prefixItemIndex < instance.GetArrayLength())
             {
-                return new ValidationResult("Invalid items");
+                return new ValidationResult("Invalid prefixItems");
             }
 
             return ValidationResult.Ok;
