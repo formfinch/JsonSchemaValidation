@@ -57,6 +57,7 @@ namespace JsonSchemaValidationTests.Draft202012
         public static IEnumerable<object[]> GetDraft202012Tests()
             => new TestCaseLoader(new string[] {  
                 /* implemented keyword tests */
+                "boolean_schema",
                 "const",
                 "exclusiveMaximum",
                 "exclusiveMinimum",

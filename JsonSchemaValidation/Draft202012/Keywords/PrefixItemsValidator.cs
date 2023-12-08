@@ -30,6 +30,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             int idxValidators = 0;
             foreach (JsonElement item in instance.EnumerateArray())
             {
+                // push index to evaluateditems
+
                 var validator = _validators.ElementAt(idxValidators++);
                 var itemValidationResult = validator.Validate(item);
                 if (itemValidationResult != ValidationResult.Ok)

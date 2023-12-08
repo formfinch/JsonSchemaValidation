@@ -24,6 +24,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if(_nPrefixItems < instance.GetArrayLength())
             {
+                // push all array indices to evaluateditems
+
                 return new ValidationResult("Invalid items");
             }
 

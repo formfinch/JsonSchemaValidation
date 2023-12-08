@@ -39,57 +39,29 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (prefixItemsElement.ValueKind == JsonValueKind.Object)
+            if (prefixItemsElement.ValueKind != JsonValueKind.Array)
             {
-                var itemSchemaValidator = CreateValidator(schemaData, prefixItemsElement);
-                return new ItemValidator(itemSchemaValidator, 0);
+                throw new InvalidSchemaException("PrefixItems has invalid content");
             }
 
-            if (prefixItemsElement.ValueKind == JsonValueKind.Array)
+            List<ISchemaValidator> validators = new();
+            foreach (JsonElement prefixItemSchemaElement in prefixItemsElement.EnumerateArray())
             {
-                List<ISchemaValidator> validators = new();
-                
-                int idx = 0;
-                foreach (JsonElement prefixItemSchemaElement in prefixItemsElement.EnumerateArray())
+                if (prefixItemSchemaElement.ValueKind != JsonValueKind.Object
+                    && prefixItemSchemaElement.ValueKind != JsonValueKind.False
+                    && prefixItemSchemaElement.ValueKind != JsonValueKind.True)
                 {
-                    ++idx;
-                    if (prefixItemSchemaElement.ValueKind == JsonValueKind.False)
-                    {
-                        return new PrefixItemFalseValidator(idx - 1);
-                    }
-
-                    if (prefixItemSchemaElement.ValueKind == JsonValueKind.True)
-                    {
-                        // ignore: doesnt do anything
-                        continue;
-                    }
-
-                    if (prefixItemSchemaElement.ValueKind != JsonValueKind.Object)
-                    {
-                        throw new InvalidSchemaException("Invalid schema item in prefixItems array");
-                    }
-
-                    var validator = CreateValidator(schemaData, prefixItemSchemaElement);
-                    validators.Add(validator);
+                    throw new InvalidSchemaException("Invalid schema item in prefixItems array");
                 }
-                return new ItemsValidator(validators, 0);
-            }
+                
+                var validator = CreateValidator(schemaData, prefixItemSchemaElement);
+                validators.Add(validator);
 
-            if (prefixItemsElement.ValueKind == JsonValueKind.False)
-            {
-                return new PrefixItemFalseValidator(0);
             }
-
-            if (prefixItemsElement.ValueKind == JsonValueKind.True)
-            {
-                // ignore: doesnt do anything
-                return null;
-            }
-
-            throw new InvalidSchemaException("PrefixItems has invalid content");
+            return new PrefixItemsValidator(validators);
         }
 
-        ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement prefixItemSchemaElement)
+        private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement prefixItemSchemaElement)
         {
             SchemaMetadata prefixItemRawSchemaData = new(schemaData)
             {

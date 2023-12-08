@@ -29,6 +29,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 if (idxItem++ >= _nPrefixItems)
                 {
+                    // push index to evaluateditems
+
                     var itemValidationResult = _validator.Validate(item);
                     if (itemValidationResult != ValidationResult.Ok)
                     {

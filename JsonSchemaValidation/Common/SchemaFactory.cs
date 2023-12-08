@@ -22,6 +22,10 @@ namespace JsonSchemaValidation.Common
         public SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;
+            if(schema.ValueKind != JsonValueKind.Object)
+            {
+                return schemaData;
+            }
 
             // check for $ref
             if (!schema.TryGetProperty("$ref", out JsonElement refElement))

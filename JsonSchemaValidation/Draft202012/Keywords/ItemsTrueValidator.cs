@@ -20,6 +20,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Ok;
             }
 
+            // push all array indices to evaluateditems
+
             // Any array will pass validation with respect to the items keyword.
             return ValidationResult.Ok;
         }

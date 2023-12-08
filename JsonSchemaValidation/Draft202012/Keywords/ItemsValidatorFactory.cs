@@ -54,22 +54,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new ItemValidator(itemSchemaValidator, nPrefixItems);
             }
 
-            if (itemsElement.ValueKind == JsonValueKind.Array)
-            {
-                List<ISchemaValidator> validators = new();
-                foreach (JsonElement itemSchemaElement in itemsElement.EnumerateArray())
-                {
-                    if(itemSchemaElement.ValueKind != JsonValueKind.Object)
-                    {
-                        throw new InvalidSchemaException("Invalid schema item in items array");
-
-                    }
-                    var validator = CreateValidator(schemaData, itemSchemaElement);
-                    validators.Add(validator);
-                }
-                return new ItemsValidator(validators, nPrefixItems);
-            }
-
             if (itemsElement.ValueKind == JsonValueKind.False)
             {
                 return new ItemsFalseValidator(nPrefixItems);
