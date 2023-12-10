@@ -1,0 +1,83 @@
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Draft202012.Interfaces;
+using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace JsonSchemaValidation.Draft202012.Keywords
+{
+    internal class PropertiesValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        private readonly ISchemaFactory _schemaFactory;
+        private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+
+        public PropertiesValidatorFactory(ISchemaFactory schemaFactory, ILazySchemaValidatorFactory schemaValidatorFactory)
+        {
+            _schemaFactory = schemaFactory;
+            _schemaValidatorFactory = schemaValidatorFactory;
+        }
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("properties", out var propertiesElement))
+            {
+                return null;
+            }
+
+            if(propertiesElement.ValueKind != JsonValueKind.Object)
+            {
+                throw new InvalidSchemaException("Properties keyword must be an object containing property names and their associated property schema.");
+            }
+
+
+            Dictionary<string, ISchemaValidator> propertySchemaValidators = new();
+            foreach (var propertyElement in propertiesElement.EnumerateObject())
+            {
+                var validator = CreateValidator(schemaData, propertyElement.Value);
+                if(validator == null)
+                {
+                    throw new InvalidSchemaException("Each property schema of the properties object must be a valid JSON Schema.");
+                }
+                propertySchemaValidators.Add(propertyElement.Name, validator);
+            }
+
+            if(!propertySchemaValidators.Any())
+            {
+                return null;
+            }
+
+            return new PropertiesValidator(propertySchemaValidators);
+
+        }
+
+        ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
+        {
+            SchemaMetadata itemsRawSchemaData = new(schemaData)
+            {
+                Schema = itemSchemaElement
+            };
+
+            var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
+            if(_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+            return _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
+        }
+    }
+}

@@ -57,6 +57,8 @@ namespace JsonSchemaValidationTests.Draft202012
         public static IEnumerable<object[]> GetDraft202012Tests()
             => new TestCaseLoader(new string[] {  
                 /* implemented keyword tests */
+                "allOf",
+                "anyOf",
                 "boolean_schema",
                 "const",
                 "exclusiveMaximum",
@@ -69,6 +71,8 @@ namespace JsonSchemaValidationTests.Draft202012
                 "minItems",
                 "minLength",
                 "multipleOf",
+                // "not", dependent on unEvaluatedItems
+                "oneOf",
                 "prefixItems",
                 "required",
                 "type"
