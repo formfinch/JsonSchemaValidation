@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
 using System.Globalization;
 using System.Text.Json;
@@ -15,15 +16,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             this.minItems = minItems;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Array)
+            if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the minItems keyword
                 return ValidationResult.Ok;
             }
 
-            if(instance.GetArrayLength() >= minItems)
+            if(context.Data.GetArrayLength() >= minItems)
             {
                 return ValidationResult.Ok;
             }

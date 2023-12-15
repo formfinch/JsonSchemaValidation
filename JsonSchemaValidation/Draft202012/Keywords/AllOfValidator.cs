@@ -8,27 +8,51 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class AllOfValidator : IKeywordValidator
     {
         private readonly IEnumerable<ISchemaValidator> _validators;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public AllOfValidator(IEnumerable<ISchemaValidator> validators)
+        public AllOfValidator(IEnumerable<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
         {
             _validators = validators;
+            _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
+            var result = ValidationResult.Ok;
+
+            var contexts = new List<IJsonValidationContext>();
             int idx = 0;
-            foreach(var validator in _validators)
+            foreach (var validator in _validators)
             {
-                var schemaResult = validator.Validate(instance);
+                var activeContext = _contextFactory.CopyContext(context);
+                var schemaResult = validator.Validate(activeContext);
                 if (schemaResult != ValidationResult.Ok)
                 {
-                    var result = new ValidationResult($"Instance failed to validate against one of the schemas in 'allOf' at index {idx}.");
+                    result = new ValidationResult($"Instance failed to validate against one of the schemas in 'allOf' at index {idx}.");
                     result.Merge(schemaResult);
-                    return result;
+                    break;
+                }
+                else
+                {
+                    contexts.Add(activeContext);
                 }
                 idx++;
             }
-            return ValidationResult.Ok;
+
+            if (result == ValidationResult.Ok)
+            {
+                if (context is IJsonValidationArrayContext target)
+                {
+                    foreach (var activeContext in contexts)
+                    {
+                        if (activeContext is IJsonValidationArrayContext source)
+                        {
+                            target.SetAnnotations(source.GetAnnotations());
+                        }
+                    }
+                }
+            }
+            return result;
         }
     }
 }

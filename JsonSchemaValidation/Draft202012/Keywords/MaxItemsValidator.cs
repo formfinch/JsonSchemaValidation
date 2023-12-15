@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -14,15 +15,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             this.maxItems = maxItems;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Array)
+            if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the maxItems keyword
                 return ValidationResult.Ok;
             }
 
-            if (instance.GetArrayLength() <= maxItems)
+            if (context.Data.GetArrayLength() <= maxItems)
             {
                 return ValidationResult.Ok;
             }

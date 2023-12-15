@@ -16,12 +16,13 @@ namespace JsonSchemaValidation.Validation
             _keywordValidators.Add(keywordValidator);
         }
 
-        public ValidationResult Validate(JsonElement jsonData)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
             var result = new ValidationResult();
+
             foreach (var validator in _keywordValidators)
             {
-                var validatorResult = validator.Validate(jsonData);
+                var validatorResult = validator.Validate(context);
                 result.Merge(validatorResult);
             }
 

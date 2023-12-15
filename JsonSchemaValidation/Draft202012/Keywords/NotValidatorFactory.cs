@@ -18,11 +18,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public NotValidatorFactory(ISchemaFactory schemaFactory, ILazySchemaValidatorFactory schemaValidatorFactory)
+        public NotValidatorFactory(ISchemaFactory schemaFactory, 
+            ILazySchemaValidatorFactory schemaValidatorFactory,
+            IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
         }
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -51,7 +55,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 throw new InvalidSchemaException("The keyword value for not MUST be a valid JSON Schema.");
             }
-            return new NotValidator(validator);
+            return new NotValidator(validator, _contextFactory);
 
         }
 

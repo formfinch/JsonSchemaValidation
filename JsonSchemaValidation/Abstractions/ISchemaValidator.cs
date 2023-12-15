@@ -12,6 +12,6 @@ namespace JsonSchemaValidation.Abstractions
     public interface ISchemaValidator
     {
         void AddKeywordValidator(IKeywordValidator keywordValidator);
-        ValidationResult Validate(JsonElement jsonData);
+        ValidationResult Validate(IJsonValidationContext context);
     }
 }

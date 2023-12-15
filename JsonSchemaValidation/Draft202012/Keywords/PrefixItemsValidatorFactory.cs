@@ -18,11 +18,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public PrefixItemsValidatorFactory(ISchemaFactory schemaFactory, ILazySchemaValidatorFactory schemaValidatorFactory)
+        public PrefixItemsValidatorFactory(
+            ISchemaFactory schemaFactory, 
+            ILazySchemaValidatorFactory schemaValidatorFactory, 
+            IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
         }
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -58,7 +63,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 validators.Add(validator);
 
             }
-            return new PrefixItemsValidator(validators);
+            return new PrefixItemsValidator(validators, _contextFactory);
         }
 
         private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement prefixItemSchemaElement)

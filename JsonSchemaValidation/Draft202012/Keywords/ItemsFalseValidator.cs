@@ -14,18 +14,21 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _nPrefixItems = nPrefixItems;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Array)
+            if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the Items keyword
                 return ValidationResult.Ok;
             }
 
-            if(_nPrefixItems < instance.GetArrayLength())
+            if (context is not IJsonValidationArrayContext arrayContext)
             {
-                // push all array indices to evaluateditems
+                throw new InvalidOperationException("Array context is invalid");
+            }
 
+            if (_nPrefixItems < context.Data.GetArrayLength())
+            {
                 return new ValidationResult("Invalid items");
             }
 

@@ -18,11 +18,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public ItemsValidatorFactory(ISchemaFactory schemaFactory, ILazySchemaValidatorFactory schemaValidatorFactory)
+        public ItemsValidatorFactory(
+            ISchemaFactory schemaFactory, 
+            ILazySchemaValidatorFactory schemaValidatorFactory, 
+            IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
         }
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -51,7 +56,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (itemsElement.ValueKind == JsonValueKind.Object)
             {
                 var itemSchemaValidator = CreateValidator(schemaData, itemsElement);
-                return new ItemValidator(itemSchemaValidator, nPrefixItems);
+                return new ItemValidator(itemSchemaValidator, nPrefixItems, _contextFactory);
             }
 
             if (itemsElement.ValueKind == JsonValueKind.False)
@@ -61,7 +66,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (itemsElement.ValueKind == JsonValueKind.True)
             {
-                return new ItemsTrueValidator();
+                return new ItemsTrueValidator(nPrefixItems);
             }
 
             throw new InvalidSchemaException("Items has invalid content");

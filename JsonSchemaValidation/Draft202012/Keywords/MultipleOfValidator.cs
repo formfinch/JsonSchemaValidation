@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
 using System;
 using System.Collections.Generic;
@@ -19,11 +20,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             this.divisor = divisor;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
+            if (context.Data.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
 
-            double quotient = instance.GetDouble() / divisor;
+            double quotient = context.Data.GetDouble() / divisor;
 
             // scaling technique to deal with floating point precision
             quotient = Math.Round((quotient + 0.000001) * 100) / 100.0;

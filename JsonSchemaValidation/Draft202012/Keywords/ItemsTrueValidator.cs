@@ -7,22 +7,31 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class ItemsTrueValidator : IKeywordValidator
     {
-        public ItemsTrueValidator()
+        private readonly int _nPrefixItems;
+
+        public ItemsTrueValidator(int nPrefixItems)
         {
-            // No nPrefixItems because any additional items will then validate to true anyway
+            _nPrefixItems = nPrefixItems;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Array)
+            if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the Items keyword
                 return ValidationResult.Ok;
             }
 
-            // push all array indices to evaluateditems
+            if (context is not IJsonValidationArrayContext arrayContext)
+            {
+                throw new InvalidOperationException("Array context is invalid");
+            }
 
-            // Any array will pass validation with respect to the items keyword.
+            if (_nPrefixItems < context.Data.GetArrayLength())
+            {
+                arrayContext.SetAllItemsEvaluated();
+            }
+
             return ValidationResult.Ok;
         }
     }

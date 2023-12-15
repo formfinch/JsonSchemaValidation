@@ -14,15 +14,15 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class ContainsValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    internal class UnevaluatedItemsValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
         private readonly IJsonValidationContextFactory _contextFactory;
 
-        public ContainsValidatorFactory(
+        public UnevaluatedItemsValidatorFactory(
             ISchemaFactory schemaFactory, 
-            ILazySchemaValidatorFactory schemaValidatorFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory, 
             IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
@@ -39,39 +39,38 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (!schema.TryGetProperty("contains", out var containsElement))
+            if (!schema.TryGetProperty("unevaluatedItems", out var unevaluatedItemSchemaElement))
             {
                 return null;
             }
 
-            if (containsElement.ValueKind != JsonValueKind.Object
-                && containsElement.ValueKind != JsonValueKind.False
-                && containsElement.ValueKind != JsonValueKind.True)
+            if (unevaluatedItemSchemaElement.ValueKind != JsonValueKind.Object
+                && unevaluatedItemSchemaElement.ValueKind != JsonValueKind.False
+                && unevaluatedItemSchemaElement.ValueKind != JsonValueKind.True)
             {
-                throw new InvalidSchemaException($"The keyword value for contains MUST be a valid JSON Schema.");
+                throw new InvalidSchemaException("UnevaluatedItems has invalid content");
             }
 
-            var containsSchemaValidator = CreateValidator(schemaData, containsElement);
-            if (containsSchemaValidator == null)
+            var unevaluatedItemValidator = CreateValidator(schemaData, unevaluatedItemSchemaElement);
+            if(unevaluatedItemValidator == null)
             {
-                throw new InvalidSchemaException($"The keyword value for contains MUST be a valid JSON Schema.");
+                throw new InvalidSchemaException("UnevaluatedItems has invalid content");
             }
-            return new ContainsValidator(containsSchemaValidator, _contextFactory);
+            return new UnevaluatedItemsValidator(unevaluatedItemValidator, _contextFactory);
         }
 
-        ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
+        private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement unevaluatedItemSchemaElement)
         {
-            SchemaMetadata itemsRawSchemaData = new(schemaData)
+            SchemaMetadata prefixItemRawSchemaData = new(schemaData)
             {
-                Schema = itemSchemaElement
+                Schema = unevaluatedItemSchemaElement
             };
-
-            var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            var prefixItemDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(prefixItemRawSchemaData);
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }
-            return _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
+            return _schemaValidatorFactory.Value.CreateValidator(prefixItemDereferencedSchemaData);
         }
     }
 }

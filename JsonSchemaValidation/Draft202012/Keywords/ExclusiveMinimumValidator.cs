@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
 using System;
 using System.Collections.Generic;
@@ -19,10 +20,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             this.minimum = minimum;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
-            if (instance.GetDouble() > minimum) return ValidationResult.Ok;
+            if (context.Data.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
+            if (context.Data.GetDouble() > minimum) return ValidationResult.Ok;
             return new ValidationResult(keyword);
         }
     }

@@ -14,9 +14,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _propertyNames = propertyNames;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Object)
+            if (context.Data.ValueKind != JsonValueKind.Object)
             {
                 // If the instance is not an object, it's considered valid with respect to the required keyword
                 return ValidationResult.Ok;
@@ -25,7 +25,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             ValidationResult result = new();
             foreach (string propertyName in _propertyNames)
             {
-                if(!instance.TryGetProperty(propertyName, out JsonElement value))
+                if(!context.Data.TryGetProperty(propertyName, out JsonElement value))
                 {
                     result.AddError($"Missing property: {propertyName}");
                 }

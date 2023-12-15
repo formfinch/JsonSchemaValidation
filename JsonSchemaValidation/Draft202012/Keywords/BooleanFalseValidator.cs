@@ -11,7 +11,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
             return new ValidationResult("Validated against false");
         }

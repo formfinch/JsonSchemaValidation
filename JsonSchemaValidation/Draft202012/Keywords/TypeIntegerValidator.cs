@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
@@ -13,14 +14,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Number)
+            if (context.Data.ValueKind != JsonValueKind.Number)
             {
                 return validationFailed;
             }
 
-            if(!instance.TryGetDecimal(out decimal value))
+            if(!context.Data.TryGetDecimal(out decimal value))
             {
                 return validationFailed;
             }

@@ -8,20 +8,29 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class NotValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _validator;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public NotValidator(ISchemaValidator validator)
+        public NotValidator(ISchemaValidator validator, IJsonValidationContextFactory contextFactory)
         {
             _validator = validator;
+            _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if(_validator.Validate(instance) == ValidationResult.Ok)
-            {
-                return new ValidationResult("Instance should fail to validate against the schema in 'not'.");
-            }
+            var result = new ValidationResult("Instance should fail to validate against the schema in 'not'.");
+            var activeContext = _contextFactory.CopyContext(context);
 
-            return ValidationResult.Ok;
+            if (_validator.Validate(activeContext) != ValidationResult.Ok)
+            {
+                result = ValidationResult.Ok;
+                if (context is IJsonValidationArrayContext target
+                    && activeContext is IJsonValidationArrayContext source)
+                {
+                    target.SetAnnotations(source.GetAnnotations());
+                }
+            }
+            return result;
         }
     }
 }

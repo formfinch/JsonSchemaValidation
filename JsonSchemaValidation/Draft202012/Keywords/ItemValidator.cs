@@ -9,33 +9,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaValidator _validator;
         private readonly int _nPrefixItems;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public ItemValidator(ISchemaValidator validator, int nPrefixItems)
+        public ItemValidator(ISchemaValidator validator, int nPrefixItems, IJsonValidationContextFactory contextFactory)
         {
             _validator = validator;
             _nPrefixItems = nPrefixItems;
+            _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (instance.ValueKind != JsonValueKind.Array)
+            if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the items keyword
                 return ValidationResult.Ok;
             }
 
+            if (context is not IJsonValidationArrayContext arrayContext)
+            {
+                throw new InvalidOperationException("Array context is invalid");
+            }
+
             int idxItem = 0;
-            foreach (JsonElement item in instance.EnumerateArray())
+            foreach (JsonElement item in context.Data.EnumerateArray())
             {
                 if (idxItem++ >= _nPrefixItems)
                 {
-                    // push index to evaluateditems
-
-                    var itemValidationResult = _validator.Validate(item);
+                    var itemContext = _contextFactory.CreateContextForArrayItem(context, idxItem - 1, item);
+                    var itemValidationResult = _validator.Validate(itemContext);
                     if (itemValidationResult != ValidationResult.Ok)
                     {
                         return itemValidationResult;
                     }
+                    arrayContext.SetEvaluatedIndex(idxItem - 1);
                 }
             }
             return ValidationResult.Ok;

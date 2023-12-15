@@ -1,4 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
@@ -16,9 +17,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _expectedValue = expectedValue;
         }
 
-        public ValidationResult Validate(JsonElement instance)
+        public ValidationResult Validate(IJsonValidationContext context)
         {
-            if (_comparison.DeepEquals(_expectedValue, instance))
+            if (_comparison.DeepEquals(_expectedValue, context.Data))
             {
                 return ValidationResult.Ok;
             }
