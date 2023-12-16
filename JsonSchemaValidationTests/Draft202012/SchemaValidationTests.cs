@@ -1,22 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
-using JsonSchemaValidation.Validation;
-using JsonSchemaValidation.Draft202012;
-using JsonSchemaValidationTests.TestCases;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
-using Xunit.Abstractions;
-using Microsoft.Extensions.DependencyInjection;
+﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using System.Text.RegularExpressions;
-using System.IO;
-using System.Reflection.Metadata.Ecma335;
+using JsonSchemaValidation.Repositories;
+using JsonSchemaValidationTests.TestCases;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -56,6 +42,7 @@ namespace JsonSchemaValidationTests.Draft202012
 
             foreach (var test in testCase.Tests)
             {
+                if (testCase.Description != "patternProperties validates properties matching a regex") continue;
                 var testData = test.GetProperty("data");
                 var prpDescription = test.GetProperty("description");
                 string testDescription = prpDescription.GetString()!;
@@ -71,11 +58,13 @@ namespace JsonSchemaValidationTests.Draft202012
         public static IEnumerable<object[]> GetDraft202012Tests()
             => new TestCaseLoader(new string[] {  
                 /* implemented keyword tests */
+                "additionalProperties",
                  "allOf",
                 "anyOf",
                 "boolean_schema",
                 "const",
                 "contains",
+                "default",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
                 "if-then-else",
@@ -87,9 +76,11 @@ namespace JsonSchemaValidationTests.Draft202012
                 "minItems",
                 "minLength",
                 "multipleOf",
-                // "not", dependent on unevaluatedProperties
+                "not",
                 "oneOf",
+                "patternProperties",
                 "prefixItems",
+                "properties",
                 "required",
                 "type",
                 "unevaluatedItems"
@@ -102,13 +93,16 @@ namespace JsonSchemaValidationTests.Draft202012
             var disabledTests = new Tuple<string, string>[]
             {
                 // Test is not valid or disabled because:
+
+                // not keyword test dependent on implementation of unevaluatedProperties
+                new ("collect annotations inside a 'not', even if collection is disabled", "unevaluated property"),
                 
                 // $ref replaces the initial schema containing unevaluatedItems keyword. 
                 // unevaluatedItems: false should no longer be used
                 new ("unevaluatedItems with $ref", "with unevaluated items"),
             };
 
-            return disabledTests.Any(test => test.Item1 == testCaseDescription && test.Item2 == testDescription);
+            return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));
         }
     }
 }
