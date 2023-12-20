@@ -14,7 +14,7 @@ namespace JsonSchemaValidationTests.TestCases
 
         public TestCaseLoader(IEnumerable<string> keywords)
         {
-            this.keywords = keywords;
+            this.keywords = keywords ?? throw new ArgumentNullException(nameof(keywords));
         }
 
         public IEnumerable<object[]> LoadTestCases(string path)
@@ -28,7 +28,11 @@ namespace JsonSchemaValidationTests.TestCases
                 {
                     foreach (var test in tests)
                     {
-                        if (keywords == null || keywords.Contains(Path.GetFileNameWithoutExtension(file)))
+                        var keyword = keywords!.FirstOrDefault(kw =>
+                            kw != null
+                            && file.EndsWith($"{kw}.json", StringComparison.CurrentCultureIgnoreCase)
+                            && kw.EndsWith(Path.GetFileNameWithoutExtension(file)));
+                        if (keyword != null)
                         {
                             yield return new object[] { test };
                         }

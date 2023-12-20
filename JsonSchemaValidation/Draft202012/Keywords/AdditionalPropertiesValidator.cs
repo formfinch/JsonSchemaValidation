@@ -52,7 +52,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                     throw new InvalidOperationException(@"Validator not available for additional properties.");
                 }
 
-                var validationResult = validator.Validate(context);
+                var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prp.Value);
+                var validationResult = validator.Validate(prpContext);
                 if (validationResult != ValidationResult.Ok)
                 {
                     var result = new ValidationResult($"Property {prp.Name} is invalid");

@@ -42,7 +42,6 @@ namespace JsonSchemaValidationTests.Draft202012
 
             foreach (var test in testCase.Tests)
             {
-                if (testCase.Description != "patternProperties validates properties matching a regex") continue;
                 var testData = test.GetProperty("data");
                 var prpDescription = test.GetProperty("description");
                 string testDescription = prpDescription.GetString()!;
@@ -59,12 +58,13 @@ namespace JsonSchemaValidationTests.Draft202012
             => new TestCaseLoader(new string[] {  
                 /* implemented keyword tests */
                 "additionalProperties",
-                 "allOf",
+                "allOf",
                 "anyOf",
                 "boolean_schema",
                 "const",
                 "contains",
                 "default",
+                "enum",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
                 "if-then-else",
@@ -78,12 +78,15 @@ namespace JsonSchemaValidationTests.Draft202012
                 "multipleOf",
                 "not",
                 "oneOf",
+                "pattern",
                 "patternProperties",
                 "prefixItems",
                 "properties",
                 "required",
                 "type",
-                "unevaluatedItems"
+                "unevaluatedItems",
+
+                @"\optional\format\email"
 
                 // "uniqueItems" : Disabled, test cases require that items and prefixItems keywords are implemented
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");

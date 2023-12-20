@@ -23,8 +23,10 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, BooleanValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ContainsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ConstValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, EnumValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ExclusiveMaximumValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ExclusiveMinimumValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, FormatValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, IfThenElseValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ItemsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MaximumValidatorFactory>();
@@ -36,6 +38,7 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MultipleOfValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, NotValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, OneOfValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PatternValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PatternPropertiesValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PrefixItemsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PropertiesValidatorFactory>();
