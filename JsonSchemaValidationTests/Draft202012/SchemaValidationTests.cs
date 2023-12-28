@@ -86,8 +86,11 @@ namespace JsonSchemaValidationTests.Draft202012
                 "type",
                 "unevaluatedItems",
 
-                @"\optional\format\email"
-
+                @"\optional\format\date-time",
+                @"\optional\format\date",
+                @"\optional\format\email",
+                @"\optional\format\idn-email",
+                @"\optional\format\time"
                 // "uniqueItems" : Disabled, test cases require that items and prefixItems keywords are implemented
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 
@@ -103,6 +106,18 @@ namespace JsonSchemaValidationTests.Draft202012
                 // $ref replaces the initial schema containing unevaluatedItems keyword. 
                 // unevaluatedItems: false should no longer be used
                 new ("unevaluatedItems with $ref", "with unevaluated items"),
+
+                // leap seconds are not supported in date-time format validation
+                new ("validation of date-time strings", "a valid date-time with a leap second, UTC"),
+                new ("validation of date-time strings", "a valid date-time with a leap second, with minus offset"),
+
+                // leap seconds are not supported in time format validation
+                new ("validation of time strings", "a valid time string with leap second, Zulu"),
+                new ("validation of time strings", "valid leap second, zero time-offset"),
+                new ("validation of time strings", "valid leap second, positive time-offset"),
+                new ("validation of time strings", "valid leap second, negative time-offset"),
+                new ("validation of time strings", "valid leap second, large positive time-offset"),
+                new ("validation of time strings", "valid leap second, large negative time-offset")
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

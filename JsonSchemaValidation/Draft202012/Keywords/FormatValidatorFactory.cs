@@ -40,9 +40,29 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidSchemaException("The format annotation attribute must be a string.");
             }
 
-            if(format == "email")
+            if(format == "date-time")
+            {
+                return new DateTimeValidator();
+            }
+
+            if (format == "date")
+            {
+                return new DateValidator();
+            }
+
+            if (format == "email")
             {
                 return new EmailValidator();
+            }
+
+            if (format == "idn-email")
+            {
+                return new EmailValidator();
+            }
+
+            if (format == "time")
+            {
+                return new TimeValidator();
             }
 
             return null;

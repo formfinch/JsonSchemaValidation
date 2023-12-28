@@ -16,10 +16,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
         // Regex for email parts recognition
-        private static string basicStructure = @"^.+@.+$";
-        private static string localPart = @"^(?:(?:[a-zA-Z0-9!#$%&'*+\-/=?^_`{|}~]+(?:\.[a-zA-Z0-9!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$";
-        private static string quotedLocalPart = @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$";
-        private static string domainPart = @"^(?:[a-zA-Z0-9-\.]+\.[a-zA-Z]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$";
+        private static readonly string basicStructure = @"^.+@.+$";
+        private static readonly string localPart = @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$";
+
+        private static readonly string quotedLocalPart = @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$";
+        private static readonly string domainPart = @"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$";
 
         private readonly Regex basicStructureRegex;
         private readonly Regex localPartRegex;
