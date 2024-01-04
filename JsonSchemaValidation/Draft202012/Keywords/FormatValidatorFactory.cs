@@ -50,6 +50,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new DateValidator();
             }
 
+            if (format == "duration")
+            {
+                return new DurationValidator();
+            }
+
             if (format == "email")
             {
                 return new EmailValidator();

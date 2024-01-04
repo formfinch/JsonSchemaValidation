@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
             if (context.Data.ValueKind != JsonValueKind.Array)
             {
-                // If the instance is not an array, it's considered valid with respect to the minItems keyword
+                // If the instance is not an array, it's considered valid with respect to the uniqueItems keyword
                 return ValidationResult.Ok;
             }
 

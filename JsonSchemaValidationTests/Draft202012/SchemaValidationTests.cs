@@ -44,6 +44,7 @@ namespace JsonSchemaValidationTests.Draft202012
             {
                 var testData = test.GetProperty("data");
                 var prpDescription = test.GetProperty("description");
+
                 string testDescription = prpDescription.GetString()!;
                 if (IsTestDisabled(testCase.Description, testDescription)) continue;
 
@@ -85,13 +86,14 @@ namespace JsonSchemaValidationTests.Draft202012
                 "required",
                 "type",
                 "unevaluatedItems",
+                "uniqueItems",
 
                 @"\optional\format\date-time",
                 @"\optional\format\date",
+                @"\optional\format\duration",
                 @"\optional\format\email",
                 @"\optional\format\idn-email",
                 @"\optional\format\time"
-                // "uniqueItems" : Disabled, test cases require that items and prefixItems keywords are implemented
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
