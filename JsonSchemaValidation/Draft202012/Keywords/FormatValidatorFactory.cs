@@ -60,9 +60,19 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new EmailValidator();
             }
 
+            if (format == "hostname")
+            {
+                return new HostnameValidator();
+            }
+
             if (format == "idn-email")
             {
                 return new EmailValidator();
+            }
+
+            if (format == "idn-hostname")
+            {
+                return new HostnameValidator(isIDNFormat:true);
             }
 
             if (format == "time")
