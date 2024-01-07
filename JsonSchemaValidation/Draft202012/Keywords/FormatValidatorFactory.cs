@@ -95,6 +95,21 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new UriValidator(iriSupport: true, canBeRelative: true);
             }
 
+            if (format == "json-pointer")
+            {
+                return new JsonPointerValidator();
+            }
+
+            if (format == "regex")
+            {
+                return new RegexValidator();
+            }
+
+            if (format == "relative-json-pointer")
+            {
+                return new RelativeJsonPointerValidator();
+            }
+
             if (format == "time")
             {
                 return new TimeValidator();
