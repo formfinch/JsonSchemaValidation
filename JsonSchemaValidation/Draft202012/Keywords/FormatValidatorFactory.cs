@@ -62,7 +62,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (format == "hostname")
             {
-                return new HostnameValidator();
+                return new HostnameValidator(isIDNFormat: false);
             }
 
             if (format == "idn-email")
@@ -75,9 +75,54 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new HostnameValidator(isIDNFormat:true);
             }
 
+            if (format == "ipv4")
+            {
+                return new IPAddressValidator(isIPV6Format:false);
+            }
+
+            if (format == "ipv6")
+            {
+                return new IPAddressValidator(isIPV6Format: true);
+            }
+
+            if (format == "iri")
+            {
+                return new UriValidator(iriSupport: true);
+            }
+
+            if (format == "iri-reference")
+            {
+                return new UriValidator(iriSupport: true, canBeRelative: true);
+            }
+
             if (format == "time")
             {
                 return new TimeValidator();
+            }
+
+            if (format == "unknown")
+            {
+                return new UnknownValidator();
+            }
+
+            if (format == "uri")
+            {
+                return new UriValidator(iriSupport: false);
+            }
+
+            if (format == "uri-reference")
+            {
+                return new UriValidator(iriSupport: false, canBeRelative: true);
+            }
+
+            if (format == "uri-template")
+            {
+                return new UriValidator(isTemplate: true);
+            }
+
+            if (format == "uuid")
+            {
+                return new UuidValidator();
             }
 
             return null;

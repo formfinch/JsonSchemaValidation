@@ -3,6 +3,9 @@ using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
+using System;
+using System.Diagnostics;
+using System.Text;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -51,7 +54,22 @@ namespace JsonSchemaValidationTests.Draft202012
                 var context = jsonValidationContextFactory.CreateContextForRoot(testData);
                 var validationResult = schemaValidator.Validate(context);
                 var expectedResult = test.GetProperty("valid").GetBoolean();
-                Assert.Equal(expectedResult, validationResult.IsValid);
+
+                if (!System.Diagnostics.Debugger.IsAttached)
+                {
+                    Assert.Equal(expectedResult, validationResult.IsValid);
+                }
+                else
+                {
+                    try
+                    {
+                        Assert.Equal(expectedResult, validationResult.IsValid);
+                    }
+                    catch
+                    {
+                        System.Diagnostics.Debug.WriteLine($"\"{testDescription}\"");
+                    }
+                }
             }
         }
 
@@ -95,7 +113,16 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\format\hostname",
                 @"\optional\format\idn-email",
                 @"\optional\format\idn-hostname",
-                @"\optional\format\time"
+                @"\optional\format\ipv4",
+                @"\optional\format\ipv6",
+                @"\optional\format\iri",
+                @"\optional\format\iri-reference",
+                @"\optional\format\time",
+                @"\optional\format\unknown",
+                @"\optional\format\uri",
+                @"\optional\format\uri-reference",
+                @"\optional\format\uri-template",
+                @"\optional\format\uuid"
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
@@ -143,7 +170,6 @@ namespace JsonSchemaValidationTests.Draft202012
 
                 // conflicting tests in hostname and idn-hostname, for now no check on this
                 new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position"),
-
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

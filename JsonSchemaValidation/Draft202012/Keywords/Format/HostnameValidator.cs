@@ -73,6 +73,5 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
             return hostnameRegex.IsMatch(hostname);
         }
-
     }
 }
