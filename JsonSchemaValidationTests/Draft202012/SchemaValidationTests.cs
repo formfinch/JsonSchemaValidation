@@ -3,9 +3,6 @@ using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Diagnostics;
-using System.Text;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -34,10 +31,14 @@ namespace JsonSchemaValidationTests.Draft202012
         public void Draft202012Tests(TestCase testCase)
         {
             var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
+            
+            // todo: this meta schema loading should be done elsewhere
+            foreach(var draft in _serviceProvider.GetServices<ISchemaDraftMeta>())
+            {
+                _ = schemaRepository.AddSchema(new SchemaMetadata(draft.MetaSchema));
+            }
+
             var schemaData = schemaRepository.AddSchema(new SchemaMetadata(testCase.Schema));
-
-            var schemaFactory = _serviceProvider.GetRequiredService<ISchemaFactory>();
-
             var schemaValidatorFactory = _serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
             var schemaValidator = schemaValidatorFactory.GetValidator(schemaData.SchemaUri!);
 
@@ -83,9 +84,11 @@ namespace JsonSchemaValidationTests.Draft202012
                 "const",
                 "contains",
                 "default",
+                // "defs", <- references meta schema, which uses dynamicAnchor, dynamicRef, vocabulary (how to load meta/core?)
                 "enum",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
+                // "format",
                 "if-then-else",
                 "items",
                 "maximum",
@@ -101,6 +104,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "patternProperties",
                 "prefixItems",
                 "properties",
+                // "ref", <-- working on ref
                 "required",
                 "type",
                 "unevaluatedItems",

@@ -15,6 +15,7 @@ namespace JsonSchemaValidation.Draft202012
     {
         public static IServiceCollection AddDraft202012(this IServiceCollection services)
         {
+            services.AddSingleton<ISchemaDraftMeta, SchemaDraft202012Meta>();
             services.AddSingleton<ISchemaDraftValidatorFactory, SchemaDraft202012ValidatorFactory>();
 
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, AdditionalPropertiesValidatorFactory>();
