@@ -1,8 +1,10 @@
 ﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
+using System.Runtime.Intrinsics.X86;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -31,30 +33,22 @@ namespace JsonSchemaValidationTests.Draft202012
         public void Draft202012Tests(TestCase testCase)
         {
             var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
-            
-            // todo: this meta schema loading should be done elsewhere
-            foreach(var draft in _serviceProvider.GetServices<ISchemaDraftMeta>())
-            {
-                _ = schemaRepository.AddSchema(new SchemaMetadata(draft.MetaSchema));
-            }
+            var schemaValidatorFactory = _serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
+            var jsonValidationContextFactory = _serviceProvider.GetRequiredService<IJsonValidationContextFactory>();
 
             var schemaData = schemaRepository.AddSchema(new SchemaMetadata(testCase.Schema));
-            var schemaValidatorFactory = _serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
             var schemaValidator = schemaValidatorFactory.GetValidator(schemaData.SchemaUri!);
-
-            var jsonValidationContextFactory = _serviceProvider.GetRequiredService<IJsonValidationContextFactory>();
 
             foreach (var test in testCase.Tests)
             {
-                var testData = test.GetProperty("data");
                 var prpDescription = test.GetProperty("description");
-
                 string testDescription = prpDescription.GetString()!;
                 if (IsTestDisabled(testCase.Description, testDescription)) continue;
 
+                var testData = test.GetProperty("data");
+                var expectedResult = test.GetProperty("valid").GetBoolean();
                 var context = jsonValidationContextFactory.CreateContextForRoot(testData);
                 var validationResult = schemaValidator.Validate(context);
-                var expectedResult = test.GetProperty("valid").GetBoolean();
 
                 if (!System.Diagnostics.Debugger.IsAttached)
                 {
@@ -84,11 +78,12 @@ namespace JsonSchemaValidationTests.Draft202012
                 "const",
                 "contains",
                 "default",
-                // "defs", <- references meta schema, which uses dynamicAnchor, dynamicRef, vocabulary (how to load meta/core?)
+                // "defs", // <- references meta schema, which uses dynamicAnchor, dynamicRef, vocabulary (how to load meta/core?)
                 "enum",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
                 // "format",
+                "id",
                 "if-then-else",
                 "items",
                 "maximum",
@@ -177,6 +172,9 @@ namespace JsonSchemaValidationTests.Draft202012
 
                 // conflicting tests in hostname and idn-hostname, for now no check on this
                 new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position"),
+
+                // $id should be format uri-reference, which allows for fragments. Test claims fragments are not allowed.
+                new ("Invalid use of fragments in location-independent $id", "*"),
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

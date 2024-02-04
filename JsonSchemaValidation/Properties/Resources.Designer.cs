@@ -63,6 +63,167 @@ namespace JsonSchemaValidation.Properties {
         /// <summary>
         ///   Looks up a localized string similar to {
         ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/applicator&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Applicator vocabulary meta-schema&quot;,
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;prefixItems&quot;: { &quot;$ref&quot;: &quot;#/$defs/schemaArray&quot; },
+        ///        &quot;items&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
+        ///        &quot;contains&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
+        ///        &quot;additionalProperties&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
+        ///        &quot;properties&quot;: {
+        ///         [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_applicator {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_applicator", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/content&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Content vocabulary meta-schema&quot;,
+        ///
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;contentEncoding&quot;: { &quot;type&quot;: &quot;string&quot; },
+        ///        &quot;contentMediaType&quot;: { &quot;type&quot;: &quot;string&quot; },
+        ///        &quot;contentSchema&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; }
+        ///    }
+        ///}
+        ///.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_content {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_content", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/core&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Core vocabulary meta-schema&quot;,
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;$id&quot;: {
+        ///            &quot;$ref&quot;: &quot;#/$defs/uriReferenceString&quot;,
+        ///            &quot;$comment&quot;: &quot;Non-empty fragments not allowed.&quot;,
+        ///            &quot;pattern&quot;: &quot;^[^#]*#?$&quot;
+        ///        },
+        ///        &quot;$schema&quot;: { &quot;$ref&quot;: &quot;#/$defs/uriString&quot; },
+        ///        &quot;$ref&quot;: { &quot;$ref&quot;: &quot;#/$ [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_core {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_core", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/format-annotation&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Format vocabulary meta-schema for annotation results&quot;,
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;format&quot;: { &quot;type&quot;: &quot;string&quot; }
+        ///    }
+        ///}
+        ///.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_format_annotation {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_format_annotation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/meta-data&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Meta-data vocabulary meta-schema&quot;,
+        ///
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;title&quot;: {
+        ///            &quot;type&quot;: &quot;string&quot;
+        ///        },
+        ///        &quot;description&quot;: {
+        ///            &quot;type&quot;: &quot;string&quot;
+        ///        },
+        ///        &quot;default&quot;: true,
+        ///        &quot;deprecated&quot;: {
+        ///            &quot;type&quot;: &quot;boolean&quot;,
+        ///            &quot;default&quot;: false
+        ///        },
+        /// [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_meta_data {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_meta_data", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/unevaluated&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Unevaluated applicator vocabulary meta-schema&quot;,
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;unevaluatedItems&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
+        ///        &quot;unevaluatedProperties&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; }
+        ///    }
+        ///}
+        ///.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_unevaluated {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_unevaluated", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
+        ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/meta/validation&quot;,
+        ///    &quot;$dynamicAnchor&quot;: &quot;meta&quot;,
+        ///
+        ///    &quot;title&quot;: &quot;Validation vocabulary meta-schema&quot;,
+        ///    &quot;type&quot;: [&quot;object&quot;, &quot;boolean&quot;],
+        ///    &quot;properties&quot;: {
+        ///        &quot;type&quot;: {
+        ///            &quot;anyOf&quot;: [
+        ///                { &quot;$ref&quot;: &quot;#/$defs/simpleTypes&quot; },
+        ///                {
+        ///                    &quot;type&quot;: &quot;array&quot;,
+        ///                    &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/simpleTypes&quot; },
+        ///                    &quot;minItems&quot;:  [rest of string was truncated]&quot;;.
+        /// </summary>
+        internal static string json_schema_draft202012_meta_validation {
+            get {
+                return ResourceManager.GetString("json_schema_draft202012_meta_validation", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///    &quot;$schema&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
         ///    &quot;$id&quot;: &quot;https://json-schema.org/draft/2020-12/schema&quot;,
         ///    &quot;$vocabulary&quot;: {
         ///        &quot;https://json-schema.org/draft/2020-12/vocab/core&quot;: true,
@@ -72,9 +233,9 @@ namespace JsonSchemaValidation.Properties {
         ///        &quot;https://json-schema.org/draft/2020-12/vocab/meta-data&quot;: true,
         ///        &quot;http [rest of string was truncated]&quot;;.
         /// </summary>
-        internal static string json_schema_draft202012 {
+        internal static string json_schema_draft202012_schema {
             get {
-                return ResourceManager.GetString("json-schema-draft202012", resourceCulture);
+                return ResourceManager.GetString("json_schema_draft202012_schema", resourceCulture);
             }
         }
     }

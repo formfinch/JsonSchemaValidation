@@ -18,8 +18,8 @@ namespace JsonSchemaValidation.Repositories
         public SchemaMetadata(JsonElement schema, string? draftVersion = null, Uri? schemaUri = null)
         {
             Schema = schema;
-            DraftVersion = draftVersion;
-            SchemaUri = schemaUri;
+            SchemaUri = schemaUri ?? SchemaRepositoryHelpers.ExtractSchemaUri(schema);
+            DraftVersion = draftVersion ?? SchemaRepositoryHelpers.ExtractDraftVersion(schema);
             References = new HashSet<Uri>();
         }
 

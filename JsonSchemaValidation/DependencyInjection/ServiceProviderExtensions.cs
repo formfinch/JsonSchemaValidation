@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
@@ -24,6 +25,16 @@ namespace JsonSchemaValidation.DependencyInjection
             {
                 // This will force the instantiation of the singleton service
                 serviceProvider.GetRequiredService(serviceType);
+            }
+
+            // load draft meta schemas
+            var schemaRepository = serviceProvider.GetRequiredService<ISchemaRepository>();
+            foreach (var draft in serviceProvider.GetServices<ISchemaDraftMeta>())
+            {
+                foreach (var schema in draft.Schemas)
+                {
+                    _ = schemaRepository.AddSchema(new SchemaMetadata(schema));
+                }
             }
         }
     }

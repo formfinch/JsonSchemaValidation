@@ -39,16 +39,16 @@ namespace JsonSchemaValidation.Common
             }
 
             string reference = refElement.GetString() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(reference) || reference == "#")
+            if (string.IsNullOrWhiteSpace(reference))
             {
-                // todo: empty string and "#" are different things.
-                // empty string should return the current schemaData
-                // "#" and schemaData.uri.fragment
-                // should return _schemaRepository.GetSchema(
                 return schemaData;
             }
 
-            Uri referenceUri = reference.StartsWith("#") ? new Uri(schemaData.SchemaUri!, new Uri(reference, UriKind.Relative)) : new Uri(reference);
+            if (!Uri.TryCreate(schemaData.SchemaUri, reference!, out Uri? referenceUri))
+            {
+                referenceUri = new Uri(reference);
+            }
+
             if (schemaData.References.Contains(referenceUri))
             {
                 throw new InvalidSchemaException($"Schema contains cyclic reference: {reference}");

@@ -10,6 +10,6 @@ namespace JsonSchemaValidation.Abstractions
     public interface ISchemaDraftMeta
     {
         string DraftVersion { get; }
-        JsonElement MetaSchema { get; }
+        IEnumerable<JsonElement> Schemas { get; }
     }
 }

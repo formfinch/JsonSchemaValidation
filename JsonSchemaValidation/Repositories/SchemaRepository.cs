@@ -35,7 +35,94 @@ namespace JsonSchemaValidation.Repositories
                 throw new InvalidOperationException(@$"Schema could not be registered.");
             }
 
+            AddDefsSchemas(schemaData);
+
             return target;
+        }
+
+        private void AddDefsSchemas(SchemaMetadata schemaData)
+        {
+            var defsElement = ExtractDefsElement(schemaData);
+            if(defsElement == null)
+            {
+                return;
+            }
+
+            foreach(var prp in defsElement.Value.EnumerateObject())
+            {
+                if(prp.Value.ValueKind != JsonValueKind.Object)
+                {
+                    continue;
+                }
+
+                Uri? id = ExtractId(prp.Value);
+                if(id == null)
+                {
+                    continue;
+
+                }
+
+                if(Uri.TryCreate(schemaData.SchemaUri, id.ToString(), out Uri? newUri))
+                {
+                    var value = new SchemaMetadata(prp.Value, schemaData.DraftVersion, schemaData.SchemaUri);
+                    if (!_schemas.TryAdd(newUri, value))
+                    {
+                        throw new InvalidOperationException(@$"Schema in def$ could not be registered.");
+                    }
+                }
+            }
+        }
+
+        public static Uri? ExtractId(JsonElement schema)
+        {
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("$id", out var idElement))
+            {
+                return null;
+            }
+
+            if (idElement.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            string? idValue = idElement.GetString();
+            if (string.IsNullOrWhiteSpace(idValue))
+            {
+                return null;
+            }
+
+            return new Uri(idValue);
+        }
+
+        private JsonElement? ExtractDefsElement(SchemaMetadata schemaData)
+        {
+            if(schemaData?.Schema == null) 
+            { 
+                return null; 
+            }
+
+            var schema = schemaData.Schema;
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("$defs", out var defsElement))
+            {
+                return null;
+            }
+
+            if (defsElement.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            return defsElement;
         }
 
         public SchemaMetadata GetSchema(Uri schemaUri)
