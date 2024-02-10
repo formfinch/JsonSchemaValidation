@@ -4,7 +4,7 @@ namespace JsonSchemaValidation.Abstractions
 {
     public interface ISchemaRepository
     {
-        SchemaMetadata AddSchema(SchemaMetadata schemaData);
+        bool TryAddSchema(SchemaMetadata schemaData, out SchemaMetadata? result);
         SchemaMetadata GetSchema(Uri schemaUri);
     }
 }

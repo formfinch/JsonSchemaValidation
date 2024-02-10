@@ -38,7 +38,12 @@ namespace JsonSchemaValidation.Repositories
                 return null;
             }
 
-            return new Uri(idValue);
+            if (!Uri.TryCreate(idValue, new UriCreationOptions(), out var result))
+            {
+                return null;
+            }
+
+            return result;
         }
 
         public static string? ExtractDraftVersion(JsonElement schema)

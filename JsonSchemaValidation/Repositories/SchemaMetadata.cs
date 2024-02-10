@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Common;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -14,6 +15,8 @@ namespace JsonSchemaValidation.Repositories
         public string? DraftVersion { get; set; }
         public Uri? SchemaUri { get; set; }
         public HashSet<Uri> References { get; set; } 
+        public ConcurrentDictionary<string, JsonElement> Anchors { get; set; }
+        public bool UseSchemaUriForRegistration { get; set; }
 
         public SchemaMetadata(JsonElement schema, string? draftVersion = null, Uri? schemaUri = null)
         {
@@ -21,6 +24,7 @@ namespace JsonSchemaValidation.Repositories
             SchemaUri = schemaUri ?? SchemaRepositoryHelpers.ExtractSchemaUri(schema);
             DraftVersion = draftVersion ?? SchemaRepositoryHelpers.ExtractDraftVersion(schema);
             References = new HashSet<Uri>();
+            Anchors = new ConcurrentDictionary<string, JsonElement>();
         }
 
         public SchemaMetadata(SchemaMetadata originalSchemaData)
@@ -41,6 +45,7 @@ namespace JsonSchemaValidation.Repositories
             {
                 References = new HashSet<Uri>(new UriWithFragmentComparer());
             }
+            Anchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.Anchors);
         }
     }
 }
