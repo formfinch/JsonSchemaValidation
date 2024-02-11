@@ -1,12 +1,7 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Common
 {
@@ -39,7 +34,7 @@ namespace JsonSchemaValidation.Common
             }
 
             string reference = refElement.GetString() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(reference))
+            if (string.IsNullOrWhiteSpace(reference) || reference == "#")
             {
                 return schemaData;
             }
@@ -53,8 +48,13 @@ namespace JsonSchemaValidation.Common
             {
                 throw new InvalidSchemaException($"Schema contains cyclic reference: {reference}");
             }
+            schemaData.References.Add(referenceUri);
+
             var retrievedSchema = _schemaRepository.GetSchema(referenceUri);
-            retrievedSchema.References.Add(referenceUri);
+            foreach(var refUri in schemaData.References)
+            {
+                retrievedSchema.References.Add(refUri);
+            }
 
             // Dereference until we receive a proper schema.
             return CreateDereferencedSchema(retrievedSchema);

@@ -1,10 +1,8 @@
 ﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
-using System.Runtime.Intrinsics.X86;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -75,7 +73,7 @@ namespace JsonSchemaValidationTests.Draft202012
 
         public static IEnumerable<object[]> GetDraft202012Tests()
             => new TestCaseLoader(new string[] {  
-                ///* implemented keyword tests */
+                /* implemented keyword tests */
                 "additionalProperties",
                 "anchor",
                 "allOf",
@@ -105,7 +103,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "patternProperties",
                 "prefixItems",
                 "properties",
-                // "ref", <-- working on ref
+                "ref",
                 "required",
                 "type",
                 "unevaluatedItems",
@@ -185,7 +183,47 @@ namespace JsonSchemaValidationTests.Draft202012
 
                 // test has out of reach anchors in allOf items
                 // we dont yet go through the complete schema to get anchors from items that otherwise never get handled.
-                new ("same $anchor with different base uri", "*" )
+                new ("same $anchor with different base uri", "*" ),
+
+                // root pointer ref is not supported
+                // root pointer ref creates cyclic-reference because of the method of implementation
+                new ("root pointer ref", "*" ),
+
+                // test logic is correct but currently unsupported because of misunderstanding $ref keyword.
+                // The package misinterprets $ref as replacing rather than coexisting with sibling keywords
+                // ignoring its intended applicator function.
+                
+                // test succeeds with change to allOf: [ { $ref... } ]
+                new ("ref applies alongside sibling keywords", "*" ),
+                
+                // unable to solve cyclic references in any way
+                new ("Recursive references between schemas", "*" ),
+
+                new ("ref creates new scope when adjacent to keywords", "*"),
+                
+                // test has out of reach reference
+                // we dont yet go through the complete schema to get $ids from items that otherwise never get handled.
+                new ("refs with relative uris and defs", "*"),
+                new ("relative refs with absolute uris and defs", "*"),
+                new ("$id must be resolved against nearest parent, not just immediate parent", "*"),
+
+                // urn type not supported by .NET?
+                // strange these tests were not presented in the format section
+                new ("simple URN base URI with $ref via the URN", "*"),
+                new ("simple URN base URI with JSON pointer", "*"),
+                new ("URN base URI with NSS", "*"),
+                new ("URN base URI with r-component", "*"),
+                new ("URN base URI with q-component", "*"),
+                new ("URN base URI with URN and JSON pointer ref", "*"),
+                new ("URN base URI with URN and anchor ref", "*"),
+                new ("URN ref with nested pointer ref", "*"),
+
+                // test has out of reach reference
+                // we dont yet go through the complete schema to get $ids from items that otherwise never get handled.
+                new ("ref to if", "*"),
+                new ("ref to then", "*"),
+                new ("ref to else", "*"),
+
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

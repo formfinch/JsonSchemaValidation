@@ -3,15 +3,9 @@ using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Draft202012.Keywords.Format;
 using JsonSchemaValidation.Exceptions;
-using System;
 using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Linq;
-using System.Reflection;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Repositories
 {
@@ -59,6 +53,11 @@ namespace JsonSchemaValidation.Repositories
         {
             if (schemaUri == null) throw new ArgumentNullException(nameof(schemaUri));
 
+            if (schemaUri.Fragment == "#")
+            {
+                schemaUri = new UriBuilder(schemaUri) { Fragment = string.Empty }.Uri;
+            }
+
             if (!_schemas.TryGetValue(schemaUri, out var metadata))
             {
                 throw new ArgumentException($"Schema with URI {schemaUri} not found.");
@@ -66,7 +65,7 @@ namespace JsonSchemaValidation.Repositories
 
             if (string.IsNullOrWhiteSpace(schemaUri.Fragment))
             {
-                return metadata;
+                return new(metadata);
             }
 
             if(metadata.Anchors.ContainsKey(schemaUri.Fragment))
@@ -80,7 +79,8 @@ namespace JsonSchemaValidation.Repositories
             if (schemaUri.Fragment.StartsWith("#/"))
             {
                 SchemaMetadata innerSchemaData = new(metadata);
-                innerSchemaData.Schema = metadata.Schema.GetElementByJsonPointer(schemaUri.Fragment);
+                string decodedFragment = Uri.UnescapeDataString(schemaUri.Fragment);
+                innerSchemaData.Schema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
                 innerSchemaData.SchemaUri = schemaUri;
                 return innerSchemaData;
             }
