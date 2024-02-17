@@ -9,6 +9,8 @@ namespace JsonSchemaValidation.Common
 {
     internal static class JsonElementExtensions
     {
+        private static readonly JsonElement nullElement = JsonDocument.Parse("null").RootElement;
+
         public static JsonElement GetElementByJsonPointer(this JsonElement element, string pointer)
         {
             if (!pointer.StartsWith("#/"))
@@ -44,6 +46,56 @@ namespace JsonSchemaValidation.Common
         {
             // Replaces '~1' with '/' and '~0' with '~', as per the JSON Pointer specification.
             return pointerPart.Replace("~1", "/").Replace("~0", "~");
+        }
+
+        public static JsonElement GetArrayProperty(this JsonElement element, string propertyName)
+        {
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
+            if (element.ValueKind != JsonValueKind.Object)
+            {
+                return nullElement;
+            }
+
+            if (!element.TryGetProperty(propertyName, out var value))
+            {
+                return nullElement;
+            }
+
+            if (value.ValueKind != JsonValueKind.Array)
+            {
+                return nullElement;
+            }
+
+            return value;
+        }
+
+        public static JsonElement GetObjectProperty(this JsonElement element, string propertyName)
+        {
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                throw new ArgumentNullException(nameof(propertyName));
+            }
+
+            if(element.ValueKind != JsonValueKind.Object)
+            {
+                return nullElement;
+            }
+
+            if(!element.TryGetProperty(propertyName, out var value))
+            {
+                return nullElement;
+            }
+
+            if(value.ValueKind != JsonValueKind.Object)
+            {
+                return nullElement;
+            }
+
+            return value;
         }
     }
 }

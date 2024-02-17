@@ -1,10 +1,11 @@
 ﻿using JsonSchemaValidation.Repositories;
+using System.Text.Json;
 
 namespace JsonSchemaValidation.Abstractions
 {
     public interface ISchemaRepository
     {
-        bool TryAddSchema(SchemaMetadata schemaData, out SchemaMetadata? result);
+        bool TryRegisterSchema(JsonElement? schemaToRegister, out SchemaMetadata? schemaData);
         SchemaMetadata GetSchema(Uri schemaUri);
     }
 }

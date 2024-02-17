@@ -35,8 +35,7 @@ namespace JsonSchemaValidationTests.Draft202012
             var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
             var schemaValidatorFactory = _serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
             var jsonValidationContextFactory = _serviceProvider.GetRequiredService<IJsonValidationContextFactory>();
-
-            if(!schemaRepository.TryAddSchema(new SchemaMetadata(testCase.Schema), out var schemaData))
+            if (!schemaRepository.TryRegisterSchema(testCase.Schema, out var schemaData))
             {
                 throw new InvalidOperationException(@$"Schema could not be registered.");
             }
@@ -181,10 +180,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 // the meta schema does not define use of $id in the $defs section
                 new ("Invalid use of fragments in location-independent $id", "*"),
 
-                // test has out of reach anchors in allOf items
-                // we dont yet go through the complete schema to get anchors from items that otherwise never get handled.
-                new ("same $anchor with different base uri", "*" ),
-
                 // root pointer ref is not supported
                 // root pointer ref creates cyclic-reference because of the method of implementation
                 new ("root pointer ref", "*" ),
@@ -205,7 +200,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 // we dont yet go through the complete schema to get $ids from items that otherwise never get handled.
                 new ("refs with relative uris and defs", "*"),
                 new ("relative refs with absolute uris and defs", "*"),
-                new ("$id must be resolved against nearest parent, not just immediate parent", "*"),
 
                 // urn type not supported by .NET?
                 // strange these tests were not presented in the format section
@@ -217,13 +211,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("URN base URI with URN and JSON pointer ref", "*"),
                 new ("URN base URI with URN and anchor ref", "*"),
                 new ("URN ref with nested pointer ref", "*"),
-
-                // test has out of reach reference
-                // we dont yet go through the complete schema to get $ids from items that otherwise never get handled.
-                new ("ref to if", "*"),
-                new ("ref to then", "*"),
-                new ("ref to else", "*"),
-
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

@@ -33,7 +33,7 @@ namespace JsonSchemaValidation.DependencyInjection
             {
                 foreach (var schema in draft.Schemas)
                 {
-                    if(!schemaRepository.TryAddSchema(new SchemaMetadata(schema), out _))
+                    if (!schemaRepository.TryRegisterSchema(schema, out _))
                     {
                         throw new InvalidOperationException("Schema could not be registered.");
                     }

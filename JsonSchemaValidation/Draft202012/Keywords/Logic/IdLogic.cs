@@ -1,34 +1,20 @@
-﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Draft202012.Interfaces;
-using JsonSchemaValidation.Draft202012.Keywords.Format;
+﻿using JsonSchemaValidation.Draft202012.Keywords.Format;
 using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Xml.Linq;
 
-namespace JsonSchemaValidation.Draft202012.Keywords
+namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {
-    internal class IdValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    internal static class IdLogic
     {
-        private readonly ISchemaRepository _schemaRepository;
-
-        public IdValidatorFactory(ISchemaRepository schemaRepository)
+        public static string? GetIdProperty(this JsonElement schema)
         {
-            _schemaRepository = schemaRepository;
-        }
-
-        public IKeywordValidator? Create(SchemaMetadata schemaData)
-        {
-            var schema = schemaData.Schema;
-
             if (schema.ValueKind != JsonValueKind.Object)
             {
                 return null;
@@ -59,14 +45,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidSchemaException("The '$id' keyword cannot contain fragments. To use fragments, refer to the '$anchor' keyword.");
             }
 
-            if (Uri.TryCreate(schemaData.SchemaUri, idText, out Uri? fullId))
-            {
-                var subSchemaData = new SchemaMetadata(schema, schemaData.DraftVersion, fullId);
-                subSchemaData.UseSchemaUriForRegistration = true;
-                _schemaRepository.TryAddSchema(subSchemaData, out _);
-            }
-
-            return null;
+            return idText;
         }
     }
 }

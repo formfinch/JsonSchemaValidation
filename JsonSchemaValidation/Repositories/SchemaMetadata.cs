@@ -14,9 +14,8 @@ namespace JsonSchemaValidation.Repositories
         public JsonElement Schema { get; set; }
         public string? DraftVersion { get; set; }
         public Uri? SchemaUri { get; set; }
-        public HashSet<Uri> References { get; set; } 
+        public HashSet<Uri> References { get; set; }
         public ConcurrentDictionary<string, JsonElement> Anchors { get; set; }
-        public bool UseSchemaUriForRegistration { get; set; }
 
         public SchemaMetadata(JsonElement schema, string? draftVersion = null, Uri? schemaUri = null)
         {

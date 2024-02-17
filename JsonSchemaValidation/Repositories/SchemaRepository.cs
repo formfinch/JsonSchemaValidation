@@ -1,9 +1,11 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft202012.Keywords.Format;
+using JsonSchemaValidation.Draft202012.Keywords.Format; // these shouldnt be here
+using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using System.Collections.Concurrent;
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -19,34 +21,178 @@ namespace JsonSchemaValidation.Repositories
             _options = options ?? throw new ArgumentNullException(nameof(options));
         }
 
-        /// Try to add the schema to the repository. Returns false when the schema is already registered.
-        public bool TryAddSchema(SchemaMetadata schemaData, out SchemaMetadata? result)
+        public bool TryRegisterSchema(JsonElement? schemaToRegister, out SchemaMetadata? schemaData)
         {
-            if (schemaData == null) throw new ArgumentNullException(nameof(schemaData));
-
-            result = new SchemaMetadata(schemaData);
-
-            if(!InitSchemaUri(result))
+            if (schemaToRegister == null)
             {
-                result = null;
+                schemaData = null;
                 return false;
             }
 
-            if(!InitDraftVersion(result))
+            var schema = schemaToRegister!.Value;
+            if (schema.ValueKind != JsonValueKind.Object 
+                && schema.ValueKind != JsonValueKind.False
+                && schema.ValueKind != JsonValueKind.True)
             {
-                result = null;
+                schemaData = null;
                 return false;
             }
 
-            if (!_schemas.TryAdd(result.SchemaUri!, result))
+            schemaData = new SchemaMetadata(schema);
+
+            // todo: default draft version
+            schemaData.DraftVersion ??= "https://json-schema.org/draft/2020-12/schema";
+
+            if (schemaData.SchemaUri != null && _schemas.ContainsKey(schemaData.SchemaUri))
             {
-                result = null;
+                schemaData = null;
                 return false;
             }
 
-            AddAnchorSchema(result, result.Schema);
-            AddDefsSchemas(result);
+            if (schemaData.SchemaUri == null)
+            {
+                // generate random schemaId
+                schemaData.SchemaUri = SchemaRepositoryHelpers.GenerateRandomSchemaId();
+            }
+
+            if (!string.IsNullOrWhiteSpace(schemaData.SchemaUri.Fragment))
+            {
+                throw new InvalidOperationException($"Schema id cannot contain a uri fragment.");
+            }
+
+            if(!_schemas.TryAdd(schemaData.SchemaUri, schemaData))
+            {
+                throw new InvalidOperationException($"Failed to register schema.");
+            }
+
+            WalkElement(schemaData.Schema, schemaData.SchemaUri);
             return true;
+        }
+
+        private void WalkElement(JsonElement? schemaToRegister, Uri id)
+        {
+            if (schemaToRegister == null)
+            {
+                return;
+            }
+            
+            var schema = schemaToRegister!.Value;
+            if(schema.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            SchemaMetadata? schemaData = null;
+            var newId = schema.GetIdProperty();
+            if (!string.IsNullOrWhiteSpace(newId))
+            {
+                if (!Uri.TryCreate(id, newId, out Uri? fullId))
+                {
+                    // failed to resolve id
+                    throw new InvalidSchemaException($"Failed to resolve {newId} against {id}.");
+                }
+                id = fullId;
+
+                // todo: default draft version
+                schemaData = new SchemaMetadata(schema, "https://json-schema.org/draft/2020-12/schema", id);
+                _schemas.TryAdd(id, schemaData);
+            }
+
+            var anchor = schema.GetAnchorProperty();
+            if (!string.IsNullOrWhiteSpace(anchor))
+            {
+                if(schemaData == null && !_schemas.TryGetValue(id, out schemaData))
+                {
+                    throw new InvalidOperationException($"Failed to retrieve {id}.");
+                }
+                schemaData.Anchors.TryAdd($"#{anchor}", schema);
+            }
+
+            // schema subobjects to walk through
+            WalkSchemas(schema, "$defs", id);
+
+            WalkSchemas(schema, "properties", id);
+            WalkObject(schema, "additionalProperties", id);
+            WalkSchemas(schema, "patternProperties", id);
+            WalkObject(schema, "unevaluatedProperties", id);
+            WalkObject(schema, "propertyNames", id);
+
+            WalkArray(schema, "items", id);
+            WalkObject(schema, "items", id);
+            WalkArray(schema, "prefixItems", id);
+            WalkObject(schema, "unevaluatedItems", id);
+            WalkObject(schema, "additionalItems", id);
+
+            WalkObject(schema, "contains", id);
+            WalkSchemas(schema, "dependentSchemas", id);
+            WalkSchemas(schema, "dependencies", id);
+
+            WalkArray(schema, "allOf", id);
+            WalkArray(schema, "anyOf", id);
+            WalkArray(schema, "oneOf", id);
+            WalkObject(schema, "not", id);
+
+            WalkObject(schema, "if", id);
+            WalkObject(schema, "then", id);
+            WalkObject(schema, "else", id);
+        }
+
+        private void WalkSchemas(JsonElement schema, string propertyName, Uri id)
+        {
+            var properties = schema.GetObjectProperty(propertyName);
+            if (properties.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var prp in properties.EnumerateObject())
+                {
+                    WalkElement(prp.Value, id);
+                }
+            }
+        }
+
+        private void WalkArray(JsonElement schema, string propertyName, Uri id)
+        {
+            var itemsAsArray = schema.GetArrayProperty(propertyName);
+            if (itemsAsArray.ValueKind == JsonValueKind.Array)
+            {
+                foreach (var item in itemsAsArray.EnumerateArray())
+                {
+                    WalkElement(item, id);
+                }
+            }
+        }
+
+        private void WalkObject(JsonElement schema, string propertyName, Uri id)
+        {
+            var itemsAsObject = schema.GetObjectProperty(propertyName);
+            if (itemsAsObject.ValueKind == JsonValueKind.Object)
+            {
+                WalkElement(itemsAsObject, id);
+            }
+        }
+
+        public bool TryAddRootSchema(JsonElement schema, out Uri id)
+        {
+            var schemaData = new SchemaMetadata(schema);
+            
+            if (schemaData.SchemaUri == null)
+            {
+                // generate random schemaId
+                schemaData.SchemaUri = SchemaRepositoryHelpers.GenerateRandomSchemaId();
+            }
+
+            if(schemaData.DraftVersion == null)
+            {
+                // default draft version
+                schemaData.DraftVersion = "https://json-schema.org/draft/2020-12/schema";
+            }
+
+            id = schemaData.SchemaUri;
+            if (!string.IsNullOrWhiteSpace(id.Fragment))
+            {
+                throw new InvalidOperationException($"Schema id cannot contain a uri fragment.");
+            }
+
+            return _schemas.TryAdd(id, schemaData);
         }
 
         public SchemaMetadata GetSchema(Uri schemaUri)
@@ -70,10 +216,17 @@ namespace JsonSchemaValidation.Repositories
 
             if(metadata.Anchors.ContainsKey(schemaUri.Fragment))
             {
-                SchemaMetadata anchorSchemaData = new(metadata);
-                anchorSchemaData.Schema = metadata.Anchors[schemaUri.Fragment];
-                anchorSchemaData.SchemaUri = schemaUri;
-                return anchorSchemaData;
+                if(metadata.Anchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
+                {
+                    SchemaMetadata innerSchemaData = new(metadata);
+                    innerSchemaData.Schema = anchoredSchema;
+                    innerSchemaData.SchemaUri = schemaUri;
+                    return innerSchemaData;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Failed to retrieve anchored schema: {schemaUri}");
+                }
             }
 
             if (schemaUri.Fragment.StartsWith("#/"))
@@ -86,172 +239,6 @@ namespace JsonSchemaValidation.Repositories
             }
 
             throw new ArgumentException($"Schema with URI {schemaUri} not found.");
-        }
-
-        private void AddDefsSchemas(SchemaMetadata schemaData)
-        {
-            var defsElement = ExtractDefsElement(schemaData);
-            if (defsElement == null)
-            {
-                return;
-            }
-
-            foreach (var prp in defsElement.Value.EnumerateObject())
-            {
-                AddIdSchema(schemaData, prp.Value);
-                AddAnchorSchema(schemaData, prp.Value);
-            }
-        }
-
-        private void AddIdSchema(SchemaMetadata schemaData, JsonElement schema)
-        {
-            if (schema.ValueKind != JsonValueKind.Object)
-            {
-                return;
-            }
-
-            if (!schema.TryGetProperty("$id", out var idElement))
-            {
-                return;
-            }
-
-            // Standard behavior is obvious misformatting is ignored
-            if (idElement.ValueKind != JsonValueKind.String)
-            {
-                return;
-            }
-
-            var uriValidation = new UriValidationLogic(canBeRelative: true);
-            var idText = idElement.ToString();
-            var isValid = uriValidation.IsValidUri(idText);
-            if (!isValid)
-            {
-                throw new InvalidSchemaException("The '$id' keyword must be a string representing a valid URI - reference.");
-            }
-
-            var rxPattern = new Regex($"^[^#]*#?$");
-            if (!rxPattern.IsMatch(idText))
-            {
-                throw new InvalidSchemaException("The '$id' keyword cannot contain fragments. To use fragments, refer to the '$anchor' keyword.");
-            }
-
-            if (Uri.TryCreate(schemaData.SchemaUri, idText, out Uri? fullId))
-            {
-                var subSchemaData = new SchemaMetadata(schema, schemaData.DraftVersion, fullId);
-                subSchemaData.UseSchemaUriForRegistration = true;
-                TryAddSchema(subSchemaData, out _);
-            }
-        }
-
-        private static void AddAnchorSchema(SchemaMetadata schemaData, JsonElement schema)
-        {
-            if (schema.ValueKind != JsonValueKind.Object)
-            {
-                return;
-            }
-
-            if (!schema.TryGetProperty("$anchor", out var anchorElement))
-            {
-                return;
-            }
-
-            // Standard behavior is obvious misformatting is ignored
-            if (anchorElement.ValueKind != JsonValueKind.String)
-            {
-                return;
-            }
-
-            var anchorText = anchorElement.ToString();
-            var rxPattern = new Regex($"^[A-Za-z_][-A-Za-z0-9._]*$");
-            if (!rxPattern.IsMatch(anchorText))
-            {
-                throw new InvalidSchemaException("The '$anchor' keyword should be a short text value describing the current URI context.");
-            }
-
-            schemaData.Anchors.TryAdd($"#{anchorText}", schema);
-        }
-
-        private static JsonElement? ExtractDefsElement(SchemaMetadata schemaData)
-        {
-            if (schemaData?.Schema == null)
-            {
-                return null;
-            }
-
-            var schema = schemaData.Schema;
-            if (schema.ValueKind != JsonValueKind.Object)
-            {
-                return null;
-            }
-
-            if (!schema.TryGetProperty("$defs", out var defsElement))
-            {
-                return null;
-            }
-
-            if (defsElement.ValueKind != JsonValueKind.Object)
-            {
-                return null;
-            }
-
-            return defsElement;
-        }
-
-        private bool InitDraftVersion(SchemaMetadata targetSchemaData)
-        {
-            var draftVersion = SchemaRepositoryHelpers.ExtractDraftVersion(targetSchemaData.Schema);
-            if (draftVersion == null)
-            {
-                // use fallback if provided
-                draftVersion = targetSchemaData.DraftVersion;
-            }
-
-            if (draftVersion == null)
-            {
-                // use default draft version from options if no $schema present and no fallback provided
-                draftVersion = _options.DefaultDraftVersion;
-            }
-
-            targetSchemaData.DraftVersion = draftVersion;
-            if (string.IsNullOrWhiteSpace(targetSchemaData.DraftVersion))
-            {
-                throw new InvalidOperationException(@$"Json Schema Draft version could not be determined.");
-            }
-
-            return true;
-        }
-
-        private bool InitSchemaUri(SchemaMetadata targetSchemaData)
-        {
-            var schemaUri = targetSchemaData.SchemaUri;
-            if(!targetSchemaData.UseSchemaUriForRegistration)
-            {
-                // Sub-schemas have the Id already resolved and stored in SchemaUri.
-                // The id element in subschemas still contains the unresolved value and must not be used for registration.
-                var extractedUri = SchemaRepositoryHelpers.ExtractSchemaUri(targetSchemaData.Schema);
-                if (extractedUri != null)
-                {
-                    schemaUri = extractedUri;
-                }
-            }
-
-            if (schemaUri == null)
-            {
-                // generate random schemaId if no $id present and no fallback provided
-                schemaUri = SchemaRepositoryHelpers.GenerateRandomSchemaId();
-            }
-
-            if(!string.IsNullOrWhiteSpace(schemaUri.Fragment))
-            {
-                throw new InvalidOperationException($"Schema id cannot contain a uri fragment.");
-            }
-
-            targetSchemaData.SchemaUri = schemaUri!;
-            if (_schemas.ContainsKey(targetSchemaData.SchemaUri))
-            {
-                return false;
-            }
-            return true;
         }
     }
 }
