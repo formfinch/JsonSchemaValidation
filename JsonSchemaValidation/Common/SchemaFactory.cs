@@ -24,7 +24,7 @@ namespace JsonSchemaValidation.Common
 
         public SchemaMetadata NopSchema => _nopSchema.Value;
 
-        public SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData, IList<SchemaMetadata>? scope = null)
+        public SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;
             if(schema.ValueKind != JsonValueKind.Object)
@@ -32,14 +32,10 @@ namespace JsonSchemaValidation.Common
                 return schemaData;
             }
 
-            if(scope == null)
-            {
-                scope = new List<SchemaMetadata>();
-            }
-
             // check for $ref
+            JsonElement dynamicRefElement = default;
             var hasRef = schema.TryGetProperty("$ref", out JsonElement refElement);
-            var hasDynamicRef = schema.TryGetProperty("$dynamicRef", out JsonElement dynamicRefElement);
+            var hasDynamicRef = !hasRef && schema.TryGetProperty("$dynamicRef", out dynamicRefElement);
 
             if (!hasRef && !hasDynamicRef)
             {
@@ -76,11 +72,8 @@ namespace JsonSchemaValidation.Common
                     retrievedSchema.References.TryAdd(visitedReference.Key, visitedReference.Value);
                 }
 
-                List<SchemaMetadata> nextScope = new List<SchemaMetadata>(scope);
-                nextScope.Add(schemaData);
-
                 // Dereference until we receive a proper schema.
-                return CreateDereferencedSchema(retrievedSchema, nextScope);
+                return CreateDereferencedSchema(retrievedSchema);
             }
 
             if(hasDynamicRef)
@@ -96,42 +89,6 @@ namespace JsonSchemaValidation.Common
                     return schemaData;
                 }
 
-                var resultInScope = scope.FirstOrDefault(s => s.DynamicAnchors.ContainsKey(reference));
-                if(resultInScope != null)
-                {
-                    if (!Uri.TryCreate(resultInScope.SchemaUri, reference, out Uri? dynamicRefUri))
-                    {
-                        throw new InvalidOperationException("Failed to register visited reference");
-                    }
-
-                    if (schemaData.References.TryGetValue(dynamicRefUri, out var previouslyDynamicallyVisited))
-                    {
-                        if (++previouslyDynamicallyVisited.CyclicReference < 2)
-                        {
-                            // no dereference, just return it
-                            return previouslyDynamicallyVisited;
-                        }
-                        else
-                        {
-                            // nesting too deep
-                            return NopSchema;
-                        }
-                    }
-                    else
-                    {
-                        // create a new copy of currentSchema
-                        SchemaMetadata nextSchemadata = new(resultInScope)
-                        {
-                            SchemaUri = dynamicRefUri,
-                        };
-
-                        List<SchemaMetadata> nextScope = new List<SchemaMetadata>(scope);
-                        nextScope.Add(schemaData);
-                        // Dereference until we receive a proper schema.
-                        return CreateDereferencedSchema(nextSchemadata, nextScope);
-                    }
-                }
-
                 // was the dynamicRef registered previously 
                 // then get the first occurence as a fresh schema reference
                 if (_schemaRepository.TryGetDynamicRef(reference, out SchemaMetadata? dynamicRetrievedSchema))
@@ -142,20 +99,7 @@ namespace JsonSchemaValidation.Common
                         throw new InvalidOperationException("Failed to register cyclic reference");
                     }
 
-                    if (schemaData.References.TryGetValue(dynamicRefUri, out var previouslyDynamicallyVisited))
-                    {
-                        if (++previouslyDynamicallyVisited.CyclicReference < 2)
-                        {
-                            // no dereference, just return it
-                            return previouslyDynamicallyVisited;
-                        }
-                        else
-                        {
-                            // nesting too deep
-                            return NopSchema;
-                        }
-                    }
-                    else
+                    if (!schemaData.References.TryGetValue(dynamicRefUri, out _))
                     {
                         schemaData.References.TryAdd(dynamicRefUri, currentSchema);
                         foreach (var visitedReference in schemaData.References)
@@ -166,6 +110,8 @@ namespace JsonSchemaValidation.Common
                         // Dereference until we receive a proper schema.
                         return CreateDereferencedSchema(currentSchema);
                     }
+
+                    return NopSchema;
                 }
 
 
@@ -174,28 +120,6 @@ namespace JsonSchemaValidation.Common
                     referenceUri = new Uri(reference);
                 }
 
-                if (schemaData.References.ContainsKey(referenceUri))
-                {
-                    // cyclic reference, stop dereferencing
-                    // throw new InvalidSchemaException($"Schema contains cyclic reference: {reference}");
-                    if (schemaData.References.TryGetValue(referenceUri, out var previouslyVisited))
-                    {
-                        if (++previouslyVisited.CyclicReference < 2)
-                        {
-                            // no dereference, just return it
-                            return previouslyVisited;
-                        }
-                        else
-                        {
-                            // stop dereferencing
-                            return NopSchema;
-                        }
-                    }
-                    else
-                    {
-                        throw new InvalidOperationException("Failed to retrieve schema");
-                    }
-                }
                 var retrievedSchema = _schemaRepository.GetSchema(referenceUri, dynamicRef: true);
                 schemaData.References.TryAdd(referenceUri, retrievedSchema);
                 foreach (var visitedReference in schemaData.References)

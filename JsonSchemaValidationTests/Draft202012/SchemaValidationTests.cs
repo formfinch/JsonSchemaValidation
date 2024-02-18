@@ -95,7 +95,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 // "format",
                 "id",
                 "if-then-else",
-                // "infinite-loop-detection",
+                "infinite-loop-detection",
                 "items",
                 // "maxContains",
                 "maximum",
@@ -228,10 +228,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("URN base URI with URN and JSON pointer ref", "*"),
                 new ("URN base URI with URN and anchor ref", "*"),
                 new ("URN ref with nested pointer ref", "*"),
-
-                // do not agree with the way this test is setup
-                // the second dynamicAnchor seems to have a more local context
-                new ("A $dynamicRef with intermediate scopes that don't include a matching $dynamicAnchor does not affect dynamic scope resolution", "*"),
 
                 // $dynamicRef and $dynamicAnchor needs work                
                 new ("A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope", "*"),
