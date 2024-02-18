@@ -14,6 +14,7 @@ namespace JsonSchemaValidation.Repositories
     public class SchemaRepository : ISchemaRepository
     {
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
+
         private readonly SchemaValidationOptions _options;
 
         public SchemaRepository(SchemaValidationOptions options)
@@ -38,7 +39,10 @@ namespace JsonSchemaValidation.Repositories
                 return false;
             }
 
-            schemaData = new SchemaMetadata(schema);
+            schemaData = new SchemaMetadata(schema)
+            {
+                Order = _schemas.Count
+            };
 
             // todo: default draft version
             schemaData.DraftVersion ??= "https://json-schema.org/draft/2020-12/schema";
@@ -60,7 +64,7 @@ namespace JsonSchemaValidation.Repositories
                 throw new InvalidOperationException($"Schema id cannot contain a uri fragment.");
             }
 
-            if(!_schemas.TryAdd(schemaData.SchemaUri, schemaData))
+            if (!_schemas.TryAdd(schemaData.SchemaUri, schemaData))
             {
                 throw new InvalidOperationException($"Failed to register schema.");
             }
@@ -93,9 +97,22 @@ namespace JsonSchemaValidation.Repositories
                 }
                 id = fullId;
 
-                // todo: default draft version
-                schemaData = new SchemaMetadata(schema, "https://json-schema.org/draft/2020-12/schema", id);
-                _schemas.TryAdd(id, schemaData);
+                if(_schemas.ContainsKey(id))
+                {
+                    if(!_schemas.TryGetValue(id, out schemaData))
+                    {
+                        throw new InvalidOperationException($"Failed to retrieve {id}.");
+                    }
+                }
+                else
+                { 
+                    schemaData = new SchemaMetadata(schema, "https://json-schema.org/draft/2020-12/schema", id);
+                    schemaData.Order = _schemas.Count();
+                    if (!_schemas.TryAdd(id, schemaData))
+                    {
+                        throw new InvalidOperationException($"Failed to register {id}.");
+                    }
+                }
             }
 
             var anchor = schema.GetAnchorProperty();
@@ -106,6 +123,16 @@ namespace JsonSchemaValidation.Repositories
                     throw new InvalidOperationException($"Failed to retrieve {id}.");
                 }
                 schemaData.Anchors.TryAdd($"#{anchor}", schema);
+            }
+
+            var dynamicAnchor = schema.GetDynamicAnchorProperty();
+            if (!string.IsNullOrWhiteSpace(dynamicAnchor))
+            {
+                if (schemaData == null && !_schemas.TryGetValue(id, out schemaData))
+                {
+                    throw new InvalidOperationException($"Failed to retrieve {id}.");
+                }
+                schemaData.DynamicAnchors.TryAdd($"#{dynamicAnchor}", schema);
             }
 
             // schema subobjects to walk through
@@ -170,32 +197,7 @@ namespace JsonSchemaValidation.Repositories
             }
         }
 
-        public bool TryAddRootSchema(JsonElement schema, out Uri id)
-        {
-            var schemaData = new SchemaMetadata(schema);
-            
-            if (schemaData.SchemaUri == null)
-            {
-                // generate random schemaId
-                schemaData.SchemaUri = SchemaRepositoryHelpers.GenerateRandomSchemaId();
-            }
-
-            if(schemaData.DraftVersion == null)
-            {
-                // default draft version
-                schemaData.DraftVersion = "https://json-schema.org/draft/2020-12/schema";
-            }
-
-            id = schemaData.SchemaUri;
-            if (!string.IsNullOrWhiteSpace(id.Fragment))
-            {
-                throw new InvalidOperationException($"Schema id cannot contain a uri fragment.");
-            }
-
-            return _schemas.TryAdd(id, schemaData);
-        }
-
-        public SchemaMetadata GetSchema(Uri schemaUri)
+        public SchemaMetadata GetSchema(Uri schemaUri, bool dynamicRef = false)
         {
             if (schemaUri == null) throw new ArgumentNullException(nameof(schemaUri));
 
@@ -214,7 +216,16 @@ namespace JsonSchemaValidation.Repositories
                 return new(metadata);
             }
 
-            if(metadata.Anchors.ContainsKey(schemaUri.Fragment))
+            if (schemaUri.Fragment.StartsWith("#/"))
+            {
+                SchemaMetadata innerSchemaData = new(metadata);
+                string decodedFragment = Uri.UnescapeDataString(schemaUri.Fragment);
+                innerSchemaData.Schema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
+                innerSchemaData.SchemaUri = schemaUri;
+                return innerSchemaData;
+            }
+
+            if (metadata.Anchors.ContainsKey(schemaUri.Fragment))
             {
                 if(metadata.Anchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
                 {
@@ -229,16 +240,58 @@ namespace JsonSchemaValidation.Repositories
                 }
             }
 
-            if (schemaUri.Fragment.StartsWith("#/"))
+            if (metadata.DynamicAnchors.ContainsKey(schemaUri.Fragment))
             {
-                SchemaMetadata innerSchemaData = new(metadata);
-                string decodedFragment = Uri.UnescapeDataString(schemaUri.Fragment);
-                innerSchemaData.Schema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
-                innerSchemaData.SchemaUri = schemaUri;
-                return innerSchemaData;
+                if (metadata.DynamicAnchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
+                {
+                    SchemaMetadata innerSchemaData = new(metadata);
+                    innerSchemaData.Schema = anchoredSchema;
+                    innerSchemaData.SchemaUri = schemaUri;
+                    return innerSchemaData;
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Failed to retrieve anchored schema: {schemaUri}");
+                }
+            }
+
+            if (dynamicRef)
+            {
+                foreach (var schema in _schemas.OrderBy(s => s.Value.Order))
+                {
+                    if (schema.Value.DynamicAnchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
+                    {
+                        SchemaMetadata innerSchemaData = new(metadata);
+                        innerSchemaData.Schema = anchoredSchema;
+                        innerSchemaData.SchemaUri = schemaUri;
+                        return innerSchemaData;
+                    }
+                }
             }
 
             throw new ArgumentException($"Schema with URI {schemaUri} not found.");
+        }
+
+        public bool TryGetDynamicRef(string dynamicAnchor, out SchemaMetadata? result)
+        {
+            result = null;
+            if (string.IsNullOrWhiteSpace(dynamicAnchor) || !dynamicAnchor.StartsWith("#"))
+            {
+                return false;
+            }
+
+            foreach (var schema in _schemas.OrderBy(s=>s.Value.Order))
+            {
+                if (schema.Value.DynamicAnchors.TryGetValue(dynamicAnchor, out var anchoredSchema))
+                {
+                    result = new(schema.Value)
+                    {
+                        Schema = anchoredSchema
+                    };
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

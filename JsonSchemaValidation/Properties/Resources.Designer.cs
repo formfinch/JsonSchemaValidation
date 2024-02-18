@@ -73,8 +73,7 @@ namespace JsonSchemaValidation.Properties {
         ///        &quot;items&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
         ///        &quot;contains&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
         ///        &quot;additionalProperties&quot;: { &quot;$dynamicRef&quot;: &quot;#meta&quot; },
-        ///        &quot;properties&quot;: {
-        ///         [rest of string was truncated]&quot;;.
+        ///        &quot;properties&quot; [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string json_schema_draft202012_meta_applicator {
             get {
@@ -120,7 +119,7 @@ namespace JsonSchemaValidation.Properties {
         ///            &quot;pattern&quot;: &quot;^[^#]*#?$&quot;
         ///        },
         ///        &quot;$schema&quot;: { &quot;$ref&quot;: &quot;#/$defs/uriString&quot; },
-        ///        &quot;$ref&quot;: { &quot;$ref&quot;: &quot;#/$ [rest of string was truncated]&quot;;.
+        ///        &quot;$ref&quot;:  [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string json_schema_draft202012_meta_core {
             get {
@@ -167,9 +166,7 @@ namespace JsonSchemaValidation.Properties {
         ///        &quot;default&quot;: true,
         ///        &quot;deprecated&quot;: {
         ///            &quot;type&quot;: &quot;boolean&quot;,
-        ///            &quot;default&quot;: false
-        ///        },
-        /// [rest of string was truncated]&quot;;.
+        ///            &quot;default&quot;: [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string json_schema_draft202012_meta_meta_data {
             get {
@@ -213,7 +210,7 @@ namespace JsonSchemaValidation.Properties {
         ///                {
         ///                    &quot;type&quot;: &quot;array&quot;,
         ///                    &quot;items&quot;: { &quot;$ref&quot;: &quot;#/$defs/simpleTypes&quot; },
-        ///                    &quot;minItems&quot;:  [rest of string was truncated]&quot;;.
+        ///                   [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string json_schema_draft202012_meta_validation {
             get {
@@ -236,6 +233,19 @@ namespace JsonSchemaValidation.Properties {
         internal static string json_schema_draft202012_schema {
             get {
                 return ResourceManager.GetString("json_schema_draft202012_schema", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to {
+        ///  &quot;$id&quot;: &quot;http://formfinch.com/jsonschemavalidation/nop-true&quot;,
+        ///  &quot;$comment&quot;: &quot;Empty schema intended to validate always.&quot;,
+        ///  &quot;allOf&quot;: [true]
+        ///}.
+        /// </summary>
+        internal static string nop_true {
+            get {
+                return ResourceManager.GetString("nop_true", resourceCulture);
             }
         }
     }

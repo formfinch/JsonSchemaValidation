@@ -28,6 +28,7 @@ namespace JsonSchemaValidation.Draft202012
             AddSchemaDocument(_schemas, JsonSchemaValidation.Properties.Resources.json_schema_draft202012_meta_meta_data);
             AddSchemaDocument(_schemas, JsonSchemaValidation.Properties.Resources.json_schema_draft202012_meta_format_annotation);
             AddSchemaDocument(_schemas, JsonSchemaValidation.Properties.Resources.json_schema_draft202012_meta_content);
+            AddSchemaDocument(_schemas, JsonSchemaValidation.Properties.Resources.nop_true);
         }
 
         private static void AddSchemaDocument(IList<JsonElement> schemas, string resourceString)

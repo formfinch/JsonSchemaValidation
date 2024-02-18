@@ -13,7 +13,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
     {
         public static string? GetAnchorProperty(this JsonElement schema)
         {
-            if (!schema.TryGetProperty("$anchor", out var anchorElement))
+            return GetAnchorKeywordProperty(schema, "$anchor");
+        }
+
+        public static string? GetDynamicAnchorProperty(this JsonElement schema)
+        {
+            return GetAnchorKeywordProperty(schema, "$dynamicAnchor");
+        }
+
+        private static string? GetAnchorKeywordProperty(JsonElement schema, string anchorKeyword)
+        {
+            if (!schema.TryGetProperty(anchorKeyword, out var anchorElement))
             {
                 return null;
             }

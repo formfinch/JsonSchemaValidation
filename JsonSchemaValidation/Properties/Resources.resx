@@ -142,4 +142,7 @@
   <data name="json_schema_draft202012_schema" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Draft202012\Data\json-schema-draft202012-schema.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="nop_true" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft202012\Data\nop-true.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>
