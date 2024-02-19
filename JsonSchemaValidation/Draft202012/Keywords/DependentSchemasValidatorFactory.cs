@@ -2,9 +2,9 @@
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
-using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
+using Microsoft.VisualBasic;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
@@ -15,14 +15,14 @@ using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class ContainsValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    internal class DependentSchemasValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
         private readonly IJsonValidationContextFactory _contextFactory;
 
-        public ContainsValidatorFactory(
-            ISchemaFactory schemaFactory, 
+        public DependentSchemasValidatorFactory(
+            ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
@@ -40,37 +40,29 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (!schema.TryGetProperty("contains", out var containsElement))
+            if (!schema.TryGetProperty("dependentSchemas", out var dependentSchemasElement))
             {
                 return null;
             }
 
-            if (containsElement.ValueKind != JsonValueKind.Object
-                && containsElement.ValueKind != JsonValueKind.False
-                && containsElement.ValueKind != JsonValueKind.True)
+            if (dependentSchemasElement.ValueKind != JsonValueKind.Object)
             {
-                throw new InvalidSchemaException($"The keyword value for contains MUST be a valid JSON Schema.");
+                throw new InvalidSchemaException("The 'depedentSchemas' should consist of an object with schemas.");
             }
 
-            var containsSchemaValidator = CreateValidator(schemaData, containsElement);
-            if (containsSchemaValidator == null)
+            Dictionary<string, ISchemaValidator> dependentSchemasProperties = new();
+            foreach(var schemasElement in dependentSchemasElement.EnumerateObject())
             {
-                throw new InvalidSchemaException($"The keyword value for contains MUST be a valid JSON Schema.");
+                string whenPropertyInObject = schemasElement.Name;
+
+                var validator = CreateValidator(schemaData, schemasElement.Value);
+                if (validator == null)
+                {
+                    throw new InvalidSchemaException("The 'depedentSchemas' should consist of an object with schemas.");
+                }
+                dependentSchemasProperties.Add(whenPropertyInObject, validator);
             }
-
-            var validator = new ContainsValidator(containsSchemaValidator, _contextFactory);
-
-            if(schema.TryGetNonNegativeInteger("minContains", out var minContains))
-            {
-                validator.MinContains = minContains;
-            }
-
-            if (schema.TryGetNonNegativeInteger("maxContains", out var maxContains))
-            {
-                validator.MaxContains = maxContains;
-            }
-
-            return validator;
+            return new DependentSchemasValidator(dependentSchemasProperties);
         }
 
         ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
@@ -81,7 +73,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             };
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

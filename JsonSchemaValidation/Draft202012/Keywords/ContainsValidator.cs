@@ -2,6 +2,7 @@
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
+using System.Xml.Linq;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -9,6 +10,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaValidator _validator;
         private readonly IJsonValidationContextFactory _contextFactory;
+        
+        public int? MinContains { get; set; }
+        public int? MaxContains { get; set; }
 
         public ContainsValidator(ISchemaValidator validator, IJsonValidationContextFactory contextFactory)
         {
@@ -43,12 +47,29 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 }
             }
 
-            if(containsResult == ValidationResult.Ok)
+            if (MinContains.HasValue && MinContains.Value == 0 
+                && containsIndices.Count == 0)
             {
-                arrayContext.SetEvaluatedIndices(containsIndices);
+                return ValidationResult.Ok;
             }
 
-            return containsResult;
+            if (containsResult != ValidationResult.Ok)
+            {
+                return containsResult;
+            }
+
+            if (MinContains.HasValue && containsIndices.Count < MinContains)
+            {
+                return new ValidationResult($"{containsIndices.Count} array items match when at least {MinContains} are expected.");
+            }
+
+            if (MaxContains.HasValue && containsIndices.Count > MaxContains)
+            {
+                return new ValidationResult($"{containsIndices.Count} array items match when at most {MaxContains} are expected.");
+            }
+
+            arrayContext.SetEvaluatedIndices(containsIndices);
+            return ValidationResult.Ok;
         }
     }
 }

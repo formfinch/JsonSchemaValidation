@@ -24,6 +24,8 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, BooleanValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ContainsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ConstValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, DependentRequiredValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, DependentSchemasValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, EnumValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ExclusiveMaximumValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ExclusiveMinimumValidatorFactory>();
@@ -33,9 +35,11 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MaximumValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MaxItemsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MaxLengthValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MaxPropertiesValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MinimumValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MinItemsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MinLengthValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MinPropertiesValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, MultipleOfValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, NotValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, OneOfValidatorFactory>();
