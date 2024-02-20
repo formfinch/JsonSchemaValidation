@@ -19,7 +19,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         public ValidationResult Validate(IJsonValidationContext context)
         {
             var result = ValidationResult.Ok;
-
             var contexts = new List<IJsonValidationContext>();
             int idx = 0;
             foreach (var validator in _validators)

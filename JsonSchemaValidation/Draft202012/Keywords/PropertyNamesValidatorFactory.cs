@@ -1,0 +1,77 @@
+﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Draft202012.Interfaces;
+using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
+using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Text;
+using System.Text.Json;
+using System.Threading.Tasks;
+
+namespace JsonSchemaValidation.Draft202012.Keywords
+{
+    internal class PropertyNamesValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        private readonly ISchemaFactory _schemaFactory;
+        private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
+
+        public PropertyNamesValidatorFactory(
+            ISchemaFactory schemaFactory, 
+            ILazySchemaValidatorFactory schemaValidatorFactory,
+            IJsonValidationContextFactory contextFactory)
+        {
+            _schemaFactory = schemaFactory;
+            _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
+        }
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("propertyNames", out var propertyNamesElement))
+            {
+                return null;
+            }
+
+            if(propertyNamesElement.ValueKind != JsonValueKind.Object
+                && propertyNamesElement.ValueKind != JsonValueKind.True
+                && propertyNamesElement.ValueKind != JsonValueKind.False)
+            {
+                throw new InvalidSchemaException("The value of 'propertyNames' MUST be a valid JSON Schema.");
+            }
+
+            var validator = CreateValidator(schemaData, propertyNamesElement);
+            if(validator == null)
+            {
+                throw new InvalidSchemaException("The value of 'propertyNames' MUST be a valid JSON Schema.");
+            }
+            return new PropertyNamesValidator(validator, _contextFactory);
+        }
+
+        ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
+        {
+            SchemaMetadata itemsRawSchemaData = new(schemaData)
+            {
+                Schema = itemSchemaElement
+            };
+
+            var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
+            if(_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+            return _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
+        }
+    }
+}

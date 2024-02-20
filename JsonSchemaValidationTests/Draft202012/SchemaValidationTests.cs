@@ -114,7 +114,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "patternProperties",
                 "prefixItems",
                 "properties",
-                // "propertyNames",
+                "propertyNames",
                 "ref",
                 // "refRemote",
                 "required",

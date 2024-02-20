@@ -24,12 +24,22 @@ namespace JsonSchemaValidation.Validation
 
         public void AddError(string error)
         {
+            if (this == ValidationResult.Ok)
+            {
+                throw new InvalidOperationException("Not allowed to change ValidationResult.Ok");
+            }
+
             IsValid = false;
             Errors.Add(error);
         }
 
         public void Merge(ValidationResult other)
         {
+            if (this == ValidationResult.Ok)
+            {
+                throw new InvalidOperationException("Not allowed to change ValidationResult.Ok");
+            }
+
             if (other == Ok) return;
 
             IsValid &= other.IsValid;

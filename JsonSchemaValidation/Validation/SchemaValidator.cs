@@ -18,7 +18,7 @@ namespace JsonSchemaValidation.Validation
 
         public ValidationResult Validate(IJsonValidationContext context)
         {
-            var result = new ValidationResult();
+            ValidationResult result = new ();
 
             foreach (var validator in _keywordValidators)
             {

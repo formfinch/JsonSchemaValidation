@@ -47,6 +47,7 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PatternPropertiesValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PrefixItemsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PropertiesValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, PropertyNamesValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, RequiredValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, TypeValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, TypeMultipleTypesValidatorFactory>();
