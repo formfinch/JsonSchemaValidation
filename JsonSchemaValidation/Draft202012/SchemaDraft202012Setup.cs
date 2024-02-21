@@ -55,6 +55,7 @@ namespace JsonSchemaValidation.Draft202012
 
             // todo: validation relies on these validators being run last, supply a guaranteed validator order system
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, UnevaluatedItemsValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, UnevaluatedPropertiesValidatorFactory>();
 
             return services;
         }

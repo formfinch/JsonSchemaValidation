@@ -20,11 +20,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
             var result = new ValidationResult("Instance failed to validate against exactly one of the schemas in 'oneOf'.");
             int nOk = 0;
-            var activeContext = _contextFactory.CopyContext(context);
+            List<IJsonValidationContext> contexts = new();
             foreach (var validator in _validators)
             {
+                var activeContext = _contextFactory.CopyContext(context);
                 if (validator.Validate(activeContext) == ValidationResult.Ok)
                 {
+                    contexts.Add(activeContext);
                     nOk++;
                     if (nOk > 1)
                     {
@@ -35,12 +37,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (nOk == 1)
             {
                 result = ValidationResult.Ok;
-                if (context is IJsonValidationArrayContext target)
+                foreach (var activeContext in contexts)
                 {
-                    if (activeContext is IJsonValidationArrayContext source)
-                    {
-                        target.SetAnnotations(source.GetAnnotations());
-                    }
+                    _contextFactory.CopyAnnotations(activeContext, context);
                 }
             }
             return result;

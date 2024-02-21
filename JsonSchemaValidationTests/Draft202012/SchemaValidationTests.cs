@@ -120,7 +120,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "required",
                 "type",
                 "unevaluatedItems",
-                // "unevaluatedProperties",
+                "unevaluatedProperties",
                 "uniqueItems",
                 "unknownKeyword",
                 // "vocabulary"
@@ -153,9 +153,6 @@ namespace JsonSchemaValidationTests.Draft202012
             {
                 // Test is not valid or disabled because:
 
-                // not keyword test dependent on implementation of unevaluatedProperties
-                new ("collect annotations inside a 'not', even if collection is disabled", "unevaluated property"),
-                
                 // $ref replaces the initial schema containing unevaluatedItems keyword. 
                 // unevaluatedItems: false should no longer be used
                 new ("unevaluatedItems with $ref", "with unevaluated items"),
@@ -211,8 +208,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 // unable to solve cyclic references in any way
                 new ("Recursive references between schemas", "*" ),
 
-                new ("ref creates new scope when adjacent to keywords", "*"),
-                
                 // test has out of reach reference
                 // we dont yet go through the complete schema to get $ids from items that otherwise never get handled.
                 new ("refs with relative uris and defs", "*"),
@@ -238,7 +233,17 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("$ref and $dynamicAnchor are independent of order - $ref first", "*"),
                 new ("$ref and $dynamicAnchor are independent of order - $defs first", "*"),
                 new ("A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
-                new ("A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*")
+                new ("A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
+
+                // $ref is treated as replacement of properties, test expects it to behave like union
+                new ("unevaluatedProperties with $ref", "*"),
+
+                // currently unsupported: this requires isolation of annotation context on root level, seems doable
+                new ("in-place applicator siblings, anyOf has unevaluated", "*"),
+
+                // self-reference "#" is at present not supported
+                new ("unevaluatedProperties + single cyclic ref", "*")
+
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

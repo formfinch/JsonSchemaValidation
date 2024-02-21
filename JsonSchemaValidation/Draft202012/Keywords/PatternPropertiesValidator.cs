@@ -41,7 +41,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                     if (!rxPropertyName.IsMatch(prp.Name)) continue;
                     if (!context.Data.TryGetProperty(prp.Name, out JsonElement value)) continue;
 
-                    // todo: set annotation for prp.Name
+                    if (context is IJsonValidationObjectContext objectContext)
+                    {
+                        objectContext.MarkPropertyEvaluated(prp.Name);
+                    }
+
                     var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, value);
                     var validationResult = validator.Validate(prpContext);
                     if (validationResult != ValidationResult.Ok)

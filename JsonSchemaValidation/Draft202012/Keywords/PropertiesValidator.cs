@@ -29,6 +29,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 if (context.Data.TryGetProperty(propertyName, out JsonElement value))
                 {
+                    if (context is IJsonValidationObjectContext objectContext)
+                    {
+                        objectContext.MarkPropertyEvaluated(propertyName);
+                    }
                     var prpContext = _contextFactory.CreateContextForProperty(context, propertyName, value);
                     var validator = _propertySchemaValidators[propertyName];
                     var validationResult = validator.Validate(prpContext);

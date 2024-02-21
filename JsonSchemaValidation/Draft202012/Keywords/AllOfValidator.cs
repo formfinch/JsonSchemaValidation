@@ -40,15 +40,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (result == ValidationResult.Ok)
             {
-                if (context is IJsonValidationArrayContext target)
+                foreach (var activeContext in contexts)
                 {
-                    foreach (var activeContext in contexts)
-                    {
-                        if (activeContext is IJsonValidationArrayContext source)
-                        {
-                            target.SetAnnotations(source.GetAnnotations());
-                        }
-                    }
+                    _contextFactory.CopyAnnotations(activeContext, context);
                 }
             }
             return result;

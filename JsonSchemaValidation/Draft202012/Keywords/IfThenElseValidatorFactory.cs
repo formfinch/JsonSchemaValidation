@@ -18,11 +18,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
-        public IfThenElseValidatorFactory(ISchemaFactory schemaFactory, ILazySchemaValidatorFactory schemaValidatorFactory)
+        public IfThenElseValidatorFactory(
+            ISchemaFactory schemaFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory,
+            IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
         }
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -35,7 +40,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             var thenValidator = CreateKeywordValidator(schemaData, "then");
             var elseValidator = CreateKeywordValidator(schemaData, "else");
-            return new IfThenElseValidator(ifValidator, thenValidator, elseValidator);
+            return new IfThenElseValidator(ifValidator, thenValidator, elseValidator, _contextFactory);
         }
 
         private ISchemaValidator? CreateKeywordValidator(SchemaMetadata schemaData, string keyword)

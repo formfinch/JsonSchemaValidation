@@ -24,11 +24,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (_validator.Validate(activeContext) != ValidationResult.Ok)
             {
                 result = ValidationResult.Ok;
-                if (context is IJsonValidationArrayContext target
-                    && activeContext is IJsonValidationArrayContext source)
-                {
-                    target.SetAnnotations(source.GetAnnotations());
-                }
+                _contextFactory.CopyAnnotations(activeContext, context);
             }
             return result;
         }

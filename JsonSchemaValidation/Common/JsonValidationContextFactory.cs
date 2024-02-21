@@ -32,12 +32,23 @@ namespace JsonSchemaValidation.Common
         public JsonValidationContext CopyContext(IJsonValidationContext context)
         {
             var newContext = CreateValidationContext(context.Data);
-            if(newContext is IJsonValidationArrayContext target
-                && context is IJsonValidationArrayContext source)
-            {
-                target.SetAnnotations(source.GetAnnotations());
-            }
+            CopyAnnotations(context, newContext);
             return newContext;
+        }
+
+        public void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg)
+        {
+            if (trg is IJsonValidationArrayContext targetArrayContext
+                && src is IJsonValidationArrayContext sourceArrayContext)
+            {
+                targetArrayContext.SetAnnotations(sourceArrayContext.GetAnnotations());
+            }
+
+            if (trg is IJsonValidationObjectContext targetObjectContext
+                && src is IJsonValidationObjectContext sourceObjectContext)
+            {
+                targetObjectContext.SetAnnotations(sourceObjectContext.GetAnnotations());
+            }
         }
 
         private JsonValidationContext CreateValidationContext(JsonElement data)
@@ -45,6 +56,11 @@ namespace JsonSchemaValidation.Common
             if(data.ValueKind == JsonValueKind.Array)
             {
                 return new JsonValidationArrayContext(data);
+            }
+
+            if (data.ValueKind == JsonValueKind.Object)
+            {
+                return new JsonValidationObjectContext(data);
             }
 
             return new JsonValidationContext(data);
