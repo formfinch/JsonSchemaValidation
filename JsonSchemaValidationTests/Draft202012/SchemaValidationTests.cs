@@ -147,11 +147,11 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\bignum",
                 // @"\optional\cross-draft",                    // No cross-draft compatibility yet
                 @"\optional\dependencies-compatibility",
-                // @"\optional\ecmascript-regex",               // Regexes are not implemented with comaptibity for Ecmascript in mind.
+                // @"\optional\ecmascript-regex",               // Regexes are not implemented with compatibility for Ecmascript in mind.
                 // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
                 // @"\optional\format-assertion",               // Requires vocabulary support
                 @"\optional\no-schema",
-                // @"\optional\non-bmp-regex",                  // It fails but low priority
+                // @"\optional\non-bmp-regex",                  // Fails but low priority to fix
                 @"\optional\refOfUnknownKeyword"
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 
