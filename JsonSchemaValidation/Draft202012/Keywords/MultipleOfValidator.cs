@@ -24,9 +24,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
             if (context.Data.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
 
-            double quotient = context.Data.GetDouble() / divisor;
+            // quick check can fail
+            double theValue = context.Data.GetDouble();
+            if ((theValue % divisor == 0))
+            {
+                return ValidationResult.Ok;
+            }
 
             // scaling technique to deal with floating point precision
+            double quotient = theValue / divisor;
             quotient = Math.Round((quotient + 0.000001) * 100) / 100.0;
             bool isInteger = Math.Abs(quotient - Math.Round(quotient)) < double.Epsilon;
             if (isInteger) return ValidationResult.Ok;

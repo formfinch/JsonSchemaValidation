@@ -19,23 +19,35 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;
-
             if (schema.ValueKind != JsonValueKind.Object)
             {
                 return null;
             }
 
+            bool dependenciesCompatibility = false;
             if (!schema.TryGetProperty("dependentRequired", out var dependentRequiredElement))
             {
-                return null;
+                if (!schema.TryGetProperty("dependencies", out dependentRequiredElement))
+                {
+                    return null;
+                }
+
+                dependenciesCompatibility = true;
             }
+            string keyword = dependenciesCompatibility ? "dependencies" : "dependentRequired";
 
             Dictionary<string, IEnumerable<string>> dependentRequiredProperties = new();
             foreach(var valueListElement in dependentRequiredElement.EnumerateObject())
             {
                 if (valueListElement.Value.ValueKind != JsonValueKind.Array)
                 {
-                    throw new InvalidSchemaException("The 'depedentRequired' should consist of arrays of strings.");
+                    // do not throw for dependencies,
+                    // dependencies could also be the variant compatible with dependentSchemas
+                    if (!dependenciesCompatibility)
+                    {
+                        throw new InvalidSchemaException("The 'depedentRequired' should consist of arrays of strings.");
+                    }
+                    return null;
                 }
 
                 string whenPropertyInObject = valueListElement.Name;
@@ -44,13 +56,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 {
                     if (propertyNameElement.ValueKind != JsonValueKind.String)
                     {
-                        throw new InvalidSchemaException("The 'depedentRequired' keyword should consist of arrays of strings.");
+                        throw new InvalidSchemaException($"The '{keyword}' keyword should consist of arrays of strings.");
                     }
 
                     string? propertyName = propertyNameElement.GetString();
                     if (string.IsNullOrWhiteSpace(propertyName))
                     {
-                        throw new InvalidSchemaException("The 'depedentRequired' keyword does not allow for empty property names.");
+                        throw new InvalidSchemaException($"The '{keyword}' keyword does not allow for empty property names.");
                     }
                     thenRequiredPropertyNames.Add(propertyName!);
                 }

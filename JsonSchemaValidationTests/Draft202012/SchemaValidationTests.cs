@@ -3,8 +3,6 @@ using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
-using static System.Formats.Asn1.AsnWriter;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -75,7 +73,7 @@ namespace JsonSchemaValidationTests.Draft202012
 
         public static IEnumerable<object[]> GetDraft202012Tests()
             => new TestCaseLoader(new string[] {  
-                /* implemented keyword tests */
+                ///* implemented keyword tests */
                 "additionalProperties",
                 "allOf",
                 "anchor",
@@ -144,7 +142,17 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\format\uri",
                 @"\optional\format\uri-reference",
                 @"\optional\format\uri-template",
-                @"\optional\format\uuid"
+                @"\optional\format\uuid",
+
+                @"\optional\bignum",
+                // @"\optional\cross-draft",                    // No cross-draft compatibility yet
+                @"\optional\dependencies-compatibility",
+                // @"\optional\ecmascript-regex",               // Regexes are not implemented with comaptibity for Ecmascript in mind.
+                // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
+                // @"\optional\format-assertion",               // Requires vocabulary support
+                @"\optional\no-schema",
+                // @"\optional\non-bmp-regex",                  // It fails but low priority
+                @"\optional\refOfUnknownKeyword"
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
@@ -242,8 +250,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("in-place applicator siblings, anyOf has unevaluated", "*"),
 
                 // self-reference "#" is at present not supported
-                new ("unevaluatedProperties + single cyclic ref", "*")
-
+                new ("unevaluatedProperties + single cyclic ref", "*"),
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

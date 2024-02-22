@@ -2,6 +2,7 @@
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
+using System.Numerics;
 using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -21,17 +22,20 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return validationFailed;
             }
 
-            if(!context.Data.TryGetDecimal(out decimal value))
+            if (context.Data.TryGetDecimal(out decimal value))
             {
-                return validationFailed;
+                if (value == decimal.Truncate(value))
+                {
+                    return ValidationResult.Ok;
+                }
             }
 
-            if(value != decimal.Truncate(value))
+            if (BigInteger.TryParse(context.Data.ToString(), out _))
             {
-                return validationFailed;
+                return ValidationResult.Ok;
             }
 
-            return ValidationResult.Ok;
+            return validationFailed;
         }
     }
 }
