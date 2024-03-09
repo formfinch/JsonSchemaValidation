@@ -228,7 +228,7 @@ namespace JsonSchemaValidation.Properties {
         ///        &quot;https://json-schema.org/draft/2020-12/vocab/unevaluated&quot;: true,
         ///        &quot;https://json-schema.org/draft/2020-12/vocab/validation&quot;: true,
         ///        &quot;https://json-schema.org/draft/2020-12/vocab/meta-data&quot;: true,
-        ///        &quot;http [rest of string was truncated]&quot;;.
+        ///     [rest of string was truncated]&quot;;.
         /// </summary>
         internal static string json_schema_draft202012_schema {
             get {
