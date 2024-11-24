@@ -1,6 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Numerics;
 using System.Text.Json;

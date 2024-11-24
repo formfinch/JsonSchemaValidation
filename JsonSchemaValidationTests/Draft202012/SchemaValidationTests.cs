@@ -1,6 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Repositories;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
 

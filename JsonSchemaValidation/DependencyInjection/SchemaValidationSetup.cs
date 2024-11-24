@@ -3,11 +3,6 @@ using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012;
 using JsonSchemaValidation.Repositories;
 using Microsoft.Extensions.DependencyInjection;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.DependencyInjection
 {

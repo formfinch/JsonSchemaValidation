@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace JsonSchemaValidation.Common
+﻿namespace JsonSchemaValidation.Common
 {
     public class UriWithFragmentComparer : IEqualityComparer<Uri>
     {

@@ -2,7 +2,6 @@
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 

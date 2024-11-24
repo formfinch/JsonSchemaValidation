@@ -1,8 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
 using System.Text.Json;
-using System.Linq;
 
 namespace JsonSchemaValidation.Common
 {

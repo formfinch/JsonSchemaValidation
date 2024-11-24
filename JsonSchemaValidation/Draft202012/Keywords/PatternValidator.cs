@@ -1,7 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
-using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 

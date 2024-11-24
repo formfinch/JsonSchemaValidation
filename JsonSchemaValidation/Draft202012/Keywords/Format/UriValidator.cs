@@ -1,11 +1,7 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
-using System;
-using System.Globalization;
-using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {

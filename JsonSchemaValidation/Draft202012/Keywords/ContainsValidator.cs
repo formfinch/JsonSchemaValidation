@@ -2,7 +2,6 @@
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
-using System.Xml.Linq;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {

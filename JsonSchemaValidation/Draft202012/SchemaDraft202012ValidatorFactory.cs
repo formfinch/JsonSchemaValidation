@@ -1,15 +1,7 @@
 ﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidation.Validation;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Text.Json;
-using System.Threading.Tasks;
 
 namespace JsonSchemaValidation.Draft202012
 {
