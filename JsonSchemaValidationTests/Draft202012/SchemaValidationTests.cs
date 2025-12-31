@@ -258,16 +258,16 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("URN base URI with URN and anchor ref", "*"),
                 new ("URN ref with nested pointer ref", "*"),
 
-                // $dynamicRef and $dynamicAnchor needs work                
-                new ("A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope", "*"),
-                new ("multiple dynamic paths to the $dynamicRef keyword", "*"),
-                new ("after leaving a dynamic scope, it is not used by a $dynamicRef", "*"),
+                // $dynamicRef and $dynamicAnchor - testing with dynamic scope implementation
+                // Branch-specific scope isolation now implemented in IfThenElseValidator
+                // These tests require $ref to work as applicator (not replacement) with sibling keywords
                 new ("strict-tree schema, guards against misspelled properties", "*"),
                 new ("tests for implementation dynamic anchor and reference link", "*"),
                 new ("$ref and $dynamicAnchor are independent of order - $ref first", "*"),
                 new ("$ref and $dynamicAnchor are independent of order - $defs first", "*"),
-                new ("A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
-                new ("A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
+                // Bookending tests - now passing
+                // new ("A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
+                // new ("A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
 
                 // $ref is treated as replacement of properties, test expects it to behave like union
                 new ("unevaluatedProperties with $ref", "*"),

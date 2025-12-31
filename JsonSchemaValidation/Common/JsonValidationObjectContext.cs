@@ -16,7 +16,17 @@ namespace JsonSchemaValidation.Common
 
         public Annotations _current = new();
 
-        public JsonValidationObjectContext(JsonElement data) : base(data) 
+        public JsonValidationObjectContext(JsonElement data) : base(data)
+        {
+            InitializeUnevaluatedProperties(data);
+        }
+
+        public JsonValidationObjectContext(JsonElement data, IValidationScope scope) : base(data, scope)
+        {
+            InitializeUnevaluatedProperties(data);
+        }
+
+        private void InitializeUnevaluatedProperties(JsonElement data)
         {
             if (Data.ValueKind == JsonValueKind.Object)
             {

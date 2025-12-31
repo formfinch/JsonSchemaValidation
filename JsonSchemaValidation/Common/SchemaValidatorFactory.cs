@@ -1,4 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Common
@@ -11,7 +12,7 @@ namespace JsonSchemaValidation.Common
 
         public SchemaValidatorFactory(
             ISchemaFactory schemaFactory,
-            ISchemaRepository schemaRepository, 
+            ISchemaRepository schemaRepository,
             IEnumerable<ISchemaDraftValidatorFactory> draftFactories
         )
         {
@@ -26,7 +27,10 @@ namespace JsonSchemaValidation.Common
         {
             var schemaMetaData = _schemaRepository.GetSchema(schemaUri);
             var dereferencedSchema = _schemaFactory.CreateDereferencedSchema(schemaMetaData);
-            return CreateValidator(dereferencedSchema);
+            var validator = CreateValidator(dereferencedSchema);
+
+            // Wrap with scope awareness to push the root schema resource
+            return new ScopeAwareSchemaValidator(validator, schemaMetaData);
         }
 
         public ISchemaValidator CreateValidator(SchemaMetadata schemaMetaData)
@@ -37,8 +41,18 @@ namespace JsonSchemaValidation.Common
                 throw new NotImplementedException($"Validator for draft version {version} is not implemented.");
             }
 
-            // Create and return the validator using the draft-specific factory
-            return draftFactory.CreateValidator(schemaMetaData);
+            // Create the validator using the draft-specific factory
+            var validator = draftFactory.CreateValidator(schemaMetaData);
+
+            // Check if this schema has its own $id (making it a distinct schema resource)
+            // If so, wrap with ScopeAwareSchemaValidator to manage the dynamic scope
+            var schemaId = schemaMetaData.Schema.GetIdProperty();
+            if (!string.IsNullOrEmpty(schemaId))
+            {
+                return new ScopeAwareSchemaValidator(validator, schemaMetaData);
+            }
+
+            return validator;
         }
     }
 }

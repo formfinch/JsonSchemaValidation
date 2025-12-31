@@ -1,6 +1,8 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
+using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
 using System.Text.Json;
@@ -12,15 +14,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
         private readonly IJsonValidationContextFactory _contextFactory;
+        private readonly ISchemaRepository _schemaRepository;
 
         public IfThenElseValidatorFactory(
             ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
-            IJsonValidationContextFactory contextFactory)
+            IJsonValidationContextFactory contextFactory,
+            ISchemaRepository schemaRepository)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
             _contextFactory = contextFactory;
+            _schemaRepository = schemaRepository;
         }
 
         public string Keyword => "if";
@@ -70,6 +75,27 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
         {
+            // Check if the original schema element has its own $id BEFORE dereferencing
+            // If so, we need to wrap with ScopeAwareSchemaValidator to push that schema resource
+            var originalSchemaId = itemSchemaElement.GetIdProperty();
+            SchemaMetadata? originalSchemaResource = null;
+
+            if (!string.IsNullOrEmpty(originalSchemaId))
+            {
+                // Resolve the $id to get the registered schema resource
+                if (Uri.TryCreate(schemaData.SchemaUri, originalSchemaId, out var schemaResourceUri))
+                {
+                    try
+                    {
+                        originalSchemaResource = _schemaRepository.GetSchema(schemaResourceUri);
+                    }
+                    catch
+                    {
+                        // Schema not found, proceed without wrapping
+                    }
+                }
+            }
+
             SchemaMetadata itemsRawSchemaData = new(schemaData)
             {
                 Schema = itemSchemaElement
@@ -80,7 +106,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }
-            return _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
+
+            var validator = _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
+
+            // If the original schema had its own $id, wrap to ensure that schema resource is pushed
+            if (originalSchemaResource != null)
+            {
+                return new ScopeAwareSchemaValidator(validator, originalSchemaResource);
+            }
+
+            return validator;
         }
     }
 }

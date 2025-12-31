@@ -10,22 +10,26 @@ namespace JsonSchemaValidation.Common
 
         public JsonValidationContext CreateContextForRoot(JsonElement data)
         {
-            return CreateValidationContext(data);
+            // Root context creates a new scope
+            return CreateValidationContext(data, new ValidationScope());
         }
 
         public JsonValidationContext CreateContextForArrayItem(IJsonValidationContext context, int idx, JsonElement arrayItem)
         {
-            return CreateValidationContext(arrayItem);
+            // Child contexts share the parent's scope
+            return CreateValidationContext(arrayItem, context.Scope);
         }
 
         public JsonValidationContext CreateContextForProperty(IJsonValidationContext context, string propertyName, JsonElement value)
         {
-            return CreateValidationContext(value);
+            // Child contexts share the parent's scope
+            return CreateValidationContext(value, context.Scope);
         }
 
         public JsonValidationContext CopyContext(IJsonValidationContext context)
         {
-            var newContext = CreateValidationContext(context.Data);
+            // Copied contexts share the same scope
+            var newContext = CreateValidationContext(context.Data, context.Scope);
             CopyAnnotations(context, newContext);
             return newContext;
         }
@@ -45,19 +49,19 @@ namespace JsonSchemaValidation.Common
             }
         }
 
-        private JsonValidationContext CreateValidationContext(JsonElement data)
+        private JsonValidationContext CreateValidationContext(JsonElement data, IValidationScope scope)
         {
-            if(data.ValueKind == JsonValueKind.Array)
+            if (data.ValueKind == JsonValueKind.Array)
             {
-                return new JsonValidationArrayContext(data);
+                return new JsonValidationArrayContext(data, scope);
             }
 
             if (data.ValueKind == JsonValueKind.Object)
             {
-                return new JsonValidationObjectContext(data);
+                return new JsonValidationObjectContext(data, scope);
             }
 
-            return new JsonValidationContext(data);
+            return new JsonValidationContext(data, scope);
         }
     }
 }
