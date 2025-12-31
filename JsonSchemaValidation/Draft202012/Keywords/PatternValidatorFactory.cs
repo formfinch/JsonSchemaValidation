@@ -9,6 +9,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class PatternValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        public string Keyword => "pattern";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

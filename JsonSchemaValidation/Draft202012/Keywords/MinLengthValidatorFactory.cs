@@ -8,6 +8,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class MinLengthValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        public string Keyword => "minLength";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

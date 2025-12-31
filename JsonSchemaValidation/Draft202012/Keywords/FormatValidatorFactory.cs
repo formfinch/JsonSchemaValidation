@@ -9,6 +9,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class FormatValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        public string Keyword => "format";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

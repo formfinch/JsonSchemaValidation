@@ -15,6 +15,18 @@ namespace JsonSchemaValidation.Repositories
         public int CyclicReference { get; set; } = 0;
         public int Order { get; set; }
 
+        /// <summary>
+        /// Active vocabularies for this schema, mapped from vocabulary URI to required flag.
+        /// null means default vocabularies (all standard vocabularies active).
+        /// </summary>
+        public Dictionary<string, bool>? ActiveVocabularies { get; set; }
+
+        /// <summary>
+        /// Set of active keyword names derived from ActiveVocabularies.
+        /// null means all keywords are active (default behavior).
+        /// </summary>
+        public HashSet<string>? ActiveKeywords { get; set; }
+
         public SchemaMetadata(JsonElement schema, string? draftVersion = null, Uri? schemaUri = null)
         {
             Schema = schema;
@@ -45,6 +57,13 @@ namespace JsonSchemaValidation.Repositories
             }
             Anchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.Anchors);
             DynamicAnchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.DynamicAnchors);
+
+            ActiveVocabularies = originalSchemaData.ActiveVocabularies != null
+                ? new Dictionary<string, bool>(originalSchemaData.ActiveVocabularies)
+                : null;
+            ActiveKeywords = originalSchemaData.ActiveKeywords != null
+                ? new HashSet<string>(originalSchemaData.ActiveKeywords)
+                : null;
         }
     }
 }

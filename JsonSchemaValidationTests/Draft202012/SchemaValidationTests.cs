@@ -2,6 +2,7 @@
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
+using System.Text.Json;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
@@ -23,6 +24,32 @@ namespace JsonSchemaValidationTests.Draft202012
             // Build service provider
             _serviceProvider = services.BuildServiceProvider();
             _serviceProvider.InitializeSingletonServices();
+
+            // Load remote schemas required for vocabulary tests
+            LoadRemoteSchemas();
+        }
+
+        private void LoadRemoteSchemas()
+        {
+            var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
+            var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12";
+
+            if (Directory.Exists(remotesPath))
+            {
+                foreach (var file in Directory.GetFiles(remotesPath, "*.json"))
+                {
+                    try
+                    {
+                        var content = File.ReadAllText(file);
+                        using var doc = JsonDocument.Parse(content);
+                        schemaRepository.TryRegisterSchema(doc.RootElement.Clone(), out _);
+                    }
+                    catch
+                    {
+                        // Ignore errors loading remote schemas
+                    }
+                }
+            }
         }
 
         [Theory]
@@ -120,7 +147,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "unevaluatedProperties",
                 "uniqueItems",
                 "unknownKeyword",
-                // "vocabulary"
+                "vocabulary",
 
                 @"\optional\format\date-time",
                 @"\optional\format\date",

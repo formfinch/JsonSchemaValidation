@@ -10,6 +10,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private static readonly JsonElementComparison _comparison = new();
 
+        public string Keyword => "type";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

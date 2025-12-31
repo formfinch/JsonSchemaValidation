@@ -2,10 +2,16 @@
 
 namespace JsonSchemaValidation.Draft202012.Interfaces
 {
+    /// <summary>
+    /// Factory interface for Draft 2020-12 keyword validators.
+    /// Extends IKeywordValidatorFactory with vocabulary support.
+    /// </summary>
     public interface ISchemaDraftKeywordValidatorFactory : IKeywordValidatorFactory
     {
-        // Interface is used to isolate the schema draft version from other draft implementations.
-        
-        // Draft 2020-12 specific methods or properties here
+        /// <summary>
+        /// The keyword name this factory handles (e.g., "minimum", "properties").
+        /// Used for vocabulary-based filtering.
+        /// </summary>
+        string Keyword { get; }
     }
 }

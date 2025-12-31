@@ -8,6 +8,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class MultipleOfValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        public string Keyword => "multipleOf";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

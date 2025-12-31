@@ -1,6 +1,7 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
+using JsonSchemaValidation.Draft202012;
 using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using System.Collections.Concurrent;
@@ -13,10 +14,12 @@ namespace JsonSchemaValidation.Repositories
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
         private IEnumerable<SchemaMetadata> _sortedSchemas = null;
         private readonly SchemaValidationOptions _options;
+        private readonly VocabularyParser? _vocabularyParser;
 
-        public SchemaRepository(SchemaValidationOptions options)
+        public SchemaRepository(SchemaValidationOptions options, VocabularyParser? vocabularyParser = null)
         {
             _options = options ?? throw new ArgumentNullException(nameof(options));
+            _vocabularyParser = vocabularyParser;
         }
 
         public bool TryRegisterSchema(JsonElement? schemaToRegister, out SchemaMetadata? schemaData)
@@ -41,6 +44,17 @@ namespace JsonSchemaValidation.Repositories
             // todo: default draft version
             schemaData.DraftVersion ??= "https://json-schema.org/draft/2020-12/schema";
 
+            // Parse $vocabulary if present (for meta-schemas)
+            if (_vocabularyParser != null)
+            {
+                var vocabResult = _vocabularyParser.ParseVocabulary(schema);
+                if (vocabResult != null)
+                {
+                    schemaData.ActiveVocabularies = vocabResult.Vocabularies;
+                    schemaData.ActiveKeywords = vocabResult.ActiveKeywords;
+                }
+            }
+
             if (schemaData.SchemaUri == null)
             {
                 // generate random schemaId
@@ -54,8 +68,46 @@ namespace JsonSchemaValidation.Repositories
 
             AddSchema(schemaData);
 
+            // Resolve vocabulary context from meta-schema if not already set
+            ResolveVocabularyContext(schemaData);
+
             WalkElement(schemaData.Schema, schemaData.SchemaUri);
             return true;
+        }
+
+        /// <summary>
+        /// Resolves vocabulary settings from the meta-schema referenced by $schema.
+        /// Also resolves the underlying draft version for custom meta-schemas.
+        /// </summary>
+        private void ResolveVocabularyContext(SchemaMetadata schemaData)
+        {
+            // If this schema already has vocabulary defined (it's a meta-schema), skip
+            if (schemaData.ActiveVocabularies != null)
+                return;
+
+            // Look up the meta-schema referenced by $schema
+            if (string.IsNullOrEmpty(schemaData.DraftVersion))
+                return;
+
+            if (!Uri.TryCreate(schemaData.DraftVersion, UriKind.Absolute, out var metaSchemaUri))
+                return;
+
+            // Try to find the meta-schema in the repository
+            if (_schemas.TryGetValue(metaSchemaUri, out var metaSchema))
+            {
+                // Inherit vocabulary settings from the meta-schema
+                schemaData.ActiveVocabularies = metaSchema.ActiveVocabularies;
+                schemaData.ActiveKeywords = metaSchema.ActiveKeywords;
+
+                // Also inherit the underlying draft version from the meta-schema
+                // This allows custom meta-schemas (that are based on standard drafts)
+                // to work correctly with the validator factory routing
+                if (!string.IsNullOrEmpty(metaSchema.DraftVersion))
+                {
+                    schemaData.DraftVersion = metaSchema.DraftVersion;
+                }
+            }
+            // If meta-schema not found or has no vocabulary, use defaults (null = all keywords active)
         }
 
         private void AddSchema(SchemaMetadata schemaData)

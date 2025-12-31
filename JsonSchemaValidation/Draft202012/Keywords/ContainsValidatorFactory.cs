@@ -24,6 +24,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public string Keyword => "contains";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

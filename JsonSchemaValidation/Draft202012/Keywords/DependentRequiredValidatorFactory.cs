@@ -8,6 +8,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class DependentRequiredValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        public string Keyword => "dependentRequired";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

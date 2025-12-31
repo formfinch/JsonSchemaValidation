@@ -7,6 +7,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class ExclusiveMinimumValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        public string Keyword => "exclusiveMinimum";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;

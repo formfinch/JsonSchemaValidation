@@ -23,6 +23,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public string Keyword => "if";
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var ifValidator = CreateKeywordValidator(schemaData, "if");
