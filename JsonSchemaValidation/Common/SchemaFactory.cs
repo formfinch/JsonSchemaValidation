@@ -24,52 +24,12 @@ namespace JsonSchemaValidation.Common
 
         public SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData)
         {
-            var schema = schemaData.Schema;
-            if(schema.ValueKind != JsonValueKind.Object)
-            {
-                return schemaData;
-            }
-
-            // check for $ref
-            // Note: $dynamicRef is NOT dereferenced here - it's handled by DynamicRefValidator
-            // at validation time when the dynamic scope is available
-            var hasRef = schema.TryGetProperty("$ref", out JsonElement refElement);
-
-            if (!hasRef)
-            {
-                return schemaData;
-            }
-
-            if (refElement.ValueKind != JsonValueKind.String)
-            {
-                throw new FormatException("$ref not a string value");
-            }
-
-            string reference = refElement.GetString() ?? string.Empty;
-            if (string.IsNullOrWhiteSpace(reference) || reference == "#")
-            {
-                return schemaData;
-            }
-
-            if (!Uri.TryCreate(schemaData.SchemaUri, reference!, out Uri? referenceUri))
-            {
-                referenceUri = new Uri(reference);
-            }
-
-            if (schemaData.References.ContainsKey(referenceUri))
-            {
-                // cyclic reference, stop dereferencing
-                return NopSchema;
-            }
-            var retrievedSchema = _schemaRepository.GetSchema(referenceUri, dynamicRef: true);
-            schemaData.References.TryAdd(referenceUri, retrievedSchema);
-            foreach (var visitedReference in schemaData.References)
-            {
-                retrievedSchema.References.TryAdd(visitedReference.Key, visitedReference.Value);
-            }
-
-            // Dereference until we receive a proper schema.
-            return CreateDereferencedSchema(retrievedSchema);
+            // In Draft 2020-12, $ref and $dynamicRef are applicators that work alongside
+            // sibling keywords. They are NOT dereferenced here - they are handled by
+            // RefValidator and DynamicRefValidator at validation time.
+            // This allows schemas like { "$ref": "other.json", "unevaluatedProperties": false }
+            // to work correctly with both $ref and sibling keywords applied.
+            return schemaData;
         }
     }
 }
