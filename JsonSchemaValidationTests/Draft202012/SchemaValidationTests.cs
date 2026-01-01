@@ -9,29 +9,35 @@ namespace JsonSchemaValidationTests.Draft202012
     public class SchemaValidationTests
     {
         private readonly IServiceProvider _serviceProvider;
+        private readonly IServiceProvider _serviceProviderWithFormatAssertion;
 
         public SchemaValidationTests()
         {
-            // Initialize DI container
+            // Initialize DI container with default settings (format annotation-only)
             var services = new ServiceCollection();
-
-            // Add your services
             services.AddJsonSchemaValidation(opt =>
             {
                 opt.EnableDraft202012 = true;
             });
-
-            // Build service provider
             _serviceProvider = services.BuildServiceProvider();
             _serviceProvider.InitializeSingletonServices();
+            LoadRemoteSchemas(_serviceProvider);
 
-            // Load remote schemas required for vocabulary tests
-            LoadRemoteSchemas();
+            // Initialize DI container with format assertion enabled
+            var servicesWithFormatAssertion = new ServiceCollection();
+            servicesWithFormatAssertion.AddJsonSchemaValidation(opt =>
+            {
+                opt.EnableDraft202012 = true;
+                opt.FormatAssertionEnabled = true;
+            });
+            _serviceProviderWithFormatAssertion = servicesWithFormatAssertion.BuildServiceProvider();
+            _serviceProviderWithFormatAssertion.InitializeSingletonServices();
+            LoadRemoteSchemas(_serviceProviderWithFormatAssertion);
         }
 
-        private void LoadRemoteSchemas()
+        private void LoadRemoteSchemas(IServiceProvider serviceProvider)
         {
-            var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
+            var schemaRepository = serviceProvider.GetRequiredService<ISchemaRepository>();
 
             // Load draft2020-12 specific remote schemas
             LoadRemoteSchemasFromPath(
@@ -77,11 +83,23 @@ namespace JsonSchemaValidationTests.Draft202012
         [MemberData(nameof(GetDraft202012Tests))]
         public void Draft202012Tests(TestCase testCase)
         {
+            RunTestCase(testCase, _serviceProvider);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetDraft202012FormatAssertionTests))]
+        public void Draft202012FormatAssertionTests(TestCase testCase)
+        {
+            RunTestCase(testCase, _serviceProviderWithFormatAssertion);
+        }
+
+        private void RunTestCase(TestCase testCase, IServiceProvider serviceProvider)
+        {
             if (IsTestDisabled(testCase.Description, "*")) return;
 
-            var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
-            var schemaValidatorFactory = _serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
-            var jsonValidationContextFactory = _serviceProvider.GetRequiredService<IJsonValidationContextFactory>();
+            var schemaRepository = serviceProvider.GetRequiredService<ISchemaRepository>();
+            var schemaValidatorFactory = serviceProvider.GetRequiredService<ISchemaValidatorFactory>();
+            var jsonValidationContextFactory = serviceProvider.GetRequiredService<IJsonValidationContextFactory>();
 
             if (!schemaRepository.TryRegisterSchema(testCase.Schema, out var schemaData))
             {
@@ -119,7 +137,7 @@ namespace JsonSchemaValidationTests.Draft202012
         }
 
         public static IEnumerable<object[]> GetDraft202012Tests()
-            => new TestCaseLoader(new string[] {  
+            => new TestCaseLoader(new string[] {
                 ///* implemented keyword tests */
                 "additionalProperties",
                 "allOf",
@@ -137,7 +155,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "enum",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
-                // "format",
+                "format",  // Tests annotation-only behavior (no validation)
                 "id",
                 "if-then-else",
                 "infinite-loop-detection",
@@ -170,6 +188,23 @@ namespace JsonSchemaValidationTests.Draft202012
                 "unknownKeyword",
                 "vocabulary",
 
+                @"\optional\bignum",
+                // @"\optional\cross-draft",                    // No cross-draft compatibility yet
+                @"\optional\dependencies-compatibility",
+                // @"\optional\ecmascript-regex",               // Regexes are not implemented with compatibility for Ecmascript in mind.
+                // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
+                // @"\optional\format-assertion",               // Requires vocabulary support
+                @"\optional\no-schema",
+                // @"\optional\non-bmp-regex",                  // Fails but low priority to fix
+                @"\optional\refOfUnknownKeyword"
+            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
+
+        /// <summary>
+        /// Returns test cases for optional format validation tests.
+        /// These tests run with FormatAssertionEnabled = true.
+        /// </summary>
+        public static IEnumerable<object[]> GetDraft202012FormatAssertionTests()
+            => new TestCaseLoader(new string[] {
                 @"\optional\format\date-time",
                 @"\optional\format\date",
                 @"\optional\format\duration",
@@ -190,16 +225,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\format\uri-reference",
                 @"\optional\format\uri-template",
                 @"\optional\format\uuid",
-
-                @"\optional\bignum",
-                // @"\optional\cross-draft",                    // No cross-draft compatibility yet
-                @"\optional\dependencies-compatibility",
-                // @"\optional\ecmascript-regex",               // Regexes are not implemented with compatibility for Ecmascript in mind.
-                // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
-                // @"\optional\format-assertion",               // Requires vocabulary support
-                @"\optional\no-schema",
-                // @"\optional\non-bmp-regex",                  // Fails but low priority to fix
-                @"\optional\refOfUnknownKeyword"
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)

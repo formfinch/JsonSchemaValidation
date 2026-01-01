@@ -1,4 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords.Format;
 using JsonSchemaValidation.Exceptions;
@@ -9,6 +10,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class FormatValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        private readonly SchemaValidationOptions _options;
+
+        public FormatValidatorFactory(SchemaValidationOptions options)
+        {
+            _options = options;
+        }
+
         public string Keyword => "format";
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -34,6 +42,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if(string.IsNullOrEmpty(format))
             {
                 throw new InvalidSchemaException("The format annotation attribute must be a string.");
+            }
+
+            // Check if format-assertion vocabulary is active for this schema
+            bool formatAssertionActive = IsFormatAssertionActive(schemaData);
+
+            // If format assertion is not active, return annotation-only validator
+            if (!formatAssertionActive)
+            {
+                return new FormatAnnotationValidator(format);
             }
 
             if(format == "date-time")
@@ -136,7 +153,36 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new UuidValidator();
             }
 
-            return null;
+            // Unknown format - return annotation-only validator
+            return new FormatAnnotationValidator(format);
+        }
+
+        /// <summary>
+        /// Determines if format assertion is active for the given schema.
+        /// Format assertion is active if:
+        /// 1. The global FormatAssertionEnabled option is true, OR
+        /// 2. The schema's metaschema includes the format-assertion vocabulary with value true
+        /// </summary>
+        private bool IsFormatAssertionActive(SchemaMetadata schemaData)
+        {
+            // Check global option first
+            if (_options.FormatAssertionEnabled)
+            {
+                return true;
+            }
+
+            // Check if schema has format-assertion vocabulary enabled
+            if (schemaData.ActiveVocabularies != null)
+            {
+                const string formatAssertionVocabulary = "https://json-schema.org/draft/2020-12/vocab/format-assertion";
+                if (schemaData.ActiveVocabularies.TryGetValue(formatAssertionVocabulary, out var isRequired))
+                {
+                    // The vocabulary is present, which means format assertion is active
+                    return true;
+                }
+            }
+
+            return false;
         }
     }
 }

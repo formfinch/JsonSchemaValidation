@@ -6,6 +6,10 @@
         public bool EnableDraft202012 { get; set; } = true;
         public bool EnableDraft4 { get; set; } = true;
 
-        // Add other options if needed
+        /// <summary>
+        /// When true, the 'format' keyword performs validation in addition to producing annotations.
+        /// When false (default), the 'format' keyword only produces annotations per Draft 2020-12 spec.
+        /// </summary>
+        public bool FormatAssertionEnabled { get; set; } = false;
     }
 }

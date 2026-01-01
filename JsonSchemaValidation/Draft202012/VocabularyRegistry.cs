@@ -44,6 +44,10 @@ namespace JsonSchemaValidation.Draft202012
                 {
                     "format"
                 },
+                ["https://json-schema.org/draft/2020-12/vocab/format-assertion"] = new HashSet<string>
+                {
+                    "format"
+                },
                 ["https://json-schema.org/draft/2020-12/vocab/content"] = new HashSet<string>
                 {
                     "contentEncoding", "contentMediaType", "contentSchema"
