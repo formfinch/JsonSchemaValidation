@@ -24,6 +24,16 @@ namespace JsonSchemaValidation.Repositories
 
         public bool TryRegisterSchema(JsonElement? schemaToRegister, out SchemaMetadata? schemaData)
         {
+            return TryRegisterSchemaInternal(schemaToRegister, null, out schemaData);
+        }
+
+        public bool TryRegisterSchema(JsonElement? schemaToRegister, Uri schemaUri, out SchemaMetadata? schemaData)
+        {
+            return TryRegisterSchemaInternal(schemaToRegister, schemaUri, out schemaData);
+        }
+
+        private bool TryRegisterSchemaInternal(JsonElement? schemaToRegister, Uri? explicitUri, out SchemaMetadata? schemaData)
+        {
             if (schemaToRegister == null)
             {
                 schemaData = null;
@@ -55,7 +65,12 @@ namespace JsonSchemaValidation.Repositories
                 }
             }
 
-            if (schemaData.SchemaUri == null)
+            // Use explicit URI if provided, otherwise use $id or generate random
+            if (explicitUri != null)
+            {
+                schemaData.SchemaUri = explicitUri;
+            }
+            else if (schemaData.SchemaUri == null)
             {
                 // generate random schemaId
                 schemaData.SchemaUri = SchemaRepositoryHelpers.GenerateRandomSchemaId();

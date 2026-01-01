@@ -35,7 +35,8 @@
                 {
                     uri = "scheme:" + uri;
                 }
-                else if (!uri.Contains("://"))
+                // Don't modify URN-style URIs (urn:, tag:, etc.) which use ':' but not '://'
+                else if (!uri.Contains("://") && !IsAbsoluteUriWithoutAuthority(uri))
                 {
                     uri = "scheme://host" + uri;
                 }
@@ -63,6 +64,19 @@
                 return validatedUri.IsWellFormedOriginalString();
             }
             return false;
+        }
+
+        /// <summary>
+        /// Checks if a URI is an absolute URI that doesn't use authority (like URN, tag:, etc.)
+        /// </summary>
+        private static bool IsAbsoluteUriWithoutAuthority(string uri)
+        {
+            // Check for common schemes that don't use '://' authority
+            // These schemes use 'scheme:path' format instead of 'scheme://host/path'
+            return uri.StartsWith("urn:", StringComparison.OrdinalIgnoreCase) ||
+                   uri.StartsWith("tag:", StringComparison.OrdinalIgnoreCase) ||
+                   uri.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ||
+                   uri.StartsWith("tel:", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

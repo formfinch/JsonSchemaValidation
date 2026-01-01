@@ -63,10 +63,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement prefixItemSchemaElement)
         {
-            SchemaMetadata prefixItemRawSchemaData = new(schemaData)
-            {
-                Schema = prefixItemSchemaElement
-            };
+            var prefixItemRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, prefixItemSchemaElement);
             var prefixItemDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(prefixItemRawSchemaData);
             if (_schemaValidatorFactory.Value == null)
             {

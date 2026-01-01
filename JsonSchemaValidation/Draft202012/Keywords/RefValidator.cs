@@ -32,6 +32,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        // Maximum recursion depth to prevent stack overflow from infinite loops
+        private const int MaxRecursionDepth = 100;
+
         public ValidationResult Validate(IJsonValidationContext context)
         {
             // Resolve the $ref
@@ -40,6 +43,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (resolvedSchema == null)
             {
                 return new ValidationResult($"Failed to resolve $ref: {_ref}");
+            }
+
+            // Guard against infinite recursion by checking scope depth
+            if (context.Scope.Depth > MaxRecursionDepth)
+            {
+                return new ValidationResult($"Maximum reference depth exceeded for $ref: {_ref}");
             }
 
             // Create a validator for the resolved schema
@@ -53,9 +62,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             // Run validation with the current context (scope is shared)
             var activeContext = _contextFactory.CopyContext(context);
 
-            // Push the resolved schema resource onto the scope if it has its own $id
+            // Push the resolved schema resource onto the scope
             bool pushedScope = false;
-            if (resolvedSchema.SchemaUri != null && resolvedSchema.SchemaUri != _schemaData.SchemaUri)
+            if (resolvedSchema.SchemaUri != null)
             {
                 context.Scope.PushSchemaResource(resolvedSchema);
                 pushedScope = true;
@@ -83,9 +92,27 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         private SchemaMetadata? ResolveRef()
         {
-            if (string.IsNullOrWhiteSpace(_ref) || _ref == "#")
+            if (string.IsNullOrWhiteSpace(_ref))
             {
-                // Self-reference to root - return the current schema's root
+                return _schemaData;
+            }
+
+            if (_ref == "#")
+            {
+                // Self-reference to root - look up the schema by its base URI (without fragment)
+                if (_schemaData.SchemaUri != null)
+                {
+                    try
+                    {
+                        // Get the base URI without any fragment
+                        var baseUri = new UriBuilder(_schemaData.SchemaUri) { Fragment = string.Empty }.Uri;
+                        return _schemaRepository.GetSchema(baseUri);
+                    }
+                    catch
+                    {
+                        return _schemaData;
+                    }
+                }
                 return _schemaData;
             }
 

@@ -32,22 +32,43 @@ namespace JsonSchemaValidationTests.Draft202012
         private void LoadRemoteSchemas()
         {
             var schemaRepository = _serviceProvider.GetRequiredService<ISchemaRepository>();
-            var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12";
 
-            if (Directory.Exists(remotesPath))
+            // Load draft2020-12 specific remote schemas
+            LoadRemoteSchemasFromPath(
+                schemaRepository,
+                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12",
+                "http://localhost:1234/draft2020-12/");
+
+            // Load common remote schemas from root remotes folder
+            LoadRemoteSchemasFromPath(
+                schemaRepository,
+                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes",
+                "http://localhost:1234/",
+                topLevelOnly: true);
+        }
+
+        private void LoadRemoteSchemasFromPath(ISchemaRepository schemaRepository, string remotesPath, string baseUrl, bool topLevelOnly = false)
+        {
+            if (!Directory.Exists(remotesPath)) return;
+
+            var searchOption = topLevelOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories;
+
+            foreach (var file in Directory.GetFiles(remotesPath, "*.json", searchOption))
             {
-                foreach (var file in Directory.GetFiles(remotesPath, "*.json"))
+                try
                 {
-                    try
-                    {
-                        var content = File.ReadAllText(file);
-                        using var doc = JsonDocument.Parse(content);
-                        schemaRepository.TryRegisterSchema(doc.RootElement.Clone(), out _);
-                    }
-                    catch
-                    {
-                        // Ignore errors loading remote schemas
-                    }
+                    var content = File.ReadAllText(file);
+                    using var doc = JsonDocument.Parse(content);
+
+                    // Calculate the relative path to build the proper URI
+                    var relativePath = Path.GetRelativePath(remotesPath, file).Replace("\\", "/");
+                    var schemaUri = new Uri(baseUrl + relativePath);
+
+                    schemaRepository.TryRegisterSchema(doc.RootElement.Clone(), schemaUri, out _);
+                }
+                catch
+                {
+                    // Ignore errors loading remote schemas
                 }
             }
         }
@@ -140,7 +161,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "properties",
                 "propertyNames",
                 "ref",
-                // "refRemote",
+                "refRemote",
                 "required",
                 "type",
                 "unevaluatedItems",
@@ -228,40 +249,8 @@ namespace JsonSchemaValidationTests.Draft202012
                 // the meta schema does not define use of $id in the $defs section
                 new ("Invalid use of fragments in location-independent $id", "*"),
 
-                // root pointer ref is not supported
-                // root pointer ref creates cyclic-reference because of the method of implementation
-                new ("root pointer ref", "*" ),
-
-                // test logic is correct but currently unsupported because of misunderstanding $ref keyword.
-                // The package misinterprets $ref as replacing rather than coexisting with sibling keywords
-                // ignoring its intended applicator function.
-                
-                // test succeeds with change to allOf: [ { $ref... } ]
-                new ("ref applies alongside sibling keywords", "*" ),
-                
-                // unable to solve cyclic references in any way
-                new ("Recursive references between schemas", "*" ),
-
-                // test has out of reach reference
-                // we dont yet go through the complete schema to get $ids from items that otherwise never get handled.
-                new ("refs with relative uris and defs", "*"),
-                new ("relative refs with absolute uris and defs", "*"),
-
-                // urn type not supported by .NET?
-                // strange these tests were not presented in the format section
-                new ("simple URN base URI with $ref via the URN", "*"),
-                new ("simple URN base URI with JSON pointer", "*"),
-                new ("URN base URI with NSS", "*"),
-                new ("URN base URI with r-component", "*"),
-                new ("URN base URI with q-component", "*"),
-                new ("URN base URI with URN and JSON pointer ref", "*"),
-                new ("URN base URI with URN and anchor ref", "*"),
-                new ("URN ref with nested pointer ref", "*"),
-
-                // unevaluatedProperties issues
-                new ("unevaluatedProperties with $ref", "*"),
-                new ("in-place applicator siblings, anyOf has unevaluated", "*"),
-                new ("unevaluatedProperties + single cyclic ref", "*"),
+                // unevaluatedProperties annotation tracking issue - fails due to complex cross-applicator annotation
+                new ("in-place applicator siblings, anyOf has unevaluated", "*")
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));
