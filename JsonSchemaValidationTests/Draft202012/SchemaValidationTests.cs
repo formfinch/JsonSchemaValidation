@@ -193,7 +193,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\dependencies-compatibility",
                 // @"\optional\ecmascript-regex",               // Regexes are not implemented with compatibility for Ecmascript in mind.
                 // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
-                // @"\optional\format-assertion",               // Requires vocabulary support
+                @"\optional\format-assertion",                  // Requires vocabulary support
                 @"\optional\no-schema",
                 // @"\optional\non-bmp-regex",                  // Fails but low priority to fix
                 @"\optional\refOfUnknownKeyword"
