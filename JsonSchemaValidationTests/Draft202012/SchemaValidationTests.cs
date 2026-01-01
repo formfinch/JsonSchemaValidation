@@ -128,7 +128,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "boolean_schema",
                 "const",
                 "contains",
-                // "content",
+                "content",
                 "default",
                 "defs",
                 "dependentRequired",
@@ -239,11 +239,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("validation of internationalized host names", "Arabic-Indic digits mixed with Extended Arabic-Indic digits"),
 
                 // conflicting tests in hostname and idn-hostname, for now no check on this
-                new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position"),
-
-                // test.data is a schema that is validated against the meta schema
-                // the meta schema does not define use of $id in the $defs section
-                new ("Invalid use of fragments in location-independent $id", "*")
+                new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position")
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

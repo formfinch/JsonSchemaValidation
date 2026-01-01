@@ -22,6 +22,9 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, BooleanValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ContainsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ConstValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ContentEncodingValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ContentMediaTypeValidatorFactory>();
+            services.AddSingleton<ISchemaDraftKeywordValidatorFactory, ContentSchemaValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, DependentRequiredValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, DependentSchemasValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, DynamicRefValidatorFactory>();
