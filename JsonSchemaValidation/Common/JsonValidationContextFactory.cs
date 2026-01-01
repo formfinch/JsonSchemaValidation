@@ -28,10 +28,17 @@ namespace JsonSchemaValidation.Common
 
         public JsonValidationContext CopyContext(IJsonValidationContext context)
         {
-            // Copied contexts share the same scope
+            // Copied contexts share the same scope and annotations
             var newContext = CreateValidationContext(context.Data, context.Scope);
             CopyAnnotations(context, newContext);
             return newContext;
+        }
+
+        public JsonValidationContext CreateFreshContext(IJsonValidationContext context)
+        {
+            // Fresh context shares the same scope but starts with fresh annotations
+            // Used by applicators so sub-schemas have independent annotation tracking
+            return CreateValidationContext(context.Data, context.Scope);
         }
 
         public void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg)

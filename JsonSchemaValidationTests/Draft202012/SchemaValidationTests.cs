@@ -208,10 +208,6 @@ namespace JsonSchemaValidationTests.Draft202012
             {
                 // Test is not valid or disabled because:
 
-                // $ref replaces the initial schema containing unevaluatedItems keyword. 
-                // unevaluatedItems: false should no longer be used
-                new ("unevaluatedItems with $ref", "with unevaluated items"),
-
                 // leap seconds are not supported in date-time format validation
                 new ("validation of date-time strings", "a valid date-time with a leap second, UTC"),
                 new ("validation of date-time strings", "a valid date-time with a leap second, with minus offset"),
@@ -247,10 +243,7 @@ namespace JsonSchemaValidationTests.Draft202012
 
                 // test.data is a schema that is validated against the meta schema
                 // the meta schema does not define use of $id in the $defs section
-                new ("Invalid use of fragments in location-independent $id", "*"),
-
-                // unevaluatedProperties annotation tracking issue - fails due to complex cross-applicator annotation
-                new ("in-place applicator siblings, anyOf has unevaluated", "*")
+                new ("Invalid use of fragments in location-independent $id", "*")
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

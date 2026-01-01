@@ -25,9 +25,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         public ValidationResult Validate(IJsonValidationContext context)
         {
-            var ifContext = _contextFactory.CopyContext(context);
-            var elseContext = _contextFactory.CopyContext(context);
-            var thenContext = _contextFactory.CopyContext(context);
+            var ifContext = _contextFactory.CreateFreshContext(context);
+            var elseContext = _contextFactory.CreateFreshContext(context);
+            var thenContext = _contextFactory.CreateFreshContext(context);
 
             List<IJsonValidationContext> validContexts = new List<IJsonValidationContext>();
 

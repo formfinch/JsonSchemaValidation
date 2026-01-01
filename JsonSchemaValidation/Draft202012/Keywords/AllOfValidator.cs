@@ -22,7 +22,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             int idx = 0;
             foreach (var validator in _validators)
             {
-                var activeContext = _contextFactory.CopyContext(context);
+                var activeContext = _contextFactory.CreateFreshContext(context);
                 var schemaResult = validator.Validate(activeContext);
                 if (schemaResult != ValidationResult.Ok)
                 {

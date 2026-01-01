@@ -60,7 +60,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
 
             // Run validation with the current context (scope is shared)
-            var activeContext = _contextFactory.CopyContext(context);
+            var activeContext = _contextFactory.CreateFreshContext(context);
 
             // Push the resolved schema resource onto the scope
             bool pushedScope = false;

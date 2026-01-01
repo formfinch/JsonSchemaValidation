@@ -18,12 +18,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         public ValidationResult Validate(IJsonValidationContext context)
         {
             var result = new ValidationResult("Instance should fail to validate against the schema in 'not'.");
-            var activeContext = _contextFactory.CopyContext(context);
+            var activeContext = _contextFactory.CreateFreshContext(context);
 
             if (_validator.Validate(activeContext) != ValidationResult.Ok)
             {
                 result = ValidationResult.Ok;
-                _contextFactory.CopyAnnotations(activeContext, context);
+                // Note: annotations from 'not' subschema should NOT be propagated
+                // as the subschema by definition did not match
             }
             return result;
         }

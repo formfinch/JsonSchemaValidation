@@ -21,7 +21,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var contexts = new List<IJsonValidationContext>();
             foreach (var validator in _validators)
             {
-                var activeContext = _contextFactory.CopyContext(context);
+                var activeContext = _contextFactory.CreateFreshContext(context);
                 if (validator.Validate(activeContext) == ValidationResult.Ok)
                 {
                     contexts.Add(activeContext);

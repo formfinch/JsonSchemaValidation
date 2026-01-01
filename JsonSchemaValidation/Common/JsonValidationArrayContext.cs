@@ -26,7 +26,7 @@ namespace JsonSchemaValidation.Common
 
         public IEnumerable<JsonElement> GetUnevaluatedItems()
         {
-            if (!_current.ItemsEvaluated && !_current.AdditionalItemsEvaluated & !_current.UnevaluatedItemsEvaluated)
+            if (!_current.ItemsEvaluated && !_current.AdditionalItemsEvaluated && !_current.UnevaluatedItemsEvaluated)
             {
                 for (int idx = _current.EvaluatedIndex + 1; idx < this.Data.GetArrayLength(); idx++)
                 {
