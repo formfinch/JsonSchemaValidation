@@ -4,6 +4,7 @@ using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -14,7 +15,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public PatternPropertiesValidatorFactory(
-            ISchemaFactory schemaFactory, 
+            ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
@@ -44,7 +45,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidSchemaException("The value of patternProperties must be an object contain patterns of property names and their associated property schema.");
             }
 
-            Dictionary<string, ISchemaValidator> patternPropertySchemaValidators = new();
+            Dictionary<Regex, ISchemaValidator> patternPropertySchemaValidators = new();
             foreach (var propertyElement in patternPropertiesElement.EnumerateObject())
             {
                 var validator = CreateValidator(schemaData, propertyElement.Value);
@@ -52,7 +53,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 {
                     throw new InvalidSchemaException("Each property schema of the patternProperties object must be a valid JSON Schema.");
                 }
-                patternPropertySchemaValidators.Add(propertyElement.Name, validator);
+                var regex = EcmaScriptRegexHelper.CreateEcmaScriptRegex(propertyElement.Name);
+                patternPropertySchemaValidators.Add(regex, validator);
             }
 
             if(!patternPropertySchemaValidators.Any())

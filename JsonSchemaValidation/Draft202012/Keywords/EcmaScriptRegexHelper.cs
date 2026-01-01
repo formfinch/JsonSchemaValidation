@@ -1,0 +1,157 @@
+using System.Text.RegularExpressions;
+
+namespace JsonSchemaValidation.Draft202012.Keywords
+{
+    /// <summary>
+    /// Helper for creating ECMAScript-compatible regular expressions.
+    /// JSON Schema patterns follow ECMA 262 regex semantics where:
+    /// - \d, \D match ASCII digits only [0-9]
+    /// - \w, \W match ASCII word characters only [A-Za-z0-9_]
+    /// - \s, \S match ECMAScript whitespace (Unicode whitespace characters)
+    /// - \p{...} Unicode property escapes are supported (ES2018+)
+    /// </summary>
+    internal static class EcmaScriptRegexHelper
+    {
+        private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
+
+        // ECMAScript whitespace includes: space, tab, vertical tab, form feed,
+        // line terminators (LF, CR, LS, PS), and Unicode category Zs (space separators), plus BOM
+        // This pattern matches the ECMAScript definition of whitespace
+        private const string EcmaScriptWhitespaceClass = @"[\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]";
+        private const string EcmaScriptNonWhitespaceClass = @"[^\t\n\v\f\r \u00a0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000\ufeff]";
+
+        // Mapping from ECMAScript/Unicode long property names to .NET equivalents
+        private static readonly Dictionary<string, string> PropertyNameMapping = new(StringComparer.OrdinalIgnoreCase)
+        {
+            { "Letter", "L" },
+            { "digit", "Nd" },
+            { "Number", "N" },
+            { "Punctuation", "P" },
+            { "Symbol", "S" },
+            { "Mark", "M" },
+            { "Separator", "Z" },
+            { "Other", "C" },
+            { "Uppercase_Letter", "Lu" },
+            { "Lowercase_Letter", "Ll" },
+            { "Titlecase_Letter", "Lt" },
+            { "Modifier_Letter", "Lm" },
+            { "Other_Letter", "Lo" },
+        };
+
+        /// <summary>
+        /// Creates a Regex with ECMAScript-compatible behavior.
+        /// </summary>
+        public static Regex CreateEcmaScriptRegex(string pattern)
+        {
+            // Always transform the pattern to ensure ECMAScript-compatible behavior
+            string transformedPattern = TransformPattern(pattern);
+            return new Regex(transformedPattern, RegexOptions.None, DefaultTimeout);
+        }
+
+        /// <summary>
+        /// Transforms the pattern for ECMAScript compatibility:
+        /// - \d, \D → ASCII digit equivalents
+        /// - \w, \W → ASCII word char equivalents
+        /// - \s, \S → ECMAScript whitespace equivalents
+        /// - \p{name} → .NET compatible property names
+        /// </summary>
+        private static string TransformPattern(string pattern)
+        {
+            var result = new System.Text.StringBuilder();
+            int i = 0;
+
+            while (i < pattern.Length)
+            {
+                if (pattern[i] == '\\' && i + 1 < pattern.Length)
+                {
+                    // Count preceding backslashes to check if this one is escaped
+                    int precedingBackslashes = CountPrecedingBackslashes(result);
+
+                    // If even number of preceding backslashes, this is a real escape
+                    if (precedingBackslashes % 2 == 0)
+                    {
+                        char nextChar = pattern[i + 1];
+                        switch (nextChar)
+                        {
+                            case 'd':
+                                result.Append("[0-9]");
+                                i += 2;
+                                continue;
+                            case 'D':
+                                result.Append("[^0-9]");
+                                i += 2;
+                                continue;
+                            case 'w':
+                                result.Append("[A-Za-z0-9_]");
+                                i += 2;
+                                continue;
+                            case 'W':
+                                result.Append("[^A-Za-z0-9_]");
+                                i += 2;
+                                continue;
+                            case 's':
+                                result.Append(EcmaScriptWhitespaceClass);
+                                i += 2;
+                                continue;
+                            case 'S':
+                                result.Append(EcmaScriptNonWhitespaceClass);
+                                i += 2;
+                                continue;
+                            case 'p':
+                            case 'P':
+                                // Handle Unicode property escape \p{...} or \P{...}
+                                if (i + 2 < pattern.Length && pattern[i + 2] == '{')
+                                {
+                                    int closeBrace = pattern.IndexOf('}', i + 3);
+                                    if (closeBrace > 0)
+                                    {
+                                        string propertyName = pattern.Substring(i + 3, closeBrace - i - 3);
+                                        string mappedName = MapPropertyName(propertyName);
+                                        result.Append('\\');
+                                        result.Append(nextChar);
+                                        result.Append('{');
+                                        result.Append(mappedName);
+                                        result.Append('}');
+                                        i = closeBrace + 1;
+                                        continue;
+                                    }
+                                }
+                                break;
+                        }
+                    }
+                }
+
+                result.Append(pattern[i]);
+                i++;
+            }
+
+            return result.ToString();
+        }
+
+        /// <summary>
+        /// Counts trailing backslashes in the StringBuilder.
+        /// </summary>
+        private static int CountPrecedingBackslashes(System.Text.StringBuilder sb)
+        {
+            int count = 0;
+            for (int i = sb.Length - 1; i >= 0 && sb[i] == '\\'; i--)
+            {
+                count++;
+            }
+            return count;
+        }
+
+        /// <summary>
+        /// Maps Unicode property long names to .NET regex equivalents.
+        /// </summary>
+        private static string MapPropertyName(string propertyName)
+        {
+            if (PropertyNameMapping.TryGetValue(propertyName, out string? mapped))
+            {
+                return mapped;
+            }
+            // Return as-is if no mapping found (might be a valid .NET property name already)
+            return propertyName;
+        }
+    }
+}

@@ -8,10 +8,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class PatternPropertiesValidator : IKeywordValidator
     {
-        private readonly Dictionary<string, ISchemaValidator> _propertySchemaValidators;
+        private readonly Dictionary<Regex, ISchemaValidator> _propertySchemaValidators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
-        public PatternPropertiesValidator(Dictionary<string, ISchemaValidator> propertySchemaValidators, IJsonValidationContextFactory contextFactory)
+        public PatternPropertiesValidator(Dictionary<Regex, ISchemaValidator> propertySchemaValidators, IJsonValidationContextFactory contextFactory)
         {
             _propertySchemaValidators = propertySchemaValidators;
             _contextFactory = contextFactory;
@@ -25,16 +25,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Ok;
             }
 
-            foreach (string propertyNamePattern in _propertySchemaValidators.Keys)
+            foreach (var kvp in _propertySchemaValidators)
             {
-                var validator = _propertySchemaValidators[propertyNamePattern];
+                var rxPropertyName = kvp.Key;
+                var validator = kvp.Value;
                 if(validator == null)
                 {
-                    throw new InvalidOperationException(@"Validator not available for properties pattern: {propertyNamePattern}.");
+                    throw new InvalidOperationException(@"Validator not available for properties pattern.");
                 }
 
                 // get all properties matching with propertyNamePattern.
-                var rxPropertyName = new Regex(propertyNamePattern);
                 foreach(var prp in context.Data.EnumerateObject())
                 {
                     if (!rxPropertyName.IsMatch(prp.Name)) continue;

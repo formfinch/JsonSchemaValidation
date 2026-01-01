@@ -191,7 +191,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\bignum",
                 // @"\optional\cross-draft",                    // No cross-draft compatibility yet
                 @"\optional\dependencies-compatibility",
-                // @"\optional\ecmascript-regex",               // Regexes are not implemented with compatibility for Ecmascript in mind.
+                @"\optional\ecmascript-regex",                  // Regexes are not implemented with compatibility for Ecmascript in mind.
                 // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
                 @"\optional\format-assertion",                  // Requires vocabulary support
                 @"\optional\no-schema",
@@ -264,7 +264,10 @@ namespace JsonSchemaValidationTests.Draft202012
                 new ("validation of internationalized host names", "Arabic-Indic digits mixed with Extended Arabic-Indic digits"),
 
                 // conflicting tests in hostname and idn-hostname, for now no check on this
-                new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position")
+                new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position"),
+
+                // .NET regex accepts \a (bell character) but ECMAScript does not. Requires full ECMAScript regex syntax validation.
+                new (@"\a is not an ECMA 262 control escape", "*")
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

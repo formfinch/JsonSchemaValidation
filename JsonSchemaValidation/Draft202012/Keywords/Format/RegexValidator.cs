@@ -11,6 +11,24 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
         private const string keyword = "format:regex";
 
+        // Valid ECMAScript escape characters (after the backslash)
+        // Standard escapes: d, D, w, W, s, S, b, B, n, r, t, v, f, 0
+        // Control escapes: cA-cZ, ca-cz
+        // Hex/Unicode escapes: x, u
+        // Unicode property escapes: p, P
+        // Literal escapes for special regex chars: \, /, ^, $, ., *, +, ?, (, ), [, ], {, }, |
+        // Backreferences: 1-9
+        private static readonly HashSet<char> ValidEcmaScriptEscapes = new()
+        {
+            'd', 'D', 'w', 'W', 's', 'S', 'b', 'B',
+            'n', 'r', 't', 'v', 'f', '0',
+            'c', 'x', 'u', 'p', 'P',
+            '\\', '/', '^', '$', '.', '*', '+', '?',
+            '(', ')', '[', ']', '{', '}', '|',
+            '1', '2', '3', '4', '5', '6', '7', '8', '9',
+            '-' // Valid inside character classes
+        };
+
         public RegexValidator()
         {
         }
@@ -28,7 +46,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 return ValidationResult.Ok;
             }
 
-            if (IsValidRegex(instanceString))
+            if (IsValidEcmaScriptRegex(instanceString))
             {
                 return ValidationResult.Ok;
             }
@@ -36,8 +54,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return new ValidationResult(keyword);
         }
 
-        private bool IsValidRegex(string pattern)
+        private bool IsValidEcmaScriptRegex(string pattern)
         {
+            // First check for non-ECMAScript escape sequences
+            if (ContainsNonEcmaScriptEscapes(pattern))
+            {
+                return false;
+            }
+
+            // Then verify it's a valid regex
             try
             {
                 var regex = new Regex(pattern, RegexOptions.ECMAScript, defaultMatchTimeout);
@@ -47,6 +72,46 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return false;
             }
+        }
+
+        /// <summary>
+        /// Checks if the pattern contains escape sequences that are valid in .NET but not in ECMAScript.
+        /// Examples: \a (bell), \e (escape)
+        /// </summary>
+        private bool ContainsNonEcmaScriptEscapes(string pattern)
+        {
+            for (int i = 0; i < pattern.Length - 1; i++)
+            {
+                if (pattern[i] == '\\')
+                {
+                    // Count preceding backslashes to check if this one is escaped
+                    int precedingBackslashes = 0;
+                    for (int j = i - 1; j >= 0 && pattern[j] == '\\'; j--)
+                    {
+                        precedingBackslashes++;
+                    }
+
+                    // If odd number of preceding backslashes, this backslash is escaped
+                    if (precedingBackslashes % 2 == 1)
+                    {
+                        continue;
+                    }
+
+                    char nextChar = pattern[i + 1];
+
+                    // Check if it's a valid ECMAScript escape
+                    if (!ValidEcmaScriptEscapes.Contains(nextChar))
+                    {
+                        // Not a recognized ECMAScript escape - invalid
+                        return true;
+                    }
+
+                    // Skip the escape sequence
+                    i++;
+                }
+            }
+
+            return false;
         }
     }
 }

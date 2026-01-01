@@ -3,7 +3,6 @@ using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -36,7 +35,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidSchemaException("The value of this pattern must be a string.");
             }
 
-            Regex rxPattern = new(pattern);
+            var rxPattern = EcmaScriptRegexHelper.CreateEcmaScriptRegex(pattern);
             return new PatternValidator(rxPattern);
         }
     }

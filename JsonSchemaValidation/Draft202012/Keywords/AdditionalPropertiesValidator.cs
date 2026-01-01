@@ -37,7 +37,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             IEnumerable<Regex> propertyNamePatternMatchers = Array.Empty<Regex>();
             if (_filterPropertyNamePatterns.Any())
             {
-                propertyNamePatternMatchers = _filterPropertyNamePatterns.Select(pattern => new Regex(pattern));
+                propertyNamePatternMatchers = _filterPropertyNamePatterns.Select(pattern => EcmaScriptRegexHelper.CreateEcmaScriptRegex(pattern));
             }
 
             foreach (var prp in context.Data.EnumerateObject())
