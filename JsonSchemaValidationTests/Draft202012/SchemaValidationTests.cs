@@ -191,7 +191,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\bignum",
                 // @"\optional\cross-draft",                    // No cross-draft compatibility yet
                 @"\optional\dependencies-compatibility",
-                // @"\optional\float-overflow",                 // Dont know how to handle the test case 1e308
+                @"\optional\float-overflow",
                 @"\optional\format-assertion",                  // Requires vocabulary support
                 @"\optional\no-schema",
                 // @"\optional\non-bmp-regex",                  // Fails but low priority to fix
