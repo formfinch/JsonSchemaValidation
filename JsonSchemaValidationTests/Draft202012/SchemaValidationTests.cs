@@ -231,40 +231,7 @@ namespace JsonSchemaValidationTests.Draft202012
         {
             var disabledTests = new Tuple<string, string>[]
             {
-                // Test is not valid or disabled because:
-
-                // leap seconds are not supported in date-time format validation
-                new ("validation of date-time strings", "a valid date-time with a leap second, UTC"),
-                new ("validation of date-time strings", "a valid date-time with a leap second, with minus offset"),
-
-                // leap seconds are not supported in time format validation
-                new ("validation of time strings", "a valid time string with leap second, Zulu"),
-                new ("validation of time strings", "valid leap second, zero time-offset"),
-                new ("validation of time strings", "valid leap second, positive time-offset"),
-                new ("validation of time strings", "valid leap second, negative time-offset"),
-                new ("validation of time strings", "valid leap second, large positive time-offset"),
-                new ("validation of time strings", "valid leap second, large negative time-offset"),
-
-                // check for invalid unicode characters or contextual rules in idn-hostname is beyond scope
-                new ("validation of internationalized host names", "contains illegal char U+302E Hangul single dot tone mark"),
-                new ("validation of internationalized host names", "Exceptions that are DISALLOWED, right-to-left chars"),
-                new ("validation of internationalized host names", "Exceptions that are DISALLOWED, left-to-right chars"),
-                new ("validation of internationalized host names", "MIDDLE DOT with no preceding 'l'"),
-                new ("validation of internationalized host names", "MIDDLE DOT with nothing preceding"),
-                new ("validation of internationalized host names", "MIDDLE DOT with no following 'l'"),
-                new ("validation of internationalized host names", "MIDDLE DOT with nothing following"),
-                new ("validation of internationalized host names", "Greek KERAIA not followed by Greek"),
-                new ("validation of internationalized host names", "Greek KERAIA not followed by anything"),
-                new ("validation of internationalized host names", "Hebrew GERESH not preceded by Hebrew"),
-                new ("validation of internationalized host names", "Hebrew GERESH not preceded by anything"),
-                new ("validation of internationalized host names", "Hebrew GERSHAYIM not preceded by Hebrew"),
-                new ("validation of internationalized host names", "Hebrew GERSHAYIM not preceded by anything"),
-                new ("validation of internationalized host names", "KATAKANA MIDDLE DOT with no Hiragana, Katakana, or Han"),
-                new ("validation of internationalized host names", "KATAKANA MIDDLE DOT with no other characters"),
-                new ("validation of internationalized host names", "Arabic-Indic digits mixed with Extended Arabic-Indic digits"),
-
-                // conflicting tests in hostname and idn-hostname, for now no check on this
-                new ("validation of internationalized host names", "U-label contains \"--\" in the 3rd and 4th position")
+                // No tests are currently disabled
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

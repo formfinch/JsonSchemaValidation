@@ -1,10 +1,6 @@
-﻿// todo: DateTime should split on [tT] separator into Date and Time components. 
-// These two components should be validated by Date and Time validation that is shared with DateValidator and TimeValidator.
-// Goal is to keep regex for DateTime and separate components consistent and defined in one single spot.
-using JsonSchemaValidation.Abstractions;
+﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Validation;
-using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -15,59 +11,67 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private const string keyword = "format:datetime";
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
-        // Regex for basic ISO 8601 structure validation
-        private static readonly string iso8601BasicPattern = @"^\d{4}-\d{2}-\d{2}[tT]\d{2}:\d{2}:\d{2}(\.\d+)?([zZ]|[+-]\d{2}:\d{2})?$";
-
-        private readonly Regex dateTimeRegex;
-
-        public DateTimeValidator()
-        {
-            var options = RegexOptions.None;
-            dateTimeRegex = new Regex(iso8601BasicPattern, options, defaultMatchTimeout);
-        }
+        // RFC 3339 date-time: YYYY-MM-DDThh:mm:ss[.frac](Z|±hh:mm) - ASCII digits only
+        private static readonly Regex dateTimeRegex = new Regex(
+            @"^([0-9]{4})-([0-9]{2})-([0-9]{2})[tT]([0-9]{2}):([0-9]{2}):([0-5][0-9]|60)(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))$",
+            RegexOptions.None, defaultMatchTimeout);
 
         public ValidationResult Validate(IJsonValidationContext context)
         {
             if (context.Data.ValueKind != JsonValueKind.String)
-            {
-                // If the instance is not a string, it's considered valid with respect to the format keyword
                 return ValidationResult.Ok;
-            }
 
-            var instanceString = context.Data.GetString();
-            if (instanceString == null)
+            var dt = context.Data.GetString();
+            if (dt == null)
+                return new ValidationResult(keyword);
+
+            var match = dateTimeRegex.Match(dt);
+            if (!match.Success)
+                return new ValidationResult(keyword);
+
+            int year = int.Parse(match.Groups[1].ValueSpan);
+            int month = int.Parse(match.Groups[2].ValueSpan);
+            int day = int.Parse(match.Groups[3].ValueSpan);
+            int hour = int.Parse(match.Groups[4].ValueSpan);
+            int minute = int.Parse(match.Groups[5].ValueSpan);
+            int second = int.Parse(match.Groups[6].ValueSpan);
+
+            // Validate date
+            if (month < 1 || month > 12 || day < 1 || day > DateTime.DaysInMonth(year, month))
+                return new ValidationResult(keyword);
+
+            // Validate offset range if numeric
+            if (match.Groups[9].Success)
             {
-                return ValidationResult.Ok; // This is a fallback; ideally, a JSON string should not be null.
+                int offsetHours = int.Parse(match.Groups[10].ValueSpan);
+                int offsetMinutes = int.Parse(match.Groups[11].ValueSpan);
+                if (offsetHours > 23 || offsetMinutes > 59)
+                    return new ValidationResult(keyword);
             }
 
-            if (IsValidDateTime(instanceString))
-            {
-                return ValidationResult.Ok;
-            }
+            // Leap second validation (only when seconds == 60)
+            if (second == 60 && !IsValidLeapSecond(hour, minute, match))
+                return new ValidationResult(keyword);
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Ok;
         }
 
-        private bool IsValidDateTime(string dateTime)
+        private static bool IsValidLeapSecond(int hour, int minute, Match match)
         {
-            try
-            {
-                if(!dateTimeRegex.IsMatch(dateTime))
-                {
-                    return false;
-                }
+            // Leap second only valid at 23:59:60 UTC
+            if (!match.Groups[9].Success) // Zulu time
+                return hour == 23 && minute == 59;
 
-                if (!DateTimeOffset.TryParse(dateTime, CultureInfo.CurrentCulture, DateTimeStyles.AssumeUniversal, out _))
-                {
-                    return false;
-                }
+            int offsetHours = int.Parse(match.Groups[10].ValueSpan);
+            int offsetMinutes = int.Parse(match.Groups[11].ValueSpan);
 
-                return true;
-            }
-            catch
-            {
-                return false;
-            }
+            int localMinutes = hour * 60 + minute;
+            int offsetTotalMinutes = offsetHours * 60 + offsetMinutes;
+            int utcMinutes = match.Groups[9].Value == "+"
+                ? localMinutes - offsetTotalMinutes
+                : localMinutes + offsetTotalMinutes;
+
+            return ((utcMinutes % 1440) + 1440) % 1440 == 23 * 60 + 59;
         }
     }
 }
