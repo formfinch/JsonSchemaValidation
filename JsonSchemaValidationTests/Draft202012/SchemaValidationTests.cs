@@ -194,7 +194,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"\optional\float-overflow",
                 @"\optional\format-assertion",                  // Requires vocabulary support
                 @"\optional\no-schema",
-                // @"\optional\non-bmp-regex",                  // Fails but low priority to fix
+                @"\optional\non-bmp-regex",
                 @"\optional\refOfUnknownKeyword"
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
 

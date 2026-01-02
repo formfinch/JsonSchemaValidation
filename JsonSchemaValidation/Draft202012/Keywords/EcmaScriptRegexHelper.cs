@@ -54,6 +54,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         /// - \w, \W → ASCII word char equivalents
         /// - \s, \S → ECMAScript whitespace equivalents
         /// - \p{name} → .NET compatible property names
+        /// - Non-BMP characters → grouped surrogate pairs for proper quantifier handling
         /// </summary>
         private static string TransformPattern(string pattern)
         {
@@ -62,6 +63,33 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             while (i < pattern.Length)
             {
+                // Handle surrogate pairs (non-BMP characters like emojis)
+                // These need to be grouped so quantifiers apply to the whole character
+                if (char.IsHighSurrogate(pattern[i]) && i + 1 < pattern.Length && char.IsLowSurrogate(pattern[i + 1]))
+                {
+                    char high = pattern[i];
+                    char low = pattern[i + 1];
+
+                    // Check if followed by a quantifier
+                    bool hasQuantifier = i + 2 < pattern.Length && IsQuantifier(pattern[i + 2]);
+
+                    if (hasQuantifier)
+                    {
+                        // Wrap in non-capturing group so quantifier applies to whole character
+                        result.Append("(?:");
+                        result.Append($"\\u{(int)high:X4}\\u{(int)low:X4}");
+                        result.Append(')');
+                    }
+                    else
+                    {
+                        // No quantifier, just output the surrogate pair as escape sequences
+                        // This ensures consistent handling
+                        result.Append($"\\u{(int)high:X4}\\u{(int)low:X4}");
+                    }
+                    i += 2;
+                    continue;
+                }
+
                 if (pattern[i] == '\\' && i + 1 < pattern.Length)
                 {
                     // Count preceding backslashes to check if this one is escaped
@@ -126,6 +154,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             return result.ToString();
+        }
+
+        /// <summary>
+        /// Checks if a character is a regex quantifier.
+        /// </summary>
+        private static bool IsQuantifier(char c)
+        {
+            return c == '*' || c == '+' || c == '?' || c == '{';
         }
 
         /// <summary>
