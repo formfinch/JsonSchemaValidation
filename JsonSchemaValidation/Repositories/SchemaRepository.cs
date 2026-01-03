@@ -12,7 +12,7 @@ namespace JsonSchemaValidation.Repositories
     public class SchemaRepository : ISchemaRepository
     {
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
-        private IEnumerable<SchemaMetadata> _sortedSchemas = null;
+        private IEnumerable<SchemaMetadata>? _sortedSchemas;
         private readonly SchemaValidationOptions _options;
         private readonly VocabularyParser? _vocabularyParser;
 
@@ -325,6 +325,11 @@ namespace JsonSchemaValidation.Repositories
         {
             result = null;
             if (string.IsNullOrWhiteSpace(dynamicAnchor) || !dynamicAnchor.StartsWith("#"))
+            {
+                return false;
+            }
+
+            if (_sortedSchemas == null)
             {
                 return false;
             }

@@ -2,7 +2,7 @@
 
 namespace JsonSchemaValidation.Repositories
 {
-    public class SchemaRepositoryHelpers
+    public static class SchemaRepositoryHelpers
     {
         public static Uri GenerateRandomSchemaId()
         {
