@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Globalization;
 using System.Text.Json;
@@ -8,36 +9,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class MinLengthValidator : IKeywordValidator
     {
-        private const string keyword = "minLength";
-        private readonly int minLength;
+        private readonly int _minLength;
+
+        public string Keyword => "minLength";
 
         public MinLengthValidator(int minLength)
         {
-            this.minLength = minLength;
+            _minLength = minLength;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
                 // If the instance is not a string, it's considered valid with respect to the minLength keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok;  // This is a fallback; ideally, a JSON string should not be null.
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             StringInfo stringInfo = new(instanceString);
             int actualLength = stringInfo.LengthInTextElements;
-            if (actualLength >= minLength)
+            if (actualLength >= _minLength)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length {actualLength} is less than minimum length of {_minLength}");
         }
     }
 }

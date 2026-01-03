@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -7,21 +8,23 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class TypeArrayValidator : IKeywordValidator
     {
-        private ValidationResult validationFailed = new("Expected an array");
+        public string Keyword => "type";
 
         public TypeArrayValidator()
         {
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Array)
             {
-                return validationFailed;
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected an array");
             }
 
-            return ValidationResult.Ok;
+            return ValidationResult.Valid(instanceLocation, kwLocation);
         }
     }
 }
-

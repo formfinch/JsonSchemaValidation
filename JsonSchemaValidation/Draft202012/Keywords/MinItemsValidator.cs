@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -7,28 +8,33 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class MinItemsValidator : IKeywordValidator
     {
-        private const string keyword = "minItems";
-        private readonly int minItems;
+        private readonly int _minItems;
+
+        public string Keyword => "minItems";
 
         public MinItemsValidator(int minItems)
         {
-            this.minItems = minItems;
+            _minItems = minItems;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the minItems keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            if(context.Data.GetArrayLength() >= minItems)
+            int arrayLength = context.Data.GetArrayLength();
+            if (arrayLength >= _minItems)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array has {arrayLength} items, which is less than the minimum of {_minItems}");
         }
     }
 }

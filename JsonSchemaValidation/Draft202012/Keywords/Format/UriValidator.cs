@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -7,43 +8,51 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
     internal class UriValidator : IKeywordValidator
     {
-        private readonly string keyword;
+        private readonly string _formatName;
         private readonly UriValidationLogic uriValidation;
+
+        public string Keyword => "format";
 
         public UriValidator(bool iriSupport = false, bool canBeRelative = false, bool isTemplate = false)
         {
             if (isTemplate)
             {
-                keyword = "uri-template";
+                _formatName = "uri-template";
             }
             else
             {
                 var uriOrIri = iriSupport ? "iri" : "uri";
                 var suffix = canBeRelative ? "-relative" : string.Empty;
-                keyword = $"format:{uriOrIri}{suffix}";
+                _formatName = $"{uriOrIri}{suffix}";
             }
             uriValidation = new UriValidationLogic(iriSupport, canBeRelative, isTemplate);
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if (uriValidation.IsValidUri(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = _formatName }
+                };
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
         }
     }
 }

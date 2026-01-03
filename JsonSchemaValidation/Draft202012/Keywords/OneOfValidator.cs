@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -7,7 +8,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class OneOfValidator : IKeywordValidator
     {
         private readonly IEnumerable<ISchemaValidator> _validators;
-        private IJsonValidationContextFactory _contextFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
+
+        public string Keyword => "oneOf";
 
         public OneOfValidator(IEnumerable<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
         {
@@ -15,34 +18,49 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult("Instance failed to validate against exactly one of the schemas in 'oneOf'.");
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             int nOk = 0;
-            List<IJsonValidationContext> contexts = new();
+            var validContexts = new List<IJsonValidationContext>();
+            var children = new List<ValidationResult>();
+
+            int index = 0;
             foreach (var validator in _validators)
             {
                 var activeContext = _contextFactory.CreateFreshContext(context);
-                if (validator.Validate(activeContext) == ValidationResult.Ok)
+                var childKeywordPath = keywordLocation.Append(index.ToString());
+                var childResult = validator.Validate(activeContext, childKeywordPath);
+                children.Add(childResult);
+
+                if (childResult.IsValid)
                 {
-                    contexts.Add(activeContext);
+                    validContexts.Add(activeContext);
                     nOk++;
                     if (nOk > 1)
                     {
-                        break;
+                        // Don't break early - collect all results for better error reporting
                     }
                 }
+                index++;
             }
+
             if (nOk == 1)
             {
-                result = ValidationResult.Ok;
-                foreach (var activeContext in contexts)
+                foreach (var activeContext in validContexts)
                 {
                     _contextFactory.CopyAnnotations(activeContext, context);
                 }
+                return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children };
             }
-            return result;
 
+            string errorMsg = nOk == 0
+                ? "Instance did not validate against any of the schemas in 'oneOf'"
+                : $"Instance validated against {nOk} schemas in 'oneOf', but must match exactly one";
+
+            return ValidationResult.Invalid(instanceLocation, kwLocation, errorMsg) with { Children = children };
         }
     }
 }

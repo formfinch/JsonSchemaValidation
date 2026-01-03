@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 
 namespace JsonSchemaValidation.Validation
 {
@@ -12,22 +13,24 @@ namespace JsonSchemaValidation.Validation
             _keywordValidators.Add(keywordValidator);
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            ValidationResult result = new ();
+            var children = new List<ValidationResult>();
 
             foreach (var validator in _keywordValidators)
             {
-                var validatorResult = validator.Validate(context);
-                result.Merge(validatorResult);
+                // Each keyword validator gets its own keyword path: parent + keyword name
+                var keywordPath = keywordLocation.Append(validator.Keyword);
+                var validatorResult = validator.Validate(context, keywordPath);
+                children.Add(validatorResult);
             }
 
-            if (!result.IsValid)
-            {
-                return result;
-            }
-
-            return ValidationResult.Ok;
+            // Aggregate all keyword results
+            return ValidationResult.Aggregate(
+                context.InstanceLocation.ToString(),
+                keywordLocation.ToString(),
+                children
+            );
         }
     }
 }

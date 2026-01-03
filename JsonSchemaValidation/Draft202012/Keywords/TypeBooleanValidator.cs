@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -7,22 +8,24 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class TypeBooleanValidator : IKeywordValidator
     {
-        private ValidationResult validationFailed = new("Expected a boolean value");
+        public string Keyword => "type";
 
         public TypeBooleanValidator()
         {
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.False
                 && context.Data.ValueKind != JsonValueKind.True)
             {
-                return validationFailed;
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected a boolean value");
             }
 
-            return ValidationResult.Ok;
+            return ValidationResult.Valid(instanceLocation, kwLocation);
         }
     }
 }
-

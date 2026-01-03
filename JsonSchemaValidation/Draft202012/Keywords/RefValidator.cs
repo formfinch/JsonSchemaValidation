@@ -35,20 +35,25 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         // Maximum recursion depth to prevent stack overflow from infinite loops
         private const int MaxRecursionDepth = 100;
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public string Keyword => "$ref";
+
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             // Resolve the $ref
             var resolvedSchema = ResolveRef();
 
             if (resolvedSchema == null)
             {
-                return new ValidationResult($"Failed to resolve $ref: {_ref}");
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Failed to resolve $ref: {_ref}");
             }
 
             // Guard against infinite recursion by checking scope depth
             if (context.Scope.Depth > MaxRecursionDepth)
             {
-                return new ValidationResult($"Maximum reference depth exceeded for $ref: {_ref}");
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Maximum reference depth exceeded for $ref: {_ref}");
             }
 
             // Create a validator for the resolved schema
@@ -72,11 +77,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             try
             {
-                var result = validator.Validate(activeContext);
+                // When following $ref, the keyword path resets to the referenced schema's root
+                var result = validator.Validate(activeContext, JsonPointer.Empty);
 
-                if (result == ValidationResult.Ok)
+                if (result.IsValid)
                 {
                     _contextFactory.CopyAnnotations(activeContext, context);
+                }
+
+                // Set absolute keyword location to the referenced schema's URI
+                if (resolvedSchema.SchemaUri != null)
+                {
+                    return new ValidationResult(result, resolvedSchema.SchemaUri);
                 }
 
                 return result;

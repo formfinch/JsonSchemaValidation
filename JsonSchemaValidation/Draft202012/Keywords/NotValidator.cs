@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -9,24 +10,30 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ISchemaValidator _validator;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        public string Keyword => "not";
+
         public NotValidator(ISchemaValidator validator, IJsonValidationContextFactory contextFactory)
         {
             _validator = validator;
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult("Instance should fail to validate against the schema in 'not'.");
-            var activeContext = _contextFactory.CreateFreshContext(context);
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
 
-            if (_validator.Validate(activeContext) != ValidationResult.Ok)
+            var activeContext = _contextFactory.CreateFreshContext(context);
+            var childResult = _validator.Validate(activeContext, keywordLocation);
+
+            if (!childResult.IsValid)
             {
-                result = ValidationResult.Ok;
                 // Note: annotations from 'not' subschema should NOT be propagated
                 // as the subschema by definition did not match
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
-            return result;
+
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Instance should fail to validate against the schema in 'not'");
         }
     }
 }

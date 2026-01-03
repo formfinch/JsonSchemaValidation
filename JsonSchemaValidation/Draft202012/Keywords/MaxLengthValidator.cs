@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Globalization;
 using System.Text.Json;
@@ -8,36 +9,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class MaxLengthValidator : IKeywordValidator
     {
-        private const string keyword = "maxLength";
-        private readonly int maxLength;
+        private readonly int _maxLength;
+
+        public string Keyword => "maxLength";
 
         public MaxLengthValidator(int maxLength)
         {
-            this.maxLength = maxLength;
+            _maxLength = maxLength;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
                 // If the instance is not a string, it's considered valid with respect to the maxLength keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok;  // This is a fallback; ideally, a JSON string should not be null.
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             StringInfo stringInfo = new(instanceString);
             int actualLength = stringInfo.LengthInTextElements;
-            if (actualLength <= maxLength)
+            if (actualLength <= _maxLength)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length {actualLength} exceeds maximum length of {_maxLength}");
         }
     }
 }

@@ -1,5 +1,6 @@
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -13,16 +14,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly string _encoding;
 
+        public string Keyword => "contentEncoding";
+
         public ContentEncodingValidator(string encoding)
         {
             _encoding = encoding;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult();
-            result.SetAnnotation("contentEncoding", _encoding);
-            return result;
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Annotations = new Dictionary<string, object?> { ["contentEncoding"] = _encoding }
+            };
         }
     }
 }

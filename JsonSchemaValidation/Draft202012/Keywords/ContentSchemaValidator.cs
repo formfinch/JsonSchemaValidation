@@ -1,6 +1,7 @@
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -14,16 +15,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly JsonElement _schema;
 
+        public string Keyword => "contentSchema";
+
         public ContentSchemaValidator(JsonElement schema)
         {
             _schema = schema;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult();
-            result.SetAnnotation("contentSchema", _schema);
-            return result;
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Annotations = new Dictionary<string, object?> { ["contentSchema"] = _schema }
+            };
         }
     }
 }

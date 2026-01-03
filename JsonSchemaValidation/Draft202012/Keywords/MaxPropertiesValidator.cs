@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -7,29 +8,33 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class MaxPropertiesValidator : IKeywordValidator
     {
-        private const string keyword = "maxProperties";
-        private readonly int maxProperties;
+        private readonly int _maxProperties;
+
+        public string Keyword => "maxProperties";
 
         public MaxPropertiesValidator(int maxProperties)
         {
-            this.maxProperties = maxProperties;
+            _maxProperties = maxProperties;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Object)
             {
                 // If the instance is not an object, it's considered valid with respect to the maxProperties keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             int numProperties = context.Data.EnumerateObject().Count();
-            if (numProperties <= maxProperties)
+            if (numProperties <= _maxProperties)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object has {numProperties} properties, which exceeds the maximum of {_maxProperties}");
         }
     }
 }

@@ -26,6 +26,12 @@ namespace JsonSchemaValidation.Common
             InitializeUnevaluatedProperties(data);
         }
 
+        public JsonValidationObjectContext(JsonElement data, IValidationScope scope, JsonPointer instanceLocation)
+            : base(data, scope, instanceLocation)
+        {
+            InitializeUnevaluatedProperties(data);
+        }
+
         private void InitializeUnevaluatedProperties(JsonElement data)
         {
             if (Data.ValueKind == JsonValueKind.Object)

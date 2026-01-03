@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -9,43 +10,56 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly IDictionary<string, ISchemaValidator> _dependentSchemasProperties;
 
+        public string Keyword => "dependentSchemas";
 
         public DependentSchemasValidator(IDictionary<string, ISchemaValidator> dependentSchemasProperties)
         {
             _dependentSchemasProperties = dependentSchemasProperties;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Object)
             {
-                // If the instance is not an object, it's considered valid with respect to the dependentRequired keyword
-                return ValidationResult.Ok;
+                // If the instance is not an object, it's considered valid with respect to the dependentSchemas keyword
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             HashSet<string> propertyNames = new();
-            foreach(var prpElement in context.Data.EnumerateObject())
+            foreach (var prpElement in context.Data.EnumerateObject())
             {
                 propertyNames.Add(prpElement.Name);
             }
 
-            ValidationResult result = new();
+            var children = new List<ValidationResult>();
+            var failedProperties = new List<string>();
+
             foreach (var dependency in _dependentSchemasProperties)
             {
-                if(propertyNames.Contains(dependency.Key))
+                if (propertyNames.Contains(dependency.Key))
                 {
                     var validator = dependency.Value;
-                    var validationResult = validator.Validate(context);
-                    result.Merge(validationResult);
+                    var childKeywordPath = keywordLocation.Append(dependency.Key);
+                    var validationResult = validator.Validate(context, childKeywordPath);
+                    children.Add(validationResult);
+
+                    if (!validationResult.IsValid)
+                    {
+                        failedProperties.Add(dependency.Key);
+                    }
                 }
             }
 
-            if(!result.IsValid)
+            if (failedProperties.Count > 0)
             {
-                return result;
+                var props = string.Join(", ", failedProperties.Select(p => $"'{p}'"));
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Dependent schema validation failed for properties: {props}") with { Children = children };
             }
 
-            return ValidationResult.Ok;
+            return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children.Count > 0 ? children : null };
         }
     }
 }

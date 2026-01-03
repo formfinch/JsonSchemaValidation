@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -8,7 +9,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
     internal class DurationValidator : IKeywordValidator
     {
-        private const string keyword = "format:duration";
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
         // Capturing Regex for ISO 8601 duration format validation with named groups
@@ -18,32 +18,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         private readonly Regex durationRegex;
 
+        public string Keyword => "format";
+
         public DurationValidator()
         {
             var options = RegexOptions.None;
             durationRegex = new Regex(iso8601DurationPattern, options, defaultMatchTimeout);
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
                 // If the instance is not a string, it's considered valid with respect to the format keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok; // This is a fallback; ideally, a JSON string should not be null.
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if (IsValidDuration(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = "duration" }
+                };
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid duration");
         }
 
         private bool IsValidDuration(string duration)
@@ -59,19 +67,19 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             bool hasTimeComponent = match.Groups["hours"].Success || match.Groups["minutes"].Success || match.Groups["seconds"].Success;
             bool hasWeeksComponent = match.Groups["weeks"].Success;
 
-            if(!hasDateComponent && !hasTimeComponent && !hasWeeksComponent)
+            if (!hasDateComponent && !hasTimeComponent && !hasWeeksComponent)
             {
                 // Must at least have one component
                 return false;
             }
 
-            if(duration.Contains('T') && !hasTimeComponent)
+            if (duration.Contains('T') && !hasTimeComponent)
             {
                 // Empty time components are not allowed
                 return false;
             }
 
-            if(hasWeeksComponent && (hasDateComponent || hasTimeComponent))
+            if (hasWeeksComponent && (hasDateComponent || hasTimeComponent))
             {
                 // Weeks cannot be combined with other components
                 return false;

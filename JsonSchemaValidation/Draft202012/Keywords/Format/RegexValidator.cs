@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -9,7 +10,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
     internal class RegexValidator : IKeywordValidator
     {
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-        private const string keyword = "format:regex";
 
         // Valid ECMAScript escape characters (after the backslash)
         // Standard escapes: d, D, w, W, s, S, b, B, n, r, t, v, f, 0
@@ -29,29 +29,37 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             '-' // Valid inside character classes
         };
 
+        public string Keyword => "format";
+
         public RegexValidator()
         {
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if (IsValidEcmaScriptRegex(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = "regex" }
+                };
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid regex");
         }
 
         private bool IsValidEcmaScriptRegex(string pattern)

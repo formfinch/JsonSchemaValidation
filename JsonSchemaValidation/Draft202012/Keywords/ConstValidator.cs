@@ -8,23 +8,27 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class ConstValidator : IKeywordValidator
     {
-        private const string keyword = "const";
         private readonly JsonElement _expectedValue;
         private static readonly JsonElementComparison _comparison = new();
+
+        public string Keyword => "const";
 
         public ConstValidator(JsonElement expectedValue)
         {
             _expectedValue = expectedValue;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (_comparison.DeepEquals(_expectedValue, context.Data))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
-            return new ValidationResult(keyword);
+
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value must equal the const value");
         }
     }
-
 }

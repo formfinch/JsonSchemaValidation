@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Numerics;
 using System.Text.Json;
@@ -8,30 +9,33 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class TypeIntegerValidator : IKeywordValidator
     {
-        private ValidationResult validationFailed = new("Expected an integer value");
+        public string Keyword => "type";
 
         public TypeIntegerValidator()
         {
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Number)
             {
-                return validationFailed;
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected an integer value");
             }
 
             if (context.Data.TryGetDecimal(out decimal value))
             {
                 if (value == decimal.Truncate(value))
                 {
-                    return ValidationResult.Ok;
+                    return ValidationResult.Valid(instanceLocation, kwLocation);
                 }
             }
 
             if (BigInteger.TryParse(context.Data.ToString(), out _))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             // Handle very large numbers that can't fit in decimal or BigInteger parse
@@ -42,12 +46,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 if (!double.IsInfinity(doubleValue) && !double.IsNaN(doubleValue)
                     && doubleValue == Math.Floor(doubleValue))
                 {
-                    return ValidationResult.Ok;
+                    return ValidationResult.Valid(instanceLocation, kwLocation);
                 }
             }
 
-            return validationFailed;
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected an integer value");
         }
     }
 }
-

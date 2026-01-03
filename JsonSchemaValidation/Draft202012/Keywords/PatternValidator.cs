@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -8,34 +9,38 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class PatternValidator : IKeywordValidator
     {
-        private const string keyword = "pattern";
         private readonly Regex _rxPattern;
+
+        public string Keyword => "pattern";
 
         public PatternValidator(Regex patternMatcher)
         {
             _rxPattern = patternMatcher;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
                 // If the instance is not a string, it's considered valid with respect to the pattern keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok;  // This is a fallback; ideally, a JSON string should not be null.
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if(_rxPattern.IsMatch(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "String does not match the required pattern");
         }
     }
 }

@@ -8,26 +8,30 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class EnumValidator : IKeywordValidator
     {
-        private const string keyword = "enum";
         private readonly JsonElement _enumValuesElement;
         private static readonly JsonElementComparison _comparison = new();
+
+        public string Keyword => "enum";
 
         public EnumValidator(JsonElement enumValuesElement)
         {
             _enumValuesElement = enumValuesElement;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            foreach(var value in _enumValuesElement.EnumerateArray())
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            foreach (var value in _enumValuesElement.EnumerateArray())
             {
                 if (_comparison.DeepEquals(value, context.Data))
                 {
-                    return ValidationResult.Ok;
+                    return ValidationResult.Valid(instanceLocation, kwLocation);
                 }
             }
-            return new ValidationResult(keyword);
+
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value must be one of the enumerated values");
         }
     }
-
 }

@@ -1,4 +1,5 @@
 ﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
@@ -116,7 +117,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 var testData = test.GetProperty("data");
                 var expectedResult = test.GetProperty("valid").GetBoolean();
                 var context = jsonValidationContextFactory.CreateContextForRoot(testData);
-                var validationResult = schemaValidator.Validate(context);
+                var validationResult = schemaValidator.ValidateRoot(context);
 
                 if (!System.Diagnostics.Debugger.IsAttached)
                 {

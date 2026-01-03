@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Globalization;
 using System.Text.Json;
@@ -17,34 +18,39 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         private readonly Regex hostnameRegex;
         private readonly bool performIDNConversion;
-        private readonly string keyword;
+        private readonly string _formatName;
+
+        public string Keyword => "format";
 
         public HostnameValidator(bool isIDNFormat = false)
         {
             var options = RegexOptions.IgnoreCase; // Hostnames are case-insensitive
             hostnameRegex = new Regex(asciiHostnamePattern, options, defaultMatchTimeout);
             performIDNConversion = isIDNFormat;
-            keyword = isIDNFormat ? "format:idn-hostname" : "format:hostname";
+            _formatName = isIDNFormat ? "idn-hostname" : "hostname";
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (string.IsNullOrEmpty(instanceString))
             {
-                return new ValidationResult(keyword);
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
             }
 
             // For plain hostname format, reject IDN label separators (U+FF0E, U+3002, U+FF61)
             // For idn-hostname, these are valid and will be converted to '.' by IdnMapping
             if (!performIDNConversion && instanceString.Any(c => c == '\uFF0E' || c == '\u3002' || c == '\uFF61'))
             {
-                return new ValidationResult(keyword);
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
             }
 
             if (performIDNConversion)
@@ -52,7 +58,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 // Validate contextual rules before IDN conversion (RFC 5892)
                 if (!ValidateIdnContextualRules(instanceString))
                 {
-                    return new ValidationResult(keyword);
+                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
                 }
 
                 // Attempt to convert possible IDN to ASCII
@@ -63,7 +69,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 catch (ArgumentException)
                 {
                     // If conversion fails, the hostname is invalid
-                    return new ValidationResult(keyword);
+                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
                 }
             }
             else
@@ -71,16 +77,19 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 // For plain hostname format, validate A-labels by decoding them
                 if (!ValidateALabels(instanceString))
                 {
-                    return new ValidationResult(keyword);
+                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
                 }
             }
 
             if (IsValidHostname(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = _formatName }
+                };
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
         }
 
         private bool IsValidHostname(string hostname)
