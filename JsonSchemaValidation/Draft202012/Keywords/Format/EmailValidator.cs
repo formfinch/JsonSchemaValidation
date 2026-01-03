@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Net;
 using System.Text.Json;
@@ -9,13 +10,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
     internal class EmailValidator : IKeywordValidator
     {
-        private const string keyword = "format:email";
-
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
         // Regex for email parts recognition
         private static readonly string basicStructure = @"^.+@.+$";
-        private static readonly string localPart = @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$";
+        private static readonly string localPartPattern = @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$";
 
         private static readonly string quotedLocalPart = @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$";
         private static readonly string domainPart = @"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$";
@@ -25,35 +24,43 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private readonly Regex quotedLocalPartRegex;
         private readonly Regex domainPartRegex;
 
+        public string Keyword => "format";
+
         public EmailValidator()
         {
             var options = RegexOptions.None;
             basicStructureRegex = new Regex(basicStructure, options, defaultMatchTimeout);
-            localPartRegex = new Regex(localPart, options, defaultMatchTimeout);
+            localPartRegex = new Regex(localPartPattern, options, defaultMatchTimeout);
             quotedLocalPartRegex = new Regex(quotedLocalPart, options, defaultMatchTimeout);
             domainPartRegex = new Regex(domainPart, options, defaultMatchTimeout);
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
                 // If the instance is not a string, it's considered valid with respect to the format keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok;  // This is a fallback; ideally, a JSON string should not be null.
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            if(IsValidEmail(instanceString))
+            if (IsValidEmail(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = "email" }
+                };
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid email address");
         }
 
         public bool IsValidEmail(string email)
@@ -101,14 +108,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             }
         }
 
-        private bool ValidateDomainPart(string domainPart)
+        private bool ValidateDomainPart(string domain)
         {
-            if (domainPartRegex.IsMatch(domainPart))
+            if (domainPartRegex.IsMatch(domain))
             {
                 // Additional check for valid IPv4 address literals
-                if (domainPart.StartsWith("[") && domainPart.EndsWith("]"))
+                if (domain.StartsWith("[") && domain.EndsWith("]"))
                 {
-                    var address = domainPart.Trim('[', ']');
+                    var address = domain.Trim('[', ']');
                     if (address.StartsWith("IPv6:"))
                     {
                         // IPv6 literal; no further validation in this context

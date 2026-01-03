@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -10,18 +11,23 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ISchemaValidator _unevaluatedPropertyValidator;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        public string Keyword => "unevaluatedProperties";
+
         public UnevaluatedPropertiesValidator(ISchemaValidator unevaluatedPropertyValidator, IJsonValidationContextFactory contextFactory)
         {
             _unevaluatedPropertyValidator = unevaluatedPropertyValidator;
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Object)
             {
                 // If the instance is not an object, it's considered valid with respect to the unevaluatedProperties keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if (context is not IJsonValidationObjectContext objectContext)
@@ -29,18 +35,46 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidOperationException("Object context is invalid");
             }
 
+            var children = new List<ValidationResult>();
+            var invalidProperties = new List<string>();
+            var evaluatedProperties = new List<string>();
+
             foreach (JsonProperty prp in objectContext.GetUnevaluatedProperties())
             {
                 var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prp.Value);
-                var validationResult = _unevaluatedPropertyValidator.Validate(prpContext);
-                if (validationResult != ValidationResult.Ok)
+                var validationResult = _unevaluatedPropertyValidator.Validate(prpContext, keywordLocation);
+                children.Add(validationResult);
+
+                if (!validationResult.IsValid)
                 {
-                    var propertyNameResult = new ValidationResult($"Property name {prp.Name} is invalid");
-                    return propertyNameResult;
+                    invalidProperties.Add(prp.Name);
+                }
+                else
+                {
+                    evaluatedProperties.Add(prp.Name);
                 }
             }
+
+            if (invalidProperties.Count > 0)
+            {
+                var props = string.Join(", ", invalidProperties.Select(p => $"'{p}'"));
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Unevaluated properties are invalid: {props}") with { Children = children };
+            }
+
             objectContext.SetUnevaluatedPropertiesEvaluated();
-            return ValidationResult.Ok;
+
+            var result = ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children.Count > 0 ? children : null };
+
+            // Per spec: annotate with property names that were validated by this keyword
+            if (evaluatedProperties.Count > 0)
+            {
+                return result with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = evaluatedProperties }
+                };
+            }
+
+            return result;
         }
     }
 }

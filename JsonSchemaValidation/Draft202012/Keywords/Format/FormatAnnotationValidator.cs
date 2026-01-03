@@ -1,5 +1,6 @@
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
@@ -13,16 +14,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
     {
         private readonly string _format;
 
+        public string Keyword => "format";
+
         public FormatAnnotationValidator(string format)
         {
             _format = format;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult();
-            result.SetAnnotation("format", _format);
-            return result;
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Annotations = new Dictionary<string, object?> { ["format"] = _format }
+            };
         }
     }
 }

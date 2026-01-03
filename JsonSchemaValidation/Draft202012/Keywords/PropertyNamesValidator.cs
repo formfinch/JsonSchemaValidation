@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -10,40 +11,50 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ISchemaValidator _validator;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        public string Keyword => "propertyNames";
+
         public PropertyNamesValidator(ISchemaValidator validator, IJsonValidationContextFactory contextFactory)
         {
             _validator = validator;
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            if(context.Data.ValueKind != JsonValueKind.Object)
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            if (context.Data.ValueKind != JsonValueKind.Object)
             {
                 // If the instance is not an object, it's considered valid with respect to the properties keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            ValidationResult result = new ();
-            foreach(var prp in context.Data.EnumerateObject())
+            var children = new List<ValidationResult>();
+            var invalidPropertyNames = new List<string>();
+
+            foreach (var prp in context.Data.EnumerateObject())
             {
                 string jsonString = $"{{\"key\": \"{JsonEncodedText.Encode(prp.Name)}\"}}";
                 using JsonDocument doc = JsonDocument.Parse(jsonString);
                 var prpValue = doc.RootElement.GetProperty("key");
                 var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prpValue);
-                var validationResult = _validator.Validate(prpContext);
-                if(validationResult != ValidationResult.Ok)
+                var validationResult = _validator.Validate(prpContext, keywordLocation);
+                children.Add(validationResult);
+
+                if (!validationResult.IsValid)
                 {
-                    var propertyNameResult = new ValidationResult($"Property name {prp.Name} is invalid");
-                    result.Merge(propertyNameResult);
+                    invalidPropertyNames.Add(prp.Name);
                 }
             }
 
-            if(!result.IsValid)
+            if (invalidPropertyNames.Count > 0)
             {
-                return result;
+                var names = string.Join(", ", invalidPropertyNames.Select(n => $"'{n}'"));
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Property names are invalid: {names}") with { Children = children };
             }
-            return ValidationResult.Ok;
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children.Count > 0 ? children : null };
         }
     }
 }

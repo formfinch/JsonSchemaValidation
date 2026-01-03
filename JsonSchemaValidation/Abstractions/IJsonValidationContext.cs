@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using JsonSchemaValidation.Common;
 
 namespace JsonSchemaValidation.Abstractions
 {
@@ -11,5 +12,11 @@ namespace JsonSchemaValidation.Abstractions
         /// Used for dynamic scope resolution, error reporting, and unevaluated tracking.
         /// </summary>
         IValidationScope Scope { get; }
+
+        /// <summary>
+        /// JSON Pointer to the current instance location being validated.
+        /// For example: "/users/0/email" for the email property of the first user.
+        /// </summary>
+        JsonPointer InstanceLocation { get; }
     }
 }

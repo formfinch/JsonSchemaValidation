@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -8,7 +9,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
     internal class DateTimeValidator : IKeywordValidator
     {
-        private const string keyword = "format:datetime";
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
         // RFC 3339 date-time: YYYY-MM-DDThh:mm:ss[.frac](Z|±hh:mm) - ASCII digits only
@@ -16,18 +16,23 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             @"^([0-9]{4})-([0-9]{2})-([0-9]{2})[tT]([0-9]{2}):([0-9]{2}):([0-5][0-9]|60)(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))$",
             RegexOptions.None, defaultMatchTimeout);
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public string Keyword => "format";
+
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
 
             var dt = context.Data.GetString();
             if (dt == null)
-                return new ValidationResult(keyword);
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
             var match = dateTimeRegex.Match(dt);
             if (!match.Success)
-                return new ValidationResult(keyword);
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
             int year = int.Parse(match.Groups[1].ValueSpan);
             int month = int.Parse(match.Groups[2].ValueSpan);
@@ -38,7 +43,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
             // Validate date
             if (month < 1 || month > 12 || day < 1 || day > DateTime.DaysInMonth(year, month))
-                return new ValidationResult(keyword);
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
             // Validate offset range if numeric
             if (match.Groups[9].Success)
@@ -46,14 +51,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 int offsetHours = int.Parse(match.Groups[10].ValueSpan);
                 int offsetMinutes = int.Parse(match.Groups[11].ValueSpan);
                 if (offsetHours > 23 || offsetMinutes > 59)
-                    return new ValidationResult(keyword);
+                    return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
             }
 
             // Leap second validation (only when seconds == 60)
             if (second == 60 && !IsValidLeapSecond(hour, minute, match))
-                return new ValidationResult(keyword);
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
-            return ValidationResult.Ok;
+            // Per spec: format always produces an annotation with the format name
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Annotations = new Dictionary<string, object?> { [Keyword] = "date-time" }
+            };
         }
 
         private static bool IsValidLeapSecond(int hour, int minute, Match match)

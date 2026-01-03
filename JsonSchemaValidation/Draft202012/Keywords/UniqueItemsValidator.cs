@@ -1,4 +1,4 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
@@ -8,14 +8,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class UniqueItemsValidator : IKeywordValidator
     {
-        private const string keyword = "uniqueItems";
+        public string Keyword => "uniqueItems";
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the uniqueItems keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var comparer = new JsonElementComparison();
@@ -27,13 +30,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 {
                     if (comparer.DeepEquals(context.Data[i], context.Data[j]))
                     {
-                        return new ValidationResult(keyword);
+                        return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array items at indices {i} and {j} are not unique");
                     }
                 }
             }
 
-            return ValidationResult.Ok;
+            return ValidationResult.Valid(instanceLocation, kwLocation);
         }
-
     }
 }

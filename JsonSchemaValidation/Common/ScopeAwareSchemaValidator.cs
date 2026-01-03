@@ -26,14 +26,22 @@ namespace JsonSchemaValidation.Common
             _innerValidator.AddKeywordValidator(keywordValidator);
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             // Push this schema resource onto the scope
             context.Scope.PushSchemaResource(_schemaResource);
 
             try
             {
-                return _innerValidator.Validate(context);
+                var result = _innerValidator.Validate(context, keywordLocation);
+
+                // Set absolute keyword location based on this schema's URI
+                if (_schemaResource.SchemaUri != null)
+                {
+                    return new ValidationResult(result, _schemaResource.SchemaUri);
+                }
+
+                return result;
             }
             finally
             {

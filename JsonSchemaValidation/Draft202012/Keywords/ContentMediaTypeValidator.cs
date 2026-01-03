@@ -1,5 +1,6 @@
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -13,16 +14,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly string _mediaType;
 
+        public string Keyword => "contentMediaType";
+
         public ContentMediaTypeValidator(string mediaType)
         {
             _mediaType = mediaType;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult();
-            result.SetAnnotation("contentMediaType", _mediaType);
-            return result;
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Annotations = new Dictionary<string, object?> { ["contentMediaType"] = _mediaType }
+            };
         }
     }
 }

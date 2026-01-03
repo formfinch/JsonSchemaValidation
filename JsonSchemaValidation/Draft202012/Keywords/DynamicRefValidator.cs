@@ -1,5 +1,6 @@
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidation.Validation;
 
@@ -17,6 +18,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        public string Keyword => "$dynamicRef";
+
         public DynamicRefValidator(
             string dynamicRef,
             SchemaMetadata schemaData,
@@ -31,14 +34,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             // Resolve the $dynamicRef based on the current dynamic scope
             var resolvedSchema = ResolveDynamicRef(context);
 
             if (resolvedSchema == null)
             {
-                return new ValidationResult($"Failed to resolve $dynamicRef: {_dynamicRef}");
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Failed to resolve $dynamicRef: {_dynamicRef}");
             }
 
             // Create a validator for the resolved schema
@@ -56,11 +62,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             context.Scope.PushSchemaResource(resolvedSchema);
             try
             {
-                var result = validator.Validate(activeContext);
+                // When following $dynamicRef, the keyword path resets to the referenced schema's root
+                var result = validator.Validate(activeContext, JsonPointer.Empty);
 
-                if (result == ValidationResult.Ok)
+                if (result.IsValid)
                 {
                     _contextFactory.CopyAnnotations(activeContext, context);
+                }
+
+                // Set absolute keyword location to the referenced schema's URI
+                if (resolvedSchema.SchemaUri != null)
+                {
+                    return new ValidationResult(result, resolvedSchema.SchemaUri);
                 }
 
                 return result;

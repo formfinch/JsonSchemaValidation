@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -9,34 +10,49 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IEnumerable<ISchemaValidator> _validators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        public string Keyword => "anyOf";
+
         public AnyOfValidator(IEnumerable<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
         {
             _validators = validators;
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = new ValidationResult("Instance did not validate anyOf schema's.");
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             var contexts = new List<IJsonValidationContext>();
+            var children = new List<ValidationResult>();
+            bool anyValid = false;
+
+            int index = 0;
             foreach (var validator in _validators)
             {
                 var activeContext = _contextFactory.CreateFreshContext(context);
-                if (validator.Validate(activeContext) == ValidationResult.Ok)
+                var childKeywordPath = keywordLocation.Append(index.ToString());
+                var childResult = validator.Validate(activeContext, childKeywordPath);
+                children.Add(childResult);
+
+                if (childResult.IsValid)
                 {
                     contexts.Add(activeContext);
-                    result = ValidationResult.Ok;
+                    anyValid = true;
                 }
+                index++;
             }
 
-            if(result == ValidationResult.Ok)
+            if (anyValid)
             {
                 foreach (var activeContext in contexts)
                 {
                     _contextFactory.CopyAnnotations(activeContext, context);
                 }
+                return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children };
             }
-            return result;
+
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Instance did not validate against any of the schemas in 'anyOf'") with { Children = children };
         }
     }
 }

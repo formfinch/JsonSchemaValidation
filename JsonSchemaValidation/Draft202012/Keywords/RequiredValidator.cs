@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -9,34 +10,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly IEnumerable<string> _propertyNames;
 
+        public string Keyword => "required";
+
         public RequiredValidator(IEnumerable<string> propertyNames)
         {
             _propertyNames = propertyNames;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Object)
             {
                 // If the instance is not an object, it's considered valid with respect to the required keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            ValidationResult result = new();
+            var missingProperties = new List<string>();
             foreach (string propertyName in _propertyNames)
             {
-                if(!context.Data.TryGetProperty(propertyName, out JsonElement value))
+                if (!context.Data.TryGetProperty(propertyName, out _))
                 {
-                    result.AddError($"Missing property: {propertyName}");
+                    missingProperties.Add(propertyName);
                 }
             }
 
-            if(!result.IsValid)
+            if (missingProperties.Count > 0)
             {
-                return result;
+                var missingList = string.Join(", ", missingProperties.Select(p => $"'{p}'"));
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Missing required properties: {missingList}");
             }
 
-            return ValidationResult.Ok;
+            return ValidationResult.Valid(instanceLocation, kwLocation);
         }
     }
 }

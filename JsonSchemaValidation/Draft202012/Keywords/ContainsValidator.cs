@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -9,7 +10,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaValidator _validator;
         private readonly IJsonValidationContextFactory _contextFactory;
-        
+
+        public string Keyword => "contains";
+
         public int? MinContains { get; set; }
         public int? MaxContains { get; set; }
 
@@ -19,12 +22,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.Array)
             {
                 // If the instance is not an array, it's considered valid with respect to the contains keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if (context is not IJsonValidationArrayContext arrayContext)
@@ -32,43 +38,50 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidOperationException("Array context is invalid");
             }
 
-            var containsResult = new ValidationResult("No array item matches with the 'contains' schema.");
+            var children = new List<ValidationResult>();
             int idx = 0;
             var containsIndices = new List<int>();
             foreach (JsonElement item in context.Data.EnumerateArray())
             {
-                var itemContext = _contextFactory.CreateContextForArrayItem(context, idx++, item);
-                var itemValidationResult = _validator.Validate(itemContext);
-                if (itemValidationResult == ValidationResult.Ok)
+                var itemContext = _contextFactory.CreateContextForArrayItem(context, idx, item);
+                var itemValidationResult = _validator.Validate(itemContext, keywordLocation);
+                children.Add(itemValidationResult);
+
+                if (itemValidationResult.IsValid)
                 {
-                    containsIndices.Add(idx - 1);
-                    containsResult = ValidationResult.Ok;
+                    containsIndices.Add(idx);
                 }
+                idx++;
             }
 
-            if (MinContains.HasValue && MinContains.Value == 0 
-                && containsIndices.Count == 0)
+            if (MinContains.HasValue && MinContains.Value == 0 && containsIndices.Count == 0)
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children };
             }
 
-            if (containsResult != ValidationResult.Ok)
+            if (containsIndices.Count == 0)
             {
-                return containsResult;
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "No array item matches with the 'contains' schema") with { Children = children };
             }
 
             if (MinContains.HasValue && containsIndices.Count < MinContains)
             {
-                return new ValidationResult($"{containsIndices.Count} array items match when at least {MinContains} are expected.");
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"{containsIndices.Count} array items match when at least {MinContains} are expected") with { Children = children };
             }
 
             if (MaxContains.HasValue && containsIndices.Count > MaxContains)
             {
-                return new ValidationResult($"{containsIndices.Count} array items match when at most {MaxContains} are expected.");
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"{containsIndices.Count} array items match when at most {MaxContains} are expected") with { Children = children };
             }
 
             arrayContext.SetEvaluatedIndices(containsIndices);
-            return ValidationResult.Ok;
+
+            // Per spec: annotate with indices of items that matched
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Children = children,
+                Annotations = new Dictionary<string, object?> { [Keyword] = containsIndices }
+            };
         }
     }
 }

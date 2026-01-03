@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -10,6 +11,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ISchemaValidator? _thenValidator;
         private readonly ISchemaValidator? _elseValidator;
         private readonly IJsonValidationContextFactory _contextFactory;
+
+        public string Keyword => "if";
 
         public IfThenElseValidator(
             ISchemaValidator ifValidator,
@@ -23,67 +26,78 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var ifContext = _contextFactory.CreateFreshContext(context);
-            var elseContext = _contextFactory.CreateFreshContext(context);
-            var thenContext = _contextFactory.CreateFreshContext(context);
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
 
-            List<IJsonValidationContext> validContexts = new List<IJsonValidationContext>();
+            var ifContext = _contextFactory.CreateFreshContext(context);
+            var validContexts = new List<IJsonValidationContext>();
+            var children = new List<ValidationResult>();
 
             // Save the scope depth before evaluating any branch
-            // Each branch should be isolated - schema resources entered in 'if'
-            // should not be visible in 'then' or 'else'
             int scopeDepthBeforeIf = context.Scope.Depth;
 
-            var result = ValidationResult.Ok;
-            if (_ifValidator.Validate(ifContext) == ValidationResult.Ok)
-            {
-                // Restore scope after 'if' - its schema resources should not persist into 'then'
-                context.Scope.RestoreToDepth(scopeDepthBeforeIf);
+            // Evaluate 'if' schema
+            var ifResult = _ifValidator.Validate(ifContext, keywordLocation);
+            children.Add(ifResult);
 
+            if (ifResult.IsValid)
+            {
+                // Restore scope after 'if'
+                context.Scope.RestoreToDepth(scopeDepthBeforeIf);
                 validContexts.Add(ifContext);
+
                 if (_thenValidator != null)
                 {
+                    var thenContext = _contextFactory.CreateFreshContext(context);
                     int scopeDepthBeforeThen = context.Scope.Depth;
-                    if(_thenValidator.Validate(thenContext) != ValidationResult.Ok)
+
+                    // Build keyword path for 'then' relative to parent (sibling of 'if')
+                    var thenKeywordPath = keywordLocation.Parent().Append("then");
+                    var thenResult = _thenValidator.Validate(thenContext, thenKeywordPath);
+                    children.Add(thenResult);
+
+                    if (!thenResult.IsValid)
                     {
-                        result = new ValidationResult($"Failed to validate against the 'then' schema in the 'if-then-else' construct.");
+                        context.Scope.RestoreToDepth(scopeDepthBeforeThen);
+                        return ValidationResult.Invalid(instanceLocation, kwLocation, "Failed to validate against the 'then' schema") with { Children = children };
                     }
-                    else
-                    {
-                        validContexts.Add(thenContext);
-                    }
-                    // Restore scope after 'then'
+                    validContexts.Add(thenContext);
                     context.Scope.RestoreToDepth(scopeDepthBeforeThen);
                 }
             }
             else
             {
-                // Restore scope after 'if' - its schema resources should not persist into 'else'
+                // Restore scope after 'if'
                 context.Scope.RestoreToDepth(scopeDepthBeforeIf);
 
                 if (_elseValidator != null)
                 {
+                    var elseContext = _contextFactory.CreateFreshContext(context);
                     int scopeDepthBeforeElse = context.Scope.Depth;
-                    if (_elseValidator.Validate(elseContext) != ValidationResult.Ok)
+
+                    // Build keyword path for 'else' relative to parent (sibling of 'if')
+                    var elseKeywordPath = keywordLocation.Parent().Append("else");
+                    var elseResult = _elseValidator.Validate(elseContext, elseKeywordPath);
+                    children.Add(elseResult);
+
+                    if (!elseResult.IsValid)
                     {
-                        result = new ValidationResult($"Failed to validate against the 'else' schema in the 'if-then-else' construct.");
+                        context.Scope.RestoreToDepth(scopeDepthBeforeElse);
+                        return ValidationResult.Invalid(instanceLocation, kwLocation, "Failed to validate against the 'else' schema") with { Children = children };
                     }
-                    else
-                    {
-                        validContexts.Add(elseContext);
-                    }
-                    // Restore scope after 'else'
+                    validContexts.Add(elseContext);
                     context.Scope.RestoreToDepth(scopeDepthBeforeElse);
                 }
             }
 
-            foreach(var validatedContext in validContexts)
+            foreach (var validatedContext in validContexts)
             {
                 _contextFactory.CopyAnnotations(validatedContext, context);
             }
-            return result;
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children };
         }
     }
 }

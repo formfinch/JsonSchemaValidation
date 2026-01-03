@@ -24,6 +24,9 @@ namespace JsonSchemaValidation.Common
 
         public JsonValidationArrayContext(JsonElement data, IValidationScope scope) : base(data, scope) { }
 
+        public JsonValidationArrayContext(JsonElement data, IValidationScope scope, JsonPointer instanceLocation)
+            : base(data, scope, instanceLocation) { }
+
         public IEnumerable<JsonElement> GetUnevaluatedItems()
         {
             if (!_current.ItemsEvaluated && !_current.AdditionalItemsEvaluated && !_current.UnevaluatedItemsEvaluated)

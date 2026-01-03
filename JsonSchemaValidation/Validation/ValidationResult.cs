@@ -1,62 +1,246 @@
-﻿namespace JsonSchemaValidation.Validation
+﻿using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Validation.Output;
+
+namespace JsonSchemaValidation.Validation
 {
-    public class ValidationResult
+    /// <summary>
+    /// Structured validation result per JSON Schema 2020-12 Section 12.
+    /// Immutable - use factory methods to create instances.
+    /// </summary>
+    public record ValidationResult
     {
-        public static readonly ValidationResult Ok = new() { IsValid = true };
+        /// <summary>
+        /// Whether this validation passed.
+        /// </summary>
+        public bool IsValid { get; }
 
-        public bool IsValid { get; private set; } = true;
-        public List<string> Errors { get; } = new List<string>();
-        public Dictionary<string, object?> Annotations { get; } = new Dictionary<string, object?>();
+        /// <summary>
+        /// JSON Pointer to the instance location being validated.
+        /// </summary>
+        public string InstanceLocation { get; }
 
-        // Initialize a ValidationResult with a single error
-        public ValidationResult(string error)
+        /// <summary>
+        /// JSON Pointer to the schema keyword that produced this result.
+        /// </summary>
+        public string KeywordLocation { get; }
+
+        /// <summary>
+        /// Absolute URI of the schema keyword including fragment.
+        /// </summary>
+        public string? AbsoluteKeywordLocation { get; init; }
+
+        /// <summary>
+        /// Error message when IsValid is false.
+        /// </summary>
+        public string? Error { get; }
+
+        /// <summary>
+        /// Keyword that produced this result (e.g., "minimum", "properties").
+        /// </summary>
+        public string? Keyword { get; init; }
+
+        /// <summary>
+        /// Annotations produced by this keyword.
+        /// </summary>
+        public IReadOnlyDictionary<string, object?>? Annotations { get; init; }
+
+        /// <summary>
+        /// Child validation results for hierarchical output.
+        /// </summary>
+        public IReadOnlyList<ValidationResult>? Children { get; init; }
+
+        private ValidationResult(bool isValid, string instanceLocation, string keywordLocation, string? error)
         {
-            IsValid = false;
-            Errors.Add(error);
+            IsValid = isValid;
+            InstanceLocation = instanceLocation;
+            KeywordLocation = keywordLocation;
+            Error = error;
         }
 
-        public ValidationResult() { }
-
-        public void AddError(string error)
+        /// <summary>
+        /// Creates a copy of a result with an absolute keyword location set from a schema URI.
+        /// </summary>
+        public ValidationResult(ValidationResult source, Uri schemaUri)
         {
-            if (this == ValidationResult.Ok)
-            {
-                throw new InvalidOperationException("Not allowed to change ValidationResult.Ok");
-            }
-
-            IsValid = false;
-            Errors.Add(error);
+            IsValid = source.IsValid;
+            InstanceLocation = source.InstanceLocation;
+            KeywordLocation = source.KeywordLocation;
+            AbsoluteKeywordLocation = schemaUri + "#" + source.KeywordLocation;
+            Error = source.Error;
+            Keyword = source.Keyword;
+            Annotations = source.Annotations;
+            Children = source.Children;
         }
 
-        public void SetAnnotation(string keyword, object? value)
+        /// <summary>
+        /// Creates a valid result for the given locations.
+        /// </summary>
+        public static ValidationResult Valid(string instanceLocation, string keywordLocation)
         {
-            if (this == ValidationResult.Ok)
-            {
-                throw new InvalidOperationException("Not allowed to change ValidationResult.Ok");
-            }
-
-            Annotations[keyword] = value;
+            return new ValidationResult(true, instanceLocation, keywordLocation, null);
         }
 
-        public void Merge(ValidationResult other)
+        /// <summary>
+        /// Creates a valid result with annotations.
+        /// </summary>
+        public static ValidationResult Valid(string instanceLocation, string keywordLocation, Dictionary<string, object?> annotations)
         {
-            if (this == ValidationResult.Ok)
+            return new ValidationResult(true, instanceLocation, keywordLocation, null)
             {
-                throw new InvalidOperationException("Not allowed to change ValidationResult.Ok");
+                Annotations = annotations
+            };
+        }
+
+        /// <summary>
+        /// Creates an invalid result with an error message.
+        /// </summary>
+        public static ValidationResult Invalid(string instanceLocation, string keywordLocation, string error)
+        {
+            return new ValidationResult(false, instanceLocation, keywordLocation, error);
+        }
+
+        /// <summary>
+        /// Creates a result with child results. Overall validity is determined by children.
+        /// </summary>
+        public static ValidationResult Aggregate(string instanceLocation, string keywordLocation, IEnumerable<ValidationResult> children)
+        {
+            var childList = children.ToList();
+            var isValid = childList.All(c => c.IsValid);
+            return new ValidationResult(isValid, instanceLocation, keywordLocation, null)
+            {
+                Children = childList
+            };
+        }
+
+        /// <summary>
+        /// Creates an invalid result with child results showing why it failed.
+        /// </summary>
+        public static ValidationResult Invalid(string instanceLocation, string keywordLocation, string error, IEnumerable<ValidationResult> children)
+        {
+            return new ValidationResult(false, instanceLocation, keywordLocation, error)
+            {
+                Children = children.ToList()
+            };
+        }
+
+        /// <summary>
+        /// Converts this result to an OutputUnit for the specified format.
+        /// </summary>
+        public OutputUnit ToOutputUnit(OutputFormat format)
+        {
+            return format switch
+            {
+                OutputFormat.Flag => ToFlagOutput(),
+                OutputFormat.Basic => ToBasicOutput(),
+                OutputFormat.Detailed => ToDetailedOutput(),
+                _ => throw new ArgumentOutOfRangeException(nameof(format))
+            };
+        }
+
+        private OutputUnit ToFlagOutput()
+        {
+            return new OutputUnit
+            {
+                Valid = IsValid,
+                InstanceLocation = "",
+                KeywordLocation = ""
+            };
+        }
+
+        private OutputUnit ToBasicOutput()
+        {
+            var output = new OutputUnit
+            {
+                Valid = IsValid,
+                InstanceLocation = InstanceLocation,
+                KeywordLocation = KeywordLocation,
+                AbsoluteKeywordLocation = AbsoluteKeywordLocation
+            };
+
+            if (!IsValid)
+            {
+                var errors = new List<OutputUnit>();
+                CollectErrorsFlat(errors);
+                output.Errors = errors;
+                output.Error = GetSummaryError(errors.Count);
             }
 
-            if (other == Ok) return;
+            return output;
+        }
 
-            IsValid &= other.IsValid;
-            if (!other.IsValid)
+        private void CollectErrorsFlat(List<OutputUnit> errors)
+        {
+            if (!IsValid && Error != null)
             {
-                Errors.AddRange(other.Errors);
+                errors.Add(new OutputUnit
+                {
+                    Valid = false,
+                    InstanceLocation = InstanceLocation,
+                    KeywordLocation = KeywordLocation,
+                    AbsoluteKeywordLocation = AbsoluteKeywordLocation,
+                    Error = Error
+                });
             }
 
-            foreach (var annotation in other.Annotations)
+            if (Children != null)
             {
-                Annotations[annotation.Key] = annotation.Value;
+                foreach (var child in Children)
+                {
+                    child.CollectErrorsFlat(errors);
+                }
             }
+        }
+
+        private OutputUnit ToDetailedOutput()
+        {
+            var output = new OutputUnit
+            {
+                Valid = IsValid,
+                InstanceLocation = InstanceLocation,
+                KeywordLocation = KeywordLocation,
+                AbsoluteKeywordLocation = AbsoluteKeywordLocation
+            };
+
+            if (Children != null && Children.Count > 0)
+            {
+                var childErrors = Children.Where(c => !c.IsValid).Select(c => c.ToDetailedOutput()).ToList();
+                var childAnnotations = Children.Where(c => c.IsValid && c.Annotations != null).Select(c => c.ToDetailedOutput()).ToList();
+
+                if (childErrors.Count > 0)
+                {
+                    output.Errors = childErrors;
+                }
+                if (childAnnotations.Count > 0)
+                {
+                    output.Annotations = childAnnotations;
+                }
+            }
+
+            // Ensure Error is always set when Valid is false
+            if (!IsValid)
+            {
+                output.Error = Error ?? GetSummaryError(output.Errors?.Count ?? 0);
+            }
+
+            if (Annotations != null && Annotations.Count > 0)
+            {
+                output.Annotation = Annotations;
+            }
+
+            return output;
+        }
+
+        private string GetSummaryError(int errorCount)
+        {
+            if (errorCount == 0)
+            {
+                return "Validation failed";
+            }
+            if (errorCount == 1)
+            {
+                return "Validation failed with 1 error";
+            }
+            return $"Validation failed with {errorCount} errors";
         }
     }
 }

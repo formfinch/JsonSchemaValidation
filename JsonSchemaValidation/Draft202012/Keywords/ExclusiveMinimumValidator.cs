@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Text.Json;
 
@@ -7,19 +8,27 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class ExclusiveMinimumValidator : IKeywordValidator
     {
-        private const string keyword = "exclusiveMinimum";
-        private readonly double minimum;
+        private readonly double _minimum;
+
+        public string Keyword => "exclusiveMinimum";
 
         public ExclusiveMinimumValidator(double minimum)
         {
-            this.minimum = minimum;
+            _minimum = minimum;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            if (context.Data.ValueKind != JsonValueKind.Number) return ValidationResult.Ok;
-            if (context.Data.GetDouble() > minimum) return ValidationResult.Ok;
-            return new ValidationResult(keyword);
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            if (context.Data.ValueKind != JsonValueKind.Number)
+                return ValidationResult.Valid(instanceLocation, kwLocation);
+
+            if (context.Data.GetDouble() > _minimum)
+                return ValidationResult.Valid(instanceLocation, kwLocation);
+
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value must be greater than {_minimum}");
         }
     }
 }

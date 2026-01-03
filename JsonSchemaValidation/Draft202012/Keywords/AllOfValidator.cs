@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -9,26 +10,35 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IEnumerable<ISchemaValidator> _validators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        public string Keyword => "allOf";
+
         public AllOfValidator(IEnumerable<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
         {
             _validators = validators;
             _contextFactory = contextFactory;
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var result = ValidationResult.Ok;
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            var children = new List<ValidationResult>();
             var contexts = new List<IJsonValidationContext>();
             int idx = 0;
+            bool allValid = true;
+
             foreach (var validator in _validators)
             {
                 var activeContext = _contextFactory.CreateFreshContext(context);
-                var schemaResult = validator.Validate(activeContext);
-                if (schemaResult != ValidationResult.Ok)
+                // Each sub-schema in allOf gets path: /allOf/0, /allOf/1, etc.
+                var subSchemaPath = keywordLocation.Append(idx);
+                var schemaResult = validator.Validate(activeContext, subSchemaPath);
+                children.Add(schemaResult);
+
+                if (!schemaResult.IsValid)
                 {
-                    result = new ValidationResult($"Instance failed to validate against one of the schemas in 'allOf' at index {idx}.");
-                    result.Merge(schemaResult);
-                    break;
+                    allValid = false;
                 }
                 else
                 {
@@ -37,14 +47,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 idx++;
             }
 
-            if (result == ValidationResult.Ok)
+            if (allValid)
             {
                 foreach (var activeContext in contexts)
                 {
                     _contextFactory.CopyAnnotations(activeContext, context);
                 }
             }
-            return result;
+
+            return ValidationResult.Aggregate(instanceLocation, kwLocation, children);
         }
     }
 }

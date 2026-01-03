@@ -1,5 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 using System.Net;
 using System.Text.Json;
@@ -8,35 +9,43 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
     internal class IPAddressValidator : IKeywordValidator
     {
-        private readonly string keyword;
-        private readonly bool ipv6Validation;
+        private readonly string _formatName;
+        private readonly bool _ipv6Validation;
+
+        public string Keyword => "format";
 
         public IPAddressValidator(bool isIPV6Format = false)
         {
-            ipv6Validation = isIPV6Format;
-            keyword = isIPV6Format ? "format:ipv6" : "format:ipv4";
+            _ipv6Validation = isIPV6Format;
+            _formatName = isIPV6Format ? "ipv6" : "ipv4";
         }
 
-        public ValidationResult Validate(IJsonValidationContext context)
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
             if (context.Data.ValueKind != JsonValueKind.String)
             {
                 // If the instance is not a string, it's considered valid with respect to the format keyword
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var instanceString = context.Data.GetString();
             if (instanceString == null)
             {
-                return ValidationResult.Ok; // This is a fallback; ideally, a JSON string should not be null.
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             if (IsValidIPAddress(instanceString))
             {
-                return ValidationResult.Ok;
+                return ValidationResult.Valid(instanceLocation, kwLocation) with
+                {
+                    Annotations = new Dictionary<string, object?> { [Keyword] = _formatName }
+                };
             }
 
-            return new ValidationResult(keyword);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName} address");
         }
 
         private bool IsValidIPAddress(string address)
@@ -46,7 +55,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 return false;
             }
 
-            if (ipv6Validation)
+            if (_ipv6Validation)
             {
                 // For IPv6 validation, check if the result was indeed an IPv6 address.
                 if (ip.AddressFamily != System.Net.Sockets.AddressFamily.InterNetworkV6)
