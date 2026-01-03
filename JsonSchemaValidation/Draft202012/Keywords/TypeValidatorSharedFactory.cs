@@ -3,7 +3,7 @@ using JsonSchemaValidation.Exceptions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class TypeValidatorSharedFactory
+    internal static class TypeValidatorSharedFactory
     {
         public static IKeywordValidator? CreateFromTypeSpecification(string? specification)
         {
