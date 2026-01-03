@@ -279,9 +279,25 @@ namespace JsonSchemaValidation.Repositories
 
             if (schemaUri.Fragment.StartsWith("#/"))
             {
-                SchemaMetadata innerSchemaData = new(metadata);
                 string decodedFragment = Uri.UnescapeDataString(schemaUri.Fragment);
-                innerSchemaData.Schema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
+                var targetSchema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
+
+                // Check if the target has its own $id - if so, use that resource's context
+                // This is important for $dynamicRef resolution which needs the correct DynamicAnchors
+                var targetId = targetSchema.GetIdProperty();
+                if (!string.IsNullOrEmpty(targetId))
+                {
+                    // Resolve the $id against the base URI (without fragment)
+                    var baseUri = new UriBuilder(schemaUri) { Fragment = string.Empty }.Uri;
+                    if (Uri.TryCreate(baseUri, targetId, out var resolvedId) &&
+                        _schemas.TryGetValue(resolvedId, out var targetResource))
+                    {
+                        return new(targetResource);
+                    }
+                }
+
+                SchemaMetadata innerSchemaData = new(metadata);
+                innerSchemaData.Schema = targetSchema;
                 innerSchemaData.SchemaUri = schemaUri;
                 return innerSchemaData;
             }

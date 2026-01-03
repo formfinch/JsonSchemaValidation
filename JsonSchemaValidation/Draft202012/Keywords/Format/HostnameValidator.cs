@@ -35,9 +35,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             }
 
             var instanceString = context.Data.GetString();
-            if (instanceString == null)
+            if (string.IsNullOrEmpty(instanceString))
             {
-                return ValidationResult.Ok;
+                return new ValidationResult(keyword);
+            }
+
+            // For plain hostname format, reject IDN label separators (U+FF0E, U+3002, U+FF61)
+            // For idn-hostname, these are valid and will be converted to '.' by IdnMapping
+            if (!performIDNConversion && instanceString.Any(c => c == '\uFF0E' || c == '\u3002' || c == '\uFF61'))
+            {
+                return new ValidationResult(keyword);
             }
 
             if (performIDNConversion)
@@ -59,6 +66,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                     return new ValidationResult(keyword);
                 }
             }
+            else
+            {
+                // For plain hostname format, validate A-labels by decoding them
+                if (!ValidateALabels(instanceString))
+                {
+                    return new ValidationResult(keyword);
+                }
+            }
 
             if (IsValidHostname(instanceString))
             {
@@ -76,6 +91,56 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             }
 
             return hostnameRegex.IsMatch(hostname);
+        }
+
+        /// <summary>
+        /// Validates A-labels (punycode) by decoding them and checking IDNA2008 rules.
+        /// </summary>
+        private bool ValidateALabels(string hostname)
+        {
+            foreach (var label in hostname.Split('.'))
+            {
+                if (string.IsNullOrEmpty(label)) continue;
+
+                // Check if this is an A-label (punycode)
+                if (label.StartsWith("xn--", StringComparison.OrdinalIgnoreCase))
+                {
+                    try
+                    {
+                        // Decode the punycode to get the U-label
+                        var decoded = idn.GetUnicode(label);
+
+                        // Validate the decoded U-label according to IDNA2008 rules
+                        if (!ValidateLabelContextualRules(decoded))
+                        {
+                            return false;
+                        }
+
+                        // Check that the label doesn't begin with a combining mark (RFC 5891 Section 4.2.3.2)
+                        if (decoded.Length > 0 && IsCombiningMark(decoded[0]))
+                        {
+                            return false;
+                        }
+                    }
+                    catch (ArgumentException)
+                    {
+                        // Invalid punycode
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        /// <summary>
+        /// Checks if a character is a combining mark (Unicode categories Mn, Mc, Me).
+        /// </summary>
+        private static bool IsCombiningMark(char c)
+        {
+            var category = CharUnicodeInfo.GetUnicodeCategory(c);
+            return category == UnicodeCategory.NonSpacingMark ||      // Mn
+                   category == UnicodeCategory.SpacingCombiningMark || // Mc
+                   category == UnicodeCategory.EnclosingMark;          // Me
         }
 
         /// <summary>

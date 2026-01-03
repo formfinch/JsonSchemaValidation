@@ -29,6 +29,14 @@
                 return false;
             }
 
+            // RFC 3986: Check for characters that must be percent-encoded
+            // These characters are not allowed unencoded in URIs (except in specific contexts)
+            // Skip this check for URI templates (expander != null) since { and } are valid template syntax
+            if (!iriSupport && expander == null && ContainsInvalidUriCharacters(uri))
+            {
+                return false;
+            }
+
             if (canBeRelative)
             {
                 if (uri.StartsWith("//"))
@@ -62,6 +70,28 @@
                     }
                 }
                 return validatedUri.IsWellFormedOriginalString();
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Checks for characters that are invalid in URIs per RFC 3986.
+        /// These must be percent-encoded if used.
+        /// </summary>
+        private static bool ContainsInvalidUriCharacters(string uri)
+        {
+            foreach (char c in uri)
+            {
+                // Non-ASCII characters must be percent-encoded in URIs (but allowed in IRIs)
+                if (c > 127)
+                    return true;
+
+                // Characters that must always be percent-encoded (RFC 3986 Section 2.4)
+                // Space, <, >, ", {, }, |, \, ^, `
+                if (c == ' ' || c == '<' || c == '>' || c == '"' ||
+                    c == '{' || c == '}' || c == '|' || c == '\\' ||
+                    c == '^' || c == '`')
+                    return true;
             }
             return false;
         }
