@@ -77,20 +77,17 @@ public Dictionary<string, object> Annotations { get; }
 
 ---
 
-### 2. Validator Execution Order - NOT GUARANTEED
+### 2. ~~Validator Execution Order - NOT GUARANTEED~~ ✓ FIXED
 
-**Severity:** High
+**Severity:** ~~High~~ Resolved
 
-**Issue:** `unevaluatedItems` and `unevaluatedProperties` must run after other applicators to correctly identify unevaluated items/properties. This is not architecturally enforced.
+**Solution:** Added `ExecutionOrder` property to `ISchemaDraftKeywordValidatorFactory` interface with default value of 0. Validators are now sorted by `ExecutionOrder` in `SchemaDraft202012ValidatorFactory` constructor. Unevaluated keyword factories (`UnevaluatedItemsValidatorFactory`, `UnevaluatedPropertiesValidatorFactory`) set `ExecutionOrder = 100` to ensure they run last.
 
-**Location:** `SchemaDraft202012Setup.cs:59`
-```csharp
-// todo: validation relies on these validators being run last, supply a guaranteed validator order system
-```
-
-**Risk:** If validator registration order changes, unevaluated keyword validation could produce incorrect results.
-
-**Recommendation:** Implement explicit validator ordering/priority mechanism.
+**Files Changed:**
+- `Draft202012/Interfaces/ISchemaDraftKeywordValidatorFactory.cs` - Added `ExecutionOrder` property with default implementation
+- `Draft202012/SchemaDraft202012ValidatorFactory.cs` - Sort factories by `ExecutionOrder` on construction
+- `Draft202012/Keywords/UnevaluatedItemsValidatorFactory.cs` - Set `ExecutionOrder = 100`
+- `Draft202012/Keywords/UnevaluatedPropertiesValidatorFactory.cs` - Set `ExecutionOrder = 100`
 
 ---
 
@@ -168,7 +165,7 @@ public Dictionary<string, object> Annotations { get; }
 | Dynamic References | ✓ Complete |
 | Output Format | ✗ Missing |
 | Error Structure | ⚠ Basic |
-| Validator Ordering | ⚠ Not guaranteed |
+| Validator Ordering | ✓ Guaranteed via ExecutionOrder |
 
 **Production Ready:** Yes, for basic validation use cases
 **Spec-Compliant Output:** No - needs output format implementation
@@ -178,6 +175,6 @@ public Dictionary<string, object> Annotations { get; }
 ## Recommended Next Steps
 
 1. **High Priority:** Implement spec-compliant output formats
-2. **High Priority:** Add validator execution ordering mechanism
+2. ~~**High Priority:** Add validator execution ordering mechanism~~ ✓ Done
 3. **Medium Priority:** Enhance error structure with instance/schema paths
 4. **Low Priority:** Add cross-draft compatibility support

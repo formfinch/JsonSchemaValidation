@@ -70,7 +70,7 @@ dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj -v normal
 
 ## Key Architectural Notes
 
-1. **Validator Ordering**: `UnevaluatedItems` and `UnevaluatedProperties` validators must run LAST to correctly track unevaluated properties/items. Currently registered at end of `SchemaDraft202012Setup.cs` but not architecturally enforced.
+1. **Validator Ordering**: Validators are sorted by `ExecutionOrder` property (default 0). `UnevaluatedItems` and `UnevaluatedProperties` use `ExecutionOrder = 100` to run last. This is enforced in `SchemaDraft202012ValidatorFactory` constructor.
 
 2. **Dynamic Scope**: `$dynamicRef` and `$dynamicAnchor` require scope tracking via `ValidationScope` and `ScopeAwareSchemaValidator`.
 
@@ -87,8 +87,7 @@ dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj -v normal
 ## Known Gaps (from DRAFT_2020_12_COMPLIANCE.md)
 
 1. **Output Format**: Current `ValidationResult` is basic; spec requires hierarchical structure with `instancePath`/`schemaPath`
-2. **Validator Execution Order**: Not architecturally guaranteed for unevaluated keywords
-3. **Cross-Draft Compatibility**: Not supported
+2. **Cross-Draft Compatibility**: Not supported
 
 ## Target Frameworks
 
