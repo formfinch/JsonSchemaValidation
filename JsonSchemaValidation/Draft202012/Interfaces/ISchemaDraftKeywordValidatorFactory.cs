@@ -13,5 +13,13 @@ namespace JsonSchemaValidation.Draft202012.Interfaces
         /// Used for vocabulary-based filtering.
         /// </summary>
         string Keyword { get; }
+
+        /// <summary>
+        /// Determines the order in which validators are executed.
+        /// Lower values execute first. Default is 0.
+        /// Unevaluated keywords (unevaluatedItems, unevaluatedProperties) should use higher values
+        /// to ensure they run after other applicator keywords.
+        /// </summary>
+        int ExecutionOrder => 0;
     }
 }

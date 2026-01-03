@@ -56,7 +56,7 @@ namespace JsonSchemaValidation.Draft202012
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, TypeMultipleTypesValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, UniqueItemsValidatorFactory>();
 
-            // todo: validation relies on these validators being run last, supply a guaranteed validator order system
+            // Unevaluated validators have ExecutionOrder=100 to ensure they run last
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, UnevaluatedItemsValidatorFactory>();
             services.AddSingleton<ISchemaDraftKeywordValidatorFactory, UnevaluatedPropertiesValidatorFactory>();
 

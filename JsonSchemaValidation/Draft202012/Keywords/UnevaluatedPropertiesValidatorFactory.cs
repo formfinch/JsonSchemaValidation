@@ -25,6 +25,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         public string Keyword => "unevaluatedProperties";
 
+        public int ExecutionOrder => 100;
+
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var schema = schemaData.Schema;
