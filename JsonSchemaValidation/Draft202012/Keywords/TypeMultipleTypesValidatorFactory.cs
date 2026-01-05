@@ -1,8 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -39,7 +39,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 }
 
                 string? typeSpecification = typeKeywords.Current.GetString();
-                var validator  = TypeValidatorSharedFactory.CreateFromTypeSpecification(typeSpecification);
+                var validator = TypeValidatorSharedFactory.CreateFromTypeSpecification(typeSpecification);
                 if (validator != null)
                 {
                     validators.Add(validator);

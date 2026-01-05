@@ -1,11 +1,11 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -33,7 +33,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         public IKeywordValidator? Create(SchemaMetadata schemaData)
         {
             var ifValidator = CreateKeywordValidator(schemaData, "if");
-            if(ifValidator == null)
+            if (ifValidator == null)
             {
                 return null;
             }
@@ -99,7 +99,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

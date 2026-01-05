@@ -1,7 +1,7 @@
-﻿using JsonSchemaValidation.Draft202012.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
-using System.Text.Json;
+﻿using System.Text.Json;
 using System.Text.RegularExpressions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
+using JsonSchemaValidation.Exceptions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {

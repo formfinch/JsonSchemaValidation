@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public PropertiesValidatorFactory(
-            ISchemaFactory schemaFactory, 
+            ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
@@ -39,7 +39,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if(propertiesElement.ValueKind != JsonValueKind.Object)
+            if (propertiesElement.ValueKind != JsonValueKind.Object)
             {
                 throw new InvalidSchemaException("Properties keyword must be an object containing property names and their associated property schema.");
             }
@@ -49,14 +49,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             foreach (var propertyElement in propertiesElement.EnumerateObject())
             {
                 var validator = CreateValidator(schemaData, propertyElement.Value);
-                if(validator == null)
+                if (validator == null)
                 {
                     throw new InvalidSchemaException("Each property schema of the properties object must be a valid JSON Schema.");
                 }
                 propertySchemaValidators.Add(propertyElement.Name, validator);
             }
 
-            if(!propertySchemaValidators.Any())
+            if (!propertySchemaValidators.Any())
             {
                 return null;
             }
@@ -69,7 +69,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

@@ -1,10 +1,10 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -15,7 +15,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public ContainsValidatorFactory(
-            ISchemaFactory schemaFactory, 
+            ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
@@ -55,7 +55,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             var validator = new ContainsValidator(containsSchemaValidator, _contextFactory);
 
-            if(schema.TryGetNonNegativeInteger("minContains", out var minContains))
+            if (schema.TryGetNonNegativeInteger("minContains", out var minContains))
             {
                 validator.MinContains = minContains;
             }
@@ -73,7 +73,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

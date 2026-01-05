@@ -1,5 +1,5 @@
-﻿using JsonSchemaValidation.Common;
-using System.Text.Json;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Common;
 
 namespace JsonSchemaValidation.Abstractions
 {

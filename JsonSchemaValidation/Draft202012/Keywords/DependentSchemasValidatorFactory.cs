@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -57,7 +57,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             Dictionary<string, ISchemaValidator> dependentSchemasProperties = new();
-            foreach(var schemasElement in dependentSchemasElement.EnumerateObject())
+            foreach (var schemasElement in dependentSchemasElement.EnumerateObject())
             {
                 string whenPropertyInObject = schemasElement.Name;
 

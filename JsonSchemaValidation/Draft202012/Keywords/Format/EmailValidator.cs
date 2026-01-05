@@ -1,10 +1,10 @@
+using System.Net;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
-using System.Net;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {

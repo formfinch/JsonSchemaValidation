@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public AnyOfValidatorFactory(
-            ISchemaFactory schemaFactory, 
+            ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
@@ -39,7 +39,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (anyOfElement.ValueKind != JsonValueKind.Array 
+            if (anyOfElement.ValueKind != JsonValueKind.Array
                 || anyOfElement.GetArrayLength() == 0)
             {
                 throw new InvalidSchemaException("The keyword value for anyOf MUST be a non-empty array");
@@ -56,14 +56,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 }
 
                 var validator = CreateValidator(schemaData, anyOfSchemaElement);
-                if(validator == null)
+                if (validator == null)
                 {
                     throw new InvalidSchemaException("Each item of the anyOf array MUST be a valid JSON Schema.");
                 }
                 validators.Add(validator);
             }
 
-            if(!validators.Any())
+            if (!validators.Any())
             {
                 return null;
             }
@@ -76,7 +76,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

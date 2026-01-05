@@ -1,8 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -31,7 +31,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             string keyword = dependenciesCompatibility ? "dependencies" : "dependentRequired";
 
             Dictionary<string, IEnumerable<string>> dependentRequiredProperties = new();
-            foreach(var valueListElement in dependentRequiredElement.EnumerateObject())
+            foreach (var valueListElement in dependentRequiredElement.EnumerateObject())
             {
                 if (valueListElement.Value.ValueKind != JsonValueKind.Array)
                 {

@@ -1,6 +1,6 @@
-﻿using JsonSchemaValidation.Common;
-using System.Collections.Concurrent;
+﻿using System.Collections.Concurrent;
 using System.Text.Json;
+using JsonSchemaValidation.Common;
 
 namespace JsonSchemaValidation.Repositories
 {
@@ -47,7 +47,7 @@ namespace JsonSchemaValidation.Repositories
             {
                 SchemaUri = new Uri(originalSchemaData.SchemaUri.ToString());
             }
-            if(originalSchemaData.References != null && originalSchemaData.References.Count != 0)
+            if (originalSchemaData.References != null && originalSchemaData.References.Count != 0)
             {
                 References = new ConcurrentDictionary<Uri, SchemaMetadata>(originalSchemaData.References, new UriWithFragmentComparer());
             }

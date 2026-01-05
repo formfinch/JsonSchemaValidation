@@ -1,5 +1,5 @@
-﻿using JsonSchemaValidation.Exceptions;
-using System.Text.Json;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Exceptions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {

@@ -50,7 +50,7 @@ namespace JsonSchemaValidation.Common
 
         public IEnumerable<JsonProperty> GetUnevaluatedProperties()
         {
-            if(Data.ValueKind != JsonValueKind.Object)
+            if (Data.ValueKind != JsonValueKind.Object)
             {
                 return Enumerable.Empty<JsonProperty>();
             }
@@ -65,9 +65,9 @@ namespace JsonSchemaValidation.Common
 
         public void SetAnnotations(Annotations annotations)
         {
-            foreach(var key in _current.UnEvaluatedProperties.Keys)
+            foreach (var key in _current.UnEvaluatedProperties.Keys)
             {
-                if(!annotations.UnEvaluatedProperties.ContainsKey(key))
+                if (!annotations.UnEvaluatedProperties.ContainsKey(key))
                 {
                     MarkPropertyEvaluated(key);
                 }

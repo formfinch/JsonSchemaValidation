@@ -1,10 +1,10 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using System.Text.RegularExpressions;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
-using System.Text.RegularExpressions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -40,7 +40,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if(patternPropertiesElement.ValueKind != JsonValueKind.Object)
+            if (patternPropertiesElement.ValueKind != JsonValueKind.Object)
             {
                 throw new InvalidSchemaException("The value of patternProperties must be an object contain patterns of property names and their associated property schema.");
             }
@@ -49,7 +49,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             foreach (var propertyElement in patternPropertiesElement.EnumerateObject())
             {
                 var validator = CreateValidator(schemaData, propertyElement.Value);
-                if(validator == null)
+                if (validator == null)
                 {
                     throw new InvalidSchemaException("Each property schema of the patternProperties object must be a valid JSON Schema.");
                 }
@@ -57,7 +57,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 patternPropertySchemaValidators.Add(regex, validator);
             }
 
-            if(!patternPropertySchemaValidators.Any())
+            if (!patternPropertySchemaValidators.Any())
             {
                 return null;
             }
@@ -70,7 +70,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

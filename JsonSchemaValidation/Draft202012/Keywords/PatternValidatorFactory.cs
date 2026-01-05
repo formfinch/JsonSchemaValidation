@@ -1,8 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -30,7 +30,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             string? pattern = patternElement.GetString();
-            if(string.IsNullOrEmpty(pattern))
+            if (string.IsNullOrEmpty(pattern))
             {
                 throw new InvalidSchemaException("The value of this pattern must be a string.");
             }

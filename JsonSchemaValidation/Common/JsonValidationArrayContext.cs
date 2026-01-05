@@ -65,7 +65,7 @@ namespace JsonSchemaValidation.Common
                 SetUnevaluatedItemsEvaluated();
             }
 
-            if(annotations.EvaluatedIndices.Any())
+            if (annotations.EvaluatedIndices.Any())
             {
                 SetEvaluatedIndices(annotations.EvaluatedIndices);
             }
@@ -73,7 +73,7 @@ namespace JsonSchemaValidation.Common
 
         public void SetEvaluatedIndex(int itemIndex)
         {
-            if(_current.EvaluatedIndex < itemIndex)
+            if (_current.EvaluatedIndex < itemIndex)
             {
                 _current.EvaluatedIndex = itemIndex;
             }
@@ -96,7 +96,8 @@ namespace JsonSchemaValidation.Common
 
         public void SetEvaluatedIndices(IEnumerable<int> indices)
         {
-            foreach (int idx in indices) {
+            foreach (int idx in indices)
+            {
                 _current.EvaluatedIndices.Add(idx);
             }
         }
