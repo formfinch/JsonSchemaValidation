@@ -81,7 +81,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private string ProcessVarSpec(string varspec, string operatorGroup, string separator)
         {
             bool assignmentStyle = operatorGroup == ";" || operatorGroup == "?" || operatorGroup == "&";
-            
+
             var varspecDetails = varspecRegex.Match(varspec);
             string varname = varspecDetails.Groups["varname"].Value;
             string modifierLevel4 = varspecDetails.Groups["modifierLevel4"].Value;

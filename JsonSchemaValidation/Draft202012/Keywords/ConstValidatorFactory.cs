@@ -1,8 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -23,7 +23,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if(constElement.ValueKind == JsonValueKind.Undefined)
+            if (constElement.ValueKind == JsonValueKind.Undefined)
             {
                 throw new InvalidSchemaException("const cannot be undefined.");
             }

@@ -9,7 +9,8 @@ namespace JsonSchemaValidation.Common
         public ISchemaValidatorFactory? Value
         {
             get => _schemaValidatorFactory;
-            set {
+            set
+            {
                 _schemaValidatorFactory ??= value;
             }
         }

@@ -75,17 +75,17 @@ namespace JsonSchemaValidation.Common
                 throw new ArgumentNullException(nameof(propertyName));
             }
 
-            if(element.ValueKind != JsonValueKind.Object)
+            if (element.ValueKind != JsonValueKind.Object)
             {
                 return nullElement;
             }
 
-            if(!element.TryGetProperty(propertyName, out var value))
+            if (!element.TryGetProperty(propertyName, out var value))
             {
                 return nullElement;
             }
 
-            if(value.ValueKind != JsonValueKind.Object)
+            if (value.ValueKind != JsonValueKind.Object)
             {
                 return nullElement;
             }

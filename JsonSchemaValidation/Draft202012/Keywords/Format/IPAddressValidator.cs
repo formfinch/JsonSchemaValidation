@@ -1,9 +1,9 @@
+using System.Net;
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
-using System.Net;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {

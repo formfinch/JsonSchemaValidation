@@ -1,8 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -26,7 +26,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             // Give an error in case of a single string because this is a common mistake
             // and ignoring the required property could lead to unexpected behavior.
-            if(requiredElement.ValueKind == JsonValueKind.String)
+            if (requiredElement.ValueKind == JsonValueKind.String)
             {
                 throw new InvalidSchemaException("The 'required' keyword should consist of an array of strings.");
             }
@@ -44,9 +44,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 {
                     throw new InvalidSchemaException("The 'required' keyword should consist of an array of strings.");
                 }
-                
+
                 string? propertyName = propertyNameElement.GetString();
-                if(string.IsNullOrWhiteSpace(propertyName))
+                if (string.IsNullOrWhiteSpace(propertyName))
                 {
                     throw new InvalidSchemaException("The 'required' keyword does not allow for empty property names.");
                 }

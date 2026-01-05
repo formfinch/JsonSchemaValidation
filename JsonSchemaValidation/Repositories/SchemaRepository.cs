@@ -1,11 +1,11 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Collections.Concurrent;
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Draft202012;
 using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
-using System.Collections.Concurrent;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Repositories
 {
@@ -144,9 +144,9 @@ namespace JsonSchemaValidation.Repositories
             {
                 return;
             }
-            
+
             var schema = schemaToRegister!.Value;
-            if(schema.ValueKind != JsonValueKind.Object)
+            if (schema.ValueKind != JsonValueKind.Object)
             {
                 return;
             }
@@ -162,15 +162,15 @@ namespace JsonSchemaValidation.Repositories
                 }
                 id = fullId;
 
-                if(_schemas.ContainsKey(id))
+                if (_schemas.ContainsKey(id))
                 {
-                    if(!_schemas.TryGetValue(id, out schemaData))
+                    if (!_schemas.TryGetValue(id, out schemaData))
                     {
                         throw new InvalidOperationException($"Failed to retrieve {id}.");
                     }
                 }
                 else
-                { 
+                {
                     schemaData = new SchemaMetadata(schema, "https://json-schema.org/draft/2020-12/schema", id);
                     AddSchema(schemaData);
                 }
@@ -179,7 +179,7 @@ namespace JsonSchemaValidation.Repositories
             var anchor = schema.GetAnchorProperty();
             if (!string.IsNullOrWhiteSpace(anchor))
             {
-                if(schemaData == null && !_schemas.TryGetValue(id, out schemaData))
+                if (schemaData == null && !_schemas.TryGetValue(id, out schemaData))
                 {
                     throw new InvalidOperationException($"Failed to retrieve {id}.");
                 }
@@ -302,7 +302,7 @@ namespace JsonSchemaValidation.Repositories
                 return innerSchemaData;
             }
 
-            if(metadata.Anchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
+            if (metadata.Anchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
             {
                 SchemaMetadata innerSchemaData = new(metadata);
                 innerSchemaData.Schema = anchoredSchema;

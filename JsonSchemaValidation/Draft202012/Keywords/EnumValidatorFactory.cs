@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -26,7 +26,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if(enumValuesElement.ValueKind != JsonValueKind.Array)
+            if (enumValuesElement.ValueKind != JsonValueKind.Array)
             {
                 throw new InvalidSchemaException("The value of the enum keyword must be an array. ");
             }

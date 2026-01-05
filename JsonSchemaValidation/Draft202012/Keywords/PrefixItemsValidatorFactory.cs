@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -14,8 +14,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public PrefixItemsValidatorFactory(
-            ISchemaFactory schemaFactory, 
-            ILazySchemaValidatorFactory schemaValidatorFactory, 
+            ISchemaFactory schemaFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
@@ -53,7 +53,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 {
                     throw new InvalidSchemaException("Invalid schema item in prefixItems array");
                 }
-                
+
                 var validator = CreateValidator(schemaData, prefixItemSchemaElement);
                 validators.Add(validator);
 

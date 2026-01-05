@@ -1,10 +1,10 @@
-﻿using JsonSchemaValidation.Abstractions.Keywords;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords.Format;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -39,7 +39,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             string? format = formatElement.GetString();
-            if(string.IsNullOrEmpty(format))
+            if (string.IsNullOrEmpty(format))
             {
                 throw new InvalidSchemaException("The format annotation attribute must be a string.");
             }
@@ -53,7 +53,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new FormatAnnotationValidator(format);
             }
 
-            if(format == "date-time")
+            if (format == "date-time")
             {
                 return new DateTimeValidator();
             }
@@ -85,12 +85,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (format == "idn-hostname")
             {
-                return new HostnameValidator(isIDNFormat:true);
+                return new HostnameValidator(isIDNFormat: true);
             }
 
             if (format == "ipv4")
             {
-                return new IPAddressValidator(isIPV6Format:false);
+                return new IPAddressValidator(isIPV6Format: false);
             }
 
             if (format == "ipv6")

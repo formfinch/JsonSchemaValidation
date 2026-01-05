@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public PropertyNamesValidatorFactory(
-            ISchemaFactory schemaFactory, 
+            ISchemaFactory schemaFactory,
             ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
@@ -39,7 +39,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if(propertyNamesElement.ValueKind != JsonValueKind.Object
+            if (propertyNamesElement.ValueKind != JsonValueKind.Object
                 && propertyNamesElement.ValueKind != JsonValueKind.True
                 && propertyNamesElement.ValueKind != JsonValueKind.False)
             {
@@ -47,7 +47,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             var validator = CreateValidator(schemaData, propertyNamesElement);
-            if(validator == null)
+            if (validator == null)
             {
                 throw new InvalidSchemaException("The value of 'propertyNames' MUST be a valid JSON Schema.");
             }
@@ -59,7 +59,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
 
             var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
-            if(_schemaValidatorFactory.Value == null)
+            if (_schemaValidatorFactory.Value == null)
             {
                 throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
             }

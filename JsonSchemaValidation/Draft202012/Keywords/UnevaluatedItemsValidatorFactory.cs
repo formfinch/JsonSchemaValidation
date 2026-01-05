@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
@@ -14,8 +14,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public UnevaluatedItemsValidatorFactory(
-            ISchemaFactory schemaFactory, 
-            ILazySchemaValidatorFactory schemaValidatorFactory, 
+            ISchemaFactory schemaFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory,
             IJsonValidationContextFactory contextFactory)
         {
             _schemaFactory = schemaFactory;
@@ -49,7 +49,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             var unevaluatedItemValidator = CreateValidator(schemaData, unevaluatedItemSchemaElement);
-            if(unevaluatedItemValidator == null)
+            if (unevaluatedItemValidator == null)
             {
                 throw new InvalidSchemaException("UnevaluatedItems has invalid content");
             }

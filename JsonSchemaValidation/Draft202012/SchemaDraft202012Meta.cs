@@ -1,5 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions;
-using System.Text.Json;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 
 namespace JsonSchemaValidation.Draft202012
 {
@@ -11,7 +11,8 @@ namespace JsonSchemaValidation.Draft202012
 
         public IEnumerable<JsonElement> Schemas => _schemas;
 
-        public SchemaDraft202012Meta() {
+        public SchemaDraft202012Meta()
+        {
             if (_schemas.Any()) return;
 
             AddSchemaDocument(_schemas, JsonSchemaValidation.Properties.Resources.json_schema_draft202012_schema);

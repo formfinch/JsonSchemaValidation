@@ -1,9 +1,9 @@
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Validation.Output;
 using Microsoft.Extensions.DependencyInjection;
-using System.Text.Json;
 
 namespace JsonSchemaValidationTests.Draft202012
 {

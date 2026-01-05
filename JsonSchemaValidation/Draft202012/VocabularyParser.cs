@@ -1,6 +1,6 @@
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Exceptions;
-using System.Text.Json;
 
 namespace JsonSchemaValidation.Draft202012
 {
