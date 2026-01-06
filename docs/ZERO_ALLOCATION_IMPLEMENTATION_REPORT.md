@@ -426,14 +426,134 @@ Before replacing the old implementation:
 
 ---
 
-## Conclusion
+## Part 5: Second Implementation Attempt (January 2026)
 
-The failed implementation attempt provided valuable lessons:
+### 5.1 Approach
 
-1. **Don't break what works** - keep old implementation until new one is proven
-2. **Test incrementally** - verify after each validator
-3. **Understand the problem** - multi-pass validation needs position tracking, not data copying
-4. **"Zero allocation" is nuanced** - minimize allocations, pool what you can't eliminate
-5. **The spec is complex** - annotations, dynamic scope, and unevaluated keywords require careful design
+Following the lessons from Part 1, a second implementation attempt was made using a fundamentally different approach:
 
-A successful implementation is achievable with the position-based re-reading approach, proper pooling, and disciplined incremental development.
+**Key Design Decisions:**
+1. **Lazy parsing via virtual `Data` property** - `SpanValidationContext` implements `IJsonValidationContext` with `ReadOnlyMemory<byte>` source. The `Data` property is lazy - only parsed when accessed.
+2. **Side-by-side implementation** - Draft202012Zero registered alongside Draft202012, sharing all interfaces
+3. **Incremental validator optimization** - Existing validators work unchanged; optimized validators added one at a time
+4. **Full test coverage** - 986 tests (448 original + 62 interchangeability + 476 Draft202012Zero) all passing
+
+**Implementation Files Created:**
+- `SpanValidationContext.cs` - Context holding `ReadOnlyMemory<byte>` with lazy `Data` parsing
+- `SpanValidationObjectContext.cs` - Object context for property iteration
+- `SpanValidationArrayContext.cs` - Array context for item iteration
+- `SpanValidationContextFactory.cs` - Factory implementing `IJsonValidationContextFactory`
+- `SchemaDraft202012ZeroSetup.cs` - Self-contained DI registration via `AddDraft202012Zero()`
+
+**Stage B Optimizations (Span-Optimized Validators):**
+- Type validators: `TypeSpanStringValidator`, `TypeSpanNumberValidator`, `TypeSpanIntegerValidator`, `TypeSpanBooleanValidator`, `TypeSpanArrayValidator`, `TypeSpanObjectValidator`, `TypeSpanNullValidator`
+- Numeric validators: `MinimumSpanValidator`, `MaximumSpanValidator`, `ExclusiveMinimumSpanValidator`, `ExclusiveMaximumSpanValidator`
+- String validators: `MinLengthSpanValidator`, `MaxLengthSpanValidator`
+
+These validators check `context is SpanValidationContext` and use `Utf8JsonReader` directly, avoiding the lazy `Data` parse.
+
+### 5.2 Benchmark Results
+
+Benchmarks using BenchmarkDotNet revealed the span-based implementation was **slower, not faster**:
+
+#### Simple Integer Validation (type + minimum + maximum)
+| Method | Mean | Allocated |
+|--------|------|-----------|
+| Draft202012_ValidInteger | 8.80 µs | 24.73 KB |
+| Draft202012Zero_ValidInteger | 10.80 µs | 25.56 KB |
+
+**Result: 23% slower, 3% more memory**
+
+#### Complex Object Validation (multiple nested properties)
+| Method | Mean | Allocated |
+|--------|------|-----------|
+| Draft202012_SmallData | 9.34 µs | 25.92 KB |
+| Draft202012Zero_SmallData | 10.76 µs | 26.85 KB |
+
+**Result: 15% slower, 4% more memory**
+
+#### Parsing Overhead (array validation)
+| Array Size | Draft202012 | Draft202012Zero |
+|------------|-------------|-----------------|
+| 10 | 4.29 µs | 7.01 µs |
+| 100 | 18.04 µs | 26.96 µs |
+| 1000 | 159.08 µs | 225.88 µs |
+| 10000 | 1.89 ms | 2.56 ms |
+
+**Result: 35-63% slower across all sizes**
+
+### 5.3 Why the Optimizations Failed
+
+1. **`Utf8JsonReader` creation overhead**: Creating a new reader from a memory slice has non-trivial setup cost. Each validator creates its own reader, multiplying this overhead.
+
+2. **`JsonElement` is already highly optimized**: `JsonDocument.Parse()` creates an indexed token database allowing O(1) random access. Property lookups, array indexing, and type checks are essentially pointer arithmetic.
+
+3. **Multiple reader passes vs single parse**: With `JsonElement`, one `JsonDocument.Parse()` call processes the entire document. With span-based validation, each validator creates and advances its own reader, re-parsing the same tokens multiple times.
+
+4. **Type checking overhead**: `Utf8JsonReader.TokenType` requires reading and advancing to get the token type. `JsonElement.ValueKind` is a cached property lookup.
+
+5. **Forward-only nature**: Even with position tracking, re-reading from a saved position still requires creating a new reader and parsing forward to the first token.
+
+### 5.4 Industry Comparison
+
+The current `JsonElement`-based implementation is already highly competitive:
+
+| Library | Small Object Validation | Notes |
+|---------|------------------------|-------|
+| **JsonSchemaValidation (ours)** | ~9 µs | JsonElement-based |
+| JsonSchema.Net | ~31 µs | Popular .NET implementation |
+| Corvus.JsonSchema | ~2 µs | Code generation approach |
+| LateApexEarlySpeed | ~5 µs | Optimized for speed |
+
+Our implementation at ~9 µs for small objects is **top-tier among runtime validators** (Corvus.JsonSchema achieves 2 µs but requires compile-time code generation).
+
+### 5.5 Fundamental Limitation: JSON Schema Requires Random Access
+
+JSON Schema validation fundamentally requires random access to data:
+
+- **`allOf`/`anyOf`/`oneOf`**: Must validate same value against multiple sub-schemas
+- **`$ref`**: References can point anywhere, validated value must be re-readable
+- **`unevaluatedProperties`/`unevaluatedItems`**: Must iterate ALL properties/items after other validators
+- **`properties` + `additionalProperties`**: Must know which properties were already evaluated
+- **`if`/`then`/`else`**: Conditional re-validation of same value
+
+A forward-only streaming approach either:
+1. Copies data (defeating zero-allocation), or
+2. Requires multiple re-reads (adding overhead that exceeds `JsonElement`)
+
+### 5.6 Conclusion: JsonElement is Optimal for Typical Use Cases
+
+The `JsonElement`-based approach is the right architecture because:
+
+1. **Single parse, multiple access**: `JsonDocument.Parse()` once, then O(1) access to any token
+2. **Efficient memory layout**: Indexed token database with minimal overhead
+3. **Already competitive**: ~9 µs puts us in the top tier of runtime validators
+4. **Simpler code**: No position tracking, no multiple readers, no span slicing
+
+**When span-based might help:**
+- Extremely large documents (>100 MB) where `JsonDocument` memory becomes prohibitive
+- Streaming validation with fail-fast (validating as data arrives)
+- Specialized single-pass schemas (no composition keywords)
+
+For these niche cases, a separate streaming API could be added, but the core `JsonElement`-based implementation should remain the default.
+
+---
+
+## Final Conclusion
+
+Two implementation attempts have now conclusively demonstrated:
+
+1. **The original approach failed** (Part 1) because copying bytes for multi-pass validation defeats zero-allocation
+2. **The position-based re-reading approach failed** (Part 5) because creating multiple `Utf8JsonReader` instances adds more overhead than `JsonElement`'s indexed access
+
+**The `JsonElement`-based implementation is optimal** for JSON Schema validation because:
+- JSON Schema requires random access (composition keywords, references, unevaluated keywords)
+- `JsonDocument` provides efficient O(1) token access after a single parse
+- Our ~9 µs performance is already top-tier among runtime validators
+
+Future optimization efforts should focus on:
+- Reducing allocations within the existing architecture (pooling, span-based string comparisons)
+- Caching compiled validators more aggressively
+- Optimizing hot-path validators (type checking, numeric constraints)
+
+The pursuit of zero-allocation validation is not viable for full JSON Schema 2020-12 compliance.
