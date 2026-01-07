@@ -18,7 +18,7 @@ dotnet build -c Release
 
 ## Running Tests
 
-The project uses xUnit with 448+ tests loaded from the JSON-Schema-Test-Suite submodule.
+The project uses xUnit with 512+ tests (448 from JSON-Schema-Test-Suite submodule + 64 output format tests).
 
 ```bash
 # Run all tests
@@ -84,10 +84,41 @@ dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj -v normal
 - `TestCaseLoader.cs` dynamically loads test cases from JSON files
 - Two service provider configurations: format annotation-only (default) and format assertion enabled
 
+## Output Format Support
+
+The library implements spec-compliant output formats per JSON Schema 2020-12 Section 12:
+
+- **Flag** - Boolean only (most efficient)
+- **Basic** - Flat list of errors with instance/keyword locations
+- **Detailed** - Hierarchical nested structure with annotations
+
+Key classes:
+- `Validation/Output/OutputUnit.cs` - Spec-compliant output structure
+- `Validation/Output/OutputFormat.cs` - Format enum
+- `Common/JsonPointer.cs` - RFC 6901 JSON Pointer implementation
+
+Usage:
+```csharp
+var output = validator.ValidateFlag(context);   // Just valid/invalid
+var output = validator.ValidateBasic(context);  // Flat error list
+var output = validator.ValidateDetailed(context); // Hierarchical
+```
+
+## Test Structure
+
+Tests are organized by feature using a feature-first folder structure:
+
+```
+JsonSchemaValidationTests/Draft202012/
+├── SchemaValidationTests.cs    # JSON-Schema-Test-Suite tests
+└── OutputFormat/
+    ├── Examples.cs             # Demonstration tests (11 tests)
+    └── RegressionTests.cs      # Comprehensive coverage (53 tests)
+```
+
 ## Known Gaps (from DRAFT_2020_12_COMPLIANCE.md)
 
-1. **Output Format**: Current `ValidationResult` is basic; spec requires hierarchical structure with `instancePath`/`schemaPath`
-2. **Cross-Draft Compatibility**: Not supported
+1. **Cross-Draft Compatibility**: Not supported (low priority/optional)
 
 ## Target Frameworks
 
