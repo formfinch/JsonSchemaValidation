@@ -16,11 +16,6 @@ namespace JsonSchemaValidationTests.Draft202012.OutputFormat;
 /// - Basic: Flat list of all errors with locations
 /// - Detailed: Hierarchical structure matching schema nesting
 /// </summary>
-/// <remarks>
-/// Uses [Collection] to prevent parallel execution with other output format tests
-/// due to static state in SchemaDraft202012Meta.
-/// </remarks>
-[Collection("OutputFormat")]
 public class Examples
 {
     private readonly ISchemaRepository _schemaRepository;
