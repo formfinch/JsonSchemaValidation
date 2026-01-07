@@ -1,3 +1,5 @@
+using System.Text;
+
 namespace JsonSchemaValidation.Common
 {
     /// <summary>
@@ -7,6 +9,7 @@ namespace JsonSchemaValidation.Common
     public sealed class JsonPointer
     {
         private readonly string[] _segments;
+        private string? _cachedString;
 
         public static JsonPointer Empty { get; } = new([]);
 
@@ -52,26 +55,51 @@ namespace JsonSchemaValidation.Common
 
         /// <summary>
         /// Returns the JSON Pointer string representation (e.g., "/foo/0/bar").
-        /// Empty pointer returns empty string.
+        /// Empty pointer returns empty string. Result is cached for performance.
         /// </summary>
         public override string ToString()
         {
-            if (_segments.Length == 0)
+            if (_cachedString != null)
             {
-                return "";
+                return _cachedString;
             }
 
-            return "/" + string.Join("/", _segments.Select(Escape));
+            if (_segments.Length == 0)
+            {
+                _cachedString = "";
+                return _cachedString;
+            }
+
+            var sb = new StringBuilder();
+            foreach (var segment in _segments)
+            {
+                sb.Append('/');
+                AppendEscaped(sb, segment);
+            }
+            _cachedString = sb.ToString();
+            return _cachedString;
         }
 
         /// <summary>
-        /// Escapes special characters per RFC 6901:
-        /// ~ becomes ~0
-        /// / becomes ~1
+        /// Appends an escaped segment to the StringBuilder.
         /// </summary>
-        private static string Escape(string segment)
+        private static void AppendEscaped(StringBuilder sb, string segment)
         {
-            return segment.Replace("~", "~0").Replace("/", "~1");
+            foreach (var c in segment)
+            {
+                switch (c)
+                {
+                    case '~':
+                        sb.Append("~0");
+                        break;
+                    case '/':
+                        sb.Append("~1");
+                        break;
+                    default:
+                        sb.Append(c);
+                        break;
+                }
+            }
         }
 
         /// <summary>
@@ -89,7 +117,12 @@ namespace JsonSchemaValidation.Common
                 throw new ArgumentException("JSON Pointer must start with '/' or be empty", nameof(pointer));
             }
 
-            var segments = pointer[1..].Split('/').Select(Unescape).ToArray();
+            var parts = pointer[1..].Split('/');
+            var segments = new string[parts.Length];
+            for (int i = 0; i < parts.Length; i++)
+            {
+                segments[i] = Unescape(parts[i]);
+            }
             return new JsonPointer(segments);
         }
 
