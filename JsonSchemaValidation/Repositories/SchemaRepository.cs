@@ -12,7 +12,7 @@ namespace JsonSchemaValidation.Repositories
     public class SchemaRepository : ISchemaRepository
     {
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
-        private IEnumerable<SchemaMetadata>? _sortedSchemas;
+        private volatile IReadOnlyList<SchemaMetadata>? _sortedSchemas;
         private readonly SchemaValidationOptions _options;
         private readonly VocabularyParser? _vocabularyParser;
 
@@ -133,8 +133,9 @@ namespace JsonSchemaValidation.Repositories
             }
             else
             {
-                schemaData.Order = _schemas.Count();
-                _sortedSchemas = _schemas.Values.OrderBy(s => s.Order);
+                schemaData.Order = _schemas.Count;
+                // Create immutable snapshot for thread-safe iteration
+                _sortedSchemas = _schemas.Values.OrderBy(s => s.Order).ToList().AsReadOnly();
             }
         }
 
@@ -329,12 +330,14 @@ namespace JsonSchemaValidation.Repositories
                 return false;
             }
 
-            if (_sortedSchemas == null)
+            // Take a local snapshot for thread-safe iteration
+            var snapshot = _sortedSchemas;
+            if (snapshot == null)
             {
                 return false;
             }
 
-            foreach (var schema in _sortedSchemas)
+            foreach (var schema in snapshot)
             {
                 if (schema.DynamicAnchors.TryGetValue(dynamicAnchor, out var anchoredSchema))
                 {
