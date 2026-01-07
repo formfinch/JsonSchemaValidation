@@ -6,6 +6,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {
     internal static class AnchorLogic
     {
+        private static readonly Regex AnchorPattern = new("^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled);
+
         public static string? GetAnchorProperty(this JsonElement schema)
         {
             return GetAnchorKeywordProperty(schema, "$anchor");
@@ -30,8 +32,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
             }
 
             var anchorText = anchorElement.ToString();
-            var rxPattern = new Regex($"^[A-Za-z_][-A-Za-z0-9._]*$");
-            if (!rxPattern.IsMatch(anchorText))
+            if (!AnchorPattern.IsMatch(anchorText))
             {
                 throw new InvalidSchemaException("The '$anchor' keyword should be a short text value describing the current URI context.");
             }

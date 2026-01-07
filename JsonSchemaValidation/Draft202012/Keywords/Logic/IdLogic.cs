@@ -7,6 +7,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {
     internal static class IdLogic
     {
+        private static readonly Regex IdFragmentPattern = new("^[^#]*#?$", RegexOptions.Compiled);
+
         public static string? GetIdProperty(this JsonElement schema)
         {
             if (schema.ValueKind != JsonValueKind.Object)
@@ -33,8 +35,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
                 throw new InvalidSchemaException("The '$id' keyword must be a string representing a valid URI - reference.");
             }
 
-            var rxPattern = new Regex($"^[^#]*#?$");
-            if (!rxPattern.IsMatch(idText))
+            if (!IdFragmentPattern.IsMatch(idText))
             {
                 throw new InvalidSchemaException("The '$id' keyword cannot contain fragments. To use fragments, refer to the '$anchor' keyword.");
             }
