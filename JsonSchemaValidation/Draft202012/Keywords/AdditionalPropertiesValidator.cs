@@ -87,14 +87,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         private bool MatchesAnyPattern(string propertyName)
         {
-            foreach (var pattern in _filterPropertyPatternRegexes)
-            {
-                if (pattern.IsMatch(propertyName))
-                {
-                    return true;
-                }
-            }
-            return false;
+            return _filterPropertyPatternRegexes.Any(pattern => pattern.IsMatch(propertyName));
         }
     }
 }

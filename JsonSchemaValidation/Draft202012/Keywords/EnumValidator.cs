@@ -22,12 +22,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            foreach (var value in _enumValuesElement.EnumerateArray())
+            if (_enumValuesElement.EnumerateArray().Any(value => JsonElement.DeepEquals(value, context.Data)))
             {
-                if (JsonElement.DeepEquals(value, context.Data))
-                {
-                    return ValidationResult.Valid(instanceLocation, kwLocation);
-                }
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value must be one of the enumerated values");

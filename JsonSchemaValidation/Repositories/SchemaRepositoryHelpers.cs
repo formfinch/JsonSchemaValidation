@@ -22,12 +22,11 @@ namespace JsonSchemaValidation.Repositories
 
             // Check if sub-schema has its own $id and resolve it against parent's base URI
             var subId = ExtractSchemaId(subSchema);
-            if (!string.IsNullOrWhiteSpace(subId) && parentSchemaData.SchemaUri != null)
+            if (!string.IsNullOrWhiteSpace(subId)
+                && parentSchemaData.SchemaUri != null
+                && Uri.TryCreate(parentSchemaData.SchemaUri, subId, out Uri? resolvedUri))
             {
-                if (Uri.TryCreate(parentSchemaData.SchemaUri, subId, out Uri? resolvedUri))
-                {
-                    subSchemaData.SchemaUri = resolvedUri;
-                }
+                subSchemaData.SchemaUri = resolvedUri;
             }
 
             return subSchemaData;

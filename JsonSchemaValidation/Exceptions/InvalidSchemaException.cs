@@ -1,6 +1,6 @@
 namespace JsonSchemaValidation.Exceptions
 {
-    internal class InvalidSchemaException : Exception
+    public class InvalidSchemaException : Exception
     {
         public InvalidSchemaException()
         {

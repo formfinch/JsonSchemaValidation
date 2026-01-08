@@ -29,7 +29,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             // quick check can fail
             double theValue = context.Data.GetDouble();
-            if ((theValue % _divisor == 0))
+            if (Math.Abs(theValue % _divisor) < double.Epsilon)
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
@@ -37,13 +37,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             // Handle overflow case: for very large numbers that are integers,
             // if divisor evenly divides 1 (like 0.5, 0.25, 0.1), all integers are valid multiples
             double quotient = theValue / _divisor;
-            if (double.IsInfinity(quotient))
+            // Check if the value is an integer and divisor divides 1 evenly
+            if (double.IsInfinity(quotient)
+                && Math.Abs(theValue % 1) < double.Epsilon
+                && Math.Abs(1.0 % _divisor) < double.Epsilon)
             {
-                // Check if the value is an integer and divisor divides 1 evenly
-                if (theValue % 1 == 0 && 1.0 % _divisor == 0)
-                {
-                    return ValidationResult.Valid(instanceLocation, kwLocation);
-                }
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             // scaling technique to deal with floating point precision

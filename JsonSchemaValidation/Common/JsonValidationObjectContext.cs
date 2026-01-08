@@ -7,14 +7,14 @@ namespace JsonSchemaValidation.Common
     {
         public struct Annotations
         {
-            public Dictionary<string, JsonProperty> UnEvaluatedProperties = new();
+            public Dictionary<string, JsonProperty> UnEvaluatedProperties { get; set; } = new();
 
             public Annotations()
             {
             }
-        };
+        }
 
-        public Annotations _current = new();
+        private Annotations _current = new();
 
         public JsonValidationObjectContext(JsonElement data) : base(data)
         {

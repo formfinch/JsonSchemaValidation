@@ -175,7 +175,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (schemaData.ActiveVocabularies != null)
             {
                 const string formatAssertionVocabulary = "https://json-schema.org/draft/2020-12/vocab/format-assertion";
-                if (schemaData.ActiveVocabularies.TryGetValue(formatAssertionVocabulary, out var isRequired))
+                if (schemaData.ActiveVocabularies.ContainsKey(formatAssertionVocabulary))
                 {
                     // The vocabulary is present, which means format assertion is active
                     return true;

@@ -17,8 +17,7 @@ namespace JsonSchemaValidation.Abstractions
         /// evaluated within that sub-schema, not by sibling applicators.
         /// </summary>
         JsonValidationContext CreateFreshContext(IJsonValidationContext context);
-
-        // todo: should not be in this interface
+        
         void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg);
     }
 }

@@ -13,12 +13,11 @@ namespace JsonSchemaValidation.Repositories
     {
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
         private volatile IReadOnlyList<SchemaMetadata>? _sortedSchemas;
-        private readonly SchemaValidationOptions _options;
         private readonly VocabularyParser? _vocabularyParser;
 
         public SchemaRepository(SchemaValidationOptions options, VocabularyParser? vocabularyParser = null)
         {
-            _options = options ?? throw new ArgumentNullException(nameof(options));
+            ArgumentNullException.ThrowIfNull(options);
             _vocabularyParser = vocabularyParser;
         }
 
@@ -51,7 +50,7 @@ namespace JsonSchemaValidation.Repositories
 
             schemaData = new SchemaMetadata(schema);
 
-            // todo: default draft version
+            // Default to Draft 2020-12 if not specified
             schemaData.DraftVersion ??= "https://json-schema.org/draft/2020-12/schema";
 
             // Parse $vocabulary if present (for meta-schemas)
@@ -325,7 +324,7 @@ namespace JsonSchemaValidation.Repositories
         public bool TryGetDynamicRef(string dynamicAnchor, out SchemaMetadata? result)
         {
             result = null;
-            if (string.IsNullOrWhiteSpace(dynamicAnchor) || !dynamicAnchor.StartsWith("#"))
+            if (string.IsNullOrWhiteSpace(dynamicAnchor) || !dynamicAnchor.StartsWith('#'))
             {
                 return false;
             }

@@ -69,7 +69,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             // Per spec: annotate with largest index validated, or true if array length <= schema count
             if (prefixItemIndex > 0)
             {
-                object annotationValue = arrayLength <= schemaCount ? true : prefixItemIndex - 1;
+                object annotationValue = arrayLength <= schemaCount ? (object)true : prefixItemIndex - 1;
                 return result with
                 {
                     Annotations = new Dictionary<string, object?> { [Keyword] = annotationValue }

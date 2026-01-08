@@ -58,7 +58,7 @@ namespace JsonSchemaValidation.Common
             }
         }
 
-        private JsonValidationContext CreateValidationContext(JsonElement data, IValidationScope scope, JsonPointer instanceLocation)
+        private static JsonValidationContext CreateValidationContext(JsonElement data, IValidationScope scope, JsonPointer instanceLocation)
         {
             if (data.ValueKind == JsonValueKind.Array)
             {

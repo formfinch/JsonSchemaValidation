@@ -37,19 +37,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var children = new List<ValidationResult>();
             var failedProperties = new List<string>();
 
-            foreach (var dependency in _dependentSchemasProperties)
+            foreach (var dependency in _dependentSchemasProperties.Where(d => propertyNames.Contains(d.Key)))
             {
-                if (propertyNames.Contains(dependency.Key))
-                {
-                    var validator = dependency.Value;
-                    var childKeywordPath = keywordLocation.Append(dependency.Key);
-                    var validationResult = validator.Validate(context, childKeywordPath);
-                    children.Add(validationResult);
+                var validator = dependency.Value;
+                var childKeywordPath = keywordLocation.Append(dependency.Key);
+                var validationResult = validator.Validate(context, childKeywordPath);
+                children.Add(validationResult);
 
-                    if (!validationResult.IsValid)
-                    {
-                        failedProperties.Add(dependency.Key);
-                    }
+                if (!validationResult.IsValid)
+                {
+                    failedProperties.Add(dependency.Key);
                 }
             }
 
