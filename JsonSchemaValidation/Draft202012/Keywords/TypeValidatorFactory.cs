@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Repositories;
 
@@ -8,8 +7,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class TypeValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
-        private static readonly JsonElementComparison _comparison = new();
-
         public string Keyword => "type";
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)

@@ -11,18 +11,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
     {
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
-        // Regex pattern for Relative JSON Pointer validation
-        private static readonly string relativeJsonPointerPattern = @"^((0#?)|([1-9]\d*#?))(\/([^/~]|(~[01]))*)*$";
-
-        private readonly Regex relativeJsonPointerRegex;
+        // Regex pattern for Relative JSON Pointer validation (compiled for performance)
+        private static readonly Regex relativeJsonPointerRegex = new Regex(
+            @"^((0#?)|([1-9]\d*#?))(\/([^/~]|(~[01]))*)*$",
+            RegexOptions.Compiled, defaultMatchTimeout);
 
         public string Keyword => "format";
-
-        public RelativeJsonPointerValidator()
-        {
-            var options = RegexOptions.None;
-            relativeJsonPointerRegex = new Regex(relativeJsonPointerPattern, options, defaultMatchTimeout);
-        }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
@@ -51,7 +45,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid relative JSON pointer");
         }
 
-        private bool IsValidRelativeJsonPointer(string relativeJsonPointer)
+        private static bool IsValidRelativeJsonPointer(string relativeJsonPointer)
         {
             if (string.IsNullOrWhiteSpace(relativeJsonPointer))
             {

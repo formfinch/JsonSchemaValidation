@@ -104,7 +104,7 @@ namespace JsonSchemaValidation.Validation
         /// </summary>
         public static ValidationResult Aggregate(string instanceLocation, string keywordLocation, IEnumerable<ValidationResult> children)
         {
-            var childList = children.ToList();
+            var childList = children as IReadOnlyList<ValidationResult> ?? children.ToArray();
             var isValid = childList.All(c => c.IsValid);
             return new ValidationResult(isValid, instanceLocation, keywordLocation, null)
             {
@@ -119,7 +119,7 @@ namespace JsonSchemaValidation.Validation
         {
             return new ValidationResult(false, instanceLocation, keywordLocation, error)
             {
-                Children = children.ToList()
+                Children = children as IReadOnlyList<ValidationResult> ?? children.ToArray()
             };
         }
 
@@ -203,14 +203,29 @@ namespace JsonSchemaValidation.Validation
 
             if (Children != null && Children.Count > 0)
             {
-                var childErrors = Children.Where(c => !c.IsValid).Select(c => c.ToDetailedOutput()).ToList();
-                var childAnnotations = Children.Where(c => c.IsValid && c.Annotations != null).Select(c => c.ToDetailedOutput()).ToList();
+                // Single pass through children to partition into errors and annotations
+                List<OutputUnit>? childErrors = null;
+                List<OutputUnit>? childAnnotations = null;
 
-                if (childErrors.Count > 0)
+                foreach (var child in Children)
+                {
+                    if (!child.IsValid)
+                    {
+                        childErrors ??= new List<OutputUnit>();
+                        childErrors.Add(child.ToDetailedOutput());
+                    }
+                    else if (child.Annotations != null)
+                    {
+                        childAnnotations ??= new List<OutputUnit>();
+                        childAnnotations.Add(child.ToDetailedOutput());
+                    }
+                }
+
+                if (childErrors != null)
                 {
                     output.Errors = childErrors;
                 }
-                if (childAnnotations.Count > 0)
+                if (childAnnotations != null)
                 {
                     output.Annotations = childAnnotations;
                 }

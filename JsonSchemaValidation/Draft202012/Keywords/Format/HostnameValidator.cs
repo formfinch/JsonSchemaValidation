@@ -13,10 +13,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
         private static readonly IdnMapping idn = new IdnMapping();
 
-        // Simplified regex pattern for ASCII hostname validation
-        private static readonly string asciiHostnamePattern = @"^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$";
+        // Simplified regex pattern for ASCII hostname validation (case-insensitive and compiled)
+        private static readonly Regex hostnameRegex = new Regex(
+            @"^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$",
+            RegexOptions.IgnoreCase | RegexOptions.Compiled, defaultMatchTimeout);
 
-        private readonly Regex hostnameRegex;
         private readonly bool performIDNConversion;
         private readonly string _formatName;
 
@@ -24,8 +25,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         public HostnameValidator(bool isIDNFormat = false)
         {
-            var options = RegexOptions.IgnoreCase; // Hostnames are case-insensitive
-            hostnameRegex = new Regex(asciiHostnamePattern, options, defaultMatchTimeout);
             performIDNConversion = isIDNFormat;
             _formatName = isIDNFormat ? "idn-hostname" : "hostname";
         }
@@ -92,7 +91,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
         }
 
-        private bool IsValidHostname(string hostname)
+        private static bool IsValidHostname(string hostname)
         {
             if (hostname.Length > 253 || hostname.Split('.').Any(label => label.Length > 63))
             {

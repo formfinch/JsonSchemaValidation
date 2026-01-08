@@ -12,19 +12,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
         // Capturing Regex for ISO 8601 duration format validation with named groups
-        private static readonly string iso8601DurationPattern =
+        private static readonly Regex durationRegex = new Regex(
             @"^P(?:(?<years>[0-9]+Y)?(?<weeks>[0-9]+W)?(?<months>[0-9]+M)?(?<days>[0-9]+D)?)"
-            + @"(T(?<hours>[0-9]+H)?(?<minutes>[0-9]+M)?(?<seconds>[0-9]+S)?)?$";
-
-        private readonly Regex durationRegex;
+            + @"(T(?<hours>[0-9]+H)?(?<minutes>[0-9]+M)?(?<seconds>[0-9]+S)?)?$",
+            RegexOptions.Compiled, defaultMatchTimeout);
 
         public string Keyword => "format";
-
-        public DurationValidator()
-        {
-            var options = RegexOptions.None;
-            durationRegex = new Regex(iso8601DurationPattern, options, defaultMatchTimeout);
-        }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
@@ -54,7 +47,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid duration");
         }
 
-        private bool IsValidDuration(string duration)
+        private static bool IsValidDuration(string duration)
         {
             var match = durationRegex.Match(duration);
             if (!match.Success)

@@ -15,7 +15,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // Regex for time RFC 3339 structure validation (ASCII digits only)
         private static readonly Regex timeRegex = new Regex(
             @"^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))$",
-            RegexOptions.None, defaultMatchTimeout);
+            RegexOptions.Compiled, defaultMatchTimeout);
 
         public string Keyword => "format";
 

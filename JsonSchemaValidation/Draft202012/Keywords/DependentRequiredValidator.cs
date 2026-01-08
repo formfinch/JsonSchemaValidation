@@ -39,10 +39,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 if (propertyNames.Contains(dependency.Key))
                 {
-                    var missingProps = dependency.Value.Where(prpName => !propertyNames.Contains(prpName)).ToList();
-                    if (missingProps.Any())
+                    var missingProps = dependency.Value.Where(prpName => !propertyNames.Contains(prpName));
+                    var missingList = string.Join(", ", missingProps.Select(p => $"'{p}'"));
+                    if (missingList.Length > 0)
                     {
-                        errors.Add($"Property '{dependency.Key}' requires: {string.Join(", ", missingProps.Select(p => $"'{p}'"))}");
+                        errors.Add($"Property '{dependency.Key}' requires: {missingList}");
                     }
                 }
             }
