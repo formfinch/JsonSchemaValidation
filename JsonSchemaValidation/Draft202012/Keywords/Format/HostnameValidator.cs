@@ -104,7 +104,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         /// <summary>
         /// Validates A-labels (punycode) by decoding them and checking IDNA2008 rules.
         /// </summary>
-        private bool ValidateALabels(string hostname)
+        private static bool ValidateALabels(string hostname)
         {
             foreach (var label in hostname.Split('.'))
             {
@@ -154,7 +154,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         /// <summary>
         /// Validates IDN contextual rules as defined in RFC 5892.
         /// </summary>
-        private bool ValidateIdnContextualRules(string hostname)
+        private static bool ValidateIdnContextualRules(string hostname)
         {
             foreach (var label in hostname.Split('.'))
             {
@@ -164,7 +164,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return true;
         }
 
-        private bool ValidateLabelContextualRules(string label)
+        private static bool ValidateLabelContextualRules(string label)
         {
             bool hasNonAscii = false, hasKatakanaMiddleDot = false, hasCjk = false;
             bool hasArabicIndic = false, hasExtendedArabicIndic = false;

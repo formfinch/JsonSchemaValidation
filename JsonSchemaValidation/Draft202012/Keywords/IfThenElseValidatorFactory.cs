@@ -80,19 +80,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var originalSchemaId = itemSchemaElement.GetIdProperty();
             SchemaMetadata? originalSchemaResource = null;
 
-            if (!string.IsNullOrEmpty(originalSchemaId))
+            // Resolve the $id to get the registered schema resource
+            if (!string.IsNullOrEmpty(originalSchemaId)
+                && Uri.TryCreate(schemaData.SchemaUri, originalSchemaId, out var schemaResourceUri))
             {
-                // Resolve the $id to get the registered schema resource
-                if (Uri.TryCreate(schemaData.SchemaUri, originalSchemaId, out var schemaResourceUri))
+                try
                 {
-                    try
-                    {
-                        originalSchemaResource = _schemaRepository.GetSchema(schemaResourceUri);
-                    }
-                    catch
-                    {
-                        // Schema not found, proceed without wrapping
-                    }
+                    originalSchemaResource = _schemaRepository.GetSchema(schemaResourceUri);
+                }
+                catch
+                {
+                    // Schema not found, proceed without wrapping
                 }
             }
 

@@ -113,17 +113,6 @@ namespace JsonSchemaValidation.Validation
         }
 
         /// <summary>
-        /// Creates an invalid result with child results showing why it failed.
-        /// </summary>
-        public static ValidationResult Invalid(string instanceLocation, string keywordLocation, string error, IEnumerable<ValidationResult> children)
-        {
-            return new ValidationResult(false, instanceLocation, keywordLocation, error)
-            {
-                Children = children as IReadOnlyList<ValidationResult> ?? children.ToArray()
-            };
-        }
-
-        /// <summary>
         /// Converts this result to an OutputUnit for the specified format.
         /// </summary>
         public OutputUnit ToOutputUnit(OutputFormat format)
@@ -245,7 +234,7 @@ namespace JsonSchemaValidation.Validation
             return output;
         }
 
-        private string GetSummaryError(int errorCount)
+        private static string GetSummaryError(int errorCount)
         {
             if (errorCount == 0)
             {

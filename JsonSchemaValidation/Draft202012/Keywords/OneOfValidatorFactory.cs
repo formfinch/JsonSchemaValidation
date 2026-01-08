@@ -11,7 +11,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
-        private IJsonValidationContextFactory _contextFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
 
         public OneOfValidatorFactory(
             ISchemaFactory schemaFactory,

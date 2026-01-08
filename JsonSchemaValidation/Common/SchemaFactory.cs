@@ -6,8 +6,10 @@ namespace JsonSchemaValidation.Common
 {
     public class SchemaFactory : ISchemaFactory
     {
+        private static readonly Uri NopSchemaUri = new("http://formfinch.com/jsonschemavalidation/nop-true");
+
         private readonly ISchemaRepository _schemaRepository;
-        private Lazy<SchemaMetadata> _nopSchema;
+        private readonly Lazy<SchemaMetadata> _nopSchema;
 
         public SchemaFactory(ISchemaRepository schemaRepository)
         {
@@ -15,8 +17,7 @@ namespace JsonSchemaValidation.Common
 
             _nopSchema = new Lazy<SchemaMetadata>(() =>
             {
-                var nopUri = new Uri("http://formfinch.com/jsonschemavalidation/nop-true");
-                return _schemaRepository.GetSchema(nopUri);
+                return _schemaRepository.GetSchema(NopSchemaUri);
             });
         }
 

@@ -55,13 +55,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                     return false;
                 }
 
-                // Parse the date string to a DateTime object
-                if (!DateTime.TryParse(date, out DateTime parsedDate))
-                {
-                    return false;
-                }
-
-                return true;
+                // Parse the date string to validate it
+                return DateTime.TryParse(date, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out _);
             }
             catch
             {

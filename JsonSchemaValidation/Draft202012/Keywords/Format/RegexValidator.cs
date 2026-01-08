@@ -62,7 +62,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid regex");
         }
 
-        private bool IsValidEcmaScriptRegex(string pattern)
+        private static bool IsValidEcmaScriptRegex(string pattern)
         {
             // First check for non-ECMAScript escape sequences
             if (ContainsNonEcmaScriptEscapes(pattern))
@@ -73,7 +73,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             // Then verify it's a valid regex
             try
             {
-                var regex = new Regex(pattern, RegexOptions.ECMAScript, defaultMatchTimeout);
+                _ = new Regex(pattern, RegexOptions.ECMAScript, defaultMatchTimeout);
                 return true;
             }
             catch
@@ -86,9 +86,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         /// Checks if the pattern contains escape sequences that are valid in .NET but not in ECMAScript.
         /// Examples: \a (bell), \e (escape)
         /// </summary>
-        private bool ContainsNonEcmaScriptEscapes(string pattern)
+        private static bool ContainsNonEcmaScriptEscapes(string pattern)
         {
-            for (int i = 0; i < pattern.Length - 1; i++)
+            int i = 0;
+            while (i < pattern.Length - 1)
             {
                 if (pattern[i] == '\\')
                 {
@@ -102,6 +103,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                     // If odd number of preceding backslashes, this backslash is escaped
                     if (precedingBackslashes % 2 == 1)
                     {
+                        i++;
                         continue;
                     }
 
@@ -114,7 +116,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                         return true;
                     }
 
-                    // Skip the escape sequence
+                    // Skip the escape sequence (backslash + next char)
+                    i += 2;
+                }
+                else
+                {
                     i++;
                 }
             }

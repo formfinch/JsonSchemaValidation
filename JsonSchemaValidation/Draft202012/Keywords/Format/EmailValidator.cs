@@ -91,7 +91,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         private static bool ValidateLocalPart(string localPart)
         {
-            if (localPart.StartsWith("\"") && localPart.EndsWith("\""))
+            if (localPart.StartsWith('"') && localPart.EndsWith('"'))
             {
                 return quotedLocalPartRegex.IsMatch(localPart);
             }
@@ -106,7 +106,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             if (domainPartRegex.IsMatch(domain))
             {
                 // Additional check for valid IPv4 address literals
-                if (domain.StartsWith("[") && domain.EndsWith("]"))
+                if (domain.StartsWith('[') && domain.EndsWith(']'))
                 {
                     var address = domain.Trim('[', ']');
                     if (address.StartsWith("IPv6:"))

@@ -11,7 +11,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
-        private readonly IJsonValidationContextFactory _contextFactory;
 
         public DependentSchemasValidatorFactory(
             ISchemaFactory schemaFactory,
@@ -20,7 +19,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
-            _contextFactory = contextFactory;
+            _ = contextFactory; // Reserved for future use
         }
 
         public string Keyword => "dependentSchemas";

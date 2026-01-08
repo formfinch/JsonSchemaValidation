@@ -7,18 +7,18 @@ namespace JsonSchemaValidation.Common
     {
         public struct Annotations
         {
-            public int EvaluatedIndex = -1;
-            public HashSet<int> EvaluatedIndices = new();
-            public bool ItemsEvaluated = false;
-            public bool AdditionalItemsEvaluated = false;
-            public bool UnevaluatedItemsEvaluated = false;
+            public int EvaluatedIndex { get; set; } = -1;
+            public HashSet<int> EvaluatedIndices { get; set; } = new();
+            public bool ItemsEvaluated { get; set; }
+            public bool AdditionalItemsEvaluated { get; set; }
+            public bool UnevaluatedItemsEvaluated { get; set; }
 
             public Annotations()
             {
             }
-        };
+        }
 
-        public Annotations _current = new();
+        private Annotations _current = new();
 
         public JsonValidationArrayContext(JsonElement data) : base(data) { }
 

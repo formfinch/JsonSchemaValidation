@@ -40,12 +40,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            if (schema.TryGetProperty("prefixItems", out var prefixItemsElement))
+            if (schema.TryGetProperty("prefixItems", out var prefixItemsElement)
+                && prefixItemsElement.ValueKind == JsonValueKind.Array)
             {
-                if (prefixItemsElement.ValueKind == JsonValueKind.Array)
-                {
-                    nPrefixItems = prefixItemsElement.GetArrayLength();
-                }
+                nPrefixItems = prefixItemsElement.GetArrayLength();
             }
 
             if (itemsElement.ValueKind == JsonValueKind.Object)
