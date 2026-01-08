@@ -10,8 +10,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class AdditionalPropertiesValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _additionalPropertiesSchemaValidator;
-        private readonly IEnumerable<string> _filterPropertyNames;
-        private readonly IEnumerable<string> _filterPropertyNamePatterns;
+        private readonly HashSet<string> _filterPropertyNames;
+        private readonly Regex[] _filterPropertyPatternRegexes;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "additionalProperties";
@@ -23,8 +23,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             IJsonValidationContextFactory contextFactory)
         {
             _additionalPropertiesSchemaValidator = additionalPropertiesSchemaValidator;
-            _filterPropertyNames = filterPropertyNames;
-            _filterPropertyNamePatterns = filterPropertyNamePatterns;
+            _filterPropertyNames = new HashSet<string>(filterPropertyNames, StringComparer.Ordinal);
+            _filterPropertyPatternRegexes = filterPropertyNamePatterns
+                .Select(EcmaScriptRegexHelper.CreateEcmaScriptRegex)
+                .ToArray();
             _contextFactory = contextFactory;
         }
 
@@ -39,19 +41,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            IEnumerable<Regex> propertyNamePatternMatchers = Array.Empty<Regex>();
-            if (_filterPropertyNamePatterns.Any())
-            {
-                propertyNamePatternMatchers = _filterPropertyNamePatterns.Select(pattern => EcmaScriptRegexHelper.CreateEcmaScriptRegex(pattern));
-            }
-
             var children = new List<ValidationResult>();
             var additionalPropertyNames = new List<string>();
 
             foreach (var prp in context.Data.EnumerateObject())
             {
-                if (_filterPropertyNames.Any() && _filterPropertyNames.Contains(prp.Name)) continue;
-                if (propertyNamePatternMatchers.Any() && propertyNamePatternMatchers.Any(pattern => pattern.IsMatch(prp.Name))) continue;
+                if (_filterPropertyNames.Contains(prp.Name)) continue;
+                if (MatchesAnyPattern(prp.Name)) continue;
 
                 var validator = _additionalPropertiesSchemaValidator;
                 if (validator == null)
@@ -87,6 +83,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             return result;
+        }
+
+        private bool MatchesAnyPattern(string propertyName)
+        {
+            foreach (var pattern in _filterPropertyPatternRegexes)
+            {
+                if (pattern.IsMatch(propertyName))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
     }
 }

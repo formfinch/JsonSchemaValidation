@@ -135,7 +135,7 @@ namespace JsonSchemaValidation.Repositories
             {
                 schemaData.Order = _schemas.Count;
                 // Create immutable snapshot for thread-safe iteration
-                _sortedSchemas = _schemas.Values.OrderBy(s => s.Order).ToList().AsReadOnly();
+                _sortedSchemas = _schemas.Values.OrderBy(s => s.Order).ToArray();
             }
         }
 

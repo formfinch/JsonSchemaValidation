@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // RFC 3339 date-time: YYYY-MM-DDThh:mm:ss[.frac](Z|±hh:mm) - ASCII digits only
         private static readonly Regex dateTimeRegex = new Regex(
             @"^([0-9]{4})-([0-9]{2})-([0-9]{2})[tT]([0-9]{2}):([0-9]{2}):([0-5][0-9]|60)(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))$",
-            RegexOptions.None, defaultMatchTimeout);
+            RegexOptions.Compiled, defaultMatchTimeout);
 
         public string Keyword => "format";
 

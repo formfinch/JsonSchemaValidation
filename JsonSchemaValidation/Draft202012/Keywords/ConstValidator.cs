@@ -9,7 +9,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class ConstValidator : IKeywordValidator
     {
         private readonly JsonElement _expectedValue;
-        private static readonly JsonElementComparison _comparison = new();
 
         public string Keyword => "const";
 
@@ -23,7 +22,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (_comparison.DeepEquals(_expectedValue, context.Data))
+            if (JsonElement.DeepEquals(_expectedValue, context.Data))
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }

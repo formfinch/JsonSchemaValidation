@@ -12,28 +12,21 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
     {
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
-        // Regex for email parts recognition
-        private static readonly string basicStructure = @"^.+@.+$";
-        private static readonly string localPartPattern = @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$";
-
-        private static readonly string quotedLocalPart = @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$";
-        private static readonly string domainPart = @"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$";
-
-        private readonly Regex basicStructureRegex;
-        private readonly Regex localPartRegex;
-        private readonly Regex quotedLocalPartRegex;
-        private readonly Regex domainPartRegex;
+        // Regex for email parts recognition (compiled for performance)
+        private static readonly Regex basicStructureRegex = new Regex(
+            @"^.+@.+$",
+            RegexOptions.Compiled, defaultMatchTimeout);
+        private static readonly Regex localPartRegex = new Regex(
+            @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$",
+            RegexOptions.Compiled, defaultMatchTimeout);
+        private static readonly Regex quotedLocalPartRegex = new Regex(
+            @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$",
+            RegexOptions.Compiled, defaultMatchTimeout);
+        private static readonly Regex domainPartRegex = new Regex(
+            @"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$",
+            RegexOptions.Compiled, defaultMatchTimeout);
 
         public string Keyword => "format";
-
-        public EmailValidator()
-        {
-            var options = RegexOptions.None;
-            basicStructureRegex = new Regex(basicStructure, options, defaultMatchTimeout);
-            localPartRegex = new Regex(localPartPattern, options, defaultMatchTimeout);
-            quotedLocalPartRegex = new Regex(quotedLocalPart, options, defaultMatchTimeout);
-            domainPartRegex = new Regex(domainPart, options, defaultMatchTimeout);
-        }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
@@ -63,7 +56,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid email address");
         }
 
-        public bool IsValidEmail(string email)
+        public static bool IsValidEmail(string email)
         {
             // Length check
             if (email.Length > 254) return false;
@@ -85,7 +78,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return true;
         }
 
-        private string[] SplitEmail(string email)
+        private static string[] SplitEmail(string email)
         {
             int atIndex = email.LastIndexOf('@');
             if (atIndex == -1) return Array.Empty<string>(); // No '@' symbol found
@@ -96,7 +89,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return new string[] { localPart, domainPart };
         }
 
-        private bool ValidateLocalPart(string localPart)
+        private static bool ValidateLocalPart(string localPart)
         {
             if (localPart.StartsWith("\"") && localPart.EndsWith("\""))
             {
@@ -108,7 +101,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             }
         }
 
-        private bool ValidateDomainPart(string domain)
+        private static bool ValidateDomainPart(string domain)
         {
             if (domainPartRegex.IsMatch(domain))
             {

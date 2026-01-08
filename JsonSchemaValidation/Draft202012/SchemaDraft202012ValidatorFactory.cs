@@ -7,7 +7,7 @@ namespace JsonSchemaValidation.Draft202012
 {
     public class SchemaDraft202012ValidatorFactory : ISchemaDraftValidatorFactory
     {
-        private readonly IReadOnlyList<ISchemaDraftKeywordValidatorFactory> _keywordFactories;
+        private readonly IEnumerable<ISchemaDraftKeywordValidatorFactory> _keywordFactories;
 
         public string DraftVersion => "https://json-schema.org/draft/2020-12/schema";
 
@@ -15,7 +15,7 @@ namespace JsonSchemaValidation.Draft202012
         {
             // Sort factories by ExecutionOrder to guarantee correct execution sequence.
             // This ensures unevaluated keywords (with higher ExecutionOrder) run after other applicators.
-            _keywordFactories = keywordFactories.OrderBy(f => f.ExecutionOrder).ToList();
+            _keywordFactories = keywordFactories.OrderBy(f => f.ExecutionOrder).ToArray();
         }
 
         public ISchemaValidator CreateValidator(SchemaMetadata schemaData)

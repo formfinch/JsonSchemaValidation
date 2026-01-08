@@ -1,6 +1,5 @@
 ﻿using System.Text.Json;
 using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;
@@ -9,8 +8,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal class EnumValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
-        private static readonly JsonElementComparison _comparison = new();
-
         public string Keyword => "enum";
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -41,7 +38,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 for (int j = i + 1; j < nEnumValues; j++)
                 {
-                    if (_comparison.DeepEquals(enumValuesElement[i], enumValuesElement[j]))
+                    if (JsonElement.DeepEquals(enumValuesElement[i], enumValuesElement[j]))
                     {
                         throw new InvalidSchemaException("Elements in the enum array should be unique.");
                     }

@@ -12,17 +12,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
         // Regex for date only ISO 8601 structure validation
-        private static readonly string iso8601DatePattern = @"^\d{4}-\d{2}-\d{2}$";
-
-        private readonly Regex dateRegex;
+        private static readonly Regex dateRegex = new Regex(
+            @"^\d{4}-\d{2}-\d{2}$",
+            RegexOptions.Compiled, defaultMatchTimeout);
 
         public string Keyword => "format";
-
-        public DateValidator()
-        {
-            var options = RegexOptions.None;
-            dateRegex = new Regex(iso8601DatePattern, options, defaultMatchTimeout);
-        }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
@@ -52,7 +46,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date");
         }
 
-        private bool IsValidDate(string date)
+        private static bool IsValidDate(string date)
         {
             try
             {

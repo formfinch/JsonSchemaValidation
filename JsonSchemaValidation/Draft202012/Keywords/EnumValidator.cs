@@ -9,7 +9,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal class EnumValidator : IKeywordValidator
     {
         private readonly JsonElement _enumValuesElement;
-        private static readonly JsonElementComparison _comparison = new();
 
         public string Keyword => "enum";
 
@@ -25,7 +24,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             foreach (var value in _enumValuesElement.EnumerateArray())
             {
-                if (_comparison.DeepEquals(value, context.Data))
+                if (JsonElement.DeepEquals(value, context.Data))
                 {
                     return ValidationResult.Valid(instanceLocation, kwLocation);
                 }

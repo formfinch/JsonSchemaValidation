@@ -21,14 +21,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            var comparer = new JsonElementComparison();
             int itemCount = context.Data.GetArrayLength();
 
             for (int i = 0; i < itemCount; i++)
             {
                 for (int j = i + 1; j < itemCount; j++)
                 {
-                    if (comparer.DeepEquals(context.Data[i], context.Data[j]))
+                    if (JsonElement.DeepEquals(context.Data[i], context.Data[j]))
                     {
                         return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array items at indices {i} and {j} are not unique");
                     }
