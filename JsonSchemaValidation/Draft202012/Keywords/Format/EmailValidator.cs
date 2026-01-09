@@ -15,16 +15,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // Regex for email parts recognition (compiled for performance)
         private static readonly Regex basicStructureRegex = new Regex(
             @"^.+@.+$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
         private static readonly Regex localPartRegex = new Regex(
             @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
         private static readonly Regex quotedLocalPartRegex = new Regex(
             @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
         private static readonly Regex domainPartRegex = new Regex(
             @"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
 
@@ -49,7 +49,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = "email" }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "email" }
                 };
             }
 
@@ -109,7 +109,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 if (domain.StartsWith('[') && domain.EndsWith(']'))
                 {
                     var address = domain.Trim('[', ']');
-                    if (address.StartsWith("IPv6:"))
+                    if (address.StartsWith("IPv6:", StringComparison.Ordinal))
                     {
                         // IPv6 literal; no further validation in this context
                         return true;

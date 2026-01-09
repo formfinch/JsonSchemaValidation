@@ -34,7 +34,7 @@ namespace JsonSchemaValidation.Common
         /// </summary>
         public JsonPointer Append(int index)
         {
-            return Append(index.ToString());
+            return Append(index.ToString(System.Globalization.CultureInfo.InvariantCulture));
         }
 
         /// <summary>
@@ -140,7 +140,7 @@ namespace JsonSchemaValidation.Common
         {
             if (obj is JsonPointer other)
             {
-                return _segments.SequenceEqual(other._segments);
+                return _segments.SequenceEqual(other._segments, StringComparer.Ordinal);
             }
             return false;
         }

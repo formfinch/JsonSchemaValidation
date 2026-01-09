@@ -14,8 +14,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // Capturing Regex for ISO 8601 duration format validation with named groups
         private static readonly Regex durationRegex = new Regex(
             @"^P(?:(?<years>[0-9]+Y)?(?<weeks>[0-9]+W)?(?<months>[0-9]+M)?(?<days>[0-9]+D)?)"
-            + @"(T(?<hours>[0-9]+H)?(?<minutes>[0-9]+M)?(?<seconds>[0-9]+S)?)?$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            + @"(?:T(?<hours>[0-9]+H)?(?<minutes>[0-9]+M)?(?<seconds>[0-9]+S)?)?$",
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
 
@@ -40,7 +40,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = "duration" }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "duration" }
                 };
             }
 

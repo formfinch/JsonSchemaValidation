@@ -55,7 +55,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = "regex" }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "regex" }
                 };
             }
 

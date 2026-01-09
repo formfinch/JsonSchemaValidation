@@ -19,13 +19,13 @@ namespace JsonSchemaValidation.Repositories
         /// Active vocabularies for this schema, mapped from vocabulary URI to required flag.
         /// null means default vocabularies (all standard vocabularies active).
         /// </summary>
-        public Dictionary<string, bool>? ActiveVocabularies { get; set; }
+        public IDictionary<string, bool>? ActiveVocabularies { get; set; }
 
         /// <summary>
         /// Set of active keyword names derived from ActiveVocabularies.
         /// null means all keywords are active (default behavior).
         /// </summary>
-        public HashSet<string>? ActiveKeywords { get; set; }
+        public ISet<string>? ActiveKeywords { get; set; }
 
         public SchemaMetadata(JsonElement schema, string? draftVersion = null, Uri? schemaUri = null)
         {
@@ -33,8 +33,8 @@ namespace JsonSchemaValidation.Repositories
             SchemaUri = schemaUri ?? SchemaRepositoryHelpers.ExtractSchemaUri(schema);
             DraftVersion = draftVersion ?? SchemaRepositoryHelpers.ExtractDraftVersion(schema);
             References = new ConcurrentDictionary<Uri, SchemaMetadata>(new UriWithFragmentComparer());
-            Anchors = new ConcurrentDictionary<string, JsonElement>();
-            DynamicAnchors = new ConcurrentDictionary<string, JsonElement>();
+            Anchors = new ConcurrentDictionary<string, JsonElement>(StringComparer.Ordinal);
+            DynamicAnchors = new ConcurrentDictionary<string, JsonElement>(StringComparer.Ordinal);
         }
 
         public SchemaMetadata(SchemaMetadata originalSchemaData)
@@ -55,14 +55,14 @@ namespace JsonSchemaValidation.Repositories
             {
                 References = new ConcurrentDictionary<Uri, SchemaMetadata>(new UriWithFragmentComparer());
             }
-            Anchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.Anchors);
-            DynamicAnchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.DynamicAnchors);
+            Anchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.Anchors, StringComparer.Ordinal);
+            DynamicAnchors = new ConcurrentDictionary<string, JsonElement>(originalSchemaData.DynamicAnchors, StringComparer.Ordinal);
 
             ActiveVocabularies = originalSchemaData.ActiveVocabularies != null
-                ? new Dictionary<string, bool>(originalSchemaData.ActiveVocabularies)
+                ? new Dictionary<string, bool>(originalSchemaData.ActiveVocabularies, StringComparer.Ordinal)
                 : null;
             ActiveKeywords = originalSchemaData.ActiveKeywords != null
-                ? new HashSet<string>(originalSchemaData.ActiveKeywords)
+                ? new HashSet<string>(originalSchemaData.ActiveKeywords, StringComparer.Ordinal)
                 : null;
         }
     }

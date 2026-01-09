@@ -68,7 +68,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 return result with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = unevaluatedIndices }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = unevaluatedIndices }
                 };
             }
 

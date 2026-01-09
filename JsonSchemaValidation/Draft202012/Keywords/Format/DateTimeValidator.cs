@@ -13,8 +13,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         // RFC 3339 date-time: YYYY-MM-DDThh:mm:ss[.frac](Z|±hh:mm) - ASCII digits only
         private static readonly Regex dateTimeRegex = new Regex(
-            @"^([0-9]{4})-([0-9]{2})-([0-9]{2})[tT]([0-9]{2}):([0-9]{2}):([0-5][0-9]|60)(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            @"^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})[tT](?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-5][0-9]|60)(?:\.[0-9]+)?(?:[zZ]|(?<sign>[+-])(?<offsetHour>[0-9]{2}):(?<offsetMinute>[0-9]{2}))$",
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
 
@@ -34,22 +34,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             if (!match.Success)
                 return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
-            int year = int.Parse(match.Groups[1].ValueSpan);
-            int month = int.Parse(match.Groups[2].ValueSpan);
-            int day = int.Parse(match.Groups[3].ValueSpan);
-            int hour = int.Parse(match.Groups[4].ValueSpan);
-            int minute = int.Parse(match.Groups[5].ValueSpan);
-            int second = int.Parse(match.Groups[6].ValueSpan);
+            int year = int.Parse(match.Groups["year"].ValueSpan);
+            int month = int.Parse(match.Groups["month"].ValueSpan);
+            int day = int.Parse(match.Groups["day"].ValueSpan);
+            int hour = int.Parse(match.Groups["hour"].ValueSpan);
+            int minute = int.Parse(match.Groups["minute"].ValueSpan);
+            int second = int.Parse(match.Groups["second"].ValueSpan);
 
             // Validate date
             if (month < 1 || month > 12 || day < 1 || day > DateTime.DaysInMonth(year, month))
                 return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
             // Validate offset range if numeric
-            if (match.Groups[9].Success)
+            if (match.Groups["sign"].Success)
             {
-                int offsetHours = int.Parse(match.Groups[10].ValueSpan);
-                int offsetMinutes = int.Parse(match.Groups[11].ValueSpan);
+                int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
+                int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
                 if (offsetHours > 23 || offsetMinutes > 59)
                     return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
             }
@@ -61,22 +61,22 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             // Per spec: format always produces an annotation with the format name
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                Annotations = new Dictionary<string, object?> { [Keyword] = "date-time" }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "date-time" }
             };
         }
 
         private static bool IsValidLeapSecond(int hour, int minute, Match match)
         {
             // Leap second only valid at 23:59:60 UTC
-            if (!match.Groups[9].Success) // Zulu time
+            if (!match.Groups["sign"].Success) // Zulu time
                 return hour == 23 && minute == 59;
 
-            int offsetHours = int.Parse(match.Groups[10].ValueSpan);
-            int offsetMinutes = int.Parse(match.Groups[11].ValueSpan);
+            int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
+            int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
 
             int localMinutes = hour * 60 + minute;
             int offsetTotalMinutes = offsetHours * 60 + offsetMinutes;
-            int utcMinutes = match.Groups[9].Value == "+"
+            int utcMinutes = string.Equals(match.Groups["sign"].Value, "+", StringComparison.Ordinal)
                 ? localMinutes - offsetTotalMinutes
                 : localMinutes + offsetTotalMinutes;
 

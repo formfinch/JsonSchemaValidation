@@ -7,7 +7,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {
     internal static class IdLogic
     {
-        private static readonly Regex IdFragmentPattern = new("^[^#]*#?$", RegexOptions.Compiled);
+        private static readonly Regex IdFragmentPattern = new("^[^#]*#?$", RegexOptions.Compiled | RegexOptions.NonBacktracking);
 
         public static string? GetIdProperty(this JsonElement schema)
         {

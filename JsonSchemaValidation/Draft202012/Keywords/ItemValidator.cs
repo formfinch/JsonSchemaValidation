@@ -66,7 +66,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 return result with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = true }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = true }
                 };
             }
 

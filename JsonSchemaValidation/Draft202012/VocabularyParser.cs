@@ -39,8 +39,8 @@ namespace JsonSchemaValidation.Draft202012
                 return null;
             }
 
-            var vocabularies = new Dictionary<string, bool>();
-            var activeKeywords = new HashSet<string>();
+            var vocabularies = new Dictionary<string, bool>(StringComparer.Ordinal);
+            var activeKeywords = new HashSet<string>(StringComparer.Ordinal);
             var unsupportedRequired = new List<string>();
 
             foreach (var prop in vocabElement.EnumerateObject())
@@ -85,21 +85,5 @@ namespace JsonSchemaValidation.Draft202012
                 ActiveKeywords = activeKeywords
             };
         }
-    }
-
-    /// <summary>
-    /// Result of parsing $vocabulary from a schema.
-    /// </summary>
-    public class VocabularyParseResult
-    {
-        /// <summary>
-        /// Map of vocabulary URIs to their required status (true = required, false = optional).
-        /// </summary>
-        public Dictionary<string, bool> Vocabularies { get; set; } = new();
-
-        /// <summary>
-        /// Set of active keyword names derived from the declared vocabularies.
-        /// </summary>
-        public HashSet<string> ActiveKeywords { get; set; } = new();
     }
 }

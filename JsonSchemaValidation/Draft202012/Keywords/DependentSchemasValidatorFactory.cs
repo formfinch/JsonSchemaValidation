@@ -55,7 +55,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return null;
             }
 
-            Dictionary<string, ISchemaValidator> dependentSchemasProperties = new();
+            Dictionary<string, ISchemaValidator> dependentSchemasProperties = new(StringComparer.Ordinal);
             foreach (var schemasElement in dependentSchemasElement.EnumerateObject())
             {
                 string whenPropertyInObject = schemasElement.Name;

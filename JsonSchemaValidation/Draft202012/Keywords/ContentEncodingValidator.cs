@@ -28,7 +28,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                Annotations = new Dictionary<string, object?> { ["contentEncoding"] = _encoding }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { ["contentEncoding"] = _encoding }
             };
         }
     }

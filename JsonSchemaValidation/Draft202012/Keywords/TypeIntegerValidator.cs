@@ -31,7 +31,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            if (BigInteger.TryParse(context.Data.ToString(), out _))
+            if (BigInteger.TryParse(context.Data.ToString(), System.Globalization.CultureInfo.InvariantCulture, out _))
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }

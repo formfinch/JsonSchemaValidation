@@ -8,7 +8,7 @@ namespace JsonSchemaValidation.Common
 
         public static JsonElement GetElementByJsonPointer(this JsonElement element, string pointer)
         {
-            if (!pointer.StartsWith("#/"))
+            if (!pointer.StartsWith("#/", StringComparison.Ordinal))
             {
                 throw new ArgumentException("Invalid JSON Pointer syntax. Must start with '#/'.", nameof(pointer));
             }
@@ -24,7 +24,7 @@ namespace JsonSchemaValidation.Common
                 {
                     currentElement = nextElement;
                 }
-                else if (currentElement.ValueKind == JsonValueKind.Array && int.TryParse(unescapedPart, out int index) && index < currentElement.GetArrayLength())
+                else if (currentElement.ValueKind == JsonValueKind.Array && int.TryParse(unescapedPart, System.Globalization.CultureInfo.InvariantCulture, out int index) && index < currentElement.GetArrayLength())
                 {
                     currentElement = currentElement[index];
                 }

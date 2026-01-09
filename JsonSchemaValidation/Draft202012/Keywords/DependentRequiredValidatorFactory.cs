@@ -30,7 +30,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
             string keyword = dependenciesCompatibility ? "dependencies" : "dependentRequired";
 
-            Dictionary<string, IEnumerable<string>> dependentRequiredProperties = new();
+            Dictionary<string, IEnumerable<string>> dependentRequiredProperties = new(StringComparer.Ordinal);
             foreach (var valueListElement in dependentRequiredElement.EnumerateObject())
             {
                 if (valueListElement.Value.ValueKind != JsonValueKind.Array)

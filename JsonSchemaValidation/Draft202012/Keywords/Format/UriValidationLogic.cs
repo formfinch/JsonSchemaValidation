@@ -39,7 +39,7 @@
 
             if (canBeRelative)
             {
-                if (uri.StartsWith("//"))
+                if (uri.StartsWith("//", StringComparison.Ordinal))
                 {
                     uri = "scheme:" + uri;
                 }

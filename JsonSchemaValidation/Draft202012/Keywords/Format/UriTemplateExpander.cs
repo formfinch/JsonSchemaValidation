@@ -80,12 +80,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         private string ProcessVarSpec(string varspec, string operatorGroup, string separator)
         {
-            bool assignmentStyle = operatorGroup == ";" || operatorGroup == "?" || operatorGroup == "&";
+            bool assignmentStyle = string.Equals(operatorGroup, ";", StringComparison.Ordinal) || string.Equals(operatorGroup, "?", StringComparison.Ordinal) || string.Equals(operatorGroup, "&", StringComparison.Ordinal);
 
             var varspecDetails = varspecRegex.Match(varspec);
             string varname = varspecDetails.Groups["varname"].Value;
             string modifierLevel4 = varspecDetails.Groups["modifierLevel4"].Value;
-            bool listExpansion = modifierLevel4 == "*";
+            bool listExpansion = string.Equals(modifierLevel4, "*", StringComparison.Ordinal);
 
             if (assignmentStyle && listExpansion)
             {

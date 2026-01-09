@@ -59,7 +59,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 return result with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = evaluatedProperties }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = evaluatedProperties }
                 };
             }
 

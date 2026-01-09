@@ -11,44 +11,44 @@ namespace JsonSchemaValidation.Draft202012
 
         public VocabularyRegistry()
         {
-            _vocabularyToKeywords = new Dictionary<string, HashSet<string>>
+            _vocabularyToKeywords = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal)
             {
-                ["https://json-schema.org/draft/2020-12/vocab/core"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/core"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "$id", "$schema", "$ref", "$anchor", "$dynamicRef",
                     "$dynamicAnchor", "$vocabulary", "$comment", "$defs"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/applicator"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/applicator"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "prefixItems", "items", "contains", "additionalProperties",
                     "properties", "patternProperties", "dependentSchemas",
                     "propertyNames", "if", "then", "else", "allOf", "anyOf", "oneOf", "not"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/validation"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/validation"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "type", "const", "enum", "multipleOf", "maximum", "exclusiveMaximum",
                     "minimum", "exclusiveMinimum", "maxLength", "minLength", "pattern",
                     "maxItems", "minItems", "uniqueItems", "maxContains", "minContains",
                     "maxProperties", "minProperties", "required", "dependentRequired"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/unevaluated"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/unevaluated"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "unevaluatedItems", "unevaluatedProperties"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/meta-data"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/meta-data"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "title", "description", "default", "deprecated",
                     "readOnly", "writeOnly", "examples"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/format-annotation"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/format-annotation"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "format"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/format-assertion"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/format-assertion"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "format"
                 },
-                ["https://json-schema.org/draft/2020-12/vocab/content"] = new HashSet<string>
+                ["https://json-schema.org/draft/2020-12/vocab/content"] = new HashSet<string>(StringComparer.Ordinal)
                 {
                     "contentEncoding", "contentMediaType", "contentSchema"
                 }

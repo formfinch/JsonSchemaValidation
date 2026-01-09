@@ -56,7 +56,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                         objectContext.MarkPropertyEvaluated(prp.Name);
                     }
 
-                    if (!matchedProperties.Contains(prp.Name))
+                    if (!matchedProperties.Contains(prp.Name, StringComparer.Ordinal))
                     {
                         matchedProperties.Add(prp.Name);
                     }
@@ -80,7 +80,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 return result with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = matchedProperties }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = matchedProperties }
                 };
             }
 

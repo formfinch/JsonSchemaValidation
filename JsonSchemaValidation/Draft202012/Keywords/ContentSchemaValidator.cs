@@ -29,7 +29,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                Annotations = new Dictionary<string, object?> { ["contentSchema"] = _schema }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { ["contentSchema"] = _schema }
             };
         }
     }

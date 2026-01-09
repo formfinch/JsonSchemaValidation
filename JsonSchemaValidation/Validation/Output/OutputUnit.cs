@@ -42,11 +42,11 @@ namespace JsonSchemaValidation.Validation.Output
         /// <summary>
         /// Nested error output units for Detailed format.
         /// </summary>
-        public List<OutputUnit>? Errors { get; set; }
+        public IList<OutputUnit>? Errors { get; set; }
 
         /// <summary>
         /// Nested annotation output units for Detailed format.
         /// </summary>
-        public List<OutputUnit>? Annotations { get; set; }
+        public IList<OutputUnit>? Annotations { get; set; }
     }
 }
