@@ -28,7 +28,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                Annotations = new Dictionary<string, object?> { ["format"] = _format }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { ["format"] = _format }
             };
         }
     }

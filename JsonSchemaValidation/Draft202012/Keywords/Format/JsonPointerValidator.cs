@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // Regex pattern for JSON Pointer validation (compiled for performance)
         private static readonly Regex jsonPointerRegex = new Regex(
             @"^(\/([^/~]|(~[01]))*)*$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
 
@@ -38,7 +38,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = "json-pointer" }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "json-pointer" }
                 };
             }
 

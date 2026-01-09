@@ -28,7 +28,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                Annotations = new Dictionary<string, object?> { ["contentMediaType"] = _mediaType }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { ["contentMediaType"] = _mediaType }
             };
         }
     }

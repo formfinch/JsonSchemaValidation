@@ -7,47 +7,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         public static IKeywordValidator? CreateFromTypeSpecification(string? specification)
         {
-            if (specification == null)
+            return specification switch
             {
-                return null;
-            }
-
-            if (specification == "string")
-            {
-                return new TypeStringValidator();
-            }
-
-            if (specification == "number")
-            {
-                return new TypeNumberValidator();
-            }
-
-            if (specification == "integer")
-            {
-                return new TypeIntegerValidator();
-            }
-
-            if (specification == "boolean")
-            {
-                return new TypeBooleanValidator();
-            }
-
-            if (specification == "array")
-            {
-                return new TypeArrayValidator();
-            }
-
-            if (specification == "object")
-            {
-                return new TypeObjectValidator();
-            }
-
-            if (specification == "null")
-            {
-                return new TypeNullValidator();
-            }
-
-            throw new InvalidSchemaException("Unknown type specification");
+                null => null,
+                "string" => new TypeStringValidator(),
+                "number" => new TypeNumberValidator(),
+                "integer" => new TypeIntegerValidator(),
+                "boolean" => new TypeBooleanValidator(),
+                "array" => new TypeArrayValidator(),
+                "object" => new TypeObjectValidator(),
+                "null" => new TypeNullValidator(),
+                _ => throw new InvalidSchemaException("Unknown type specification")
+            };
         }
     }
 }

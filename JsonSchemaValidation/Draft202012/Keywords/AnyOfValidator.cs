@@ -31,7 +31,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             foreach (var validator in _validators)
             {
                 var activeContext = _contextFactory.CreateFreshContext(context);
-                var childKeywordPath = keywordLocation.Append(index.ToString());
+                var childKeywordPath = keywordLocation.Append(index.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 var childResult = validator.Validate(activeContext, childKeywordPath);
                 children.Add(childResult);
 

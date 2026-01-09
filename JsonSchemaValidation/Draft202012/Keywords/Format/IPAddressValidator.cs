@@ -41,7 +41,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = _formatName }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = _formatName }
                 };
             }
 
@@ -73,7 +73,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
                 // Further validate the structure for IPv4.
                 var parts = address.Split('.');
-                if (parts.Length != 4 || parts.Any(part => !int.TryParse(part, out int _)))
+                if (parts.Length != 4 || parts.Any(part => !int.TryParse(part, System.Globalization.CultureInfo.InvariantCulture, out int _)))
                     return false;
             }
 

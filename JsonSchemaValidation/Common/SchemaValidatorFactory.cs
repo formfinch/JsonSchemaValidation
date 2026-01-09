@@ -20,7 +20,8 @@ namespace JsonSchemaValidation.Common
             _schemaRepository = schemaRepository;
             _draftFactories = draftFactories.ToDictionary(
                 draftFactory => draftFactory.DraftVersion,
-                draftFactory => draftFactory);
+                draftFactory => draftFactory,
+                StringComparer.Ordinal);
         }
 
         public ISchemaValidator GetValidator(Uri schemaUri)
@@ -38,7 +39,7 @@ namespace JsonSchemaValidation.Common
             string version = schemaMetaData.DraftVersion!;
             if (!_draftFactories.TryGetValue(version, out ISchemaDraftValidatorFactory? draftFactory))
             {
-                throw new NotImplementedException($"Validator for draft version {version} is not implemented.");
+                throw new NotSupportedException($"Validator for draft version {version} is not supported.");
             }
 
             // Create the validator using the draft-specific factory

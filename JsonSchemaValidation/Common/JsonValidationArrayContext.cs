@@ -8,7 +8,7 @@ namespace JsonSchemaValidation.Common
         public struct Annotations
         {
             public int EvaluatedIndex { get; set; } = -1;
-            public HashSet<int> EvaluatedIndices { get; set; } = new();
+            public ISet<int> EvaluatedIndices { get; set; } = new HashSet<int>();
             public bool ItemsEvaluated { get; set; }
             public bool AdditionalItemsEvaluated { get; set; }
             public bool UnevaluatedItemsEvaluated { get; set; }

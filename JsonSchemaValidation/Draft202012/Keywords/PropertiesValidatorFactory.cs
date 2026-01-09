@@ -45,7 +45,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
 
-            Dictionary<string, ISchemaValidator> propertySchemaValidators = new();
+            Dictionary<string, ISchemaValidator> propertySchemaValidators = new(StringComparer.Ordinal);
             foreach (var propertyElement in propertiesElement.EnumerateObject())
             {
                 var validator = CreateValidator(schemaData, propertyElement.Value);

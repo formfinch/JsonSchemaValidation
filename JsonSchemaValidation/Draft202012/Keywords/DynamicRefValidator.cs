@@ -98,7 +98,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             string fragment = referenceUri.Fragment;
 
             // If the fragment is a JSON pointer (starts with #/), treat as normal $ref
-            if (string.IsNullOrEmpty(fragment) || fragment.StartsWith("#/"))
+            if (string.IsNullOrEmpty(fragment) || fragment.StartsWith("#/", StringComparison.Ordinal))
             {
                 return _schemaRepository.GetSchema(referenceUri);
             }

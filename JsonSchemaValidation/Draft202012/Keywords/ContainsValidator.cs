@@ -80,7 +80,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
                 Children = children,
-                Annotations = new Dictionary<string, object?> { [Keyword] = containsIndices }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = containsIndices }
             };
         }
     }

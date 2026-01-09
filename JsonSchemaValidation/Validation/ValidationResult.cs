@@ -83,7 +83,7 @@ namespace JsonSchemaValidation.Validation
         /// <summary>
         /// Creates a valid result with annotations.
         /// </summary>
-        public static ValidationResult Valid(string instanceLocation, string keywordLocation, Dictionary<string, object?> annotations)
+        public static ValidationResult Valid(string instanceLocation, string keywordLocation, IReadOnlyDictionary<string, object?> annotations)
         {
             return new ValidationResult(true, instanceLocation, keywordLocation, null)
             {

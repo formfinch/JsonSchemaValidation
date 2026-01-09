@@ -53,108 +53,30 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new FormatAnnotationValidator(format);
             }
 
-            if (format == "date-time")
+            return format switch
             {
-                return new DateTimeValidator();
-            }
-
-            if (format == "date")
-            {
-                return new DateValidator();
-            }
-
-            if (format == "duration")
-            {
-                return new DurationValidator();
-            }
-
-            if (format == "email")
-            {
-                return new EmailValidator();
-            }
-
-            if (format == "hostname")
-            {
-                return new HostnameValidator(isIDNFormat: false);
-            }
-
-            if (format == "idn-email")
-            {
-                return new EmailValidator();
-            }
-
-            if (format == "idn-hostname")
-            {
-                return new HostnameValidator(isIDNFormat: true);
-            }
-
-            if (format == "ipv4")
-            {
-                return new IPAddressValidator(isIPV6Format: false);
-            }
-
-            if (format == "ipv6")
-            {
-                return new IPAddressValidator(isIPV6Format: true);
-            }
-
-            if (format == "iri")
-            {
-                return new UriValidator(iriSupport: true);
-            }
-
-            if (format == "iri-reference")
-            {
-                return new UriValidator(iriSupport: true, canBeRelative: true);
-            }
-
-            if (format == "json-pointer")
-            {
-                return new JsonPointerValidator();
-            }
-
-            if (format == "regex")
-            {
-                return new RegexValidator();
-            }
-
-            if (format == "relative-json-pointer")
-            {
-                return new RelativeJsonPointerValidator();
-            }
-
-            if (format == "time")
-            {
-                return new TimeValidator();
-            }
-
-            if (format == "unknown")
-            {
-                return new UnknownValidator();
-            }
-
-            if (format == "uri")
-            {
-                return new UriValidator(iriSupport: false);
-            }
-
-            if (format == "uri-reference")
-            {
-                return new UriValidator(iriSupport: false, canBeRelative: true);
-            }
-
-            if (format == "uri-template")
-            {
-                return new UriValidator(isTemplate: true);
-            }
-
-            if (format == "uuid")
-            {
-                return new UuidValidator();
-            }
-
-            // Unknown format - return annotation-only validator
-            return new FormatAnnotationValidator(format);
+                "date-time" => new DateTimeValidator(),
+                "date" => new DateValidator(),
+                "duration" => new DurationValidator(),
+                "email" => new EmailValidator(),
+                "hostname" => new HostnameValidator(isIDNFormat: false),
+                "idn-email" => new EmailValidator(),
+                "idn-hostname" => new HostnameValidator(isIDNFormat: true),
+                "ipv4" => new IPAddressValidator(isIPV6Format: false),
+                "ipv6" => new IPAddressValidator(isIPV6Format: true),
+                "iri" => new UriValidator(iriSupport: true),
+                "iri-reference" => new UriValidator(iriSupport: true, canBeRelative: true),
+                "json-pointer" => new JsonPointerValidator(),
+                "regex" => new RegexValidator(),
+                "relative-json-pointer" => new RelativeJsonPointerValidator(),
+                "time" => new TimeValidator(),
+                "unknown" => new UnknownValidator(),
+                "uri" => new UriValidator(iriSupport: false),
+                "uri-reference" => new UriValidator(iriSupport: false, canBeRelative: true),
+                "uri-template" => new UriValidator(isTemplate: true),
+                "uuid" => new UuidValidator(),
+                _ => new FormatAnnotationValidator(format)  // Unknown format - return annotation-only validator
+            };
         }
 
         /// <summary>

@@ -35,7 +35,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = "uuid" }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "uuid" }
                 };
             }
 

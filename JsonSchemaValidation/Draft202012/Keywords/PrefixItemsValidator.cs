@@ -52,7 +52,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
                 var validator = _validators.ElementAt(prefixItemIndex);
                 var itemContext = _contextFactory.CreateContextForArrayItem(context, prefixItemIndex, item);
-                var childKeywordPath = keywordLocation.Append(prefixItemIndex.ToString());
+                var childKeywordPath = keywordLocation.Append(prefixItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 var itemValidationResult = validator.Validate(itemContext, childKeywordPath);
                 children.Add(itemValidationResult);
 
@@ -72,7 +72,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 object annotationValue = arrayLength <= schemaCount ? (object)true : prefixItemIndex - 1;
                 return result with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = annotationValue }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = annotationValue }
                 };
             }
 

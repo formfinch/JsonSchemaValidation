@@ -28,7 +28,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            HashSet<string> propertyNames = new();
+            HashSet<string> propertyNames = new(StringComparer.Ordinal);
             foreach (var prpElement in context.Data.EnumerateObject())
             {
                 propertyNames.Add(prpElement.Name);

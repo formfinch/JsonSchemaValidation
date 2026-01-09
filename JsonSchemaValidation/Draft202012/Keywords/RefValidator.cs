@@ -109,7 +109,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return _schemaData;
             }
 
-            if (_ref == "#")
+            if (string.Equals(_ref, "#", StringComparison.Ordinal))
             {
                 // Self-reference to root - look up the schema by its base URI (without fragment)
                 if (_schemaData.SchemaUri != null)

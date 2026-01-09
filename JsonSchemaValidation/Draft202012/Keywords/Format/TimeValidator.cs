@@ -14,8 +14,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         // Regex for time RFC 3339 structure validation (ASCII digits only)
         private static readonly Regex timeRegex = new Regex(
-            @"^([01][0-9]|2[0-3]):([0-5][0-9]):([0-5][0-9]|60)(\.[0-9]+)?([zZ]|([+-])([0-9]{2}):([0-9]{2}))$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            @"^(?<hour>[01][0-9]|2[0-3]):(?<minute>[0-5][0-9]):(?<second>[0-5][0-9]|60)(?:\.[0-9]+)?(?:[zZ]|(?<sign>[+-])(?<offsetHour>[0-9]{2}):(?<offsetMinute>[0-9]{2}))$",
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
 
@@ -35,9 +35,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             if (!match.Success)
                 return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
 
-            int hour = int.Parse(match.Groups[1].ValueSpan);
-            int minute = int.Parse(match.Groups[2].ValueSpan);
-            int second = int.Parse(match.Groups[3].ValueSpan);
+            int hour = int.Parse(match.Groups["hour"].ValueSpan);
+            int minute = int.Parse(match.Groups["minute"].ValueSpan);
+            int second = int.Parse(match.Groups["second"].ValueSpan);
 
             // Leap second validation (only if seconds == 60)
             if (second == 60 && !IsValidLeapSecond(hour, minute, match))
@@ -48,35 +48,35 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
 
             // Validate offset range if numeric offset present
-            if (match.Groups[6].Success)
+            if (match.Groups["sign"].Success)
             {
-                int offsetHours = int.Parse(match.Groups[7].ValueSpan);
-                int offsetMinutes = int.Parse(match.Groups[8].ValueSpan);
+                int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
+                int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
                 if (offsetHours > 23 || offsetMinutes > 59)
                     return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
             }
 
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                Annotations = new Dictionary<string, object?> { [Keyword] = "time" }
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "time" }
             };
         }
 
         private static bool IsValidLeapSecond(int hour, int minute, Match match)
         {
             // Leap second only valid at 23:59:60 UTC
-            if (!match.Groups[6].Success) // Zulu time
+            if (!match.Groups["sign"].Success) // Zulu time
                 return hour == 23 && minute == 59;
 
             // Calculate UTC time: UTC = local - offset
-            int offsetHours = int.Parse(match.Groups[7].ValueSpan);
-            int offsetMinutes = int.Parse(match.Groups[8].ValueSpan);
+            int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
+            int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
             if (offsetHours > 23 || offsetMinutes > 59)
                 return false;
 
             int localMinutes = hour * 60 + minute;
             int offsetTotalMinutes = offsetHours * 60 + offsetMinutes;
-            int utcMinutes = match.Groups[6].Value == "+"
+            int utcMinutes = string.Equals(match.Groups["sign"].Value, "+", StringComparison.Ordinal)
                 ? localMinutes - offsetTotalMinutes
                 : localMinutes + offsetTotalMinutes;
 

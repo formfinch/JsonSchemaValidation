@@ -7,7 +7,7 @@ namespace JsonSchemaValidation.Common
     {
         public struct Annotations
         {
-            public Dictionary<string, JsonProperty> UnEvaluatedProperties { get; set; } = new();
+            public IDictionary<string, JsonProperty> UnEvaluatedProperties { get; set; } = new Dictionary<string, JsonProperty>(StringComparer.Ordinal);
 
             public Annotations()
             {

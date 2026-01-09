@@ -14,7 +14,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // Regex pattern for Relative JSON Pointer validation (compiled for performance)
         private static readonly Regex relativeJsonPointerRegex = new Regex(
             @"^((0#?)|([1-9]\d*#?))(\/([^/~]|(~[01]))*)*$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
 
@@ -38,7 +38,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = "relative-json-pointer" }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "relative-json-pointer" }
                 };
             }
 

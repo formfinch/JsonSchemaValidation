@@ -16,7 +16,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
         // Simplified regex pattern for ASCII hostname validation (case-insensitive and compiled)
         private static readonly Regex hostnameRegex = new Regex(
             @"^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled, defaultMatchTimeout);
+            RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         private readonly bool performIDNConversion;
         private readonly string _formatName;
@@ -84,7 +84,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation) with
                 {
-                    Annotations = new Dictionary<string, object?> { [Keyword] = _formatName }
+                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = _formatName }
                 };
             }
 

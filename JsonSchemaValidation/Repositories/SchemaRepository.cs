@@ -262,14 +262,14 @@ namespace JsonSchemaValidation.Repositories
         {
             if (schemaUri == null) throw new ArgumentNullException(nameof(schemaUri));
 
-            if (schemaUri.Fragment == "#")
+            if (string.Equals(schemaUri.Fragment, "#", StringComparison.Ordinal))
             {
                 schemaUri = new UriBuilder(schemaUri) { Fragment = string.Empty }.Uri;
             }
 
             if (!_schemas.TryGetValue(schemaUri, out var metadata))
             {
-                throw new ArgumentException($"Schema with URI {schemaUri} not found.");
+                throw new ArgumentException($"Schema with URI {schemaUri} not found.", nameof(schemaUri));
             }
 
             if (string.IsNullOrWhiteSpace(schemaUri.Fragment))
@@ -277,7 +277,7 @@ namespace JsonSchemaValidation.Repositories
                 return new(metadata);
             }
 
-            if (schemaUri.Fragment.StartsWith("#/"))
+            if (schemaUri.Fragment.StartsWith("#/", StringComparison.Ordinal))
             {
                 string decodedFragment = Uri.UnescapeDataString(schemaUri.Fragment);
                 var targetSchema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
@@ -318,7 +318,7 @@ namespace JsonSchemaValidation.Repositories
                 return innerSchemaData;
             }
 
-            throw new ArgumentException($"Schema with URI {schemaUri} not found.");
+            throw new ArgumentException($"Schema with URI {schemaUri} not found.", nameof(schemaUri));
         }
 
         public bool TryGetDynamicRef(string dynamicAnchor, out SchemaMetadata? result)

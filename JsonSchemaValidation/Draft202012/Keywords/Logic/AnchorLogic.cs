@@ -6,7 +6,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Logic
 {
     internal static class AnchorLogic
     {
-        private static readonly Regex AnchorPattern = new("^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled);
+        private static readonly Regex AnchorPattern = new("^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled | RegexOptions.NonBacktracking);
 
         public static string? GetAnchorProperty(this JsonElement schema)
         {
