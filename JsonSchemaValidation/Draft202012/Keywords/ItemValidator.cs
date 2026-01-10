@@ -34,7 +34,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 if (idxItem >= _nPrefixItems)
                 {
-                    var itemContext = _contextFactory.CreateContextForArrayItem(context, idxItem, item);
+                    var itemContext = _contextFactory.CreateContextForArrayItemFast(context, item);
                     if (!_validator.IsValid(itemContext))
                     {
                         return false;

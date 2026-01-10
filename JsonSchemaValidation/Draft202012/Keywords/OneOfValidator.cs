@@ -24,7 +24,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             foreach (var validator in _validators)
             {
-                var activeContext = _contextFactory.CreateFreshContext(context);
+                var activeContext = _contextFactory.CreateFreshContextFast(context);
                 if (validator.IsValid(activeContext))
                 {
                     validCount++;
