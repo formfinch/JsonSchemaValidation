@@ -1,3 +1,4 @@
+using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
@@ -13,6 +14,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     internal static class EcmaScriptRegexHelper
     {
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
+
+        /// <summary>
+        /// Cache for compiled regex instances keyed by original pattern string.
+        /// Thread-safe via ConcurrentDictionary. Patterns are immutable so caching is safe.
+        /// </summary>
+        private static readonly ConcurrentDictionary<string, Regex> RegexCache = new(StringComparer.Ordinal);
 
         // ECMAScript whitespace includes: space, tab, vertical tab, form feed,
         // line terminators (LF, CR, LS, PS), and Unicode category Zs (space separators), plus BOM
@@ -40,12 +47,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         /// <summary>
         /// Creates a Regex with ECMAScript-compatible behavior.
+        /// Results are cached by pattern string for reuse across schema instances.
         /// </summary>
         public static Regex CreateEcmaScriptRegex(string pattern)
         {
-            // Always transform the pattern to ensure ECMAScript-compatible behavior
-            string transformedPattern = TransformPattern(pattern);
-            return new Regex(transformedPattern, RegexOptions.None, DefaultTimeout);
+            return RegexCache.GetOrAdd(pattern, static p =>
+            {
+                string transformedPattern = TransformPattern(p);
+                return new Regex(transformedPattern, RegexOptions.None, DefaultTimeout);
+            });
         }
 
         /// <summary>
