@@ -18,6 +18,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
         private readonly IJsonValidationContextFactory _contextFactory;
 
+        // Local cache for the resolved schema and validator
+        private SchemaMetadata? _cachedResolvedSchema;
+        private ISchemaValidator? _cachedValidator;
+        private bool _cacheInitialized;
+
         public RefValidator(
             string refValue,
             SchemaMetadata schemaData,
@@ -42,10 +47,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            // Resolve the $ref
-            var resolvedSchema = ResolveRef();
+            // Get cached or resolve the $ref
+            var (resolvedSchema, validator) = GetOrCreateValidator();
 
-            if (resolvedSchema == null)
+            if (resolvedSchema == null || validator == null)
             {
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Failed to resolve $ref: {_ref}");
             }
@@ -55,14 +60,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Maximum reference depth exceeded for $ref: {_ref}");
             }
-
-            // Create a validator for the resolved schema
-            if (_schemaValidatorFactory.Value == null)
-            {
-                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
-            }
-
-            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
 
             // Run validation with the current context (scope is shared)
             var activeContext = _contextFactory.CreateFreshContext(context);
@@ -104,10 +101,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         public bool IsValid(IJsonValidationContext context)
         {
-            // Resolve the $ref
-            var resolvedSchema = ResolveRef();
+            // Get cached or resolve the $ref
+            var (resolvedSchema, validator) = GetOrCreateValidator();
 
-            if (resolvedSchema == null)
+            if (resolvedSchema == null || validator == null)
             {
                 return false;
             }
@@ -117,14 +114,6 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 return false;
             }
-
-            // Create a validator for the resolved schema
-            if (_schemaValidatorFactory.Value == null)
-            {
-                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
-            }
-
-            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
 
             // Use tracking if referenced schema needs it, or if parent already tracks
             bool needsTracking = validator.RequiresAnnotationTracking || context is IJsonValidationObjectContext or IJsonValidationArrayContext;
@@ -149,6 +138,38 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                     context.Scope.PopSchemaResource();
                 }
             }
+        }
+
+        private (SchemaMetadata? schema, ISchemaValidator? validator) GetOrCreateValidator()
+        {
+            // Return cached result if available
+            if (_cacheInitialized)
+            {
+                return (_cachedResolvedSchema, _cachedValidator);
+            }
+
+            // Resolve the $ref
+            var resolvedSchema = ResolveRef();
+            if (resolvedSchema == null)
+            {
+                _cacheInitialized = true;
+                return (null, null);
+            }
+
+            // Create a validator for the resolved schema
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+
+            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
+
+            // Cache for subsequent calls
+            _cachedResolvedSchema = resolvedSchema;
+            _cachedValidator = validator;
+            _cacheInitialized = true;
+
+            return (resolvedSchema, validator);
         }
 
         private SchemaMetadata? ResolveRef()
