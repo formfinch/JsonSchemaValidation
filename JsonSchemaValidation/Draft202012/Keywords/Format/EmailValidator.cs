@@ -109,7 +109,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
                 // Additional check for valid IPv4 address literals
                 if (domain.StartsWith('[') && domain.EndsWith(']'))
                 {
-                    var address = domain.Trim('[', ']');
+                    var address = domain.Substring(1, domain.Length - 2);
                     if (address.StartsWith("IPv6:", StringComparison.Ordinal))
                     {
                         // IPv6 literal; no further validation in this context

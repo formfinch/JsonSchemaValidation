@@ -6,23 +6,6 @@ namespace JsonSchemaValidation.Common
 {
     public class SchemaFactory : ISchemaFactory
     {
-        private static readonly Uri NopSchemaUri = new("http://formfinch.com/jsonschemavalidation/nop-true");
-
-        private readonly ISchemaRepository _schemaRepository;
-        private readonly Lazy<SchemaMetadata> _nopSchema;
-
-        public SchemaFactory(ISchemaRepository schemaRepository)
-        {
-            _schemaRepository = schemaRepository;
-
-            _nopSchema = new Lazy<SchemaMetadata>(() =>
-            {
-                return _schemaRepository.GetSchema(NopSchemaUri);
-            });
-        }
-
-        public SchemaMetadata NopSchema => _nopSchema.Value;
-
         public SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData)
         {
             // In Draft 2020-12, $ref and $dynamicRef are applicators that work alongside

@@ -95,7 +95,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
                 if (!itemValidationResult.IsValid)
                 {
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Unevaluated item at index {idx} is invalid") with { Children = children };
+                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Unevaluated item at index {idx.ToString(System.Globalization.CultureInfo.InvariantCulture)} is invalid") with { Children = children };
                 }
                 unevaluatedIndices.Add(idx);
             }

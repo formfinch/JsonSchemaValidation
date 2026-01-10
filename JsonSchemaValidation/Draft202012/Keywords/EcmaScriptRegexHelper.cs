@@ -87,14 +87,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                     {
                         // Wrap in non-capturing group so quantifier applies to whole character
                         result.Append("(?:");
-                        result.Append($"\\u{(int)high:X4}\\u{(int)low:X4}");
+                        AppendUnicodeEscape(result, high);
+                        AppendUnicodeEscape(result, low);
                         result.Append(')');
                     }
                     else
                     {
                         // No quantifier, just output the surrogate pair as escape sequences
                         // This ensures consistent handling
-                        result.Append($"\\u{(int)high:X4}\\u{(int)low:X4}");
+                        AppendUnicodeEscape(result, high);
+                        AppendUnicodeEscape(result, low);
                     }
                     i += 2;
                     continue;
@@ -164,6 +166,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             return result.ToString();
+        }
+
+        /// <summary>
+        /// Appends a Unicode escape sequence (\uXXXX) for a character without boxing.
+        /// </summary>
+        private static void AppendUnicodeEscape(System.Text.StringBuilder sb, char c)
+        {
+            sb.Append("\\u");
+            sb.Append(((int)c).ToString("X4", System.Globalization.CultureInfo.InvariantCulture));
         }
 
         /// <summary>

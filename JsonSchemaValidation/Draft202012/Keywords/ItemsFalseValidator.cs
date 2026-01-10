@@ -46,7 +46,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (_nPrefixItems < context.Data.GetArrayLength())
             {
-                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array has more items ({context.Data.GetArrayLength()}) than allowed by prefixItems ({_nPrefixItems})");
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array has more items ({context.Data.GetArrayLength().ToString(System.Globalization.CultureInfo.InvariantCulture)}) than allowed by prefixItems ({_nPrefixItems.ToString(System.Globalization.CultureInfo.InvariantCulture)})");
             }
 
             return ValidationResult.Valid(instanceLocation, kwLocation);

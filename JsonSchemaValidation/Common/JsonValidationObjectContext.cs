@@ -65,12 +65,21 @@ namespace JsonSchemaValidation.Common
 
         public void SetAnnotations(Annotations annotations)
         {
-            foreach (var key in _current.UnEvaluatedProperties.Keys)
+            // Collect keys to remove first to avoid modifying during enumeration
+            var keysToRemove = new List<string>();
+            var keys = _current.UnEvaluatedProperties.Keys;
+            for (int i = 0; keys.Skip(i).Any(); i++)
             {
+                var key = keys.ElementAt(i);
                 if (!annotations.UnEvaluatedProperties.ContainsKey(key))
                 {
-                    MarkPropertyEvaluated(key);
+                    keysToRemove.Add(key);
                 }
+            }
+
+            foreach (var key in keysToRemove)
+            {
+                MarkPropertyEvaluated(key);
             }
         }
 

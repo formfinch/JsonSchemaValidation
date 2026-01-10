@@ -90,7 +90,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
                 if (!itemValidationResult.IsValid)
                 {
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Item at index {prefixItemIndex} is invalid") with { Children = children };
+                    return ValidationResult.Invalid(instanceLocation, kwLocation, string.Concat("Item at index ", prefixItemIndex.ToString(System.Globalization.CultureInfo.InvariantCulture), " is invalid")) with { Children = children };
                 }
                 arrayContext.SetEvaluatedIndex(prefixItemIndex);
                 prefixItemIndex++;
@@ -101,11 +101,21 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             // Per spec: annotate with largest index validated, or true if array length <= schema count
             if (prefixItemIndex > 0)
             {
-                object annotationValue = arrayLength <= schemaCount ? (object)true : prefixItemIndex - 1;
-                return result with
+                // Avoid boxing by using separate dictionary creation paths
+                if (arrayLength <= schemaCount)
                 {
-                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = annotationValue }
-                };
+                    return result with
+                    {
+                        Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = true }
+                    };
+                }
+                else
+                {
+                    return result with
+                    {
+                        Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = prefixItemIndex - 1 }
+                    };
+                }
             }
 
             return result;

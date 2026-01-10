@@ -32,7 +32,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value must be at most {_maximum}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value must be at most {_maximum.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
     }
 }

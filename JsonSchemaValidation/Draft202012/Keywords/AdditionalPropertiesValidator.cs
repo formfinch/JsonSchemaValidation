@@ -25,9 +25,13 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
             _additionalPropertiesSchemaValidator = additionalPropertiesSchemaValidator;
             _filterPropertyNames = filterPropertyNames.ToFrozenSet(StringComparer.Ordinal);
-            _filterPropertyPatternRegexes = filterPropertyNamePatterns
-                .Select(EcmaScriptRegexHelper.CreateEcmaScriptRegex)
-                .ToArray();
+            var patternsArray = filterPropertyNamePatterns as string[] ?? filterPropertyNamePatterns.ToArray();
+            var regexes = new Regex[patternsArray.Length];
+            for (int i = 0; i < patternsArray.Length; i++)
+            {
+                regexes[i] = EcmaScriptRegexHelper.CreateEcmaScriptRegex(patternsArray[i]);
+            }
+            _filterPropertyPatternRegexes = regexes;
             _contextFactory = contextFactory;
         }
 
@@ -111,7 +115,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         private bool MatchesAnyPattern(string propertyName)
         {
-            return _filterPropertyPatternRegexes.Any(pattern => pattern.IsMatch(propertyName));
+            for (int i = 0; i < _filterPropertyPatternRegexes.Length; i++)
+            {
+                if (_filterPropertyPatternRegexes[i].IsMatch(propertyName))
+                    return true;
+            }
+            return false;
         }
     }
 }

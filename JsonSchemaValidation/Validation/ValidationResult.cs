@@ -173,9 +173,9 @@ namespace JsonSchemaValidation.Validation
 
             if (Children != null)
             {
-                foreach (var child in Children)
+                for (int i = 0; i < Children.Count; i++)
                 {
-                    child.CollectErrorsFlat(errors);
+                    Children[i].CollectErrorsFlat(errors);
                 }
             }
         }
@@ -196,8 +196,9 @@ namespace JsonSchemaValidation.Validation
                 List<OutputUnit>? childErrors = null;
                 List<OutputUnit>? childAnnotations = null;
 
-                foreach (var child in Children)
+                for (int i = 0; i < Children.Count; i++)
                 {
+                    var child = Children[i];
                     if (!child.IsValid)
                     {
                         childErrors ??= new List<OutputUnit>();
@@ -244,7 +245,7 @@ namespace JsonSchemaValidation.Validation
             {
                 return "Validation failed with 1 error";
             }
-            return $"Validation failed with {errorCount} errors";
+            return $"Validation failed with {errorCount.ToString(System.Globalization.CultureInfo.InvariantCulture)} errors";
         }
     }
 }

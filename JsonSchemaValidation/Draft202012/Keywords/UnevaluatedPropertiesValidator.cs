@@ -41,8 +41,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             // With tracking, only validate unevaluated properties
-            foreach (var prp in objectContext.GetUnevaluatedProperties())
+            var unevaluatedProps = objectContext.GetUnevaluatedProperties();
+            for (int i = 0; unevaluatedProps.Skip(i).Any(); i++)
             {
+                var prp = unevaluatedProps.ElementAt(i);
                 var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
                 if (!_unevaluatedPropertyValidator.IsValid(prpContext))
                 {
@@ -73,8 +75,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var invalidProperties = new List<string>();
             var evaluatedProperties = new List<string>();
 
-            foreach (JsonProperty prp in objectContext.GetUnevaluatedProperties())
+            var unevaluatedProps = objectContext.GetUnevaluatedProperties();
+            for (int i = 0; unevaluatedProps.Skip(i).Any(); i++)
             {
+                var prp = unevaluatedProps.ElementAt(i);
                 var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prp.Value);
                 var validationResult = _unevaluatedPropertyValidator.Validate(prpContext, keywordLocation);
                 children.Add(validationResult);
@@ -91,7 +95,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (invalidProperties.Count > 0)
             {
-                var props = string.Join(", ", invalidProperties.Select(p => $"'{p}'"));
+                var quotedProps = new List<string>(invalidProperties.Count);
+                foreach (var p in invalidProperties)
+                {
+                    quotedProps.Add($"'{p}'");
+                }
+                var props = string.Join(", ", quotedProps);
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Unevaluated properties are invalid: {props}") with { Children = children };
             }
 

@@ -77,7 +77,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
                     if (!itemValidationResult.IsValid)
                     {
-                        return ValidationResult.Invalid(instanceLocation, kwLocation, $"Item at index {idxItem} is invalid") with { Children = children };
+                        return ValidationResult.Invalid(instanceLocation, kwLocation, $"Item at index {idxItem.ToString(System.Globalization.CultureInfo.InvariantCulture)} is invalid") with { Children = children };
                     }
                     arrayContext.SetEvaluatedIndex(idxItem);
                 }

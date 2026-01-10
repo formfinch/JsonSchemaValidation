@@ -58,11 +58,7 @@ namespace JsonSchemaValidation.Common
 
         public void SetEvaluatedIndices(IEnumerable<int> indices)
         {
-            _evaluatedIndices ??= new HashSet<int>();
-            foreach (int idx in indices)
-            {
-                _evaluatedIndices.Add(idx);
-            }
+            _evaluatedIndices ??= [.. indices];
         }
 
         public void SetAllItemsEvaluated()

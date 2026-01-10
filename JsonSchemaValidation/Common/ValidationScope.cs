@@ -46,8 +46,14 @@ namespace JsonSchemaValidation.Common
 
             if (targetDepth > _schemaStack.Count)
             {
+                ThrowDepthExceedsException(targetDepth, _schemaStack.Count);
+            }
+
+            [System.Diagnostics.CodeAnalysis.DoesNotReturn]
+            static void ThrowDepthExceedsException(int targetDepth, int currentDepth)
+            {
                 throw new ArgumentOutOfRangeException(nameof(targetDepth),
-                    $"Target depth {targetDepth} exceeds current depth {_schemaStack.Count}.");
+                    $"Target depth {targetDepth.ToString(System.Globalization.CultureInfo.InvariantCulture)} exceeds current depth {currentDepth.ToString(System.Globalization.CultureInfo.InvariantCulture)}.");
             }
 
             while (_schemaStack.Count > targetDepth)
