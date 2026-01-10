@@ -43,7 +43,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 if (_filterPropertyNames.Contains(prp.Name)) continue;
                 if (MatchesAnyPattern(prp.Name)) continue;
 
-                var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prp.Value);
+                var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
                 if (!_additionalPropertiesSchemaValidator.IsValid(prpContext))
                 {
                     return false;

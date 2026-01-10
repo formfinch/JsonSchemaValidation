@@ -43,6 +43,24 @@ namespace JsonSchemaValidation.Common
             return CreateValidationContext(context.Data, context.Scope, context.InstanceLocation);
         }
 
+        public IJsonValidationContext CreateContextForPropertyFast(IJsonValidationContext context, JsonElement value)
+        {
+            // Fast path: reuse scope, skip location tracking
+            return new FastValidationContext(value, context.Scope);
+        }
+
+        public IJsonValidationContext CreateContextForArrayItemFast(IJsonValidationContext context, JsonElement arrayItem)
+        {
+            // Fast path: reuse scope, skip location tracking
+            return new FastValidationContext(arrayItem, context.Scope);
+        }
+
+        public IJsonValidationContext CreateFreshContextFast(IJsonValidationContext context)
+        {
+            // Fast path: reuse data and scope, skip location tracking
+            return new FastValidationContext(context.Data, context.Scope);
+        }
+
         public void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg)
         {
             if (trg is IJsonValidationArrayContext targetArrayContext

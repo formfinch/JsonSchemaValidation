@@ -17,7 +17,25 @@ namespace JsonSchemaValidation.Abstractions
         /// evaluated within that sub-schema, not by sibling applicators.
         /// </summary>
         JsonValidationContext CreateFreshContext(IJsonValidationContext context);
-        
+
+        /// <summary>
+        /// Fast path: Creates a lightweight context for property validation without location tracking.
+        /// Used by IsValid() path where instance location is not needed.
+        /// </summary>
+        IJsonValidationContext CreateContextForPropertyFast(IJsonValidationContext context, JsonElement value);
+
+        /// <summary>
+        /// Fast path: Creates a lightweight context for array item validation without location tracking.
+        /// Used by IsValid() path where instance location is not needed.
+        /// </summary>
+        IJsonValidationContext CreateContextForArrayItemFast(IJsonValidationContext context, JsonElement arrayItem);
+
+        /// <summary>
+        /// Fast path: Creates a fresh context without annotation tracking.
+        /// Used by IsValid() path where annotations are not needed.
+        /// </summary>
+        IJsonValidationContext CreateFreshContextFast(IJsonValidationContext context);
+
         void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg);
     }
 }
