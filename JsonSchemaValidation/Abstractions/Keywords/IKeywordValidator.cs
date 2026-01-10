@@ -18,5 +18,18 @@ namespace JsonSchemaValidation.Abstractions.Keywords
         /// <param name="keywordLocation">The JSON Pointer to this keyword's location in the schema.</param>
         /// <returns>A validation result with location information.</returns>
         ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation);
+
+        /// <summary>
+        /// Fast path validation that returns only a boolean result.
+        /// Avoids allocations for ValidationResult, location strings, and children lists.
+        /// </summary>
+        /// <param name="context">The validation context containing the data to validate.</param>
+        /// <returns>True if validation passes, false otherwise.</returns>
+        bool IsValid(IJsonValidationContext context)
+        {
+            // Default implementation delegates to full Validate method.
+            // Override in specific validators for better performance.
+            return Validate(context, JsonPointer.Empty).IsValid;
+        }
     }
 }

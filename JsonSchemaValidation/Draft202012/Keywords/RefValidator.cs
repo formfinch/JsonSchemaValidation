@@ -102,6 +102,54 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            // Resolve the $ref
+            var resolvedSchema = ResolveRef();
+
+            if (resolvedSchema == null)
+            {
+                return false;
+            }
+
+            // Guard against infinite recursion by checking scope depth
+            if (context.Scope.Depth > MaxRecursionDepth)
+            {
+                return false;
+            }
+
+            // Create a validator for the resolved schema
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+
+            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
+
+            // Run validation with the current context (scope is shared)
+            var activeContext = _contextFactory.CreateFreshContext(context);
+
+            // Push the resolved schema resource onto the scope
+            bool pushedScope = false;
+            if (resolvedSchema.SchemaUri != null)
+            {
+                context.Scope.PushSchemaResource(resolvedSchema);
+                pushedScope = true;
+            }
+
+            try
+            {
+                return validator.IsValid(activeContext);
+            }
+            finally
+            {
+                if (pushedScope)
+                {
+                    context.Scope.PopSchemaResource();
+                }
+            }
+        }
+
         private SchemaMetadata? ResolveRef()
         {
             if (string.IsNullOrWhiteSpace(_ref))

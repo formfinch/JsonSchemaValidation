@@ -18,6 +18,21 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            // Fast path: short-circuit on first failure
+            foreach (var validator in _validators)
+            {
+                var activeContext = _contextFactory.CreateFreshContext(context);
+                if (!validator.IsValid(activeContext))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();

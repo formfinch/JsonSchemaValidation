@@ -43,8 +43,7 @@ public sealed class JsonSchemaValidationAdapter : ISchemaValidatorAdapter
     {
         using var doc = JsonDocument.Parse(dataJson);
         var context = _contextFactory!.CreateContextForRoot(doc.RootElement);
-        var result = _validator!.ValidateRoot(context);
-        return result.IsValid;
+        return _validator!.IsValidRoot(context);
     }
 
     public void Dispose()

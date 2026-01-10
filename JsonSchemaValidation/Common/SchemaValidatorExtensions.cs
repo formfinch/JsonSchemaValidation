@@ -19,6 +19,16 @@ namespace JsonSchemaValidation.Common
         }
 
         /// <summary>
+        /// Fast path validation that returns only a boolean result.
+        /// Short-circuits on first failure and avoids building the full result tree.
+        /// Use this when you only need to know if the data is valid, not why it's invalid.
+        /// </summary>
+        public static bool IsValidRoot(this ISchemaValidator validator, IJsonValidationContext context)
+        {
+            return validator.IsValid(context);
+        }
+
+        /// <summary>
         /// Validates and returns the result in the specified output format.
         /// </summary>
         public static OutputUnit ValidateWithOutput(

@@ -21,6 +21,31 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Array)
+            {
+                // If the instance is not an array, it's considered valid with respect to the items keyword
+                return true;
+            }
+
+            int idxItem = 0;
+            foreach (JsonElement item in context.Data.EnumerateArray())
+            {
+                if (idxItem >= _nPrefixItems)
+                {
+                    var itemContext = _contextFactory.CreateContextForArrayItem(context, idxItem, item);
+                    if (!_validator.IsValid(itemContext))
+                    {
+                        return false;
+                    }
+                }
+                idxItem++;
+            }
+
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();

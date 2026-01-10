@@ -30,6 +30,29 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Object)
+            {
+                // If the instance is not an object, it's considered valid with respect to the properties keyword
+                return true;
+            }
+
+            foreach (var prp in context.Data.EnumerateObject())
+            {
+                if (_filterPropertyNames.Contains(prp.Name)) continue;
+                if (MatchesAnyPattern(prp.Name)) continue;
+
+                var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prp.Value);
+                if (!_additionalPropertiesSchemaValidator.IsValid(prpContext))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();

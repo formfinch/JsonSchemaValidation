@@ -49,5 +49,21 @@ namespace JsonSchemaValidation.Common
                 context.Scope.PopSchemaResource();
             }
         }
+
+        public bool IsValid(IJsonValidationContext context)
+        {
+            // Push this schema resource onto the scope
+            context.Scope.PushSchemaResource(_schemaResource);
+
+            try
+            {
+                return _innerValidator.IsValid(context);
+            }
+            finally
+            {
+                // Always pop when leaving this schema resource
+                context.Scope.PopSchemaResource();
+            }
+        }
     }
 }

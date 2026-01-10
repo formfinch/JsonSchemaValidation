@@ -32,5 +32,19 @@ namespace JsonSchemaValidation.Validation
                 children
             );
         }
+
+        public bool IsValid(IJsonValidationContext context)
+        {
+            // Fast path: short-circuit on first failure
+            foreach (var validator in _keywordValidators)
+            {
+                if (!validator.IsValid(context))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
     }
 }
