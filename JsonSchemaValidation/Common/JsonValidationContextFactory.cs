@@ -61,6 +61,20 @@ namespace JsonSchemaValidation.Common
             return new FastValidationContext(context.Data, context.Scope);
         }
 
+        public IJsonValidationContext CreateFreshContextFast(IJsonValidationContext context, bool requiresTracking)
+        {
+            if (!requiresTracking)
+                return new FastValidationContext(context.Data, context.Scope);
+
+            // Use tracking-aware fast contexts for unevaluatedProperties/Items support
+            return context.Data.ValueKind switch
+            {
+                JsonValueKind.Object => new FastValidationObjectContext(context.Data, context.Scope),
+                JsonValueKind.Array => new FastValidationArrayContext(context.Data, context.Scope),
+                _ => new FastValidationContext(context.Data, context.Scope)
+            };
+        }
+
         public void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg)
         {
             if (trg is IJsonValidationArrayContext targetArrayContext

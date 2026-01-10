@@ -11,6 +11,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         private readonly ISchemaValidator? _thenValidator;
         private readonly ISchemaValidator? _elseValidator;
         private readonly IJsonValidationContextFactory _contextFactory;
+        private readonly bool _requiresTracking;
 
         public string Keyword => "if";
 
@@ -24,11 +25,18 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _thenValidator = thenValidator;
             _elseValidator = elseValidator;
             _contextFactory = contextFactory;
+            // Check if any branch requires annotation tracking
+            _requiresTracking = _ifValidator.RequiresAnnotationTracking
+                || (_thenValidator?.RequiresAnnotationTracking ?? false)
+                || (_elseValidator?.RequiresAnnotationTracking ?? false);
         }
 
         public bool IsValid(IJsonValidationContext context)
         {
-            var ifContext = _contextFactory.CreateFreshContextFast(context);
+            // Use tracking if any branch needs it, or if parent already tracks
+            bool needsTracking = _requiresTracking || context is IJsonValidationObjectContext or IJsonValidationArrayContext;
+
+            var ifContext = _contextFactory.CreateFreshContextFast(context, needsTracking);
             int scopeDepthBeforeIf = context.Scope.Depth;
 
             bool ifValid = _ifValidator.IsValid(ifContext);
@@ -38,7 +46,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 if (_thenValidator != null)
                 {
-                    var thenContext = _contextFactory.CreateFreshContextFast(context);
+                    var thenContext = _contextFactory.CreateFreshContextFast(context, needsTracking);
                     int scopeDepthBeforeThen = context.Scope.Depth;
                     bool thenValid = _thenValidator.IsValid(thenContext);
                     context.Scope.RestoreToDepth(scopeDepthBeforeThen);
@@ -50,7 +58,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             {
                 if (_elseValidator != null)
                 {
-                    var elseContext = _contextFactory.CreateFreshContextFast(context);
+                    var elseContext = _contextFactory.CreateFreshContextFast(context, needsTracking);
                     int scopeDepthBeforeElse = context.Scope.Depth;
                     bool elseValid = _elseValidator.IsValid(elseContext);
                     context.Scope.RestoreToDepth(scopeDepthBeforeElse);

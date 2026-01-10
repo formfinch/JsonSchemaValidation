@@ -36,6 +36,13 @@ namespace JsonSchemaValidation.Abstractions
         /// </summary>
         IJsonValidationContext CreateFreshContextFast(IJsonValidationContext context);
 
+        /// <summary>
+        /// Fast path: Creates a fresh context with optional annotation tracking.
+        /// When requiresTracking is true, returns a context that implements
+        /// IJsonValidationObjectContext/IJsonValidationArrayContext for unevaluated* support.
+        /// </summary>
+        IJsonValidationContext CreateFreshContextFast(IJsonValidationContext context, bool requiresTracking);
+
         void CopyAnnotations(IJsonValidationContext src, IJsonValidationContext trg);
     }
 }
