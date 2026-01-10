@@ -73,36 +73,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             if (context.Data.ValueKind != JsonValueKind.String)
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            var dt = context.Data.GetString();
-            if (dt == null)
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
-
-            var match = dateTimeRegex.Match(dt);
-            if (!match.Success)
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
-
-            int year = int.Parse(match.Groups["year"].ValueSpan);
-            int month = int.Parse(match.Groups["month"].ValueSpan);
-            int day = int.Parse(match.Groups["day"].ValueSpan);
-            int hour = int.Parse(match.Groups["hour"].ValueSpan);
-            int minute = int.Parse(match.Groups["minute"].ValueSpan);
-            int second = int.Parse(match.Groups["second"].ValueSpan);
-
-            // Validate date
-            if (month < 1 || month > 12 || day < 1 || day > DateTime.DaysInMonth(year, month))
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
-
-            // Validate offset range if numeric
-            if (match.Groups["sign"].Success)
-            {
-                int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
-                int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
-                if (offsetHours > 23 || offsetMinutes > 59)
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
-            }
-
-            // Leap second validation (only when seconds == 60)
-            if (second == 60 && !IsValidLeapSecond(hour, minute, match))
+            if (!IsValid(context.Data))
                 return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid date-time");
 
             // Per spec: format always produces an annotation with the format name

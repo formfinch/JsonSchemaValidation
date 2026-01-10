@@ -29,19 +29,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.Object)
-            {
-                // If the instance is not an object, it's considered valid with respect to the maxProperties keyword
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            int numProperties = context.Data.EnumerateObject().Count();
-            if (numProperties <= _maxProperties)
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object has {numProperties} properties, which exceeds the maximum of {_maxProperties}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object exceeds the maximum of {_maxProperties} properties");
         }
     }
 }

@@ -77,60 +77,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             var kwLocation = keywordLocation.ToString();
 
             if (context.Data.ValueKind != JsonValueKind.String)
-            {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            var instanceString = context.Data.GetString();
-            if (string.IsNullOrEmpty(instanceString))
-            {
+            if (!IsValid(context.Data))
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
-            }
 
-            // For plain hostname format, reject IDN label separators (U+FF0E, U+3002, U+FF61)
-            // For idn-hostname, these are valid and will be converted to '.' by IdnMapping
-            if (!performIDNConversion && instanceString.Any(c => c == '\uFF0E' || c == '\u3002' || c == '\uFF61'))
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
-            }
-
-            if (performIDNConversion)
-            {
-                // Validate contextual rules before IDN conversion (RFC 5892)
-                if (!ValidateIdnContextualRules(instanceString))
-                {
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
-                }
-
-                // Attempt to convert possible IDN to ASCII
-                try
-                {
-                    instanceString = idn.GetAscii(instanceString);
-                }
-                catch (ArgumentException)
-                {
-                    // If conversion fails, the hostname is invalid
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
-                }
-            }
-            else
-            {
-                // For plain hostname format, validate A-labels by decoding them
-                if (!ValidateALabels(instanceString))
-                {
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
-                }
-            }
-
-            if (IsValidHostname(instanceString))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation) with
-                {
-                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = _formatName }
-                };
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a valid {_formatName}");
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = _formatName }
+            };
         }
 
         private static bool IsValidHostname(string hostname)

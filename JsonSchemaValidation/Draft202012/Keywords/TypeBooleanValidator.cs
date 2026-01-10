@@ -22,13 +22,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.False
-                && context.Data.ValueKind != JsonValueKind.True)
-            {
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected a boolean value");
-            }
+            if (IsValid(context.Data))
+                return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Valid(instanceLocation, kwLocation);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected a boolean value");
         }
     }
 }

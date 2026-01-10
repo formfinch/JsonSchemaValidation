@@ -71,34 +71,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             if (context.Data.ValueKind != JsonValueKind.String)
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            var time = context.Data.GetString();
-            if (time == null)
+            if (!IsValid(context.Data))
                 return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
-
-            var match = timeRegex.Match(time);
-            if (!match.Success)
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
-
-            int hour = int.Parse(match.Groups["hour"].ValueSpan);
-            int minute = int.Parse(match.Groups["minute"].ValueSpan);
-            int second = int.Parse(match.Groups["second"].ValueSpan);
-
-            // Leap second validation (only if seconds == 60)
-            if (second == 60 && !IsValidLeapSecond(hour, minute, match))
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
-
-            // For non-leap-seconds, use DateTimeOffset.TryParse for additional validation
-            if (second < 60 && !DateTimeOffset.TryParse(time, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
-
-            // Validate offset range if numeric offset present
-            if (match.Groups["sign"].Success)
-            {
-                int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
-                int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
-                if (offsetHours > 23 || offsetMinutes > 59)
-                    return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid time");
-            }
 
             return ValidationResult.Valid(instanceLocation, kwLocation) with
             {

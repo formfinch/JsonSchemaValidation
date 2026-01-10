@@ -36,25 +36,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             var kwLocation = keywordLocation.ToString();
 
             if (context.Data.ValueKind != JsonValueKind.String)
-            {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            var instanceString = context.Data.GetString();
-            if (instanceString == null)
+            if (!IsValid(context.Data))
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid relative JSON pointer");
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            if (IsValidRelativeJsonPointer(instanceString))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation) with
-                {
-                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "relative-json-pointer" }
-                };
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid relative JSON pointer");
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "relative-json-pointer" }
+            };
         }
 
         private static bool IsValidRelativeJsonPointer(string relativeJsonPointer)
