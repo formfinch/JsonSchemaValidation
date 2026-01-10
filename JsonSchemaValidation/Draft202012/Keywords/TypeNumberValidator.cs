@@ -21,10 +21,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind == JsonValueKind.Number)
-            {
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected a number");
         }

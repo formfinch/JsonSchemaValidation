@@ -29,19 +29,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.Object)
-            {
-                // If the instance is not an object, it's considered valid with respect to the minProperties keyword
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            int numProperties = context.Data.EnumerateObject().Count();
-            if (numProperties >= _minProperties)
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object has {numProperties} properties, which is less than the minimum of {_minProperties}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object has less than the minimum of {_minProperties} properties");
         }
     }
 }

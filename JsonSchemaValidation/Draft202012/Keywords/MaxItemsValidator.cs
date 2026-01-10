@@ -29,19 +29,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.Array)
-            {
-                // If the instance is not an array, it's considered valid with respect to the maxItems keyword
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            int arrayLength = context.Data.GetArrayLength();
-            if (arrayLength <= _maxItems)
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array has {arrayLength} items, which exceeds the maximum of {_maxItems}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array exceeds the maximum of {_maxItems} items");
         }
     }
 }

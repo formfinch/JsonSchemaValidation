@@ -28,10 +28,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (JsonElement.DeepEquals(_expectedValue, context.Data))
-            {
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
             return ValidationResult.Invalid(instanceLocation, kwLocation, "Value must equal the const value");
         }

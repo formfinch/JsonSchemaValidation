@@ -35,22 +35,8 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.String)
-            {
-                // If the instance is not a string, it's considered valid with respect to the pattern keyword
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            var instanceString = context.Data.GetString();
-            if (instanceString == null)
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            if (_rxPattern.IsMatch(instanceString))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
             return ValidationResult.Invalid(instanceLocation, kwLocation, "String does not match the required pattern");
         }

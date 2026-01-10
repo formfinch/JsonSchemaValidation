@@ -49,25 +49,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             var kwLocation = keywordLocation.ToString();
 
             if (context.Data.ValueKind != JsonValueKind.String)
-            {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            var instanceString = context.Data.GetString();
-            if (instanceString == null)
+            if (!IsValid(context.Data))
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid regex");
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            if (IsValidEcmaScriptRegex(instanceString))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation) with
-                {
-                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "regex" }
-                };
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid regex");
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "regex" }
+            };
         }
 
         private static bool IsValidEcmaScriptRegex(string pattern)

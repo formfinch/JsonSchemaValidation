@@ -46,26 +46,15 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             var kwLocation = keywordLocation.ToString();
 
             if (context.Data.ValueKind != JsonValueKind.String)
-            {
-                // If the instance is not a string, it's considered valid with respect to the format keyword
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            var instanceString = context.Data.GetString();
-            if (instanceString == null)
+            if (!IsValid(context.Data))
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid email address");
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
             {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            if (IsValidEmail(instanceString))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation) with
-                {
-                    Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "email" }
-                };
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid email address");
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "email" }
+            };
         }
 
         public static bool IsValidEmail(string email)

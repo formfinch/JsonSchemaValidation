@@ -37,26 +37,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.String)
-            {
-                // If the instance is not a string, it's considered valid with respect to the maxLength keyword
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            var instanceString = context.Data.GetString();
-            if (instanceString == null)
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            StringInfo stringInfo = new(instanceString);
-            int actualLength = stringInfo.LengthInTextElements;
-            if (actualLength <= _maxLength)
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length {actualLength} exceeds maximum length of {_maxLength}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length exceeds maximum length of {_maxLength}");
         }
     }
 }

@@ -36,26 +36,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.Array)
-            {
-                // If the instance is not an array, it's considered valid with respect to the uniqueItems keyword
+            if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
 
-            int itemCount = context.Data.GetArrayLength();
-
-            for (int i = 0; i < itemCount; i++)
-            {
-                for (int j = i + 1; j < itemCount; j++)
-                {
-                    if (JsonElement.DeepEquals(context.Data[i], context.Data[j]))
-                    {
-                        return ValidationResult.Invalid(instanceLocation, kwLocation, $"Array items at indices {i} and {j} are not unique");
-                    }
-                }
-            }
-
-            return ValidationResult.Valid(instanceLocation, kwLocation);
+            return ValidationResult.Invalid(instanceLocation, kwLocation, "Array items are not unique");
         }
     }
 }

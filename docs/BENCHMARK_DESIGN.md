@@ -1,7 +1,8 @@
 # JSON Schema Validation Benchmark Design
 
-**Status:** Design phase - not yet implemented
+**Status:** Implemented
 **Created:** 2026-01-03
+**Updated:** 2026-01-10
 
 ---
 
@@ -281,14 +282,74 @@ console.log(`  Mean: ${(totalMs / iterations * 1000).toFixed(3)}μs`);
 
 ## Running Benchmarks
 
-### .NET
+### JsonSchemaValidationBenchmarks (Custom CLI)
+
+The primary benchmark runner with cross-library comparison support.
 
 ```bash
-cd JsonSchemaValidation.Benchmarks
-dotnet run -c Release -- --filter "*"
+dotnet run --project JsonSchemaValidationBenchmarks -c Release -- [options]
 ```
 
-### Node.js (Ajv)
+#### CLI Options
+
+| Flag | Long Form | Description | Default |
+|------|-----------|-------------|---------|
+| `-l` | `--libraries` | Libraries to benchmark | `jsonschemavalidation` |
+| `-s` | `--scenarios` | Scenario source: `manifest`, `testsuite` | `testsuite` |
+| `-c` | `--categories` | Filter by category | all |
+| `-i` | `--iterations` | Measurement iterations | 1000 |
+| `-w` | `--warmup` | Warmup iterations | 100 |
+| `-q` | `--quick` | Quick mode (100 iter, core only) | false |
+| `-v` | `--verbose` | Detailed progress output | false |
+| `-o` | `--output` | JSON output file path | none |
+| `-f` | `--include-compile` | Include schema compile time | false |
+
+**Available Libraries:**
+- `jsonschemavalidation` - This solution
+- `jsonschemanet` - JsonSchema.Net
+- `njsonschema` - NJsonSchema
+- `lateapex` - LateApexEarlySpeed.Json.Schema
+- `ajv` - Ajv (Node.js)
+- `hyperjump` - Hyperjump JSON Schema (Node.js)
+- `cfworker` - @cfworker/json-schema (Node.js)
+
+**Categories:**
+- `core` - Basic validation (type, enum, const)
+- `complex` - allOf, anyOf, oneOf, $ref
+- `format` - Format validators
+- `array` - Array keywords (items, contains, uniqueItems)
+- `string` - String keywords (pattern, minLength, maxLength)
+- `numeric` - Numeric keywords (minimum, maximum, multipleOf)
+- `object` - Object keywords (properties, required, additionalProperties)
+
+#### Examples
+
+```bash
+# Quick benchmark of this library only
+dotnet run --project JsonSchemaValidationBenchmarks -c Release -- -q
+
+# Compare all .NET libraries with verbose output
+dotnet run --project JsonSchemaValidationBenchmarks -c Release -- -l jsonschemavalidation jsonschemanet lateapex -v
+
+# Run format validators with 5000 iterations
+dotnet run --project JsonSchemaValidationBenchmarks -c Release -- -c format -i 5000
+
+# Compare against Ajv with compilation time included
+dotnet run --project JsonSchemaValidationBenchmarks -c Release -- -l jsonschemavalidation ajv -f
+
+# Full comparison, save results to JSON
+dotnet run --project JsonSchemaValidationBenchmarks -c Release -- -l jsonschemavalidation jsonschemanet ajv -o results.json
+```
+
+### JsonSchemaValidation.Benchmarks (BenchmarkDotNet)
+
+For detailed micro-benchmarks with statistical analysis.
+
+```bash
+dotnet run --project JsonSchemaValidation.Benchmarks -c Release -- --filter "*"
+```
+
+### Node.js (Ajv standalone)
 
 ```bash
 cd benchmarks-js
@@ -352,10 +413,11 @@ Ajv Results:
 
 ## Next Steps
 
-1. [ ] Create the benchmark project structure
-2. [ ] Implement benchmark classes
-3. [ ] Create shared test data
-4. [ ] Run initial benchmarks
-5. [ ] Identify optimization opportunities
-6. [ ] Implement optimizations
+1. [x] Create the benchmark project structure
+2. [x] Implement benchmark classes
+3. [x] Create shared test data
+4. [x] Run initial benchmarks
+5. [x] Identify optimization opportunities
+6. [x] Implement optimizations (IsValid fast path, sealed validators)
 7. [ ] Re-run benchmarks to measure improvement
+8. [ ] Add more scenario coverage
