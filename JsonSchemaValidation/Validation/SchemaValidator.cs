@@ -12,11 +12,24 @@ namespace JsonSchemaValidation.Validation
         private IKeywordValidator[]? _directValidators;
         private IKeywordValidator[]? _contextValidators;
         private bool _cacheBuilt;
+        private bool _requiresAnnotationTracking;
+
+        /// <summary>
+        /// Indicates whether this schema requires annotation tracking for correct validation.
+        /// Set to true when unevaluatedProperties or unevaluatedItems keywords are present.
+        /// </summary>
+        public bool RequiresAnnotationTracking => _requiresAnnotationTracking;
 
         public void AddKeywordValidator(IKeywordValidator keywordValidator)
         {
             _keywordValidators.Add(keywordValidator);
             _cacheBuilt = false;
+
+            // Detect keywords that require annotation tracking
+            if (keywordValidator.Keyword is "unevaluatedProperties" or "unevaluatedItems")
+            {
+                _requiresAnnotationTracking = true;
+            }
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)

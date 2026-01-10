@@ -20,6 +20,8 @@ namespace JsonSchemaValidation.Common
             _schemaResource = schemaResource ?? throw new ArgumentNullException(nameof(schemaResource));
         }
 
+        public bool RequiresAnnotationTracking => _innerValidator.RequiresAnnotationTracking;
+
         public void AddKeywordValidator(IKeywordValidator keywordValidator)
         {
             // Delegate to inner validator

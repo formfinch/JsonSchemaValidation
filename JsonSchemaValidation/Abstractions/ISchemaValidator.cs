@@ -23,5 +23,12 @@ namespace JsonSchemaValidation.Abstractions
         /// <param name="context">The validation context containing the data to validate.</param>
         /// <returns>True if all keyword validators pass, false otherwise.</returns>
         bool IsValid(IJsonValidationContext context);
+
+        /// <summary>
+        /// Indicates whether this schema requires annotation tracking for correct validation.
+        /// True if the schema uses unevaluatedProperties, unevaluatedItems, or contains
+        /// sub-schemas that require tracking.
+        /// </summary>
+        bool RequiresAnnotationTracking { get; }
     }
 }

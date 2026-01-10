@@ -85,6 +85,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            // Resolve the $dynamicRef based on the current dynamic scope
+            var resolvedSchema = ResolveDynamicRef(context);
+
+            if (resolvedSchema == null)
+            {
+                return false;
+            }
+
+            // Create a validator for the resolved schema
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+
+            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
+
+            // Use tracking if referenced schema needs it, or if parent already tracks
+            bool needsTracking = validator.RequiresAnnotationTracking || context is IJsonValidationObjectContext or IJsonValidationArrayContext;
+            var activeContext = _contextFactory.CreateFreshContextFast(context, needsTracking);
+
+            // Push the resolved schema resource onto the scope
+            context.Scope.PushSchemaResource(resolvedSchema);
+            try
+            {
+                return validator.IsValid(activeContext);
+            }
+            finally
+            {
+                context.Scope.PopSchemaResource();
+            }
+        }
+
         private SchemaMetadata? ResolveDynamicRef(IJsonValidationContext context)
         {
             // Parse the reference to get the anchor fragment

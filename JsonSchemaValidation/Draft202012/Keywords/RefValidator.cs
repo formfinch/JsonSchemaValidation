@@ -126,8 +126,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
 
-            // Run validation with the current context (scope is shared)
-            var activeContext = _contextFactory.CreateFreshContextFast(context);
+            // Use tracking if referenced schema needs it, or if parent already tracks
+            bool needsTracking = validator.RequiresAnnotationTracking || context is IJsonValidationObjectContext or IJsonValidationArrayContext;
+            var activeContext = _contextFactory.CreateFreshContextFast(context, needsTracking);
 
             // Push the resolved schema resource onto the scope
             bool pushedScope = false;

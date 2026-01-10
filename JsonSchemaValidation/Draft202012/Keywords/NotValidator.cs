@@ -20,7 +20,9 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         public bool IsValid(IJsonValidationContext context)
         {
-            var activeContext = _contextFactory.CreateFreshContextFast(context);
+            // Use tracking if sub-schema needs it, or if parent already tracks
+            bool needsTracking = _validator.RequiresAnnotationTracking || context is IJsonValidationObjectContext or IJsonValidationArrayContext;
+            var activeContext = _contextFactory.CreateFreshContextFast(context, needsTracking);
             return !_validator.IsValid(activeContext);
         }
 
