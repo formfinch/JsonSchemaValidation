@@ -1,0 +1,17 @@
+{
+  "name": "json-schema-benchmark-host",
+  "version": "1.0.0",
+  "description": "Node.js adapter host for JSON Schema benchmark comparisons",
+  "main": "adapter-host.js",
+  "type": "module",
+  "scripts": {
+    "start": "node adapter-host.js"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1",
+    "ajv-draft-04": "^1.0.0",
+    "@hyperjump/json-schema": "^1.9.8",
+    "@cfworker/json-schema": "^4.0.3"
+  }
+}

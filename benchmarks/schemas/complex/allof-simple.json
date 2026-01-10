@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "allOf": [
+    {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "age": { "type": "integer", "minimum": 0 }
+      },
+      "required": ["age"]
+    }
+  ]
+}

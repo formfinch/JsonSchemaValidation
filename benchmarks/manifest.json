@@ -1,0 +1,78 @@
+{
+  "version": "1.0",
+  "description": "Custom benchmark scenarios for JSON Schema validation",
+  "scenarios": [
+    {
+      "id": "type-string",
+      "name": "String Type Check",
+      "category": "core",
+      "schema": "schemas/core/type-string.json",
+      "validData": "data/valid/type-string.json",
+      "invalidData": "data/invalid/type-string.json"
+    },
+    {
+      "id": "type-integer",
+      "name": "Integer Type Check",
+      "category": "core",
+      "schema": "schemas/core/type-integer.json",
+      "validData": "data/valid/type-integer.json",
+      "invalidData": "data/invalid/type-integer.json"
+    },
+    {
+      "id": "properties-simple",
+      "name": "Simple Properties",
+      "category": "core",
+      "schema": "schemas/core/properties-simple.json",
+      "validData": "data/valid/properties-simple.json",
+      "invalidData": "data/invalid/properties-simple.json"
+    },
+    {
+      "id": "properties-nested",
+      "name": "Nested Properties",
+      "category": "core",
+      "schema": "schemas/core/properties-nested.json",
+      "validData": "data/valid/properties-nested.json",
+      "invalidData": "data/invalid/properties-nested.json"
+    },
+    {
+      "id": "allof-simple",
+      "name": "AllOf Simple",
+      "category": "complex",
+      "schema": "schemas/complex/allof-simple.json",
+      "validData": "data/valid/allof-simple.json",
+      "invalidData": "data/invalid/allof-simple.json"
+    },
+    {
+      "id": "anyof-multiple",
+      "name": "AnyOf Multiple",
+      "category": "complex",
+      "schema": "schemas/complex/anyof-multiple.json",
+      "validData": "data/valid/anyof-multiple.json",
+      "invalidData": "data/invalid/anyof-multiple.json"
+    },
+    {
+      "id": "format-datetime",
+      "name": "DateTime Format",
+      "category": "format",
+      "schema": "schemas/format/datetime.json",
+      "validData": "data/valid/format-datetime.json",
+      "invalidData": "data/invalid/format-datetime.json"
+    },
+    {
+      "id": "format-email",
+      "name": "Email Format",
+      "category": "format",
+      "schema": "schemas/format/email.json",
+      "validData": "data/valid/format-email.json",
+      "invalidData": "data/invalid/format-email.json"
+    },
+    {
+      "id": "array-items",
+      "name": "Array Items",
+      "category": "array",
+      "schema": "schemas/array/items.json",
+      "validData": "data/valid/array-items.json",
+      "invalidData": "data/invalid/array-items.json"
+    }
+  ]
+}
