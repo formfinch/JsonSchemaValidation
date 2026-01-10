@@ -17,6 +17,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _nPrefixItems = nPrefixItems;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            // items: true means all items are valid
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();

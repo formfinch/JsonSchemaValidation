@@ -17,6 +17,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _nPrefixItems = nPrefixItems;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Array)
+            {
+                return true;
+            }
+
+            // items: false means no items beyond prefixItems are allowed
+            return _nPrefixItems >= context.Data.GetArrayLength();
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();
