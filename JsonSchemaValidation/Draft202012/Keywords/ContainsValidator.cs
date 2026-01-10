@@ -112,12 +112,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (MinContains.HasValue && containsIndices.Count < MinContains)
             {
-                return ValidationResult.Invalid(instanceLocation, kwLocation, $"{containsIndices.Count} array items match when at least {MinContains} are expected") with { Children = children };
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"{containsIndices.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} array items match when at least {MinContains.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)} are expected") with { Children = children };
             }
 
             if (MaxContains.HasValue && containsIndices.Count > MaxContains)
             {
-                return ValidationResult.Invalid(instanceLocation, kwLocation, $"{containsIndices.Count} array items match when at most {MaxContains} are expected") with { Children = children };
+                return ValidationResult.Invalid(instanceLocation, kwLocation, $"{containsIndices.Count.ToString(System.Globalization.CultureInfo.InvariantCulture)} array items match when at most {MaxContains.Value.ToString(System.Globalization.CultureInfo.InvariantCulture)} are expected") with { Children = children };
             }
 
             arrayContext.SetEvaluatedIndices(containsIndices);

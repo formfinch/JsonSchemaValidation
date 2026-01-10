@@ -48,7 +48,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a multiple of {_divisor}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value is not a multiple of {_divisor.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
     }
 }

@@ -57,8 +57,10 @@ namespace JsonSchemaValidation.Common
         {
             // Convert to Annotations struct for compatibility
             var annotations = new JsonValidationObjectContext.Annotations();
-            foreach (var prp in GetUnevaluatedProperties())
+            var unEvaluatedProperties = GetUnevaluatedProperties();
+            for(int i = 0; unEvaluatedProperties.Skip(i).Any(); i++)
             {
+                var prp = unEvaluatedProperties.ElementAt(i);
                 annotations.UnEvaluatedProperties[prp.Name] = prp;
             }
             return annotations;
@@ -70,12 +72,16 @@ namespace JsonSchemaValidation.Common
             if (_data.ValueKind != JsonValueKind.Object)
                 return;
 
-            var evaluatedNames = _data.EnumerateObject()
-                .Select(prp => prp.Name)
-                .Where(name => !annotations.UnEvaluatedProperties.ContainsKey(name));
-
             _evaluatedProperties ??= new HashSet<string>(StringComparer.Ordinal);
-            _evaluatedProperties.UnionWith(evaluatedNames);
+            var enumerator = _data.EnumerateObject();
+            for (int i = 0; enumerator.Skip(i).Any(); i++)
+            {
+                var prp = enumerator.ElementAt(i);
+                if (!annotations.UnEvaluatedProperties.ContainsKey(prp.Name))
+                {
+                    _evaluatedProperties.Add(prp.Name);
+                }
+            }
         }
 
         public void SetUnevaluatedPropertiesEvaluated()

@@ -7,7 +7,7 @@ namespace JsonSchemaValidation.Repositories
         public static Uri GenerateRandomSchemaId()
         {
             var guid = Guid.NewGuid();
-            return new Uri($"urn:schema:{guid}");
+            return new Uri($"urn:schema:{guid.ToString()}");
         }
 
         /// <summary>

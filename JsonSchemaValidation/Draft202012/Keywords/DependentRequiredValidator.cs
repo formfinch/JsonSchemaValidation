@@ -70,12 +70,20 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             var errors = new List<string>();
-            foreach (var dependency in _dependentRequiredProperties.Where(d => propertyNames.Contains(d.Key)))
+            foreach (var dependency in _dependentRequiredProperties)
             {
-                var missingProps = dependency.Value.Where(prpName => !propertyNames.Contains(prpName));
-                var missingList = string.Join(", ", missingProps.Select(p => $"'{p}'"));
-                if (missingList.Length > 0)
+                if (!propertyNames.Contains(dependency.Key))
+                    continue;
+
+                var missingProps = new List<string>();
+                foreach (var prpName in dependency.Value)
                 {
+                    if (!propertyNames.Contains(prpName))
+                        missingProps.Add($"'{prpName}'");
+                }
+                if (missingProps.Count > 0)
+                {
+                    var missingList = string.Join(", ", missingProps);
                     errors.Add($"Property '{dependency.Key}' requires: {missingList}");
                 }
             }

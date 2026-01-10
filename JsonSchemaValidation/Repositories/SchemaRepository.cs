@@ -336,13 +336,14 @@ namespace JsonSchemaValidation.Repositories
                 return false;
             }
 
-            foreach (var schema in snapshot)
+            for (int i = 0; i < snapshot.Count; i++)
             {
+                var schema = snapshot[i];
                 if (schema.DynamicAnchors.TryGetValue(dynamicAnchor, out var anchoredSchema))
                 {
                     result = new(schema)
                     {
-                        Schema = anchoredSchema
+                        Schema = anchoredSchema,
                     };
                     return true;
                 }

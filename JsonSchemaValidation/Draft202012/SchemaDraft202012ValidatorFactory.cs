@@ -7,7 +7,7 @@ namespace JsonSchemaValidation.Draft202012
 {
     public class SchemaDraft202012ValidatorFactory : ISchemaDraftValidatorFactory
     {
-        private readonly IEnumerable<ISchemaDraftKeywordValidatorFactory> _keywordFactories;
+        private readonly ISchemaDraftKeywordValidatorFactory[] _keywordFactories;
 
         public string DraftVersion => "https://json-schema.org/draft/2020-12/schema";
 

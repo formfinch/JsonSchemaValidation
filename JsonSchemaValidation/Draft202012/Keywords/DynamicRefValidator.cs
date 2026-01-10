@@ -156,8 +156,10 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             }
 
             // Search the dynamic scope from outermost to innermost
-            foreach (var schemaResource in context.Scope.GetDynamicScope())
+            var dynamicScope = context.Scope.GetDynamicScope();
+            for (int i = 0; dynamicScope.Skip(i).Any(); i++)
             {
+                var schemaResource = dynamicScope.ElementAt(i);
                 if (schemaResource.DynamicAnchors.TryGetValue(fragment, out var anchoredSchema))
                 {
                     return new SchemaMetadata(schemaResource)

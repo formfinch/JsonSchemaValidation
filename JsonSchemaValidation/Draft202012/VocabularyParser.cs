@@ -60,9 +60,9 @@ namespace JsonSchemaValidation.Draft202012
                     var keywords = _registry.GetKeywordsForVocabulary(vocabUri);
                     if (keywords != null)
                     {
-                        foreach (var kw in keywords)
+                        for (int i = 0; keywords.Skip(i).Any(); i++)
                         {
-                            activeKeywords.Add(kw);
+                            activeKeywords.Add(keywords.ElementAt(i));
                         }
                     }
                 }

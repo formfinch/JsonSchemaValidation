@@ -96,8 +96,9 @@ namespace JsonSchemaValidation.Common
 
         public void SetEvaluatedIndices(IEnumerable<int> indices)
         {
-            foreach (int idx in indices)
+            for (int i = 0; indices.Skip(i).Any(); i++)
             {
+                var idx = indices.ElementAt(i);
                 _current.EvaluatedIndices.Add(idx);
             }
         }

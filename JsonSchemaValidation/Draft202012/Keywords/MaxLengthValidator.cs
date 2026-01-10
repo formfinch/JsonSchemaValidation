@@ -40,7 +40,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length exceeds maximum length of {_maxLength}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length exceeds maximum length of {_maxLength.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
     }
 }

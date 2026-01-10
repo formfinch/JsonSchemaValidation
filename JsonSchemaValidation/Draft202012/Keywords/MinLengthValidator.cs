@@ -40,7 +40,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length is less than minimum length of {_minLength}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"String length is less than minimum length of {_minLength.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
     }
 }

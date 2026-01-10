@@ -8,7 +8,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 {
     internal sealed class RequiredValidator : IKeywordValidator
     {
-        private readonly IEnumerable<string> _propertyNames;
+        private readonly string[] _propertyNames;
 
         public string Keyword => "required";
 
@@ -16,7 +16,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
         public RequiredValidator(IEnumerable<string> propertyNames)
         {
-            _propertyNames = propertyNames;
+            _propertyNames = propertyNames as string[] ?? propertyNames.ToArray();
         }
 
         public bool IsValid(JsonElement data)
@@ -56,7 +56,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (missingProperties.Count > 0)
             {
-                var missingList = string.Join(", ", missingProperties.Select(p => $"'{p}'"));
+                var quotedProps = new List<string>(missingProperties.Count);
+                foreach (var p in missingProperties)
+                {
+                    quotedProps.Add($"'{p}'");
+                }
+                var missingList = string.Join(", ", quotedProps);
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Missing required properties: {missingList}");
             }
 

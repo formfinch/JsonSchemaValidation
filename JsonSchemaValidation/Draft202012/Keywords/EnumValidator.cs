@@ -19,8 +19,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _enumValuesElement = enumValuesElement;
         }
 
-        public bool IsValid(JsonElement data) =>
-            _enumValuesElement.EnumerateArray().Any(value => JsonElement.DeepEquals(value, data));
+        public bool IsValid(JsonElement data)
+        {
+            var enumArray = _enumValuesElement.EnumerateArray();
+            for (int i = 0; enumArray.Skip(i).Any(); i++)
+            {
+                if (JsonElement.DeepEquals(enumArray.ElementAt(i), data))
+                    return true;
+            }
+            return false;
+        }
 
         public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 

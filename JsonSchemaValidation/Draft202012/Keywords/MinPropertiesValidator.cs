@@ -32,7 +32,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object has less than the minimum of {_minProperties} properties");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Object has less than the minimum of {_minProperties.ToString(System.Globalization.CultureInfo.InvariantCulture)} properties");
         }
     }
 }

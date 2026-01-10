@@ -37,7 +37,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             foreach (var prp in context.Data.EnumerateObject())
 #pragma warning restore S3267
             {
-                string jsonString = $"{{\"key\": \"{JsonEncodedText.Encode(prp.Name)}\"}}";
+                string jsonString = $"{{\"key\": \"{JsonEncodedText.Encode(prp.Name).ToString()}\"}}";
                 using JsonDocument doc = JsonDocument.Parse(jsonString);
                 var prpValue = doc.RootElement.GetProperty("key");
                 var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prpValue);

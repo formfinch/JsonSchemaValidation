@@ -60,8 +60,11 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             var children = new List<ValidationResult>();
             var failedProperties = new List<string>();
 
-            foreach (var dependency in _dependentSchemasProperties.Where(d => propertyNames.Contains(d.Key)))
+            foreach (var dependency in _dependentSchemasProperties)
             {
+                if (!propertyNames.Contains(dependency.Key))
+                    continue;
+
                 var validator = dependency.Value;
                 var childKeywordPath = keywordLocation.Append(dependency.Key);
                 var validationResult = validator.Validate(context, childKeywordPath);
@@ -75,7 +78,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             if (failedProperties.Count > 0)
             {
-                var props = string.Join(", ", failedProperties.Select(p => $"'{p}'"));
+                var propsList = new List<string>(failedProperties.Count);
+                foreach (var p in failedProperties)
+                {
+                    propsList.Add($"'{p}'");
+                }
+                var props = string.Join(", ", propsList);
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Dependent schema validation failed for properties: {props}") with { Children = children };
             }
 

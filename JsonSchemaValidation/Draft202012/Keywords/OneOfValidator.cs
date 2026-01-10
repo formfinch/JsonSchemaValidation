@@ -85,7 +85,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
 
             string errorMsg = nOk == 0
                 ? "Instance did not validate against any of the schemas in 'oneOf'"
-                : $"Instance validated against {nOk} schemas in 'oneOf', but must match exactly one";
+                : $"Instance validated against {nOk.ToString(System.Globalization.CultureInfo.InvariantCulture)} schemas in 'oneOf', but must match exactly one";
 
             return ValidationResult.Invalid(instanceLocation, kwLocation, errorMsg) with { Children = children };
         }

@@ -32,7 +32,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             if (IsValid(context.Data))
                 return ValidationResult.Valid(instanceLocation, kwLocation);
 
-            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value must be at least {_minimum}");
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value must be at least {_minimum.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
         }
     }
 }
