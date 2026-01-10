@@ -12,6 +12,33 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     {
         private readonly SchemaValidationOptions _options;
 
+        /// <summary>
+        /// Cached format assertion validators. These are stateless and can be safely shared.
+        /// </summary>
+        private static readonly Dictionary<string, IKeywordValidator> CachedAssertionValidators = new(StringComparer.Ordinal)
+        {
+            { "date-time", new DateTimeValidator() },
+            { "date", new DateValidator() },
+            { "duration", new DurationValidator() },
+            { "email", new EmailValidator() },
+            { "hostname", new HostnameValidator(isIDNFormat: false) },
+            { "idn-email", new EmailValidator() },
+            { "idn-hostname", new HostnameValidator(isIDNFormat: true) },
+            { "ipv4", new IPAddressValidator(isIPV6Format: false) },
+            { "ipv6", new IPAddressValidator(isIPV6Format: true) },
+            { "iri", new UriValidator(iriSupport: true) },
+            { "iri-reference", new UriValidator(iriSupport: true, canBeRelative: true) },
+            { "json-pointer", new JsonPointerValidator() },
+            { "regex", new RegexValidator() },
+            { "relative-json-pointer", new RelativeJsonPointerValidator() },
+            { "time", new TimeValidator() },
+            { "unknown", new UnknownValidator() },
+            { "uri", new UriValidator(iriSupport: false) },
+            { "uri-reference", new UriValidator(iriSupport: false, canBeRelative: true) },
+            { "uri-template", new UriValidator(isTemplate: true) },
+            { "uuid", new UuidValidator() },
+        };
+
         public FormatValidatorFactory(SchemaValidationOptions options)
         {
             _options = options;
@@ -53,30 +80,14 @@ namespace JsonSchemaValidation.Draft202012.Keywords
                 return new FormatAnnotationValidator(format);
             }
 
-            return format switch
+            // Use cached validator instances for known formats (they are stateless)
+            if (CachedAssertionValidators.TryGetValue(format, out var cachedValidator))
             {
-                "date-time" => new DateTimeValidator(),
-                "date" => new DateValidator(),
-                "duration" => new DurationValidator(),
-                "email" => new EmailValidator(),
-                "hostname" => new HostnameValidator(isIDNFormat: false),
-                "idn-email" => new EmailValidator(),
-                "idn-hostname" => new HostnameValidator(isIDNFormat: true),
-                "ipv4" => new IPAddressValidator(isIPV6Format: false),
-                "ipv6" => new IPAddressValidator(isIPV6Format: true),
-                "iri" => new UriValidator(iriSupport: true),
-                "iri-reference" => new UriValidator(iriSupport: true, canBeRelative: true),
-                "json-pointer" => new JsonPointerValidator(),
-                "regex" => new RegexValidator(),
-                "relative-json-pointer" => new RelativeJsonPointerValidator(),
-                "time" => new TimeValidator(),
-                "unknown" => new UnknownValidator(),
-                "uri" => new UriValidator(iriSupport: false),
-                "uri-reference" => new UriValidator(iriSupport: false, canBeRelative: true),
-                "uri-template" => new UriValidator(isTemplate: true),
-                "uuid" => new UuidValidator(),
-                _ => new FormatAnnotationValidator(format)  // Unknown format - return annotation-only validator
-            };
+                return cachedValidator;
+            }
+
+            // Unknown format - return annotation-only validator
+            return new FormatAnnotationValidator(format);
         }
 
         /// <summary>
