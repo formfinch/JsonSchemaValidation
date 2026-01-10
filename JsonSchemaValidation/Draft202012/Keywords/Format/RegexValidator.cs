@@ -7,7 +7,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal class RegexValidator : IKeywordValidator
+    internal sealed class RegexValidator : IKeywordValidator
     {
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
@@ -31,9 +31,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         public string Keyword => "format";
 
-        public RegexValidator()
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data)
         {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            return str == null || IsValidEcmaScriptRegex(str);
         }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

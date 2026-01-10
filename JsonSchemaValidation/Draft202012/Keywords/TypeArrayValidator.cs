@@ -6,13 +6,15 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class TypeArrayValidator : IKeywordValidator
+    internal sealed class TypeArrayValidator : IKeywordValidator
     {
         public string Keyword => "type";
 
-        public TypeArrayValidator()
-        {
-        }
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data) => data.ValueKind == JsonValueKind.Array;
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

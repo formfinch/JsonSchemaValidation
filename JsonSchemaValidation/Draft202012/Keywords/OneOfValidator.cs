@@ -5,7 +5,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class OneOfValidator : IKeywordValidator
+    internal sealed class OneOfValidator : IKeywordValidator
     {
         private readonly IEnumerable<ISchemaValidator> _validators;
         private readonly IJsonValidationContextFactory _contextFactory;

@@ -7,16 +7,28 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class PatternValidator : IKeywordValidator
+    internal sealed class PatternValidator : IKeywordValidator
     {
         private readonly Regex _rxPattern;
 
         public string Keyword => "pattern";
 
+        public bool SupportsDirectValidation => true;
+
         public PatternValidator(Regex patternMatcher)
         {
             _rxPattern = patternMatcher;
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            return str == null || _rxPattern.IsMatch(str);
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

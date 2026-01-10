@@ -1,16 +1,22 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 
 namespace JsonSchemaValidation.Validation
 {
-    public class SchemaValidator : ISchemaValidator
+    public sealed class SchemaValidator : ISchemaValidator
     {
         private readonly List<IKeywordValidator> _keywordValidators = new();
+        // Cached arrays for fast path to avoid LINQ overhead
+        private IKeywordValidator[]? _directValidators;
+        private IKeywordValidator[]? _contextValidators;
+        private bool _cacheBuilt;
 
         public void AddKeywordValidator(IKeywordValidator keywordValidator)
         {
             _keywordValidators.Add(keywordValidator);
+            _cacheBuilt = false;
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
@@ -35,16 +41,51 @@ namespace JsonSchemaValidation.Validation
 
         public bool IsValid(IJsonValidationContext context)
         {
-            // Fast path: short-circuit on first failure
-            foreach (var validator in _keywordValidators)
+            EnsureCacheBuilt();
+            var data = context.Data;
+
+            // Fast path for validators that support direct JsonElement validation
+            if (_directValidators != null)
             {
-                if (!validator.IsValid(context))
+                foreach (var validator in _directValidators)
                 {
-                    return false;
+                    if (!validator.IsValid(data))
+                        return false;
+                }
+            }
+
+            // Context-required validators (refs, applicators that need scope)
+            if (_contextValidators != null)
+            {
+                foreach (var validator in _contextValidators)
+                {
+                    if (!validator.IsValid(context))
+                        return false;
                 }
             }
 
             return true;
+        }
+
+        private void EnsureCacheBuilt()
+        {
+            if (_cacheBuilt)
+                return;
+
+            var directList = new List<IKeywordValidator>();
+            var contextList = new List<IKeywordValidator>();
+
+            foreach (var validator in _keywordValidators)
+            {
+                if (validator.SupportsDirectValidation)
+                    directList.Add(validator);
+                else
+                    contextList.Add(validator);
+            }
+
+            _directValidators = directList.Count > 0 ? directList.ToArray() : null;
+            _contextValidators = contextList.Count > 0 ? contextList.ToArray() : null;
+            _cacheBuilt = true;
         }
     }
 }

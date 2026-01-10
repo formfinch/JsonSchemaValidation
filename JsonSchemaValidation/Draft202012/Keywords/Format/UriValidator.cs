@@ -6,12 +6,14 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal class UriValidator : IKeywordValidator
+    internal sealed class UriValidator : IKeywordValidator
     {
         private readonly string _formatName;
         private readonly UriValidationLogic uriValidation;
 
         public string Keyword => "format";
+
+        public bool SupportsDirectValidation => true;
 
         public UriValidator(bool iriSupport = false, bool canBeRelative = false, bool isTemplate = false)
         {
@@ -27,6 +29,16 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             }
             uriValidation = new UriValidationLogic(iriSupport, canBeRelative, isTemplate);
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            return str == null || uriValidation.IsValidUri(str);
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

@@ -8,7 +8,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal class TimeValidator : IKeywordValidator
+    internal sealed class TimeValidator : IKeywordValidator
     {
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
 
@@ -18,6 +18,50 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
             RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
 
         public string Keyword => "format";
+
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var time = data.GetString();
+            if (time == null)
+                return false;
+            return IsValidTime(time);
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
+
+        private static bool IsValidTime(string time)
+        {
+            var match = timeRegex.Match(time);
+            if (!match.Success)
+                return false;
+
+            int hour = int.Parse(match.Groups["hour"].ValueSpan);
+            int minute = int.Parse(match.Groups["minute"].ValueSpan);
+            int second = int.Parse(match.Groups["second"].ValueSpan);
+
+            // Leap second validation
+            if (second == 60 && !IsValidLeapSecond(hour, minute, match))
+                return false;
+
+            // For non-leap-seconds, use DateTimeOffset.TryParse for additional validation
+            if (second < 60 && !DateTimeOffset.TryParse(time, CultureInfo.InvariantCulture, DateTimeStyles.None, out _))
+                return false;
+
+            // Validate offset range if numeric offset present
+            if (match.Groups["sign"].Success)
+            {
+                int offsetHours = int.Parse(match.Groups["offsetHour"].ValueSpan);
+                int offsetMinutes = int.Parse(match.Groups["offsetMinute"].ValueSpan);
+                if (offsetHours > 23 || offsetMinutes > 59)
+                    return false;
+            }
+
+            return true;
+        }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

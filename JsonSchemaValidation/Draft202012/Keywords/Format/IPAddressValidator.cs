@@ -7,18 +7,30 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal class IPAddressValidator : IKeywordValidator
+    internal sealed class IPAddressValidator : IKeywordValidator
     {
         private readonly string _formatName;
         private readonly bool _ipv6Validation;
 
         public string Keyword => "format";
 
+        public bool SupportsDirectValidation => true;
+
         public IPAddressValidator(bool isIPV6Format = false)
         {
             _ipv6Validation = isIPV6Format;
             _formatName = isIPV6Format ? "ipv6" : "ipv4";
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            return str == null || IsValidIPAddress(str);
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

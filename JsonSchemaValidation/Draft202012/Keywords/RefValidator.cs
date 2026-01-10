@@ -10,7 +10,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     /// Validator for $ref that resolves the reference at validation time.
     /// In Draft 2020-12, $ref is an applicator that works alongside sibling keywords.
     /// </summary>
-    internal class RefValidator : IKeywordValidator
+    internal sealed class RefValidator : IKeywordValidator
     {
         private readonly string _ref;
         private readonly SchemaMetadata _schemaData;

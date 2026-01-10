@@ -6,9 +6,30 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class UniqueItemsValidator : IKeywordValidator
+    internal sealed class UniqueItemsValidator : IKeywordValidator
     {
         public string Keyword => "uniqueItems";
+
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.Array)
+                return true;
+
+            int itemCount = data.GetArrayLength();
+            for (int i = 0; i < itemCount; i++)
+            {
+                for (int j = i + 1; j < itemCount; j++)
+                {
+                    if (JsonElement.DeepEquals(data[i], data[j]))
+                        return false;
+                }
+            }
+            return true;
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

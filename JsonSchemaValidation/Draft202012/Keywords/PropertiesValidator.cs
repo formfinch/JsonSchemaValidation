@@ -1,4 +1,5 @@
-﻿using System.Text.Json;
+﻿using System.Collections.Frozen;
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
@@ -6,16 +7,16 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class PropertiesValidator : IKeywordValidator
+    internal sealed class PropertiesValidator : IKeywordValidator
     {
-        private readonly Dictionary<string, ISchemaValidator> _propertySchemaValidators;
+        private readonly FrozenDictionary<string, ISchemaValidator> _propertySchemaValidators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "properties";
 
         public PropertiesValidator(Dictionary<string, ISchemaValidator> propertySchemaValidators, IJsonValidationContextFactory contextFactory)
         {
-            _propertySchemaValidators = propertySchemaValidators;
+            _propertySchemaValidators = propertySchemaValidators.ToFrozenDictionary(StringComparer.Ordinal);
             _contextFactory = contextFactory;
         }
 

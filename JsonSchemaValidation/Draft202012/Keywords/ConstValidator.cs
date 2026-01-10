@@ -6,16 +6,22 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class ConstValidator : IKeywordValidator
+    internal sealed class ConstValidator : IKeywordValidator
     {
         private readonly JsonElement _expectedValue;
 
         public string Keyword => "const";
 
+        public bool SupportsDirectValidation => true;
+
         public ConstValidator(JsonElement expectedValue)
         {
             _expectedValue = expectedValue;
         }
+
+        public bool IsValid(JsonElement data) => JsonElement.DeepEquals(_expectedValue, data);
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

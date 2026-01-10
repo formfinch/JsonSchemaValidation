@@ -31,5 +31,23 @@ namespace JsonSchemaValidation.Abstractions.Keywords
             // Override in specific validators for better performance.
             return Validate(context, JsonPointer.Empty).IsValid;
         }
+
+        /// <summary>
+        /// Ultra-fast path validation for simple validators that only need the JSON data.
+        /// Avoids context object allocation entirely.
+        /// </summary>
+        /// <param name="data">The JSON element to validate.</param>
+        /// <returns>True if validation passes, false otherwise.</returns>
+        bool IsValid(System.Text.Json.JsonElement data)
+        {
+            // Default: not supported, will throw if called on complex validator
+            throw new System.NotSupportedException(
+                $"Validator '{Keyword}' does not support direct JsonElement validation. Use IsValid(IJsonValidationContext) instead.");
+        }
+
+        /// <summary>
+        /// Indicates whether this validator supports the fast IsValid(JsonElement) overload.
+        /// </summary>
+        bool SupportsDirectValidation => false;
     }
 }

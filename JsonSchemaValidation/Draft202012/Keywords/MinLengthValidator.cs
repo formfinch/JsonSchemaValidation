@@ -7,16 +7,30 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MinLengthValidator : IKeywordValidator
+    internal sealed class MinLengthValidator : IKeywordValidator
     {
         private readonly int _minLength;
 
         public string Keyword => "minLength";
 
+        public bool SupportsDirectValidation => true;
+
         public MinLengthValidator(int minLength)
         {
             _minLength = minLength;
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            if (str == null)
+                return true;
+            return new StringInfo(str).LengthInTextElements >= _minLength;
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

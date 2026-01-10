@@ -6,16 +6,23 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class ExclusiveMinimumValidator : IKeywordValidator
+    internal sealed class ExclusiveMinimumValidator : IKeywordValidator
     {
         private readonly double _minimum;
 
         public string Keyword => "exclusiveMinimum";
 
+        public bool SupportsDirectValidation => true;
+
         public ExclusiveMinimumValidator(double minimum)
         {
             _minimum = minimum;
         }
+
+        public bool IsValid(JsonElement data) =>
+            data.ValueKind != JsonValueKind.Number || data.GetDouble() > _minimum;
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
