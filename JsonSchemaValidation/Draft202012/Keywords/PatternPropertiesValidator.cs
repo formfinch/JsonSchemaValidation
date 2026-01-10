@@ -20,6 +20,33 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Object)
+            {
+                return true;
+            }
+
+            foreach (var kvp in _propertySchemaValidators)
+            {
+                var rxPropertyName = kvp.Key;
+                var validator = kvp.Value;
+
+                foreach (var prp in context.Data.EnumerateObject())
+                {
+                    if (!rxPropertyName.IsMatch(prp.Name)) continue;
+
+                    var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
+                    if (!validator.IsValid(prpContext))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();

@@ -22,6 +22,52 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Array)
+            {
+                return true;
+            }
+
+            int containsCount = 0;
+            foreach (var item in context.Data.EnumerateArray())
+            {
+                var itemContext = _contextFactory.CreateContextForArrayItemFast(context, item);
+                if (_validator.IsValid(itemContext))
+                {
+                    containsCount++;
+                    // Early exit if we've met maxContains and no minContains constraint
+                    if (MaxContains.HasValue && containsCount > MaxContains.Value)
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            // Check minContains=0 special case
+            if (MinContains.HasValue && MinContains.Value == 0 && containsCount == 0)
+            {
+                return true;
+            }
+
+            if (containsCount == 0)
+            {
+                return false;
+            }
+
+            if (MinContains.HasValue && containsCount < MinContains.Value)
+            {
+                return false;
+            }
+
+            if (MaxContains.HasValue && containsCount > MaxContains.Value)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();

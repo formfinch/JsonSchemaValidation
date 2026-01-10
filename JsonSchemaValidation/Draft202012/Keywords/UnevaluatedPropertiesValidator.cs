@@ -19,6 +19,40 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _contextFactory = contextFactory;
         }
 
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Object)
+            {
+                return true;
+            }
+
+            // If context doesn't support tracking, validate all properties conservatively
+            if (context is not IJsonValidationObjectContext objectContext)
+            {
+                foreach (var prp in context.Data.EnumerateObject())
+                {
+                    var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
+                    if (!_unevaluatedPropertyValidator.IsValid(prpContext))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            }
+
+            // With tracking, only validate unevaluated properties
+            foreach (var prp in objectContext.GetUnevaluatedProperties())
+            {
+                var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
+                if (!_unevaluatedPropertyValidator.IsValid(prpContext))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();
