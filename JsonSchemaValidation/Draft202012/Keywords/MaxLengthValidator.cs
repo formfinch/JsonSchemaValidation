@@ -7,16 +7,30 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MaxLengthValidator : IKeywordValidator
+    internal sealed class MaxLengthValidator : IKeywordValidator
     {
         private readonly int _maxLength;
 
         public string Keyword => "maxLength";
 
+        public bool SupportsDirectValidation => true;
+
         public MaxLengthValidator(int maxLength)
         {
             _maxLength = maxLength;
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            if (str == null)
+                return true;
+            return new StringInfo(str).LengthInTextElements <= _maxLength;
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

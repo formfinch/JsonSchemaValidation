@@ -1,17 +1,20 @@
-﻿using JsonSchemaValidation.Abstractions;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class BooleanFalseValidator : IKeywordValidator
+    internal sealed class BooleanFalseValidator : IKeywordValidator
     {
         public string Keyword => "";  // Boolean schema has no keyword name
 
-        public BooleanFalseValidator()
-        {
-        }
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data) => false;
+
+        public bool IsValid(IJsonValidationContext context) => false;
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

@@ -6,7 +6,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class UnevaluatedItemsValidator : IKeywordValidator
+    internal sealed class UnevaluatedItemsValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _unevaluatedItemValidator;
         private readonly IJsonValidationContextFactory _contextFactory;

@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
@@ -6,15 +7,37 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class DependentSchemasValidator : IKeywordValidator
+    internal sealed class DependentSchemasValidator : IKeywordValidator
     {
-        private readonly IDictionary<string, ISchemaValidator> _dependentSchemasProperties;
+        private readonly FrozenDictionary<string, ISchemaValidator> _dependentSchemasProperties;
 
         public string Keyword => "dependentSchemas";
 
         public DependentSchemasValidator(IDictionary<string, ISchemaValidator> dependentSchemasProperties)
         {
-            _dependentSchemasProperties = dependentSchemasProperties;
+            _dependentSchemasProperties = dependentSchemasProperties.ToFrozenDictionary(StringComparer.Ordinal);
+        }
+
+        public bool IsValid(IJsonValidationContext context)
+        {
+            if (context.Data.ValueKind != JsonValueKind.Object)
+                return true;
+
+            HashSet<string> propertyNames = new(StringComparer.Ordinal);
+            foreach (var prpElement in context.Data.EnumerateObject())
+            {
+                propertyNames.Add(prpElement.Name);
+            }
+
+#pragma warning disable S3267, S1066 // Loop has early return for performance
+            foreach (var dependency in _dependentSchemasProperties)
+            {
+                if (propertyNames.Contains(dependency.Key) && !dependency.Value.IsValid(context))
+                    return false;
+            }
+#pragma warning restore S3267, S1066
+
+            return true;
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)

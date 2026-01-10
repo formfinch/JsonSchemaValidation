@@ -10,7 +10,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     /// Validator for $dynamicRef that resolves the reference at validation time
     /// based on the dynamic scope.
     /// </summary>
-    internal class DynamicRefValidator : IKeywordValidator
+    internal sealed class DynamicRefValidator : IKeywordValidator
     {
         private readonly string _dynamicRef;
         private readonly SchemaMetadata _schemaData;

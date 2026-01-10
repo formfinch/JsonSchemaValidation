@@ -7,7 +7,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class PatternPropertiesValidator : IKeywordValidator
+    internal sealed class PatternPropertiesValidator : IKeywordValidator
     {
         private readonly Dictionary<Regex, ISchemaValidator> _propertySchemaValidators;
         private readonly IJsonValidationContextFactory _contextFactory;

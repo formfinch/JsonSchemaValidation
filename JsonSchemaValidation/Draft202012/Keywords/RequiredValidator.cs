@@ -6,16 +6,33 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class RequiredValidator : IKeywordValidator
+    internal sealed class RequiredValidator : IKeywordValidator
     {
         private readonly IEnumerable<string> _propertyNames;
 
         public string Keyword => "required";
 
+        public bool SupportsDirectValidation => true;
+
         public RequiredValidator(IEnumerable<string> propertyNames)
         {
             _propertyNames = propertyNames;
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.Object)
+                return true;
+
+            foreach (string propertyName in _propertyNames)
+            {
+                if (!data.TryGetProperty(propertyName, out _))
+                    return false;
+            }
+            return true;
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

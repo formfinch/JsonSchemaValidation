@@ -6,16 +6,23 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class MaxItemsValidator : IKeywordValidator
+    internal sealed class MaxItemsValidator : IKeywordValidator
     {
         private readonly int _maxItems;
 
         public string Keyword => "maxItems";
 
+        public bool SupportsDirectValidation => true;
+
         public MaxItemsValidator(int maxItems)
         {
             _maxItems = maxItems;
         }
+
+        public bool IsValid(JsonElement data) =>
+            data.ValueKind != JsonValueKind.Array || data.GetArrayLength() <= _maxItems;
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

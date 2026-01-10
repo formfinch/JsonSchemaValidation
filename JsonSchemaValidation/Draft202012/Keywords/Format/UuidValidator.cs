@@ -6,13 +6,21 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal class UuidValidator : IKeywordValidator
+    internal sealed class UuidValidator : IKeywordValidator
     {
         public string Keyword => "format";
 
-        public UuidValidator()
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data)
         {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            return str == null || IsValidUuid(str);
         }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

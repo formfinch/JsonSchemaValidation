@@ -11,11 +11,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     /// This is an annotation-only keyword that produces an annotation
     /// but does not perform validation.
     /// </summary>
-    internal class ContentSchemaValidator : IKeywordValidator
+    internal sealed class ContentSchemaValidator : IKeywordValidator
     {
         private readonly JsonElement _schema;
 
         public string Keyword => "contentSchema";
+
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data) => true;
+
+        public bool IsValid(IJsonValidationContext context) => true;
 
         public ContentSchemaValidator(JsonElement schema)
         {

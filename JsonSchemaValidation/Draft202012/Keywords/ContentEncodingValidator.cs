@@ -1,3 +1,4 @@
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
@@ -10,11 +11,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     /// This is an annotation-only keyword that produces an annotation
     /// but does not perform validation.
     /// </summary>
-    internal class ContentEncodingValidator : IKeywordValidator
+    internal sealed class ContentEncodingValidator : IKeywordValidator
     {
         private readonly string _encoding;
 
         public string Keyword => "contentEncoding";
+
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data) => true;
+
+        public bool IsValid(IJsonValidationContext context) => true;
 
         public ContentEncodingValidator(string encoding)
         {

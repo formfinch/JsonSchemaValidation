@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
@@ -6,16 +7,50 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class DependentRequiredValidator : IKeywordValidator
+    internal sealed class DependentRequiredValidator : IKeywordValidator
     {
-        private readonly IDictionary<string, IEnumerable<string>> _dependentRequiredProperties;
+        private readonly FrozenDictionary<string, string[]> _dependentRequiredProperties;
 
         public string Keyword => "dependentRequired";
 
+        public bool SupportsDirectValidation => true;
+
         public DependentRequiredValidator(IDictionary<string, IEnumerable<string>> dependentRequiredProperties)
         {
-            _dependentRequiredProperties = dependentRequiredProperties;
+            _dependentRequiredProperties = dependentRequiredProperties.ToFrozenDictionary(
+                kvp => kvp.Key,
+                kvp => kvp.Value.ToArray(),
+                StringComparer.Ordinal);
         }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.Object)
+                return true;
+
+            HashSet<string> propertyNames = new(StringComparer.Ordinal);
+            foreach (var prpElement in data.EnumerateObject())
+            {
+                propertyNames.Add(prpElement.Name);
+            }
+
+#pragma warning disable S3267 // Loop has early return for performance
+            foreach (var dependency in _dependentRequiredProperties)
+            {
+                if (propertyNames.Contains(dependency.Key))
+                {
+                    foreach (var requiredProp in dependency.Value)
+                    {
+                        if (!propertyNames.Contains(requiredProp))
+                            return false;
+                    }
+                }
+            }
+#pragma warning restore S3267
+            return true;
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {

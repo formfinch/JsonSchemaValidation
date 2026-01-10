@@ -8,7 +8,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal class HostnameValidator : IKeywordValidator
+    internal sealed class HostnameValidator : IKeywordValidator
     {
         private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
         private static readonly IdnMapping idn = new IdnMapping();
@@ -23,10 +23,52 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
 
         public string Keyword => "format";
 
+        public bool SupportsDirectValidation => true;
+
         public HostnameValidator(bool isIDNFormat = false)
         {
             performIDNConversion = isIDNFormat;
             _formatName = isIDNFormat ? "idn-hostname" : "hostname";
+        }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+            var str = data.GetString();
+            if (string.IsNullOrEmpty(str))
+                return false;
+            return IsValidHostnameValue(str);
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
+
+        private bool IsValidHostnameValue(string instanceString)
+        {
+            // For plain hostname format, reject IDN label separators
+            if (!performIDNConversion && instanceString.Any(c => c == '\uFF0E' || c == '\u3002' || c == '\uFF61'))
+                return false;
+
+            if (performIDNConversion)
+            {
+                if (!ValidateIdnContextualRules(instanceString))
+                    return false;
+                try
+                {
+                    instanceString = idn.GetAscii(instanceString);
+                }
+                catch (ArgumentException)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                if (!ValidateALabels(instanceString))
+                    return false;
+            }
+
+            return IsValidHostname(instanceString);
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)

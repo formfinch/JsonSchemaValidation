@@ -1,3 +1,4 @@
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
@@ -10,11 +11,17 @@ namespace JsonSchemaValidation.Draft202012.Keywords.Format
     /// Per Draft 2020-12 spec, the format keyword is annotation-only by default.
     /// This validator only produces an annotation and always returns valid.
     /// </summary>
-    internal class FormatAnnotationValidator : IKeywordValidator
+    internal sealed class FormatAnnotationValidator : IKeywordValidator
     {
         private readonly string _format;
 
         public string Keyword => "format";
+
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data) => true;
+
+        public bool IsValid(IJsonValidationContext context) => true;
 
         public FormatAnnotationValidator(string format)
         {

@@ -5,7 +5,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class NotValidator : IKeywordValidator
+    internal sealed class NotValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _validator;
         private readonly IJsonValidationContextFactory _contextFactory;
@@ -16,6 +16,12 @@ namespace JsonSchemaValidation.Draft202012.Keywords
         {
             _validator = validator;
             _contextFactory = contextFactory;
+        }
+
+        public bool IsValid(IJsonValidationContext context)
+        {
+            var activeContext = _contextFactory.CreateFreshContextFast(context);
+            return !_validator.IsValid(activeContext);
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)

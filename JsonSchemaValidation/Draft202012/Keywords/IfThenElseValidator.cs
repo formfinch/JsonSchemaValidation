@@ -5,7 +5,7 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class IfThenElseValidator : IKeywordValidator
+    internal sealed class IfThenElseValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _ifValidator;
         private readonly ISchemaValidator? _thenValidator;
@@ -24,6 +24,42 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             _thenValidator = thenValidator;
             _elseValidator = elseValidator;
             _contextFactory = contextFactory;
+        }
+
+        public bool IsValid(IJsonValidationContext context)
+        {
+            var ifContext = _contextFactory.CreateFreshContextFast(context);
+            int scopeDepthBeforeIf = context.Scope.Depth;
+
+            bool ifValid = _ifValidator.IsValid(ifContext);
+            context.Scope.RestoreToDepth(scopeDepthBeforeIf);
+
+            if (ifValid)
+            {
+                if (_thenValidator != null)
+                {
+                    var thenContext = _contextFactory.CreateFreshContextFast(context);
+                    int scopeDepthBeforeThen = context.Scope.Depth;
+                    bool thenValid = _thenValidator.IsValid(thenContext);
+                    context.Scope.RestoreToDepth(scopeDepthBeforeThen);
+                    if (!thenValid)
+                        return false;
+                }
+            }
+            else
+            {
+                if (_elseValidator != null)
+                {
+                    var elseContext = _contextFactory.CreateFreshContextFast(context);
+                    int scopeDepthBeforeElse = context.Scope.Depth;
+                    bool elseValid = _elseValidator.IsValid(elseContext);
+                    context.Scope.RestoreToDepth(scopeDepthBeforeElse);
+                    if (!elseValid)
+                        return false;
+                }
+            }
+
+            return true;
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)

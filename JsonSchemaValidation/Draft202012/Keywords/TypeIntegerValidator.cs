@@ -7,42 +7,40 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class TypeIntegerValidator : IKeywordValidator
+    internal sealed class TypeIntegerValidator : IKeywordValidator
     {
         public string Keyword => "type";
 
-        public TypeIntegerValidator()
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data)
         {
+            if (data.ValueKind != JsonValueKind.Number)
+                return false;
+
+            if (data.TryGetDecimal(out decimal value) && value == decimal.Truncate(value))
+                return true;
+
+            if (BigInteger.TryParse(data.ToString(), System.Globalization.CultureInfo.InvariantCulture, out _))
+                return true;
+
+            if (data.TryGetDouble(out double doubleValue)
+                && !double.IsInfinity(doubleValue)
+                && !double.IsNaN(doubleValue)
+                && Math.Abs(doubleValue - Math.Floor(doubleValue)) < double.Epsilon)
+                return true;
+
+            return false;
         }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            if (context.Data.ValueKind != JsonValueKind.Number)
-            {
-                return ValidationResult.Invalid(instanceLocation, kwLocation, "Expected an integer value");
-            }
-
-            if (context.Data.TryGetDecimal(out decimal value)
-                && value == decimal.Truncate(value))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            if (BigInteger.TryParse(context.Data.ToString(), System.Globalization.CultureInfo.InvariantCulture, out _))
-            {
-                return ValidationResult.Valid(instanceLocation, kwLocation);
-            }
-
-            // Handle very large numbers that can't fit in decimal or BigInteger parse
-            // (e.g., 1e308 which comes as "1E+308" string)
-            // Check if the double value is a whole number
-            if (context.Data.TryGetDouble(out double doubleValue)
-                && !double.IsInfinity(doubleValue)
-                && !double.IsNaN(doubleValue)
-                && Math.Abs(doubleValue - Math.Floor(doubleValue)) < double.Epsilon)
+            if (IsValid(context.Data))
             {
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }

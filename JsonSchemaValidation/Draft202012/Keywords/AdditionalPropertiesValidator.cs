@@ -1,3 +1,4 @@
+using System.Collections.Frozen;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
@@ -7,10 +8,10 @@ using JsonSchemaValidation.Validation;
 
 namespace JsonSchemaValidation.Draft202012.Keywords
 {
-    internal class AdditionalPropertiesValidator : IKeywordValidator
+    internal sealed class AdditionalPropertiesValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _additionalPropertiesSchemaValidator;
-        private readonly HashSet<string> _filterPropertyNames;
+        private readonly FrozenSet<string> _filterPropertyNames;
         private readonly Regex[] _filterPropertyPatternRegexes;
         private readonly IJsonValidationContextFactory _contextFactory;
 
@@ -23,7 +24,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
             IJsonValidationContextFactory contextFactory)
         {
             _additionalPropertiesSchemaValidator = additionalPropertiesSchemaValidator;
-            _filterPropertyNames = new HashSet<string>(filterPropertyNames, StringComparer.Ordinal);
+            _filterPropertyNames = filterPropertyNames.ToFrozenSet(StringComparer.Ordinal);
             _filterPropertyPatternRegexes = filterPropertyNamePatterns
                 .Select(EcmaScriptRegexHelper.CreateEcmaScriptRegex)
                 .ToArray();
