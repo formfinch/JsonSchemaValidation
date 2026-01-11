@@ -12,6 +12,7 @@ namespace JsonSchemaValidationTests.Draft202012.OutputFormat;
 /// Comprehensive regression tests for JSON Schema 2020-12 output formats.
 /// Tests cover edge cases, RFC 6901 compliance, and all annotation-producing keywords.
 /// </summary>
+[Trait("Draft", "2020-12")]
 public class RegressionTests
 {
     private readonly ISchemaRepository _schemaRepository;

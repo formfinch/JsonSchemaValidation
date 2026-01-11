@@ -92,5 +92,34 @@ namespace JsonSchemaValidation.Common
 
             return value;
         }
+
+        /// <summary>
+        /// Attempts to get a non-negative integer from the JsonElement.
+        /// </summary>
+        /// <param name="element">The JsonElement to parse.</param>
+        /// <param name="value">The resulting non-negative integer if successful.</param>
+        /// <returns>True if the element is a non-negative integer, false otherwise.</returns>
+        public static bool TryGetNonNegativeInteger(this JsonElement element, out int value)
+        {
+            value = 0;
+            if (element.ValueKind != JsonValueKind.Number)
+            {
+                return false;
+            }
+
+            if (!element.TryGetInt32(out int intValue))
+            {
+                return false;
+            }
+
+            if (intValue < 0)
+            {
+                return false;
+            }
+
+            value = intValue;
+            return true;
+        }
+
     }
 }

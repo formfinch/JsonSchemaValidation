@@ -7,6 +7,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace JsonSchemaValidationTests.Draft202012
 {
+    [Trait("Draft", "2020-12")]
     public class SchemaValidationTests
     {
         private readonly IServiceProvider _serviceProvider;

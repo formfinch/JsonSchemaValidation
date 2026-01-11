@@ -1,0 +1,71 @@
+// Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
+// Factory for not keyword validator.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft201909.Keywords
+{
+    internal class NotValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        private readonly ISchemaFactory _schemaFactory;
+        private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
+
+        public NotValidatorFactory(ISchemaFactory schemaFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory,
+            IJsonValidationContextFactory contextFactory)
+        {
+            _schemaFactory = schemaFactory;
+            _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
+        }
+
+        public string Keyword => "not";
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("not", out var notElement))
+            {
+                return null;
+            }
+
+            if (notElement.ValueKind != JsonValueKind.Object
+                && notElement.ValueKind != JsonValueKind.False
+                && notElement.ValueKind != JsonValueKind.True)
+            {
+                throw new InvalidSchemaException("The keyword value for not MUST be a valid JSON Schema.");
+            }
+
+            var validator = CreateValidator(schemaData, notElement);
+            if (validator == null)
+            {
+                throw new InvalidSchemaException("The keyword value for not MUST be a valid JSON Schema.");
+            }
+            return new NotValidator(validator, _contextFactory);
+
+        }
+
+        ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)
+        {
+            var itemsRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, itemSchemaElement);
+
+            var itemsDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(itemsRawSchemaData);
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+            return _schemaValidatorFactory.Value.CreateValidator(itemsDereferencedSchemaData);
+        }
+    }
+}

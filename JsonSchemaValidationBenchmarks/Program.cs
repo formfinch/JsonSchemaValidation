@@ -15,7 +15,7 @@ librariesOption.AddAlias("-l");
 var scenariosOption = new Option<string[]>(
     name: "--scenarios",
     getDefaultValue: () => new[] { "testsuite" },
-    description: "Scenario sources: manifest, testsuite, or specific scenario IDs");
+    description: "Scenario sources: manifest, testsuite (draft2020-12), testsuite-2019-09, or specific scenario IDs");
 scenariosOption.AddAlias("-s");
 
 var categoriesOption = new Option<string[]>(
@@ -212,7 +212,8 @@ static List<BenchmarkScenario> LoadScenarios(
         IScenarioSource? scenarioSource = source.ToLowerInvariant() switch
         {
             "manifest" => new ManifestScenarioSource(benchmarksPath),
-            "testsuite" => new TestSuiteScenarioSource(testSuitePath),
+            "testsuite" => new TestSuiteScenarioSource(testSuitePath, "draft2020-12"),
+            "testsuite-2019-09" => new TestSuiteScenarioSource(testSuitePath, "draft2019-09"),
             _ => null
         };
 

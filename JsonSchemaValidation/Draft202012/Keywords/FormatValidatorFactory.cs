@@ -1,7 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords.Format;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;

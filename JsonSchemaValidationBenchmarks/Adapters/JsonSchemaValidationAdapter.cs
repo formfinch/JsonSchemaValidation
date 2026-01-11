@@ -21,6 +21,7 @@ public sealed class JsonSchemaValidationAdapter : ISchemaValidatorAdapter
         services.AddJsonSchemaValidation(opt =>
         {
             opt.EnableDraft202012 = true;
+            opt.EnableDraft201909 = true;
             opt.FormatAssertionEnabled = true;
         });
         _serviceProvider = services.BuildServiceProvider();

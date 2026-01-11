@@ -1,8 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 using JsonSchemaValidation.Repositories;

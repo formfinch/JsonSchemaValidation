@@ -1,9 +1,8 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
 using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft202012;
 using JsonSchemaValidation.Draft202012.Keywords.Logic;
 using JsonSchemaValidation.Exceptions;
 
@@ -13,12 +12,22 @@ namespace JsonSchemaValidation.Repositories
     {
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
         private volatile IReadOnlyList<SchemaMetadata>? _sortedSchemas;
-        private readonly VocabularyParser? _vocabularyParser;
+        private readonly Dictionary<string, IVocabularyParser> _vocabularyParsers;
 
-        public SchemaRepository(SchemaValidationOptions options, VocabularyParser? vocabularyParser = null)
+        public SchemaRepository(SchemaValidationOptions options, IEnumerable<IVocabularyParser>? vocabularyParsers = null)
         {
             ArgumentNullException.ThrowIfNull(options);
-            _vocabularyParser = vocabularyParser;
+            _vocabularyParsers = new Dictionary<string, IVocabularyParser>(StringComparer.Ordinal);
+            if (vocabularyParsers != null)
+            {
+                // Use List to avoid IEnumerable<T> enumerator allocation
+                var parsersList = vocabularyParsers is IList<IVocabularyParser> list ? list : vocabularyParsers.ToList();
+                for (int i = 0; i < parsersList.Count; i++)
+                {
+                    var parser = parsersList[i];
+                    _vocabularyParsers[parser.DraftVersion] = parser;
+                }
+            }
         }
 
         public bool TryRegisterSchema(JsonElement? schemaToRegister, out SchemaMetadata? schemaData)
@@ -50,13 +59,17 @@ namespace JsonSchemaValidation.Repositories
 
             schemaData = new SchemaMetadata(schema);
 
+            // Check for $recursiveAnchor: true (Draft 2019-09 feature)
+            schemaData.HasRecursiveAnchor = HasRecursiveAnchorProperty(schema);
+
             // Default to Draft 2020-12 if not specified
             schemaData.DraftVersion ??= "https://json-schema.org/draft/2020-12/schema";
 
             // Parse $vocabulary if present (for meta-schemas)
-            if (_vocabularyParser != null)
+            // Select the vocabulary parser based on the draft version
+            if (_vocabularyParsers.TryGetValue(schemaData.DraftVersion, out var vocabularyParser))
             {
-                var vocabResult = _vocabularyParser.ParseVocabulary(schema);
+                var vocabResult = vocabularyParser.ParseVocabulary(schema);
                 if (vocabResult != null)
                 {
                     schemaData.ActiveVocabularies = vocabResult.Vocabularies;
@@ -172,6 +185,7 @@ namespace JsonSchemaValidation.Repositories
                 else
                 {
                     schemaData = new SchemaMetadata(schema, "https://json-schema.org/draft/2020-12/schema", id);
+                    schemaData.HasRecursiveAnchor = HasRecursiveAnchorProperty(schema);
                     AddSchema(schemaData);
                 }
             }
@@ -349,6 +363,24 @@ namespace JsonSchemaValidation.Repositories
                 }
             }
             return false;
+        }
+
+        /// <summary>
+        /// Checks if the schema has $recursiveAnchor: true (Draft 2019-09 feature).
+        /// </summary>
+        private static bool HasRecursiveAnchorProperty(JsonElement schema)
+        {
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return false;
+            }
+
+            if (!schema.TryGetProperty("$recursiveAnchor", out var recursiveAnchorElement))
+            {
+                return false;
+            }
+
+            return recursiveAnchorElement.ValueKind == JsonValueKind.True;
         }
     }
 }

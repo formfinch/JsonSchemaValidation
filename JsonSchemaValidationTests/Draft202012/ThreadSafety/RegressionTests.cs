@@ -12,6 +12,7 @@ namespace JsonSchemaValidationTests.Draft202012.ThreadSafety;
 /// Thread safety regression tests to verify the library handles concurrent access correctly.
 /// Tests cover concurrent schema registration, validation, and service initialization.
 /// </summary>
+[Trait("Draft", "2020-12")]
 public class RegressionTests
 {
     #region Concurrent Validation Tests

@@ -1,7 +1,8 @@
-﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Draft202012.Interfaces;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
 using JsonSchemaValidation.Repositories;
 using JsonSchemaValidation.Validation;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace JsonSchemaValidation.Draft202012
 {
@@ -9,9 +10,10 @@ namespace JsonSchemaValidation.Draft202012
     {
         private readonly ISchemaDraftKeywordValidatorFactory[] _keywordFactories;
 
-        public string DraftVersion => "https://json-schema.org/draft/2020-12/schema";
+        public string DraftVersion => SchemaDraft202012Setup.DraftVersion;
 
-        public SchemaDraft202012ValidatorFactory(IEnumerable<ISchemaDraftKeywordValidatorFactory> keywordFactories)
+        public SchemaDraft202012ValidatorFactory(
+            [FromKeyedServices(SchemaDraft202012Setup.DraftVersion)] IEnumerable<ISchemaDraftKeywordValidatorFactory> keywordFactories)
         {
             // Sort factories by ExecutionOrder to guarantee correct execution sequence.
             // This ensures unevaluated keywords (with higher ExecutionOrder) run after other applicators.

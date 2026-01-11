@@ -27,6 +27,12 @@ namespace JsonSchemaValidation.Repositories
         /// </summary>
         public ISet<string>? ActiveKeywords { get; set; }
 
+        /// <summary>
+        /// Indicates whether this schema has $recursiveAnchor: true (Draft 2019-09).
+        /// Used for dynamic reference resolution with $recursiveRef.
+        /// </summary>
+        public bool HasRecursiveAnchor { get; set; }
+
         public SchemaMetadata(JsonElement schema, string? draftVersion = null, Uri? schemaUri = null)
         {
             Schema = schema;
@@ -64,6 +70,7 @@ namespace JsonSchemaValidation.Repositories
             ActiveKeywords = originalSchemaData.ActiveKeywords != null
                 ? new HashSet<string>(originalSchemaData.ActiveKeywords, StringComparer.Ordinal)
                 : null;
+            HasRecursiveAnchor = originalSchemaData.HasRecursiveAnchor;
         }
     }
 }

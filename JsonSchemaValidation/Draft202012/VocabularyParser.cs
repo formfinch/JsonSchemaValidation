@@ -7,13 +7,16 @@ namespace JsonSchemaValidation.Draft202012
     /// <summary>
     /// Parses $vocabulary declarations from meta-schemas.
     /// </summary>
-    public class VocabularyParser
+    public class VocabularyParser : IVocabularyParser
     {
-        private readonly IVocabularyRegistry _registry;
+        private readonly VocabularyRegistry _registry;
 
-        public VocabularyParser(IVocabularyRegistry registry)
+        public string DraftVersion => "https://json-schema.org/draft/2020-12/schema";
+
+        public VocabularyParser()
         {
-            _registry = registry ?? throw new ArgumentNullException(nameof(registry));
+            // Each parser owns its own registry to avoid DI conflicts when multiple drafts are enabled
+            _registry = new VocabularyRegistry();
         }
 
         /// <summary>
