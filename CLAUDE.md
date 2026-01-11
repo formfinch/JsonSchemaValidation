@@ -122,4 +122,4 @@ JsonSchemaValidationTests/Draft202012/
 
 ## Target Frameworks
 
-net9.0, net8.0, net6.0
+net10.0 (LTS)
