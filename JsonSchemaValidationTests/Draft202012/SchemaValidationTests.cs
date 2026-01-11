@@ -47,6 +47,12 @@ namespace JsonSchemaValidationTests.Draft202012
                 @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12",
                 "http://localhost:1234/draft2020-12/");
 
+            // Load draft2019-09 remotes for cross-draft tests
+            LoadRemoteSchemasFromPath(
+                schemaRepository,
+                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2019-09",
+                "http://localhost:1234/draft2019-09/");
+
             // Load common remote schemas from root remotes folder
             LoadRemoteSchemasFromPath(
                 schemaRepository,
@@ -191,7 +197,7 @@ namespace JsonSchemaValidationTests.Draft202012
                 "vocabulary",
 
                 @"\optional\bignum",
-                // @"\optional\cross-draft",                    // No cross-draft compatibility yet
+                @"\optional\cross-draft",
                 @"\optional\dependencies-compatibility",
                 @"\optional\float-overflow",
                 @"\optional\format-assertion",                  // Requires vocabulary support
