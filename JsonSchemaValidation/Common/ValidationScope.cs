@@ -37,6 +37,25 @@ namespace JsonSchemaValidation.Common
 
         public int Depth => _schemaStack.Count;
 
+        /// <summary>
+        /// Finds the first (outermost) schema resource with HasRecursiveAnchor set to true.
+        /// Returns null if no such schema is found in the dynamic scope.
+        /// </summary>
+        public SchemaMetadata? FindFirstRecursiveAnchor()
+        {
+            // Stack.ToArray() returns items in LIFO order (top first, bottom last)
+            // We need to iterate from outermost (bottom = last in array) to innermost (top = first in array)
+            var items = _schemaStack.ToArray();
+            for (int i = items.Length - 1; i >= 0; i--)
+            {
+                if (items[i].HasRecursiveAnchor)
+                {
+                    return items[i];
+                }
+            }
+            return null;
+        }
+
         public void RestoreToDepth(int targetDepth)
         {
             if (targetDepth < 0)

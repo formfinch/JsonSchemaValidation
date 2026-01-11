@@ -98,7 +98,7 @@ namespace JsonSchemaValidation.Repositories
             // Resolve vocabulary context from meta-schema if not already set
             ResolveVocabularyContext(schemaData);
 
-            WalkElement(schemaData.Schema, schemaData.SchemaUri);
+            WalkElement(schemaData.Schema, schemaData.SchemaUri, schemaData.DraftVersion);
             return true;
         }
 
@@ -151,7 +151,7 @@ namespace JsonSchemaValidation.Repositories
             }
         }
 
-        private void WalkElement(JsonElement? schemaToRegister, Uri id)
+        private void WalkElement(JsonElement? schemaToRegister, Uri id, string? parentDraftVersion)
         {
             if (schemaToRegister == null)
             {
@@ -184,7 +184,9 @@ namespace JsonSchemaValidation.Repositories
                 }
                 else
                 {
-                    schemaData = new SchemaMetadata(schema, "https://json-schema.org/draft/2020-12/schema", id);
+                    // Inherit draft version from parent, or default to 2020-12
+                    var draftVersion = parentDraftVersion ?? "https://json-schema.org/draft/2020-12/schema";
+                    schemaData = new SchemaMetadata(schema, draftVersion, id);
                     schemaData.HasRecursiveAnchor = HasRecursiveAnchorProperty(schema);
                     AddSchema(schemaData);
                 }
@@ -211,64 +213,64 @@ namespace JsonSchemaValidation.Repositories
             }
 
             // schema subobjects to walk through
-            WalkSchemas(schema, "$defs", id);
+            WalkSchemas(schema, "$defs", id, parentDraftVersion);
 
-            WalkSchemas(schema, "properties", id);
-            WalkObject(schema, "additionalProperties", id);
-            WalkSchemas(schema, "patternProperties", id);
-            WalkObject(schema, "unevaluatedProperties", id);
-            WalkObject(schema, "propertyNames", id);
+            WalkSchemas(schema, "properties", id, parentDraftVersion);
+            WalkObject(schema, "additionalProperties", id, parentDraftVersion);
+            WalkSchemas(schema, "patternProperties", id, parentDraftVersion);
+            WalkObject(schema, "unevaluatedProperties", id, parentDraftVersion);
+            WalkObject(schema, "propertyNames", id, parentDraftVersion);
 
-            WalkArray(schema, "items", id);
-            WalkObject(schema, "items", id);
-            WalkArray(schema, "prefixItems", id);
-            WalkObject(schema, "unevaluatedItems", id);
-            WalkObject(schema, "additionalItems", id);
+            WalkArray(schema, "items", id, parentDraftVersion);
+            WalkObject(schema, "items", id, parentDraftVersion);
+            WalkArray(schema, "prefixItems", id, parentDraftVersion);
+            WalkObject(schema, "unevaluatedItems", id, parentDraftVersion);
+            WalkObject(schema, "additionalItems", id, parentDraftVersion);
 
-            WalkObject(schema, "contains", id);
-            WalkSchemas(schema, "dependentSchemas", id);
-            WalkSchemas(schema, "dependencies", id);
+            WalkObject(schema, "contains", id, parentDraftVersion);
+            WalkSchemas(schema, "dependentSchemas", id, parentDraftVersion);
+            WalkSchemas(schema, "dependencies", id, parentDraftVersion);
 
-            WalkArray(schema, "allOf", id);
-            WalkArray(schema, "anyOf", id);
-            WalkArray(schema, "oneOf", id);
-            WalkObject(schema, "not", id);
+            WalkArray(schema, "allOf", id, parentDraftVersion);
+            WalkArray(schema, "anyOf", id, parentDraftVersion);
+            WalkArray(schema, "oneOf", id, parentDraftVersion);
+            WalkObject(schema, "not", id, parentDraftVersion);
 
-            WalkObject(schema, "if", id);
-            WalkObject(schema, "then", id);
-            WalkObject(schema, "else", id);
+            WalkObject(schema, "if", id, parentDraftVersion);
+            WalkObject(schema, "then", id, parentDraftVersion);
+            WalkObject(schema, "else", id, parentDraftVersion);
         }
 
-        private void WalkSchemas(JsonElement schema, string propertyName, Uri id)
+        private void WalkSchemas(JsonElement schema, string propertyName, Uri id, string? draftVersion)
         {
             var properties = schema.GetObjectProperty(propertyName);
             if (properties.ValueKind == JsonValueKind.Object)
             {
                 foreach (var prp in properties.EnumerateObject())
                 {
-                    WalkElement(prp.Value, id);
+                    WalkElement(prp.Value, id, draftVersion);
                 }
             }
         }
 
-        private void WalkArray(JsonElement schema, string propertyName, Uri id)
+        private void WalkArray(JsonElement schema, string propertyName, Uri id, string? draftVersion)
         {
             var itemsAsArray = schema.GetArrayProperty(propertyName);
             if (itemsAsArray.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in itemsAsArray.EnumerateArray())
                 {
-                    WalkElement(item, id);
+                    WalkElement(item, id, draftVersion);
                 }
             }
         }
 
-        private void WalkObject(JsonElement schema, string propertyName, Uri id)
+        private void WalkObject(JsonElement schema, string propertyName, Uri id, string? draftVersion)
         {
             var itemsAsObject = schema.GetObjectProperty(propertyName);
             if (itemsAsObject.ValueKind == JsonValueKind.Object)
             {
-                WalkElement(itemsAsObject, id);
+                WalkElement(itemsAsObject, id, draftVersion);
             }
         }
 

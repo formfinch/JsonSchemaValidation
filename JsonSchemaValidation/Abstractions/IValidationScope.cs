@@ -40,5 +40,12 @@ namespace JsonSchemaValidation.Abstractions
         /// </summary>
         /// <param name="targetDepth">The depth to restore to (must be &lt;= current depth).</param>
         void RestoreToDepth(int targetDepth);
+
+        /// <summary>
+        /// Finds the first (outermost) schema resource with HasRecursiveAnchor set to true.
+        /// Used for $recursiveRef resolution in Draft 2019-09.
+        /// </summary>
+        /// <returns>The first schema with recursive anchor, or null if none found.</returns>
+        SchemaMetadata? FindFirstRecursiveAnchor();
     }
 }

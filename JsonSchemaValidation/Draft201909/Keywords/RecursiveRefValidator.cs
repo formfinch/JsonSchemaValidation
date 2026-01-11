@@ -170,15 +170,10 @@ namespace JsonSchemaValidation.Draft201909.Keywords
             }
 
             // Search the dynamic scope from outermost to innermost for a schema with $recursiveAnchor: true
-            var dynamicScope = context.Scope.GetDynamicScope();
-            // Use explicit loop to avoid IEnumerable<T> enumerator allocation
-            for (int i = 0; dynamicScope.Skip(i).Any(); i++)
+            var recursiveAnchorSchema = context.Scope.FindFirstRecursiveAnchor();
+            if (recursiveAnchorSchema != null)
             {
-                var schemaResource = dynamicScope.ElementAt(i);
-                if (schemaResource.HasRecursiveAnchor)
-                {
-                    return schemaResource;
-                }
+                return recursiveAnchorSchema;
             }
 
             // Fall back to static target
