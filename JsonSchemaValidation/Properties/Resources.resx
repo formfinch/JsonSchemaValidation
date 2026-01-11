@@ -145,4 +145,28 @@
   <data name="nop_true" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Draft202012\Data\nop-true.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="json_schema_draft201909_schema" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-schema.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_meta_core" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-meta-core.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_meta_applicator" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-meta-applicator.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_meta_validation" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-meta-validation.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_meta_meta_data" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-meta-meta-data.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_meta_format" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-meta-format.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_meta_content" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\json-schema-draft201909-meta-content.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft201909_nop_true" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft201909\Data\nop-true.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>

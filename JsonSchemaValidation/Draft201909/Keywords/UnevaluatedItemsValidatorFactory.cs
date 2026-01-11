@@ -1,0 +1,73 @@
+// Draft behavior: Identical in Draft 2019-09, Draft 2020-12
+// Note: unevaluatedItems was introduced in Draft 2019-09.
+// Factory for unevaluatedItems keyword validator.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft201909.Keywords
+{
+    internal class UnevaluatedItemsValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        private readonly ISchemaFactory _schemaFactory;
+        private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+        private readonly IJsonValidationContextFactory _contextFactory;
+
+        public UnevaluatedItemsValidatorFactory(
+            ISchemaFactory schemaFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory,
+            IJsonValidationContextFactory contextFactory)
+        {
+            _schemaFactory = schemaFactory;
+            _schemaValidatorFactory = schemaValidatorFactory;
+            _contextFactory = contextFactory;
+        }
+
+        public string Keyword => "unevaluatedItems";
+
+        public int ExecutionOrder => 100;
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("unevaluatedItems", out var unevaluatedItemSchemaElement))
+            {
+                return null;
+            }
+
+            if (unevaluatedItemSchemaElement.ValueKind != JsonValueKind.Object
+                && unevaluatedItemSchemaElement.ValueKind != JsonValueKind.False
+                && unevaluatedItemSchemaElement.ValueKind != JsonValueKind.True)
+            {
+                throw new InvalidSchemaException("UnevaluatedItems has invalid content");
+            }
+
+            var unevaluatedItemValidator = CreateValidator(schemaData, unevaluatedItemSchemaElement);
+            if (unevaluatedItemValidator == null)
+            {
+                throw new InvalidSchemaException("UnevaluatedItems has invalid content");
+            }
+            return new UnevaluatedItemsValidator(unevaluatedItemValidator, _contextFactory);
+        }
+
+        private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement unevaluatedItemSchemaElement)
+        {
+            var prefixItemRawSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, unevaluatedItemSchemaElement);
+            var prefixItemDereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(prefixItemRawSchemaData);
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+            return _schemaValidatorFactory.Value.CreateValidator(prefixItemDereferencedSchemaData);
+        }
+    }
+}

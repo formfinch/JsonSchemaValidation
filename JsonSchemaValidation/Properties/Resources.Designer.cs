@@ -248,5 +248,77 @@ namespace JsonSchemaValidation.Properties {
                 return ResourceManager.GetString("nop_true", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 main schema.
+        /// </summary>
+        internal static string json_schema_draft201909_schema {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_schema", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 core meta-schema.
+        /// </summary>
+        internal static string json_schema_draft201909_meta_core {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_meta_core", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 applicator meta-schema.
+        /// </summary>
+        internal static string json_schema_draft201909_meta_applicator {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_meta_applicator", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 validation meta-schema.
+        /// </summary>
+        internal static string json_schema_draft201909_meta_validation {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_meta_validation", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 meta-data meta-schema.
+        /// </summary>
+        internal static string json_schema_draft201909_meta_meta_data {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_meta_meta_data", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 format meta-schema.
+        /// </summary>
+        internal static string json_schema_draft201909_meta_format {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_meta_format", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 content meta-schema.
+        /// </summary>
+        internal static string json_schema_draft201909_meta_content {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_meta_content", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 2019-09 nop-true schema.
+        /// </summary>
+        internal static string json_schema_draft201909_nop_true {
+            get {
+                return ResourceManager.GetString("json_schema_draft201909_nop_true", resourceCulture);
+            }
+        }
     }
 }

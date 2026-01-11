@@ -16,6 +16,7 @@ namespace JsonSchemaValidationTests.Draft202012.OutputFormat;
 /// - Basic: Flat list of all errors with locations
 /// - Detailed: Hierarchical structure matching schema nesting
 /// </summary>
+[Trait("Draft", "2020-12")]
 public class Examples
 {
     private readonly ISchemaRepository _schemaRepository;

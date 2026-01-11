@@ -4,10 +4,11 @@ namespace JsonSchemaValidationBenchmarks.Scenarios;
 
 public sealed class TestSuiteScenarioSource : IScenarioSource
 {
-    public string Name => "testsuite";
-
     private readonly string _testSuitePath;
+    private readonly string _draftVersion;
     private readonly Lazy<List<BenchmarkScenario>> _scenarios;
+
+    public string Name => $"testsuite-{_draftVersion}";
 
     private static readonly Dictionary<string, string> CategoryMappings = new(StringComparer.OrdinalIgnoreCase)
     {
@@ -54,9 +55,15 @@ public sealed class TestSuiteScenarioSource : IScenarioSource
         ["propertyNames"] = "object"
     };
 
-    public TestSuiteScenarioSource(string testSuitePath)
+    /// <summary>
+    /// Creates a test suite scenario source for the specified draft version.
+    /// </summary>
+    /// <param name="testSuitePath">Path to the JSON-Schema-Test-Suite root</param>
+    /// <param name="draftVersion">Draft version folder name (e.g., "draft2020-12" or "draft2019-09")</param>
+    public TestSuiteScenarioSource(string testSuitePath, string draftVersion = "draft2020-12")
     {
         _testSuitePath = testSuitePath;
+        _draftVersion = draftVersion;
         _scenarios = new Lazy<List<BenchmarkScenario>>(LoadScenarios);
     }
 
@@ -83,7 +90,7 @@ public sealed class TestSuiteScenarioSource : IScenarioSource
     private List<BenchmarkScenario> LoadScenarios()
     {
         var scenarios = new List<BenchmarkScenario>();
-        var testsPath = Path.Combine(_testSuitePath, "tests", "draft2020-12");
+        var testsPath = Path.Combine(_testSuitePath, "tests", _draftVersion);
 
         if (!Directory.Exists(testsPath))
         {

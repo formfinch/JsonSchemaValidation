@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.Draft202012
+namespace JsonSchemaValidation.Abstractions
 {
     /// <summary>
     /// Result of parsing $vocabulary from a schema.

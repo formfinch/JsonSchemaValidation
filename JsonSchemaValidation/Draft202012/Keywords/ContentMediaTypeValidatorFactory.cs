@@ -1,6 +1,5 @@
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Draft202012.Interfaces;
 using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Draft202012.Keywords

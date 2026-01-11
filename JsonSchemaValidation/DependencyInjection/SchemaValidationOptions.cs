@@ -4,6 +4,7 @@
     {
         public string DefaultDraftVersion { get; set; } = "https://json-schema.org/draft/2020-12/schema";
         public bool EnableDraft202012 { get; set; } = true;
+        public bool EnableDraft201909 { get; set; } = true;
         public bool EnableDraft4 { get; set; } = true;
 
         /// <summary>
