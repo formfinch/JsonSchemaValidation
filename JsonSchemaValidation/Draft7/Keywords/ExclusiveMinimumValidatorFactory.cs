@@ -1,0 +1,36 @@
+// Draft behavior: Identical in Draft 2019-09, Draft 2020-12 (numeric value)
+// Note: In Draft 4-7, exclusiveMinimum was a boolean modifier for minimum.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft7.Keywords
+{
+    internal class ExclusiveMinimumValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        public string Keyword => "exclusiveMinimum";
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("exclusiveMinimum", out var exclusiveMinimumElement))
+            {
+                return null;
+            }
+
+            if (!exclusiveMinimumElement.TryGetDouble(out var minimum))
+            {
+                return null;
+            }
+
+            return new ExclusiveMinimumValidator(minimum);
+        }
+    }
+}

@@ -1,5 +1,5 @@
-﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Draft202012.Keywords.Logic;
+﻿using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Common
@@ -14,12 +14,12 @@ namespace JsonSchemaValidation.Common
         // Maps unsupported drafts to the closest supported draft
         private static readonly Dictionary<string, string> DraftFallbacks = new(StringComparer.Ordinal)
         {
-            // Draft 07 -> 2019-09 (mostly compatible, unknown keywords are ignored)
-            ["http://json-schema.org/draft-07/schema#"] = "https://json-schema.org/draft/2019-09/schema",
-            // Draft 06 -> 2019-09
-            ["http://json-schema.org/draft-06/schema#"] = "https://json-schema.org/draft/2019-09/schema",
-            // Draft 04 -> 2019-09
-            ["http://json-schema.org/draft-04/schema#"] = "https://json-schema.org/draft/2019-09/schema",
+            // Draft 07 with fragment -> native Draft 7 (without fragment for internal consistency)
+            ["http://json-schema.org/draft-07/schema#"] = "http://json-schema.org/draft-07/schema",
+            // Draft 06 -> Draft 7 (mostly compatible, native Draft 7 now available)
+            ["http://json-schema.org/draft-06/schema#"] = "http://json-schema.org/draft-07/schema",
+            // Draft 04 -> Draft 7 (mostly compatible)
+            ["http://json-schema.org/draft-04/schema#"] = "http://json-schema.org/draft-07/schema",
         };
 
         // Keywords that exist in draft-07 and earlier (used for filtering when falling back)
@@ -127,7 +127,7 @@ namespace JsonSchemaValidation.Common
 
             // Check if this schema has its own $id (making it a distinct schema resource)
             // If so, wrap with ScopeAwareSchemaValidator to manage the dynamic scope
-            var schemaId = schemaMetaData.Schema.GetIdProperty();
+            var schemaId = ExtractIdProperty(schemaMetaData.Schema);
             if (!string.IsNullOrEmpty(schemaId))
             {
                 return new ScopeAwareSchemaValidator(validator, schemaMetaData);
@@ -149,6 +149,29 @@ namespace JsonSchemaValidation.Common
                 "http://json-schema.org/draft-04/schema#" => Draft07Keywords, // Draft 04 is a subset of 07
                 _ => null
             };
+        }
+
+        /// <summary>
+        /// Extracts $id property value without draft-specific validation.
+        /// </summary>
+        private static string? ExtractIdProperty(JsonElement schema)
+        {
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("$id", out var idElement))
+            {
+                return null;
+            }
+
+            if (idElement.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            return idElement.GetString();
         }
     }
 }

@@ -29,6 +29,7 @@ public sealed class JsonSchemaValidation2019Adapter : ISchemaValidatorAdapter
             opt.EnableDraft202012 = false;
             opt.EnableDraft201909 = true;
             opt.FormatAssertionEnabled = true;
+            opt.DefaultDraftVersion = DraftUri;
         });
         _serviceProvider = services.BuildServiceProvider();
         _serviceProvider.InitializeSingletonServices();
@@ -90,6 +91,44 @@ public sealed class JsonSchemaValidation2019Adapter : ISchemaValidatorAdapter
                 {
                     obj["$ref"] = refStr.Replace("draft/2020-12", "draft/2019-09");
                 }
+            }
+
+            // Convert Draft 2020-12's prefixItems + items to Draft 2019-09's items array + additionalItems
+            // Draft 2020-12: prefixItems for positional, items for additional
+            // Draft 2019-09: items as array for positional, additionalItems for additional
+            if (obj.ContainsKey("prefixItems"))
+            {
+                var prefixItems = obj["prefixItems"];
+                obj.Remove("prefixItems");
+
+                // If items also exists (in 2020-12 form), move it to additionalItems
+                if (obj.ContainsKey("items") && !obj.ContainsKey("additionalItems"))
+                {
+                    var items = obj["items"];
+                    obj.Remove("items");
+                    obj["additionalItems"] = items;
+                }
+
+                obj["items"] = prefixItems;
+            }
+
+            // Convert $dynamicRef/$dynamicAnchor to $recursiveRef/$recursiveAnchor
+            // These are not fully equivalent but provide basic compatibility
+            if (obj.ContainsKey("$dynamicAnchor"))
+            {
+                var anchor = obj["$dynamicAnchor"];
+                obj.Remove("$dynamicAnchor");
+                // $recursiveAnchor is boolean true, not a string name
+                // Only set if anchor exists (2019-09 uses simpler model)
+                obj["$recursiveAnchor"] = true;
+            }
+
+            if (obj.TryGetPropertyValue("$dynamicRef", out var dynRefNode) && dynRefNode is JsonValue dynRefValue)
+            {
+                var dynRefStr = dynRefValue.ToString();
+                obj.Remove("$dynamicRef");
+                // Convert to $recursiveRef (simpler model in 2019-09)
+                obj["$recursiveRef"] = dynRefStr;
             }
 
             // Recurse into all properties

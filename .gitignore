@@ -394,3 +394,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 .claude/*
+tmpclaude-*-cwd

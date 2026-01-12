@@ -320,5 +320,23 @@ namespace JsonSchemaValidation.Properties {
                 return ResourceManager.GetString("json_schema_draft201909_nop_true", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 7 main schema.
+        /// </summary>
+        internal static string json_schema_draft7_schema {
+            get {
+                return ResourceManager.GetString("json_schema_draft7_schema", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string for Draft 7 nop-true schema.
+        /// </summary>
+        internal static string json_schema_draft7_nop_true {
+            get {
+                return ResourceManager.GetString("json_schema_draft7_nop_true", resourceCulture);
+            }
+        }
     }
 }

@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Draft7;
 using JsonSchemaValidation.Draft201909;
 using JsonSchemaValidation.Draft202012;
 using JsonSchemaValidation.Repositories;
@@ -30,6 +31,11 @@ namespace JsonSchemaValidation.DependencyInjection
             if (options.EnableDraft201909)
             {
                 services.AddDraft201909();
+            }
+
+            if (options.EnableDraft7)
+            {
+                services.AddDraft7();
             }
 
             return services;

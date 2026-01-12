@@ -20,6 +20,17 @@ namespace JsonSchemaValidation.Repositories
                 Schema = subSchema
             };
 
+            // Draft 7 special case: $ref causes sibling keywords to be ignored, including $id.
+            // Don't apply sibling $id when $ref is present in Draft 7.
+            bool isDraft7 = string.Equals(parentSchemaData.DraftVersion, "http://json-schema.org/draft-07/schema", StringComparison.Ordinal);
+            bool hasRef = subSchema.ValueKind == JsonValueKind.Object && subSchema.TryGetProperty("$ref", out _);
+
+            if (isDraft7 && hasRef)
+            {
+                // In Draft 7, $ref ignores sibling $id, so don't change the base URI
+                return subSchemaData;
+            }
+
             // Check if sub-schema has its own $id and resolve it against parent's base URI
             var subId = ExtractSchemaId(subSchema);
             if (!string.IsNullOrWhiteSpace(subId)

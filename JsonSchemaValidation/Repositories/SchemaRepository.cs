@@ -13,10 +13,12 @@ namespace JsonSchemaValidation.Repositories
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
         private volatile IReadOnlyList<SchemaMetadata>? _sortedSchemas;
         private readonly Dictionary<string, IVocabularyParser> _vocabularyParsers;
+        private readonly string _defaultDraftVersion;
 
         public SchemaRepository(SchemaValidationOptions options, IEnumerable<IVocabularyParser>? vocabularyParsers = null)
         {
             ArgumentNullException.ThrowIfNull(options);
+            _defaultDraftVersion = options.DefaultDraftVersion;
             _vocabularyParsers = new Dictionary<string, IVocabularyParser>(StringComparer.Ordinal);
             if (vocabularyParsers != null)
             {
@@ -62,8 +64,8 @@ namespace JsonSchemaValidation.Repositories
             // Check for $recursiveAnchor: true (Draft 2019-09 feature)
             schemaData.HasRecursiveAnchor = HasRecursiveAnchorProperty(schema);
 
-            // Default to Draft 2020-12 if not specified
-            schemaData.DraftVersion ??= "https://json-schema.org/draft/2020-12/schema";
+            // Use configured default draft version if not specified
+            schemaData.DraftVersion ??= _defaultDraftVersion;
 
             // Parse $vocabulary if present (for meta-schemas)
             // Select the vocabulary parser based on the draft version
@@ -151,8 +153,10 @@ namespace JsonSchemaValidation.Repositories
             }
         }
 
+#pragma warning disable MA0051 // Method is too long
         private void WalkElement(JsonElement? schemaToRegister, Uri id, string? parentDraftVersion)
         {
+#pragma warning restore MA0051
             if (schemaToRegister == null)
             {
                 return;
@@ -165,8 +169,18 @@ namespace JsonSchemaValidation.Repositories
             }
 
             SchemaMetadata? schemaData = null;
-            var newId = schema.GetIdProperty();
-            if (!string.IsNullOrWhiteSpace(newId))
+            var newId = ExtractIdProperty(schema);
+
+            // Draft 7 special case: $ref causes sibling keywords to be ignored, including $id.
+            // Don't register sibling $id as a new base URI when $ref is present.
+            bool isDraft7 = string.Equals(parentDraftVersion, "http://json-schema.org/draft-07/schema", StringComparison.Ordinal);
+            bool hasRef = schema.TryGetProperty("$ref", out _);
+
+            // In Draft 7 and earlier, $id starting with # is a "plain name fragment" (anchor),
+            // not a base URI change. It should be treated like $anchor in 2019-09+.
+            bool isPlainNameFragment = !string.IsNullOrWhiteSpace(newId) && newId.StartsWith('#');
+
+            if (!string.IsNullOrWhiteSpace(newId) && !isPlainNameFragment && !(isDraft7 && hasRef))
             {
                 if (!Uri.TryCreate(id, newId, out Uri? fullId))
                 {
@@ -184,16 +198,28 @@ namespace JsonSchemaValidation.Repositories
                 }
                 else
                 {
-                    // Inherit draft version from parent, or default to 2020-12
-                    var draftVersion = parentDraftVersion ?? "https://json-schema.org/draft/2020-12/schema";
+                    // Inherit draft version from parent, or use configured default
+                    var draftVersion = parentDraftVersion ?? _defaultDraftVersion;
                     schemaData = new SchemaMetadata(schema, draftVersion, id);
                     schemaData.HasRecursiveAnchor = HasRecursiveAnchorProperty(schema);
                     AddSchema(schemaData);
                 }
             }
 
+            // Handle plain name fragments from $id (e.g., $id: "#foo" in Draft 7)
+            // These are treated as anchors
+            if (isPlainNameFragment && newId != null && !(isDraft7 && hasRef))
+            {
+                if (schemaData == null && !_schemas.TryGetValue(id, out schemaData))
+                {
+                    throw new InvalidOperationException($"Failed to retrieve {id}.");
+                }
+                schemaData.Anchors.TryAdd(newId, schema);
+            }
+
+            // Draft 7: $ref ignores sibling $anchor as well
             var anchor = schema.GetAnchorProperty();
-            if (!string.IsNullOrWhiteSpace(anchor))
+            if (!string.IsNullOrWhiteSpace(anchor) && !(isDraft7 && hasRef))
             {
                 if (schemaData == null && !_schemas.TryGetValue(id, out schemaData))
                 {
@@ -214,6 +240,7 @@ namespace JsonSchemaValidation.Repositories
 
             // schema subobjects to walk through
             WalkSchemas(schema, "$defs", id, parentDraftVersion);
+            WalkSchemas(schema, "definitions", id, parentDraftVersion); // Draft 7 and earlier
 
             WalkSchemas(schema, "properties", id, parentDraftVersion);
             WalkObject(schema, "additionalProperties", id, parentDraftVersion);
@@ -300,7 +327,7 @@ namespace JsonSchemaValidation.Repositories
 
                 // Check if the target has its own $id - if so, use that resource's context
                 // This is important for $dynamicRef resolution which needs the correct DynamicAnchors
-                var targetId = targetSchema.GetIdProperty();
+                var targetId = ExtractIdProperty(targetSchema);
                 if (!string.IsNullOrEmpty(targetId))
                 {
                     // Resolve the $id against the base URI (without fragment)
@@ -383,6 +410,30 @@ namespace JsonSchemaValidation.Repositories
             }
 
             return recursiveAnchorElement.ValueKind == JsonValueKind.True;
+        }
+
+        /// <summary>
+        /// Extracts $id property value without draft-specific validation.
+        /// This is needed because SchemaRepository works with all drafts.
+        /// </summary>
+        private static string? ExtractIdProperty(JsonElement schema)
+        {
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("$id", out var idElement))
+            {
+                return null;
+            }
+
+            if (idElement.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            return idElement.GetString();
         }
     }
 }
