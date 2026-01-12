@@ -9,7 +9,7 @@ var rootCommand = new RootCommand("JSON Schema Validation Benchmark Suite");
 var librariesOption = new Option<string[]>(
     name: "--libraries",
     getDefaultValue: () => new[] { "jsonschemavalidation" },
-    description: "Libraries to benchmark: jsonschemavalidation, jsonschemanet, njsonschema, lateapex, ajv, hyperjump, cfworker");
+    description: "Libraries to benchmark: jsonschemavalidation, jsv2020, jsv2019, jsonschemanet, njsonschema, lateapex, ajv, hyperjump, cfworker. Use jsv2020,jsv2019 to compare draft performance.");
 librariesOption.AddAlias("-l");
 
 var scenariosOption = new Option<string[]>(
@@ -233,6 +233,8 @@ static ISchemaValidatorAdapter? CreateAdapter(string name, string benchmarksPath
     name.ToLowerInvariant() switch
     {
         "jsonschemavalidation" => new JsonSchemaValidationAdapter(),
+        "jsv2020" => new JsonSchemaValidation2020Adapter(),
+        "jsv2019" => new JsonSchemaValidation2019Adapter(),
         "jsonschemanet" => new JsonSchemaNetAdapter(),
         "njsonschema" => new NJsonSchemaAdapter(),
         "lateapex" => new LateApexAdapter(),
@@ -417,6 +419,8 @@ static void PrintOverallSummary(List<BenchmarkResult> results, List<string> libr
 static string GetShortLibraryName(string name) => name switch
 {
     "JsonSchemaValidation" => "JSV",
+    "JSV-2020-12" => "2020-12",
+    "JSV-2019-09" => "2019-09",
     "JsonSchema.Net" => "JS.Net",
     "NJsonSchema" => "NJS",
     "LateApex" => "LateApex",
