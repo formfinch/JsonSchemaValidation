@@ -169,4 +169,10 @@
   <data name="json_schema_draft201909_nop_true" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\Draft201909\Data\nop-true.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
   </data>
+  <data name="json_schema_draft7_schema" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft7\Data\json-schema-draft7-schema.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
+  <data name="json_schema_draft7_nop_true" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\Draft7\Data\nop-true.json;System.String, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089;utf-8</value>
+  </data>
 </root>

@@ -1,0 +1,37 @@
+// Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
+// Handles single type specification (e.g., "type": "string").
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft7.Keywords
+{
+    internal class TypeValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        public string Keyword => "type";
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("type", out var typeElement))
+            {
+                return null;
+            }
+
+            if (typeElement.ValueKind != JsonValueKind.String)
+            {
+                return null;
+            }
+
+            string? typeSpecification = typeElement.GetString();
+            return TypeValidatorSharedFactory.CreateFromTypeSpecification(typeSpecification);
+        }
+    }
+}
