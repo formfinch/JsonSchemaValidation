@@ -1,0 +1,50 @@
+// Draft behavior: In Draft 4, minimum is a number with optional exclusiveMinimum boolean modifier.
+// Validates that numeric data is >= (or >) the minimum value.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Validation;
+
+namespace JsonSchemaValidation.Draft4.Keywords
+{
+    internal sealed class MinimumValidator : IKeywordValidator
+    {
+        private readonly double _minimum;
+        private readonly bool _exclusive;
+
+        public string Keyword => "minimum";
+
+        public bool SupportsDirectValidation => true;
+
+        public MinimumValidator(double minimum, bool exclusive)
+        {
+            _minimum = minimum;
+            _exclusive = exclusive;
+        }
+
+        public bool IsValid(JsonElement data)
+        {
+            if (data.ValueKind != JsonValueKind.Number)
+                return true;
+
+            var value = data.GetDouble();
+            return _exclusive ? value > _minimum : value >= _minimum;
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
+
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
+        {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            if (IsValid(context.Data))
+                return ValidationResult.Valid(instanceLocation, kwLocation);
+
+            var comparison = _exclusive ? "greater than" : "at least";
+            return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value must be {comparison} {_minimum.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        }
+    }
+}

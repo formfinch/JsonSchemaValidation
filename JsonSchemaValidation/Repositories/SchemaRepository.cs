@@ -413,7 +413,8 @@ namespace JsonSchemaValidation.Repositories
         }
 
         /// <summary>
-        /// Extracts $id property value without draft-specific validation.
+        /// Extracts $id or id property value without draft-specific validation.
+        /// Supports both $id (Draft 6+) and id (Draft 4).
         /// This is needed because SchemaRepository works with all drafts.
         /// </summary>
         private static string? ExtractIdProperty(JsonElement schema)
@@ -423,17 +424,19 @@ namespace JsonSchemaValidation.Repositories
                 return null;
             }
 
-            if (!schema.TryGetProperty("$id", out var idElement))
+            // Try $id first (Draft 6+)
+            if (schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
             {
-                return null;
+                return idElement.GetString();
             }
 
-            if (idElement.ValueKind != JsonValueKind.String)
+            // Fall back to id (Draft 4)
+            if (schema.TryGetProperty("id", out idElement) && idElement.ValueKind == JsonValueKind.String)
             {
-                return null;
+                return idElement.GetString();
             }
 
-            return idElement.GetString();
+            return null;
         }
     }
 }

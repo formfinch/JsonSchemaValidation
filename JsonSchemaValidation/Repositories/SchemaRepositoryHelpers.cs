@@ -45,6 +45,7 @@ namespace JsonSchemaValidation.Repositories
 
         /// <summary>
         /// Extracts the $id value as a string (not resolved to URI yet).
+        /// Supports both $id (Draft 6+) and id (Draft 4).
         /// </summary>
         private static string? ExtractSchemaId(JsonElement schema)
         {
@@ -53,19 +54,24 @@ namespace JsonSchemaValidation.Repositories
                 return null;
             }
 
-            if (!schema.TryGetProperty("$id", out var idElement))
+            // Try $id first (Draft 6+)
+            if (schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
             {
-                return null;
+                return idElement.GetString();
             }
 
-            if (idElement.ValueKind != JsonValueKind.String)
+            // Fall back to id (Draft 4)
+            if (schema.TryGetProperty("id", out idElement) && idElement.ValueKind == JsonValueKind.String)
             {
-                return null;
+                return idElement.GetString();
             }
 
-            return idElement.GetString();
+            return null;
         }
 
+        /// <summary>
+        /// Extracts the schema URI from $id (Draft 6+) or id (Draft 4).
+        /// </summary>
         public static Uri? ExtractSchemaUri(JsonElement schema)
         {
             if (schema.ValueKind != JsonValueKind.Object)
@@ -73,12 +79,12 @@ namespace JsonSchemaValidation.Repositories
                 return null;
             }
 
-            if (!schema.TryGetProperty("$id", out var idElement))
-            {
-                return null;
-            }
+            // Try $id first (Draft 6+), then fall back to id (Draft 4)
+            JsonElement idElement;
+            bool hasId = (schema.TryGetProperty("$id", out idElement) && idElement.ValueKind == JsonValueKind.String)
+                      || (schema.TryGetProperty("id", out idElement) && idElement.ValueKind == JsonValueKind.String);
 
-            if (idElement.ValueKind != JsonValueKind.String)
+            if (!hasId)
             {
                 return null;
             }

@@ -1,0 +1,61 @@
+// Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09
+// Note: In Draft 2020-12, "additionalItems" was removed.
+// Boolean true schema for additionalItems - all additional items are valid.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Validation;
+
+namespace JsonSchemaValidation.Draft4.Keywords
+{
+    internal sealed class AdditionalItemsTrueValidator : IKeywordValidator
+    {
+        private readonly int _tupleSize;
+
+        public string Keyword => "additionalItems";
+
+        public bool SupportsDirectValidation => true;
+
+        public AdditionalItemsTrueValidator(int tupleSize)
+        {
+            _tupleSize = tupleSize;
+        }
+
+        public bool IsValid(JsonElement data) => true;
+
+        public bool IsValid(IJsonValidationContext context) => true;
+
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
+        {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            if (context.Data.ValueKind != JsonValueKind.Array)
+            {
+                return ValidationResult.Valid(instanceLocation, kwLocation);
+            }
+
+            // Mark additional indices as evaluated
+            if (context is IJsonValidationArrayContext arrayContext)
+            {
+                int length = context.Data.GetArrayLength();
+                for (int idx = _tupleSize; idx < length; idx++)
+                {
+                    arrayContext.SetEvaluatedIndex(idx);
+                }
+
+                if (length > _tupleSize)
+                {
+                    return ValidationResult.Valid(instanceLocation, kwLocation) with
+                    {
+                        Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = true }
+                    };
+                }
+            }
+
+            return ValidationResult.Valid(instanceLocation, kwLocation);
+        }
+    }
+}
