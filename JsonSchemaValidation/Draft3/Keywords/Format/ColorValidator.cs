@@ -1,0 +1,90 @@
+// Draft 3 specific: Validates CSS color format.
+// Supports CSS 2.1 basic color keywords and hex colors (#RGB, #RRGGBB).
+
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Common;
+using JsonSchemaValidation.Validation;
+
+namespace JsonSchemaValidation.Draft3.Keywords.Format
+{
+    internal sealed class ColorValidator : IKeywordValidator
+    {
+        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
+
+        // CSS 2.1 basic color keywords (case-insensitive)
+        private static readonly HashSet<string> CssColorNames = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "aqua",
+            "black",
+            "blue",
+            "fuchsia",
+            "gray",
+            "green",
+            "lime",
+            "maroon",
+            "navy",
+            "olive",
+            "orange",
+            "purple",
+            "red",
+            "silver",
+            "teal",
+            "white",
+            "yellow"
+        };
+
+        // Regex for hex color validation: #RGB or #RRGGBB (case-insensitive)
+        private static readonly Regex hexColorRegex = new Regex(
+            @"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
+            RegexOptions.Compiled, defaultMatchTimeout);
+
+        public string Keyword => "format";
+
+        public bool SupportsDirectValidation => true;
+
+        public bool IsValid(JsonElement data)
+        {
+            // Format only applies to strings - non-strings are valid
+            if (data.ValueKind != JsonValueKind.String)
+                return true;
+
+            var str = data.GetString();
+            return str == null || IsValidColor(str);
+        }
+
+        public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
+
+        public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
+        {
+            var instanceLocation = context.InstanceLocation.ToString();
+            var kwLocation = keywordLocation.ToString();
+
+            if (context.Data.ValueKind != JsonValueKind.String)
+                return ValidationResult.Valid(instanceLocation, kwLocation);
+
+            if (!IsValid(context.Data))
+                return ValidationResult.Invalid(instanceLocation, kwLocation, "Value is not a valid CSS color");
+
+            return ValidationResult.Valid(instanceLocation, kwLocation) with
+            {
+                Annotations = new Dictionary<string, object?>(StringComparer.Ordinal) { [Keyword] = "color" }
+            };
+        }
+
+        private static bool IsValidColor(string color)
+        {
+            // Check if it's a valid CSS color name
+            if (CssColorNames.Contains(color))
+                return true;
+
+            // Check if it's a valid hex color
+            if (hexColorRegex.IsMatch(color))
+                return true;
+
+            return false;
+        }
+    }
+}

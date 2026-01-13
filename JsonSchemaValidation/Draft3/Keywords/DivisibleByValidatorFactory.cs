@@ -1,0 +1,42 @@
+// Draft 3 behavior: divisibleBy is equivalent to multipleOf in later drafts.
+// Factory for divisibleBy keyword validator.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft3.Keywords
+{
+    internal class DivisibleByValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        public string Keyword => "divisibleBy";
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("divisibleBy", out var divisibleByElement))
+            {
+                return null;
+            }
+
+            if (!divisibleByElement.TryGetDouble(out var divisor))
+            {
+                return null;
+            }
+
+            if (divisor <= 0)
+            {
+                throw new InvalidSchemaException("The 'divisibleBy' keyword must have a number value greater than 0.");
+            }
+
+            return new DivisibleByValidator(divisor);
+        }
+    }
+}
