@@ -16,44 +16,12 @@ namespace JsonSchemaValidation.Common
         {
             // Draft 07 with fragment -> native Draft 7 (without fragment for internal consistency)
             ["http://json-schema.org/draft-07/schema#"] = "http://json-schema.org/draft-07/schema",
-            // Draft 06 -> Draft 7 (mostly compatible, native Draft 7 now available)
-            ["http://json-schema.org/draft-06/schema#"] = "http://json-schema.org/draft-07/schema",
-            // Draft 04 -> Draft 7 (mostly compatible)
-            ["http://json-schema.org/draft-04/schema#"] = "http://json-schema.org/draft-07/schema",
-        };
-
-        // Keywords that exist in draft-07 and earlier (used for filtering when falling back)
-        // Keywords introduced in 2019-09 or later are NOT included here
-        private static readonly HashSet<string> Draft07Keywords = new(StringComparer.Ordinal)
-        {
-            // Core keywords
-            "$id", "$ref", "$schema", "$comment",
-            // Definitions (note: $defs is 2019-09+, definitions is draft-07)
-            "definitions",
-            // Validation keywords
-            "type", "enum", "const",
-            // Object keywords
-            "properties", "additionalProperties", "patternProperties", "propertyNames",
-            "required", "minProperties", "maxProperties",
-            // Dependencies (single keyword in draft-07, split into dependentRequired/dependentSchemas in 2019-09)
-            "dependencies",
-            // Array keywords
-            "items", "additionalItems", "contains",
-            "minItems", "maxItems", "uniqueItems",
-            // String keywords
-            "minLength", "maxLength", "pattern",
-            // Number keywords
-            "minimum", "maximum", "exclusiveMinimum", "exclusiveMaximum", "multipleOf",
-            // Logic keywords
-            "allOf", "anyOf", "oneOf", "not",
-            "if", "then", "else",
-            // Format
-            "format",
-            // Metadata keywords
-            "title", "description", "default", "examples",
-            "readOnly", "writeOnly",
-            // Content keywords
-            "contentEncoding", "contentMediaType",
+            // Draft 06 with fragment -> native Draft 6 (without fragment for internal consistency)
+            ["http://json-schema.org/draft-06/schema#"] = "http://json-schema.org/draft-06/schema",
+            // Draft 04 with fragment -> native Draft 4 (without fragment for internal consistency)
+            ["http://json-schema.org/draft-04/schema#"] = "http://json-schema.org/draft-04/schema",
+            // Draft 03 with fragment -> native Draft 3 (without fragment for internal consistency)
+            ["http://json-schema.org/draft-03/schema#"] = "http://json-schema.org/draft-03/schema",
         };
 
         public SchemaValidatorFactory(
@@ -139,16 +107,17 @@ namespace JsonSchemaValidation.Common
         /// <summary>
         /// Gets the set of keywords that are valid for a specific draft version.
         /// Used for cross-draft compatibility to filter out keywords introduced in later drafts.
+        /// Note: Now that native Draft 3, 4, 6, and 7 implementations exist, this is primarily
+        /// for cross-draft schema references where an older draft references a newer draft's keywords.
         /// </summary>
+#pragma warning disable S1172 // Method parameter is kept for future extensibility
         private static HashSet<string>? GetAllowedKeywordsForDraft(string draftVersion)
+#pragma warning restore S1172
         {
-            return draftVersion switch
-            {
-                "http://json-schema.org/draft-07/schema#" => Draft07Keywords,
-                "http://json-schema.org/draft-06/schema#" => Draft07Keywords, // Draft 06 is similar to 07
-                "http://json-schema.org/draft-04/schema#" => Draft07Keywords, // Draft 04 is a subset of 07
-                _ => null
-            };
+            // Native draft implementations handle their own keyword filtering,
+            // so no keyword filtering needed when using fallback to same-family native implementation
+            _ = draftVersion; // Suppress unused parameter warning
+            return null;
         }
 
         /// <summary>

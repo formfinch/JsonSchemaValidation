@@ -1,0 +1,133 @@
+// Draft 3 behavior: The "dependencies" keyword supports:
+// - String: single property dependency (e.g., "bar": "foo" means if "bar" exists, "foo" must exist)
+// - Array: multiple property dependencies (e.g., "bar": ["foo", "baz"])
+// - Schema: schema dependency (e.g., "bar": {...})
+// Factory for dependencies keyword validator.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Exceptions;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft3.Keywords
+{
+    internal class DependenciesValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        private readonly ISchemaFactory _schemaFactory;
+        private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
+
+        public DependenciesValidatorFactory(
+            ISchemaFactory schemaFactory,
+            ILazySchemaValidatorFactory schemaValidatorFactory,
+            IJsonValidationContextFactory contextFactory)
+        {
+            _schemaFactory = schemaFactory;
+            _schemaValidatorFactory = schemaValidatorFactory;
+            _ = contextFactory; // Reserved for future use
+        }
+
+        public string Keyword => "dependencies";
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("dependencies", out var dependenciesElement))
+            {
+                return null;
+            }
+
+            if (dependenciesElement.ValueKind != JsonValueKind.Object)
+            {
+                throw new InvalidSchemaException("The 'dependencies' keyword must be an object.");
+            }
+
+            Dictionary<string, string[]> propertyDependencies = new(StringComparer.Ordinal);
+            Dictionary<string, ISchemaValidator> schemaDependencies = new(StringComparer.Ordinal);
+
+            foreach (var dependencyElement in dependenciesElement.EnumerateObject())
+            {
+                string propertyName = dependencyElement.Name;
+                var dependencyValue = dependencyElement.Value;
+
+                if (dependencyValue.ValueKind == JsonValueKind.String)
+                {
+                    // Draft 3: Single property dependency as string
+                    string? reqProp = dependencyValue.GetString();
+                    if (string.IsNullOrWhiteSpace(reqProp))
+                    {
+                        throw new InvalidSchemaException("Property dependency cannot have empty property name.");
+                    }
+                    propertyDependencies.Add(propertyName, new[] { reqProp! });
+                }
+                else if (dependencyValue.ValueKind == JsonValueKind.Array)
+                {
+                    // Property dependency (array of required property names)
+                    var requiredProps = new List<string>();
+                    foreach (JsonElement propertyNameElement in dependencyValue.EnumerateArray())
+                    {
+                        if (propertyNameElement.ValueKind != JsonValueKind.String)
+                        {
+                            throw new InvalidSchemaException("Property dependencies must be arrays of strings.");
+                        }
+
+                        string? reqProp = propertyNameElement.GetString();
+                        if (string.IsNullOrWhiteSpace(reqProp))
+                        {
+                            throw new InvalidSchemaException("Property dependencies cannot have empty property names.");
+                        }
+                        requiredProps.Add(reqProp!);
+                    }
+
+                    if (requiredProps.Count > 0)
+                    {
+                        propertyDependencies.Add(propertyName, requiredProps.ToArray());
+                    }
+                    else
+                    {
+                        // Empty array means no requirements, but we still track it
+                        propertyDependencies.Add(propertyName, Array.Empty<string>());
+                    }
+                }
+                else if (dependencyValue.ValueKind == JsonValueKind.Object ||
+                         dependencyValue.ValueKind == JsonValueKind.True ||
+                         dependencyValue.ValueKind == JsonValueKind.False)
+                {
+                    // Schema dependency (object or boolean schema)
+                    var validator = CreateValidator(schemaData, dependencyValue);
+                    schemaDependencies.Add(propertyName, validator);
+                }
+                else
+                {
+                    throw new InvalidSchemaException($"Dependency for property '{propertyName}' must be a string, array, or schema.");
+                }
+            }
+
+            if (propertyDependencies.Count == 0 && schemaDependencies.Count == 0)
+            {
+                return null;
+            }
+
+            return new DependenciesValidator(propertyDependencies, schemaDependencies);
+        }
+
+        private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement schemaElement)
+        {
+            var subSchemaData = SchemaRepositoryHelpers.CreateSubSchemaMetadata(schemaData, schemaElement);
+            var dereferencedSchemaData = _schemaFactory.CreateDereferencedSchema(subSchemaData);
+
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+
+            return _schemaValidatorFactory.Value.CreateValidator(dereferencedSchemaData);
+        }
+    }
+}

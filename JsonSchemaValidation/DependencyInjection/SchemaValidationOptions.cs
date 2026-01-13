@@ -8,6 +8,7 @@
         public bool EnableDraft7 { get; set; } = true;
         public bool EnableDraft6 { get; set; } = true;
         public bool EnableDraft4 { get; set; } = true;
+        public bool EnableDraft3 { get; set; } = true;
 
         /// <summary>
         /// When true, the 'format' keyword performs validation in addition to producing annotations.
