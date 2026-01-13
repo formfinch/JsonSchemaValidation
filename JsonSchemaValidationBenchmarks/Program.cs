@@ -9,13 +9,13 @@ var rootCommand = new RootCommand("JSON Schema Validation Benchmark Suite");
 var librariesOption = new Option<string[]>(
     name: "--libraries",
     getDefaultValue: () => new[] { "jsonschemavalidation" },
-    description: "Libraries to benchmark: jsonschemavalidation, jsv2020, jsv2019, jsv7, jsonschemanet, njsonschema, lateapex, ajv, hyperjump, cfworker. Use jsv2020,jsv2019,jsv7 to compare draft performance.");
+    description: "Libraries to benchmark: jsonschemavalidation, jsv2020, jsv2019, jsv7, jsv6, jsonschemanet, njsonschema, lateapex, ajv, hyperjump, cfworker. Use jsv2020,jsv2019,jsv7,jsv6 to compare draft performance.");
 librariesOption.AddAlias("-l");
 
 var scenariosOption = new Option<string[]>(
     name: "--scenarios",
     getDefaultValue: () => new[] { "testsuite" },
-    description: "Scenario sources: manifest, testsuite (draft2020-12), testsuite-2019-09, testsuite-7, or specific scenario IDs");
+    description: "Scenario sources: manifest, testsuite (draft2020-12), testsuite-2019-09, testsuite-7, testsuite-6, or specific scenario IDs");
 scenariosOption.AddAlias("-s");
 
 var categoriesOption = new Option<string[]>(
@@ -215,6 +215,7 @@ static List<BenchmarkScenario> LoadScenarios(
             "testsuite" => new TestSuiteScenarioSource(testSuitePath, "draft2020-12"),
             "testsuite-2019-09" => new TestSuiteScenarioSource(testSuitePath, "draft2019-09"),
             "testsuite-7" or "testsuite-draft7" => new TestSuiteScenarioSource(testSuitePath, "draft7"),
+            "testsuite-6" or "testsuite-draft6" => new TestSuiteScenarioSource(testSuitePath, "draft6"),
             _ => null
         };
 
@@ -237,6 +238,7 @@ static ISchemaValidatorAdapter? CreateAdapter(string name, string benchmarksPath
         "jsv2020" => new JsonSchemaValidation2020Adapter(),
         "jsv2019" => new JsonSchemaValidation2019Adapter(),
         "jsv7" or "jsvdraft7" => new JsonSchemaValidation7Adapter(),
+        "jsv6" or "jsvdraft6" => new JsonSchemaValidation6Adapter(),
         "jsonschemanet" => new JsonSchemaNetAdapter(),
         "njsonschema" => new NJsonSchemaAdapter(),
         "lateapex" => new LateApexAdapter(),
@@ -424,6 +426,7 @@ static string GetShortLibraryName(string name) => name switch
     "JSV-2020-12" => "2020-12",
     "JSV-2019-09" => "2019-09",
     "JSV-Draft7" => "Draft7",
+    "JSV-Draft6" => "Draft6",
     "JsonSchema.Net" => "JS.Net",
     "NJsonSchema" => "NJS",
     "LateApex" => "LateApex",

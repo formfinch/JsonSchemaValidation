@@ -6,6 +6,7 @@
         public bool EnableDraft202012 { get; set; } = true;
         public bool EnableDraft201909 { get; set; } = true;
         public bool EnableDraft7 { get; set; } = true;
+        public bool EnableDraft6 { get; set; } = true;
         public bool EnableDraft4 { get; set; } = true;
 
         /// <summary>
