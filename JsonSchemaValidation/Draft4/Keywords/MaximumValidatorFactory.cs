@@ -1,0 +1,44 @@
+// Draft behavior: In Draft 4, exclusiveMaximum is a boolean modifier for maximum.
+// Factory for maximum keyword validator with boolean exclusiveMaximum support.
+
+using System.Text.Json;
+using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.Repositories;
+
+namespace JsonSchemaValidation.Draft4.Keywords
+{
+    internal class MaximumValidatorFactory : ISchemaDraftKeywordValidatorFactory
+    {
+        public string Keyword => "maximum";
+
+        public IKeywordValidator? Create(SchemaMetadata schemaData)
+        {
+            var schema = schemaData.Schema;
+
+            if (schema.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            if (!schema.TryGetProperty("maximum", out var maximumElement))
+            {
+                return null;
+            }
+
+            if (!maximumElement.TryGetDouble(out var maximum))
+            {
+                return null;
+            }
+
+            // In Draft 4, exclusiveMaximum is a boolean that modifies maximum behavior
+            bool exclusive = false;
+            if (schema.TryGetProperty("exclusiveMaximum", out var exclusiveElement) &&
+                exclusiveElement.ValueKind == JsonValueKind.True)
+            {
+                exclusive = true;
+            }
+
+            return new MaximumValidator(maximum, exclusive);
+        }
+    }
+}
