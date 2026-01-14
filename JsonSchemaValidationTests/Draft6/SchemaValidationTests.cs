@@ -236,10 +236,7 @@ namespace JsonSchemaValidationTests.Draft6
         {
             var disabledTests = new Tuple<string, string>[]
             {
-                // TODO: Investigate $ref resolution with nested $id folder changes
-                Tuple.Create("base URI change - change folder in subschema", "*"),
-                // TODO: Investigate $ref prevents sibling $id from changing base URI
-                Tuple.Create("$ref prevents a sibling $id from changing the base uri", "*"),
+                // No tests are currently disabled
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));
