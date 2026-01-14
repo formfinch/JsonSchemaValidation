@@ -18,20 +18,41 @@ public static class CompiledMetaschemaSetup
     /// <returns>The service collection for chaining.</returns>
     public static IServiceCollection AddCompiledMetaschemas(this IServiceCollection services)
     {
-        // Compiled metaschema validators will be added here
-        // For now, return empty as the generated validators don't exist yet
-        var validators = new List<ICompiledValidator>();
+        ICompiledValidator[] validators =
+        [
+            // Draft 2020-12
+            new CompiledValidator_Draft202012Schema(),
+            new CompiledValidator_Draft202012MetaCore(),
+            new CompiledValidator_Draft202012MetaApplicator(),
+            new CompiledValidator_Draft202012MetaValidation(),
+            new CompiledValidator_Draft202012MetaMetaData(),
+            new CompiledValidator_Draft202012MetaFormatAnnotation(),
+            new CompiledValidator_Draft202012MetaContent(),
+            new CompiledValidator_Draft202012MetaUnevaluated(),
 
-        // TODO: Add generated validators when available:
-        // validators.Add(new Generated.Draft202012.SchemaValidator());
-        // validators.Add(new Generated.Draft201909.SchemaValidator());
-        // validators.Add(new Generated.Draft7.SchemaValidator());
-        // etc.
+            // Draft 2019-09
+            new CompiledValidator_Draft201909Schema(),
+            new CompiledValidator_Draft201909MetaCore(),
+            new CompiledValidator_Draft201909MetaApplicator(),
+            new CompiledValidator_Draft201909MetaValidation(),
+            new CompiledValidator_Draft201909MetaMetaData(),
+            new CompiledValidator_Draft201909MetaFormat(),
+            new CompiledValidator_Draft201909MetaContent(),
 
-        if (validators.Count > 0)
-        {
-            services.AddCompiledValidators(validators);
-        }
+            // Draft 7
+            new CompiledValidator_Draft7Schema(),
+
+            // Draft 6
+            new CompiledValidator_Draft6Schema(),
+
+            // Draft 4
+            new CompiledValidator_Draft4Schema(),
+
+            // Draft 3
+            new CompiledValidator_Draft3Schema()
+        ];
+
+        services.AddCompiledValidators(validators);
 
         return services;
     }
