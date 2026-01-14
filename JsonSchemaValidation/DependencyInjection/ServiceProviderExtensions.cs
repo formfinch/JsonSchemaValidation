@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
+using JsonSchemaValidation.CompiledValidators;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace JsonSchemaValidation.DependencyInjection
@@ -19,6 +20,17 @@ namespace JsonSchemaValidation.DependencyInjection
             {
                 // This will force the instantiation of the singleton service
                 serviceProvider.GetRequiredService(serviceType);
+            }
+
+            // Register compiled validators if any were added
+            var compiledValidators = serviceProvider.GetService<ICompiledValidator[]>();
+            if (compiledValidators != null)
+            {
+                var registry = serviceProvider.GetRequiredService<ICompiledValidatorRegistry>();
+                for (int i = 0; i < compiledValidators.Length; i++)
+                {
+                    registry.Register(compiledValidators[i]);
+                }
             }
 
             // load draft meta schemas

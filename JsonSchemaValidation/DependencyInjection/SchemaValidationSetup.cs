@@ -1,5 +1,6 @@
 ﻿using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Common;
+using JsonSchemaValidation.CompiledValidators;
 using JsonSchemaValidation.Draft3;
 using JsonSchemaValidation.Draft4;
 using JsonSchemaValidation.Draft6;
@@ -21,6 +22,7 @@ namespace JsonSchemaValidation.DependencyInjection
 
             services.AddSingleton<ISchemaRepository, SchemaRepository>();
             services.AddSingleton<ISchemaFactory, SchemaFactory>();
+            services.AddSingleton<ICompiledValidatorRegistry, CompiledValidatorRegistry>();
             services.AddSingleton<ISchemaValidatorFactory, SchemaValidatorFactory>();
             services.AddSingleton<ILazySchemaValidatorFactory, LazySchemaValidatorFactory>();
             services.AddSingleton<IJsonValidationContextFactory, JsonValidationContextFactory>();
@@ -57,6 +59,36 @@ namespace JsonSchemaValidation.DependencyInjection
             }
 
             return services;
+        }
+
+        /// <summary>
+        /// Registers compiled validators with the compiled validator registry.
+        /// Call this after AddJsonSchemaValidation and before building the service provider.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="validators">The compiled validators to register.</param>
+        /// <returns>The service collection for chaining.</returns>
+        public static IServiceCollection AddCompiledValidators(
+            this IServiceCollection services,
+            IEnumerable<ICompiledValidator> validators)
+        {
+            // Store validators as array to be registered after the service provider is built
+            services.AddSingleton(validators.ToArray());
+            return services;
+        }
+
+        /// <summary>
+        /// Registers compiled validators with the compiled validator registry.
+        /// Call this after AddJsonSchemaValidation and before building the service provider.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="validators">The compiled validators to register.</param>
+        /// <returns>The service collection for chaining.</returns>
+        public static IServiceCollection AddCompiledValidators(
+            this IServiceCollection services,
+            params ICompiledValidator[] validators)
+        {
+            return services.AddCompiledValidators(validators.AsEnumerable());
         }
     }
 }

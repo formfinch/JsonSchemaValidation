@@ -1,5 +1,6 @@
 ﻿using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.CompiledValidators;
 using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Common
@@ -9,6 +10,7 @@ namespace JsonSchemaValidation.Common
         private readonly ISchemaFactory _schemaFactory;
         private readonly ISchemaRepository _schemaRepository;
         private readonly Dictionary<string, ISchemaDraftValidatorFactory> _draftFactories;
+        private readonly ICompiledValidatorRegistry? _compiledValidatorRegistry;
 
         // Fallback mappings for cross-draft compatibility
         // Maps unsupported drafts to the closest supported draft
@@ -27,7 +29,8 @@ namespace JsonSchemaValidation.Common
         public SchemaValidatorFactory(
             ISchemaFactory schemaFactory,
             ISchemaRepository schemaRepository,
-            IEnumerable<ISchemaDraftValidatorFactory> draftFactories
+            IEnumerable<ISchemaDraftValidatorFactory> draftFactories,
+            ICompiledValidatorRegistry? compiledValidatorRegistry = null
         )
         {
             _schemaFactory = schemaFactory;
@@ -36,9 +39,29 @@ namespace JsonSchemaValidation.Common
                 draftFactory => draftFactory.DraftVersion,
                 draftFactory => draftFactory,
                 StringComparer.Ordinal);
+            _compiledValidatorRegistry = compiledValidatorRegistry;
         }
 
+        // Closure allocation is acceptable here as GetValidator is not in the validation hot path
+#pragma warning disable HAA0301, HAA0302 // Closure allocation - acceptable for lazy fallback creation
         public ISchemaValidator GetValidator(Uri schemaUri)
+        {
+            // Check compiled validator registry first
+            if (_compiledValidatorRegistry != null &&
+                _compiledValidatorRegistry.TryGetValidator(schemaUri, out var compiledValidator))
+            {
+                // Return a wrapper that uses compiled validator for IsValid
+                // and lazily creates dynamic validator for Validate
+                return new CompiledSchemaValidator(
+                    compiledValidator,
+                    () => CreateDynamicValidator(schemaUri));
+            }
+
+            return CreateDynamicValidator(schemaUri);
+        }
+#pragma warning restore HAA0301, HAA0302
+
+        private ISchemaValidator CreateDynamicValidator(Uri schemaUri)
         {
             var schemaMetaData = _schemaRepository.GetSchema(schemaUri);
             var dereferencedSchema = _schemaFactory.CreateDereferencedSchema(schemaMetaData);
