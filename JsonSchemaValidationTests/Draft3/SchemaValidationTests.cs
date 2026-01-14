@@ -33,7 +33,7 @@ namespace JsonSchemaValidationTests.Draft3
             {
                 opt.EnableDraft3 = true;
                 opt.DefaultDraftVersion = "http://json-schema.org/draft-03/schema";
-                opt.FormatAssertionEnabled = true;
+                opt.Draft3.FormatAssertionEnabled = true;
             });
             _serviceProviderWithFormatAssertion = servicesWithFormatAssertion.BuildServiceProvider();
             _serviceProviderWithFormatAssertion.InitializeSingletonServices();

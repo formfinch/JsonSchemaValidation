@@ -65,9 +65,9 @@ namespace JsonSchemaValidation.Draft6.Keywords
                 throw new InvalidSchemaException("The format annotation attribute must be a string.");
             }
 
-            // In Draft 6, format assertion is controlled only by the global FormatAssertionEnabled option.
+            // In Draft 6, format assertion is controlled by the Draft6 FormatAssertionEnabled option.
             // (Draft 6 does not have vocabulary support.)
-            if (!_options.FormatAssertionEnabled)
+            if (!_options.Draft6.FormatAssertionEnabled)
             {
                 return new FormatAnnotationValidator(format);
             }

@@ -11,16 +11,33 @@
         public bool EnableDraft3 { get; set; } = true;
 
         /// <summary>
-        /// When true, the 'format' keyword performs validation in addition to producing annotations.
-        /// When false (default), the 'format' keyword only produces annotations per Draft 2020-12 spec.
+        /// Draft-specific options for JSON Schema Draft 2020-12.
         /// </summary>
-        public bool FormatAssertionEnabled { get; set; } = false;
+        public Draft202012Options Draft202012 { get; set; } = new();
 
         /// <summary>
-        /// When true, the 'contentEncoding' and 'contentMediaType' keywords perform validation
-        /// in addition to producing annotations.
-        /// When false (default), these keywords only produce annotations per JSON Schema spec.
+        /// Draft-specific options for JSON Schema Draft 2019-09.
         /// </summary>
-        public bool ContentAssertionEnabled { get; set; } = false;
+        public Draft201909Options Draft201909 { get; set; } = new();
+
+        /// <summary>
+        /// Draft-specific options for JSON Schema Draft 7.
+        /// </summary>
+        public Draft7Options Draft7 { get; set; } = new();
+
+        /// <summary>
+        /// Draft-specific options for JSON Schema Draft 6.
+        /// </summary>
+        public Draft6Options Draft6 { get; set; } = new();
+
+        /// <summary>
+        /// Draft-specific options for JSON Schema Draft 4.
+        /// </summary>
+        public Draft4Options Draft4 { get; set; } = new();
+
+        /// <summary>
+        /// Draft-specific options for JSON Schema Draft 3.
+        /// </summary>
+        public Draft3Options Draft3 { get; set; } = new();
     }
 }

@@ -22,7 +22,8 @@ public sealed class JsonSchemaValidationAdapter : ISchemaValidatorAdapter
         {
             opt.EnableDraft202012 = true;
             opt.EnableDraft201909 = true;
-            opt.FormatAssertionEnabled = true;
+            opt.Draft202012.FormatAssertionEnabled = true;
+            opt.Draft201909.FormatAssertionEnabled = true;
         });
         _serviceProvider = services.BuildServiceProvider();
         _serviceProvider.InitializeSingletonServices();

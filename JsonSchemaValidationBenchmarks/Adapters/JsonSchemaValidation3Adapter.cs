@@ -33,7 +33,7 @@ public sealed class JsonSchemaValidation3Adapter : ISchemaValidatorAdapter
             opt.EnableDraft6 = false;
             opt.EnableDraft4 = false;
             opt.EnableDraft3 = true;
-            opt.FormatAssertionEnabled = true;
+            opt.Draft3.FormatAssertionEnabled = true;
             opt.DefaultDraftVersion = DraftUri;
         });
         _serviceProvider = services.BuildServiceProvider();

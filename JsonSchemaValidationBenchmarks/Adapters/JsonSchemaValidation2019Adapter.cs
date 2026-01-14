@@ -28,7 +28,7 @@ public sealed class JsonSchemaValidation2019Adapter : ISchemaValidatorAdapter
         {
             opt.EnableDraft202012 = false;
             opt.EnableDraft201909 = true;
-            opt.FormatAssertionEnabled = true;
+            opt.Draft201909.FormatAssertionEnabled = true;
             opt.DefaultDraftVersion = DraftUri;
         });
         _serviceProvider = services.BuildServiceProvider();

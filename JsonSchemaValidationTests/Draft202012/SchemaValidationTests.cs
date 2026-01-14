@@ -30,7 +30,7 @@ namespace JsonSchemaValidationTests.Draft202012
             servicesWithFormatAssertion.AddJsonSchemaValidation(opt =>
             {
                 opt.EnableDraft202012 = true;
-                opt.FormatAssertionEnabled = true;
+                opt.Draft202012.FormatAssertionEnabled = true;
             });
             _serviceProviderWithFormatAssertion = servicesWithFormatAssertion.BuildServiceProvider();
             _serviceProviderWithFormatAssertion.InitializeSingletonServices();

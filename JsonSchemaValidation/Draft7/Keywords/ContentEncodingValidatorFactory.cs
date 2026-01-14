@@ -59,7 +59,7 @@ namespace JsonSchemaValidation.Draft7.Keywords
             }
 
             // If content assertion is enabled, create assertion validator
-            if (_options.ContentAssertionEnabled)
+            if (_options.Draft7.ContentAssertionEnabled)
             {
                 return new ContentAssertionValidator(encoding, mediaType);
             }
