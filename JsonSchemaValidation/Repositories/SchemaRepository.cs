@@ -171,16 +171,16 @@ namespace JsonSchemaValidation.Repositories
             SchemaMetadata? schemaData = null;
             var newId = ExtractIdProperty(schema);
 
-            // Draft 7 special case: $ref causes sibling keywords to be ignored, including $id.
+            // In Draft 3-7, $ref causes sibling keywords to be ignored, including $id/id.
             // Don't register sibling $id as a new base URI when $ref is present.
-            bool isDraft7 = string.Equals(parentDraftVersion, "http://json-schema.org/draft-07/schema", StringComparison.Ordinal);
+            bool isRefIgnoresSiblingsDraft = IsRefIgnoresSiblingsDraft(parentDraftVersion);
             bool hasRef = schema.TryGetProperty("$ref", out _);
 
             // In Draft 7 and earlier, $id starting with # is a "plain name fragment" (anchor),
             // not a base URI change. It should be treated like $anchor in 2019-09+.
             bool isPlainNameFragment = !string.IsNullOrWhiteSpace(newId) && newId.StartsWith('#');
 
-            if (!string.IsNullOrWhiteSpace(newId) && !isPlainNameFragment && !(isDraft7 && hasRef))
+            if (!string.IsNullOrWhiteSpace(newId) && !isPlainNameFragment && !(isRefIgnoresSiblingsDraft && hasRef))
             {
                 if (!Uri.TryCreate(id, newId, out Uri? fullId))
                 {
@@ -208,7 +208,7 @@ namespace JsonSchemaValidation.Repositories
 
             // Handle plain name fragments from $id (e.g., $id: "#foo" in Draft 7)
             // These are treated as anchors
-            if (isPlainNameFragment && newId != null && !(isDraft7 && hasRef))
+            if (isPlainNameFragment && newId != null && !(isRefIgnoresSiblingsDraft && hasRef))
             {
                 if (schemaData == null && !_schemas.TryGetValue(id, out schemaData))
                 {
@@ -217,9 +217,9 @@ namespace JsonSchemaValidation.Repositories
                 schemaData.Anchors.TryAdd(newId, schema);
             }
 
-            // Draft 7: $ref ignores sibling $anchor as well
+            // Draft 3-7: $ref ignores sibling $anchor as well
             var anchor = schema.GetAnchorProperty();
-            if (!string.IsNullOrWhiteSpace(anchor) && !(isDraft7 && hasRef))
+            if (!string.IsNullOrWhiteSpace(anchor) && !(isRefIgnoresSiblingsDraft && hasRef))
             {
                 if (schemaData == null && !_schemas.TryGetValue(id, out schemaData))
                 {
@@ -323,26 +323,38 @@ namespace JsonSchemaValidation.Repositories
             if (schemaUri.Fragment.StartsWith("#/", StringComparison.Ordinal))
             {
                 string decodedFragment = Uri.UnescapeDataString(schemaUri.Fragment);
-                var targetSchema = metadata.Schema.GetElementByJsonPointer(decodedFragment);
+
+                // Navigate by JSON pointer while tracking the effective base URI
+                // as we pass through elements with $id values
+                var baseUri = new UriBuilder(schemaUri) { Fragment = string.Empty }.Uri;
+                var (targetSchema, effectiveBaseUri) = GetElementByJsonPointerWithBaseUri(
+                    metadata.Schema, decodedFragment, baseUri);
 
                 // Check if the target has its own $id - if so, use that resource's context
                 // This is important for $dynamicRef resolution which needs the correct DynamicAnchors
                 var targetId = ExtractIdProperty(targetSchema);
-                if (!string.IsNullOrEmpty(targetId))
+                if (!string.IsNullOrEmpty(targetId) &&
+                    Uri.TryCreate(effectiveBaseUri, targetId, out var resolvedId) &&
+                    _schemas.TryGetValue(resolvedId, out var targetResource))
                 {
-                    // Resolve the $id against the base URI (without fragment)
-                    var baseUri = new UriBuilder(schemaUri) { Fragment = string.Empty }.Uri;
-                    if (Uri.TryCreate(baseUri, targetId, out var resolvedId) &&
-                        _schemas.TryGetValue(resolvedId, out var targetResource))
-                    {
-                        return new(targetResource);
-                    }
+                    return new(targetResource);
                 }
 
-                SchemaMetadata innerSchemaData = new(metadata);
-                innerSchemaData.Schema = targetSchema;
-                innerSchemaData.SchemaUri = schemaUri;
-                return innerSchemaData;
+                // Check if we passed through any $id that changed the base URI
+                // If so, look up the schema at that base URI to get the correct context
+                if (effectiveBaseUri != baseUri && _schemas.TryGetValue(effectiveBaseUri, out var baseResource))
+                {
+                    // The target is within a subschema that has its own $id
+                    SchemaMetadata innerSchemaData = new(baseResource);
+                    innerSchemaData.Schema = targetSchema;
+                    innerSchemaData.SchemaUri = effectiveBaseUri;
+                    return innerSchemaData;
+                }
+
+                SchemaMetadata innerSchemaDataDefault = new(metadata);
+                innerSchemaDataDefault.Schema = targetSchema;
+                innerSchemaDataDefault.SchemaUri = schemaUri;
+                return innerSchemaDataDefault;
             }
 
             if (metadata.Anchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
@@ -413,6 +425,72 @@ namespace JsonSchemaValidation.Repositories
         }
 
         /// <summary>
+        /// Navigates a JSON element by JSON Pointer while tracking the effective base URI.
+        /// As we traverse through the document, any $id or id values encountered update the base URI.
+        /// </summary>
+        private static (JsonElement element, Uri effectiveBaseUri) GetElementByJsonPointerWithBaseUri(
+            JsonElement element, string pointer, Uri baseUri)
+        {
+            if (!pointer.StartsWith("#/", StringComparison.Ordinal))
+            {
+                throw new ArgumentException("Invalid JSON Pointer syntax. Must start with '#/'.", nameof(pointer));
+            }
+
+            string[] parts = pointer.Substring(2).Split('/');
+            JsonElement currentElement = element;
+            Uri currentBaseUri = baseUri;
+
+            foreach (var part in parts)
+            {
+                string unescapedPart = UnescapeJsonPointer(part);
+
+                if (currentElement.ValueKind == JsonValueKind.Object &&
+                    currentElement.TryGetProperty(unescapedPart, out var nextElement))
+                {
+                    currentElement = nextElement;
+
+                    // Check if the new element has an $id or id that changes the base URI
+                    var elementId = ExtractIdProperty(currentElement);
+                    if (!string.IsNullOrWhiteSpace(elementId) &&
+                        !elementId.StartsWith('#') &&
+                        Uri.TryCreate(currentBaseUri, elementId, out var newBaseUri))
+                    {
+                        currentBaseUri = newBaseUri;
+                    }
+                }
+                else if (currentElement.ValueKind == JsonValueKind.Array &&
+                         int.TryParse(unescapedPart, System.Globalization.CultureInfo.InvariantCulture, out int index) &&
+                         index < currentElement.GetArrayLength())
+                {
+                    currentElement = currentElement[index];
+
+                    // Check if the new element has an $id or id that changes the base URI
+                    var elementIdArray = ExtractIdProperty(currentElement);
+                    if (!string.IsNullOrWhiteSpace(elementIdArray) &&
+                        !elementIdArray.StartsWith('#') &&
+                        Uri.TryCreate(currentBaseUri, elementIdArray, out var newBaseUriArray))
+                    {
+                        currentBaseUri = newBaseUriArray;
+                    }
+                }
+                else
+                {
+                    throw new InvalidOperationException($"Property or index not found: {unescapedPart}");
+                }
+            }
+
+            return (currentElement, currentBaseUri);
+        }
+
+        /// <summary>
+        /// Unescapes JSON Pointer syntax: ~1 becomes /, ~0 becomes ~
+        /// </summary>
+        private static string UnescapeJsonPointer(string pointerPart)
+        {
+            return pointerPart.Replace("~1", "/").Replace("~0", "~");
+        }
+
+        /// <summary>
         /// Extracts $id or id property value without draft-specific validation.
         /// Supports both $id (Draft 6+) and id (Draft 4).
         /// This is needed because SchemaRepository works with all drafts.
@@ -437,6 +515,23 @@ namespace JsonSchemaValidation.Repositories
             }
 
             return null;
+        }
+
+        /// <summary>
+        /// Checks if the given draft version is one where $ref causes sibling keywords to be ignored.
+        /// This applies to Draft 3, 4, 6, and 7. In Draft 2019-09 and later, $ref is just another
+        /// applicator and sibling keywords are processed.
+        /// </summary>
+        private static bool IsRefIgnoresSiblingsDraft(string? draftVersion)
+        {
+            if (string.IsNullOrEmpty(draftVersion))
+                return false;
+
+            // Draft 3, 4, 6, 7 all have $ref ignoring siblings
+            return draftVersion.Contains("draft-03", StringComparison.OrdinalIgnoreCase) ||
+                   draftVersion.Contains("draft-04", StringComparison.OrdinalIgnoreCase) ||
+                   draftVersion.Contains("draft-06", StringComparison.OrdinalIgnoreCase) ||
+                   draftVersion.Contains("draft-07", StringComparison.OrdinalIgnoreCase);
         }
     }
 }

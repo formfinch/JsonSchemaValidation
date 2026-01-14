@@ -1,20 +1,29 @@
 // Draft behavior: Identical in Draft 7, Draft 2019-09, Draft 2020-12
-// Factory for contentEncoding annotation-only validator.
+// Factory for contentEncoding validator.
+// When ContentAssertionEnabled is true, this factory creates a combined validator
+// that handles both contentEncoding and contentMediaType validation.
 
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Draft7.Keywords
 {
     /// <summary>
     /// Factory for the contentEncoding keyword.
-    /// Per JSON Schema Draft 2019-09, contentEncoding is an annotation-only keyword
-    /// that describes the encoding (e.g., base64) of a string value.
-    /// It does not perform validation - only provides annotations.
+    /// When ContentAssertionEnabled is false (default), creates annotation-only validators.
+    /// When ContentAssertionEnabled is true, creates validators that perform actual validation.
     /// </summary>
     internal class ContentEncodingValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        private readonly SchemaValidationOptions _options;
+
+        public ContentEncodingValidatorFactory(SchemaValidationOptions options)
+        {
+            _options = options;
+        }
+
         public string Keyword => "contentEncoding";
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -26,23 +35,36 @@ namespace JsonSchemaValidation.Draft7.Keywords
                 return null;
             }
 
-            if (!schema.TryGetProperty("contentEncoding", out var contentEncodingElement))
+            string? encoding = null;
+            string? mediaType = null;
+
+            // Check for contentEncoding
+            if (schema.TryGetProperty("contentEncoding", out var contentEncodingElement) &&
+                contentEncodingElement.ValueKind == JsonValueKind.String)
             {
-                return null;
+                encoding = contentEncodingElement.GetString();
             }
 
-            // contentEncoding must be a string per the spec
-            if (contentEncodingElement.ValueKind != JsonValueKind.String)
+            // Check for contentMediaType (needed for combined assertion validator)
+            if (schema.TryGetProperty("contentMediaType", out var contentMediaTypeElement) &&
+                contentMediaTypeElement.ValueKind == JsonValueKind.String)
             {
-                return null;
+                mediaType = contentMediaTypeElement.GetString();
             }
 
-            var encoding = contentEncodingElement.GetString();
+            // If no contentEncoding, nothing to do
             if (string.IsNullOrEmpty(encoding))
             {
                 return null;
             }
 
+            // If content assertion is enabled, create assertion validator
+            if (_options.ContentAssertionEnabled)
+            {
+                return new ContentAssertionValidator(encoding, mediaType);
+            }
+
+            // Default: annotation-only validator
             return new ContentEncodingValidator(encoding);
         }
     }

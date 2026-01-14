@@ -15,5 +15,12 @@
         /// When false (default), the 'format' keyword only produces annotations per Draft 2020-12 spec.
         /// </summary>
         public bool FormatAssertionEnabled { get; set; } = false;
+
+        /// <summary>
+        /// When true, the 'contentEncoding' and 'contentMediaType' keywords perform validation
+        /// in addition to producing annotations.
+        /// When false (default), these keywords only produce annotations per JSON Schema spec.
+        /// </summary>
+        public bool ContentAssertionEnabled { get; set; } = false;
     }
 }

@@ -1,20 +1,30 @@
 // Draft behavior: Identical in Draft 7, Draft 2019-09, Draft 2020-12
-// Factory for contentMediaType annotation-only validator.
+// Factory for contentMediaType validator.
+// When ContentAssertionEnabled is true and contentEncoding is NOT present,
+// this factory creates the assertion validator for contentMediaType only.
 
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions.Keywords;
+using JsonSchemaValidation.DependencyInjection;
 using JsonSchemaValidation.Repositories;
 
 namespace JsonSchemaValidation.Draft7.Keywords
 {
     /// <summary>
     /// Factory for the contentMediaType keyword.
-    /// Per JSON Schema Draft 2019-09, contentMediaType is an annotation-only keyword
-    /// that describes the media type (e.g., application/json) of a string value.
-    /// It does not perform validation - only provides annotations.
+    /// When ContentAssertionEnabled is false (default), creates annotation-only validators.
+    /// When ContentAssertionEnabled is true, creates assertion validators
+    /// (but only if contentEncoding is not present, since ContentEncodingValidatorFactory handles the combined case).
     /// </summary>
     internal class ContentMediaTypeValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {
+        private readonly SchemaValidationOptions _options;
+
+        public ContentMediaTypeValidatorFactory(SchemaValidationOptions options)
+        {
+            _options = options;
+        }
+
         public string Keyword => "contentMediaType";
 
         public IKeywordValidator? Create(SchemaMetadata schemaData)
@@ -43,6 +53,25 @@ namespace JsonSchemaValidation.Draft7.Keywords
                 return null;
             }
 
+            // If content assertion is enabled
+            if (_options.ContentAssertionEnabled)
+            {
+                // Check if contentEncoding is also present
+                bool hasEncoding = schema.TryGetProperty("contentEncoding", out var encodingElement) &&
+                                   encodingElement.ValueKind == JsonValueKind.String &&
+                                   !string.IsNullOrEmpty(encodingElement.GetString());
+
+                if (hasEncoding)
+                {
+                    // ContentEncodingValidatorFactory handles the combined case
+                    return null;
+                }
+
+                // No encoding - create assertion validator for mediaType only
+                return new ContentAssertionValidator(null, mediaType);
+            }
+
+            // Default: annotation-only validator
             return new ContentMediaTypeValidator(mediaType);
         }
     }

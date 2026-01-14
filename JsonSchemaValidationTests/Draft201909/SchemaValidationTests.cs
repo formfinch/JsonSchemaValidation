@@ -200,14 +200,16 @@ namespace JsonSchemaValidationTests.Draft201909
                 "unknownKeyword",
                 "vocabulary",
 
+                @"\optional\anchor",
                 @"\optional\bignum",
                 @"\optional\cross-draft",
                 @"\optional\dependencies-compatibility",
                 @"\optional\float-overflow",
                 @"\optional\format-assertion",                  // Requires vocabulary support
+                @"\optional\id",
                 @"\optional\no-schema",
                 @"\optional\non-bmp-regex",
-                @"\optional\refOfUnknownKeyword"
+                @"\optional\refOfUnknownKeyword",
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2019-09");
 
         /// <summary>

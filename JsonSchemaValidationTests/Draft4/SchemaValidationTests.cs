@@ -233,10 +233,7 @@ namespace JsonSchemaValidationTests.Draft4
         {
             var disabledTests = new Tuple<string, string>[]
             {
-                // TODO: Investigate id resolution with nested id folder changes
-                Tuple.Create("base URI change - change folder in subschema", "*"),
-                // Known issue: $ref and sibling id interaction in Draft 4
-                Tuple.Create("$ref prevents a sibling id from changing the base uri", "*"),
+                // No tests are currently disabled
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));

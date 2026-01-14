@@ -20,14 +20,13 @@ namespace JsonSchemaValidation.Repositories
                 Schema = subSchema
             };
 
-            // Draft 7 special case: $ref causes sibling keywords to be ignored, including $id.
-            // Don't apply sibling $id when $ref is present in Draft 7.
-            bool isDraft7 = string.Equals(parentSchemaData.DraftVersion, "http://json-schema.org/draft-07/schema", StringComparison.Ordinal);
+            // In Draft 3-7, $ref causes sibling keywords to be ignored, including $id/id.
+            // Don't apply sibling $id when $ref is present in these drafts.
             bool hasRef = subSchema.ValueKind == JsonValueKind.Object && subSchema.TryGetProperty("$ref", out _);
 
-            if (isDraft7 && hasRef)
+            if (hasRef && IsRefIgnoresSiblingsDraft(parentSchemaData.DraftVersion))
             {
-                // In Draft 7, $ref ignores sibling $id, so don't change the base URI
+                // In Draft 3-7, $ref ignores sibling $id, so don't change the base URI
                 return subSchemaData;
             }
 
@@ -41,6 +40,23 @@ namespace JsonSchemaValidation.Repositories
             }
 
             return subSchemaData;
+        }
+
+        /// <summary>
+        /// Checks if the given draft version is one where $ref causes sibling keywords to be ignored.
+        /// This applies to Draft 3, 4, 6, and 7. In Draft 2019-09 and later, $ref is just another
+        /// applicator and sibling keywords are processed.
+        /// </summary>
+        private static bool IsRefIgnoresSiblingsDraft(string? draftVersion)
+        {
+            if (string.IsNullOrEmpty(draftVersion))
+                return false;
+
+            // Draft 3, 4, 6, 7 all have $ref ignoring siblings
+            return draftVersion.Contains("draft-03", StringComparison.OrdinalIgnoreCase) ||
+                   draftVersion.Contains("draft-04", StringComparison.OrdinalIgnoreCase) ||
+                   draftVersion.Contains("draft-06", StringComparison.OrdinalIgnoreCase) ||
+                   draftVersion.Contains("draft-07", StringComparison.OrdinalIgnoreCase);
         }
 
         /// <summary>

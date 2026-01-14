@@ -12,6 +12,7 @@ namespace JsonSchemaValidationTests.Draft7
     {
         private readonly IServiceProvider _serviceProvider;
         private readonly IServiceProvider _serviceProviderWithFormatAssertion;
+        private readonly IServiceProvider _serviceProviderWithContentAssertion;
 
         public SchemaValidationTests()
         {
@@ -38,6 +39,18 @@ namespace JsonSchemaValidationTests.Draft7
             _serviceProviderWithFormatAssertion = servicesWithFormatAssertion.BuildServiceProvider();
             _serviceProviderWithFormatAssertion.InitializeSingletonServices();
             LoadRemoteSchemas(_serviceProviderWithFormatAssertion);
+
+            // Initialize DI container with content assertion enabled
+            var servicesWithContentAssertion = new ServiceCollection();
+            servicesWithContentAssertion.AddJsonSchemaValidation(opt =>
+            {
+                opt.EnableDraft7 = true;
+                opt.DefaultDraftVersion = "http://json-schema.org/draft-07/schema";
+                opt.ContentAssertionEnabled = true;
+            });
+            _serviceProviderWithContentAssertion = servicesWithContentAssertion.BuildServiceProvider();
+            _serviceProviderWithContentAssertion.InitializeSingletonServices();
+            LoadRemoteSchemas(_serviceProviderWithContentAssertion);
         }
 
         private void LoadRemoteSchemas(IServiceProvider serviceProvider)
@@ -116,6 +129,13 @@ namespace JsonSchemaValidationTests.Draft7
         public void Draft7FormatAssertionTests(TestCase testCase)
         {
             RunTestCase(testCase, _serviceProviderWithFormatAssertion);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetDraft7ContentAssertionTests))]
+        public void Draft7ContentAssertionTests(TestCase testCase)
+        {
+            RunTestCase(testCase, _serviceProviderWithContentAssertion);
         }
 
         private void RunTestCase(TestCase testCase, IServiceProvider serviceProvider)
@@ -203,10 +223,11 @@ namespace JsonSchemaValidationTests.Draft7
                 "uniqueItems",
 
                 @"\optional\bignum",
-                @"\optional\content",
+                // Note: content tests removed - they require ContentAssertionEnabled
                 @"\optional\cross-draft",
                 @"\optional\float-overflow",
                 @"\optional\non-bmp-regex",
+                @"\optional\unknownKeyword",
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
 
         /// <summary>
@@ -236,18 +257,20 @@ namespace JsonSchemaValidationTests.Draft7
                 @"\optional\format\uri-template",
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
 
+        /// <summary>
+        /// Returns test cases for optional content validation tests.
+        /// These tests run with ContentAssertionEnabled = true.
+        /// </summary>
+        public static IEnumerable<object[]> GetDraft7ContentAssertionTests()
+            => new TestCaseLoader(new string[] {
+                @"\optional\content",
+            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
         {
             var disabledTests = new Tuple<string, string>[]
             {
-                // Content keywords (contentEncoding, contentMediaType) are annotation-only in Draft 7
-                // These optional tests expect validation behavior which is not the default
-                Tuple.Create("validation of string-encoded content based on media type", "*"),
-                Tuple.Create("validation of binary string-encoding", "*"),
-                Tuple.Create("validation of binary-encoded media type documents", "*"),
-
-                // TODO: Investigate $ref resolution with nested $id folder changes
-                Tuple.Create("base URI change - change folder in subschema", "*"),
+                // No tests are currently disabled
             };
 
             return disabledTests.Any(test => test.Item1 == testCaseDescription && (test.Item2 == "*" || test.Item2 == testDescription));
