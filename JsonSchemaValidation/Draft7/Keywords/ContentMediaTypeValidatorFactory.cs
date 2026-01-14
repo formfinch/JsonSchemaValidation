@@ -54,7 +54,7 @@ namespace JsonSchemaValidation.Draft7.Keywords
             }
 
             // If content assertion is enabled
-            if (_options.ContentAssertionEnabled)
+            if (_options.Draft7.ContentAssertionEnabled)
             {
                 // Check if contentEncoding is also present
                 bool hasEncoding = schema.TryGetProperty("contentEncoding", out var encodingElement) &&

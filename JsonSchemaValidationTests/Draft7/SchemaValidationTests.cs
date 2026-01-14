@@ -34,7 +34,7 @@ namespace JsonSchemaValidationTests.Draft7
             {
                 opt.EnableDraft7 = true;
                 opt.DefaultDraftVersion = "http://json-schema.org/draft-07/schema";
-                opt.FormatAssertionEnabled = true;
+                opt.Draft7.FormatAssertionEnabled = true;
             });
             _serviceProviderWithFormatAssertion = servicesWithFormatAssertion.BuildServiceProvider();
             _serviceProviderWithFormatAssertion.InitializeSingletonServices();
@@ -46,7 +46,7 @@ namespace JsonSchemaValidationTests.Draft7
             {
                 opt.EnableDraft7 = true;
                 opt.DefaultDraftVersion = "http://json-schema.org/draft-07/schema";
-                opt.ContentAssertionEnabled = true;
+                opt.Draft7.ContentAssertionEnabled = true;
             });
             _serviceProviderWithContentAssertion = servicesWithContentAssertion.BuildServiceProvider();
             _serviceProviderWithContentAssertion.InitializeSingletonServices();

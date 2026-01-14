@@ -101,8 +101,8 @@ namespace JsonSchemaValidation.Draft201909.Keywords
         /// </summary>
         private bool IsFormatAssertionActive(SchemaMetadata schemaData)
         {
-            // Check global option first
-            if (_options.FormatAssertionEnabled)
+            // Check Draft2019-09 specific option first
+            if (_options.Draft201909.FormatAssertionEnabled)
             {
                 return true;
             }
