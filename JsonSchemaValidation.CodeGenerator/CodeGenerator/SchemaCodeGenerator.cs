@@ -20,6 +20,7 @@ public sealed class SchemaCodeGenerator
         _keywordGenerators =
         [
             new BooleanSchemaCodeGenerator(),
+            new RefCodeGenerator(),
             new TypeCodeGenerator(),
             new RequiredCodeGenerator(),
             new EnumCodeGenerator(),
@@ -29,12 +30,18 @@ public sealed class SchemaCodeGenerator
             new ArrayConstraintsCodeGenerator(),
             new PrefixItemsCodeGenerator(),
             new ItemsCodeGenerator(),
+            new ContainsCodeGenerator(),
             new PropertiesCodeGenerator(),
+            new PatternPropertiesCodeGenerator(),
             new AdditionalPropertiesCodeGenerator(),
+            new PropertyNamesCodeGenerator(),
+            new DependentRequiredCodeGenerator(),
+            new DependentSchemasCodeGenerator(),
             new AllOfCodeGenerator(),
             new AnyOfCodeGenerator(),
             new OneOfCodeGenerator(),
             new NotCodeGenerator(),
+            new IfThenElseCodeGenerator(),
             new PatternCodeGenerator()
         ];
 
