@@ -141,12 +141,30 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_ebe762b2137b(JsonElement e)
     {
+        // $ref: #/$defs/nonNegativeInteger
+        if (!Validate_0d3ac1e9e006(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_0d3ac1e9e006(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Number) return false;
+        if (!e.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intVal_)) return false;
+        if (e.ValueKind == JsonValueKind.Number)
+        {
+            var _num_ = e.GetDecimal();
+            if (_num_ < 0m) return false;
+        }
+
         return true;
     }
 
 
     private static bool Validate_8b7394ccb04a(JsonElement e)
     {
+        // $ref: #/$defs/nonNegativeIntegerDefault0
+        if (!Validate_ebe762b2137b(e)) return false;
         return true;
     }
 
@@ -167,6 +185,45 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_3f7f12fe7e01(JsonElement e)
     {
+        // $ref: #/$defs/stringArray
+        if (!Validate_822d2c4e6703(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_822d2c4e6703(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Array) return false;
+        if (e.ValueKind == JsonValueKind.Array)
+        {
+            var _arrLen_ = e.GetArrayLength();
+            // Check uniqueItems
+            var _items_ = new List<JsonElement>(_arrLen_);
+            foreach (var _item_ in e.EnumerateArray())
+            {
+                foreach (var _existing_ in _items_)
+                {
+                    if (JsonElementDeepEquals(_item_, _existing_)) return false;
+                }
+                _items_.Add(_item_);
+            }
+        }
+
+        if (e.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var _arrItem_ in e.EnumerateArray())
+            {
+                if (!Validate_00404e686415(_arrItem_)) return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    private static bool Validate_00404e686415(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
@@ -223,6 +280,28 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_4e011bee05be(JsonElement e)
     {
+        // $ref: #/$defs/simpleTypes
+        if (!Validate_4b8c15195535(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_4b8c15195535(JsonElement e)
+    {
+        // enum check
+        {
+            var _enumValid_ = false;
+            foreach (var _enumVal_ in Enum_4b8c15195535)
+            {
+                if (JsonElementDeepEquals(e, _enumVal_))
+                {
+                    _enumValid_ = true;
+                    break;
+                }
+            }
+            if (!_enumValid_) return false;
+        }
+
         return true;
     }
 
@@ -254,77 +333,6 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
             }
         }
 
-        return true;
-    }
-
-
-    private static bool Validate_0d3ac1e9e006(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.Number) return false;
-        if (!e.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intVal_)) return false;
-        if (e.ValueKind == JsonValueKind.Number)
-        {
-            var _num_ = e.GetDecimal();
-            if (_num_ < 0m) return false;
-        }
-
-        return true;
-    }
-
-
-    private static bool Validate_4b8c15195535(JsonElement e)
-    {
-        // enum check
-        {
-            var _enumValid_ = false;
-            foreach (var _enumVal_ in Enum_4b8c15195535)
-            {
-                if (JsonElementDeepEquals(e, _enumVal_))
-                {
-                    _enumValid_ = true;
-                    break;
-                }
-            }
-            if (!_enumValid_) return false;
-        }
-
-        return true;
-    }
-
-
-    private static bool Validate_822d2c4e6703(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.Array) return false;
-        if (e.ValueKind == JsonValueKind.Array)
-        {
-            var _arrLen_ = e.GetArrayLength();
-            // Check uniqueItems
-            var _items_ = new List<JsonElement>(_arrLen_);
-            foreach (var _item_ in e.EnumerateArray())
-            {
-                foreach (var _existing_ in _items_)
-                {
-                    if (JsonElementDeepEquals(_item_, _existing_)) return false;
-                }
-                _items_.Add(_item_);
-            }
-        }
-
-        if (e.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var _arrItem_ in e.EnumerateArray())
-            {
-                if (!Validate_00404e686415(_arrItem_)) return false;
-            }
-        }
-
-        return true;
-    }
-
-
-    private static bool Validate_00404e686415(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 

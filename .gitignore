@@ -396,3 +396,6 @@ FodyWeavers.xsd
 .claude/*
 tmpclaude-*-cwd
 nul
+
+# Generated compiled validators (regenerated on demand)
+JsonSchemaValidationBenchmarks/Generated/

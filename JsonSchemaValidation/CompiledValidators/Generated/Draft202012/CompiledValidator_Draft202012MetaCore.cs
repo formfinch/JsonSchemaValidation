@@ -78,6 +78,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_683e0a045989(JsonElement e)
     {
+        // $ref: #/$defs/uriReferenceString
+        if (!Validate_5dc527ab08dc(e)) return false;
         if (e.ValueKind == JsonValueKind.String)
         {
             var _str_ = e.GetString();
@@ -87,20 +89,52 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
+    private static bool Validate_5dc527ab08dc(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.String) return false;
+        return true;
+    }
+
+
     private static bool Validate_ee31a97f81af(JsonElement e)
     {
+        // $ref: #/$defs/uriString
+        if (!Validate_f9757109fae3(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_f9757109fae3(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
     private static bool Validate_75560a999e95(JsonElement e)
     {
+        // $ref: #/$defs/uriReferenceString
+        if (!Validate_5dc527ab08dc(e)) return false;
         return true;
     }
 
 
     private static bool Validate_3565c9ce7bc5(JsonElement e)
     {
+        // $ref: #/$defs/anchorString
+        if (!Validate_97b3610c8717(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_97b3610c8717(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.String) return false;
+        if (e.ValueKind == JsonValueKind.String)
+        {
+            var _str_ = e.GetString();
+            if (_str_ != null && !Pattern_97b3610c8717.IsMatch(_str_)) return false;
+        }
         return true;
     }
 
@@ -160,32 +194,6 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_380c73c6d6de(JsonElement e)
     {
-        return true;
-    }
-
-
-    private static bool Validate_97b3610c8717(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
-        if (e.ValueKind == JsonValueKind.String)
-        {
-            var _str_ = e.GetString();
-            if (_str_ != null && !Pattern_97b3610c8717.IsMatch(_str_)) return false;
-        }
-        return true;
-    }
-
-
-    private static bool Validate_f9757109fae3(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
-        return true;
-    }
-
-
-    private static bool Validate_5dc527ab08dc(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 

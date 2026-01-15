@@ -1,14 +1,21 @@
+using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.CodeGenerator;
+namespace JsonSchemaValidation.Common;
 
 /// <summary>
-/// Computes content-based hashes for JSON schemas to identify unique subschemas.
+/// Computes content-based hashes for JSON schemas to identify unique schemas.
+/// Used for hash-based lookup of compiled validators.
 /// </summary>
 public sealed class SchemaHasher
 {
+    /// <summary>
+    /// Shared instance for convenience.
+    /// </summary>
+    public static SchemaHasher Instance { get; } = new();
+
     // Keywords that don't affect validation behavior and should be ignored for hashing
     private static readonly HashSet<string> MetadataKeywords = new(StringComparer.Ordinal)
     {
@@ -32,7 +39,7 @@ public sealed class SchemaHasher
     /// </summary>
     /// <param name="schema">The schema to hash.</param>
     /// <returns>A 12-character lowercase hex hash.</returns>
-    public string ComputeHash(JsonElement schema)
+    public static string ComputeHash(JsonElement schema)
     {
         var normalized = NormalizeForHashing(schema);
         var bytes = Encoding.UTF8.GetBytes(normalized);
@@ -117,16 +124,16 @@ public sealed class SchemaHasher
         // Normalize numbers to remove trailing zeros and decimal points
         if (element.TryGetInt64(out var longValue))
         {
-            return longValue.ToString();
+            return longValue.ToString(CultureInfo.InvariantCulture);
         }
         if (element.TryGetDouble(out var doubleValue))
         {
             // Check if it's actually an integer
             if (Math.Abs(doubleValue - Math.Truncate(doubleValue)) < double.Epsilon)
             {
-                return ((long)doubleValue).ToString();
+                return ((long)doubleValue).ToString(CultureInfo.InvariantCulture);
             }
-            return doubleValue.ToString("G17");
+            return doubleValue.ToString("G17", CultureInfo.InvariantCulture);
         }
         return element.GetRawText();
     }

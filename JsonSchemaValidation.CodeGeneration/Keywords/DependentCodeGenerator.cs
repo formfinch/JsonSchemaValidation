@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.Keywords;
+namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "dependentRequired" keyword.
@@ -64,7 +64,23 @@ public sealed class DependentRequiredCodeGenerator : IKeywordCodeGenerator
 
     private static string EscapeString(string s)
     {
-        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        var sb = new StringBuilder();
+        foreach (var c in s)
+        {
+            sb.Append(c switch
+            {
+                '\\' => "\\\\",
+                '"' => "\\\"",
+                '\n' => "\\n",
+                '\r' => "\\r",
+                '\t' => "\\t",
+                '\f' => "\\f",
+                '\b' => "\\b",
+                _ when c < 32 => $"\\u{(int)c:X4}",
+                _ => c.ToString()
+            });
+        }
+        return sb.ToString();
     }
 }
 
@@ -119,6 +135,22 @@ public sealed class DependentSchemasCodeGenerator : IKeywordCodeGenerator
 
     private static string EscapeString(string s)
     {
-        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        var sb = new StringBuilder();
+        foreach (var c in s)
+        {
+            sb.Append(c switch
+            {
+                '\\' => "\\\\",
+                '"' => "\\\"",
+                '\n' => "\\n",
+                '\r' => "\\r",
+                '\t' => "\\t",
+                '\f' => "\\f",
+                '\b' => "\\b",
+                _ when c < 32 => $"\\u{(int)c:X4}",
+                _ => c.ToString()
+            });
+        }
+        return sb.ToString();
     }
 }

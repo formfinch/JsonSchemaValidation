@@ -9,7 +9,7 @@ var rootCommand = new RootCommand("JSON Schema Validation Benchmark Suite");
 var librariesOption = new Option<string[]>(
     name: "--libraries",
     getDefaultValue: () => new[] { "jsonschemavalidation" },
-    description: "Libraries to benchmark: jsonschemavalidation, jsv2020, jsv2019, jsv7, jsv6, jsv4, jsv3, jsonschemanet, njsonschema, lateapex, ajv, hyperjump, cfworker. Use jsv2020,jsv2019,jsv7,jsv6,jsv4,jsv3 to compare draft performance.");
+    description: "Libraries to benchmark: jsonschemavalidation, jsvcompiled, jsv2020, jsv2019, jsv7, jsv6, jsv4, jsv3, jsonschemanet, njsonschema, lateapex, ajv, hyperjump, cfworker");
 librariesOption.AddAlias("-l");
 
 var scenariosOption = new Option<string[]>(
@@ -231,10 +231,12 @@ static List<BenchmarkScenario> LoadScenarios(
     return scenarios.DistinctBy(s => s.Id).ToList();
 }
 
-static ISchemaValidatorAdapter? CreateAdapter(string name, string benchmarksPath) =>
-    name.ToLowerInvariant() switch
+static ISchemaValidatorAdapter? CreateAdapter(string name, string benchmarksPath)
+{
+    return name.ToLowerInvariant() switch
     {
         "jsonschemavalidation" => new JsonSchemaValidationAdapter(),
+        "jsvcompiled" or "jsv-compiled" => new JsonSchemaValidationCompiledAdapter(),
         "jsv2020" => new JsonSchemaValidation2020Adapter(),
         "jsv2019" => new JsonSchemaValidation2019Adapter(),
         "jsv7" or "jsvdraft7" => new JsonSchemaValidation7Adapter(),
@@ -249,6 +251,7 @@ static ISchemaValidatorAdapter? CreateAdapter(string name, string benchmarksPath
         "cfworker" => new CfworkerAdapter(benchmarksPath),
         _ => null
     };
+}
 
 static string FindTestSuitePath(string basePath)
 {

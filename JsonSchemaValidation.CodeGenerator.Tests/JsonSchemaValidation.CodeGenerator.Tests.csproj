@@ -18,7 +18,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\JsonSchemaValidation.CodeGenerator\JsonSchemaValidation.CodeGenerator.csproj" />
+    <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration\JsonSchemaValidation.CodeGeneration.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
   </ItemGroup>
 </Project>

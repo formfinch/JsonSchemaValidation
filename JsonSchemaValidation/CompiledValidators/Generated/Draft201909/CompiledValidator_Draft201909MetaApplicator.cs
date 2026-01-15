@@ -127,6 +127,29 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_418a8c4278fe(JsonElement e)
     {
+        // $ref: #/$defs/schemaArray
+        if (!Validate_ddd65fc60db1(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_ddd65fc60db1(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Array) return false;
+        if (e.ValueKind == JsonValueKind.Array)
+        {
+            var _arrLen_ = e.GetArrayLength();
+            if (_arrLen_ < 1) return false;
+        }
+
+        if (e.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var _arrItem_ in e.EnumerateArray())
+            {
+                if (!Validate_f408d0871962(_arrItem_)) return false;
+            }
+        }
+
         return true;
     }
 
@@ -172,27 +195,6 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_a0c839cc99e3(JsonElement e)
     {
-        return true;
-    }
-
-
-    private static bool Validate_ddd65fc60db1(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.Array) return false;
-        if (e.ValueKind == JsonValueKind.Array)
-        {
-            var _arrLen_ = e.GetArrayLength();
-            if (_arrLen_ < 1) return false;
-        }
-
-        if (e.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var _arrItem_ in e.EnumerateArray())
-            {
-                if (!Validate_f408d0871962(_arrItem_)) return false;
-            }
-        }
-
         return true;
     }
 

@@ -4,14 +4,15 @@ using JsonSchemaValidation.Abstractions;
 namespace JsonSchemaValidation.CompiledValidators;
 
 /// <summary>
-/// Thread-safe registry for compiled validators indexed by schema URI.
+/// Thread-safe registry for compiled validators indexed by schema URI or content hash.
 /// Uses string keys for faster lookups (Uri equality is slow).
 /// </summary>
 public sealed class CompiledValidatorRegistry : ICompiledValidatorRegistry
 {
     // Use Dictionary with string keys for faster lookups.
     // Registry is populated once during initialization and only read during validation.
-    private readonly Dictionary<string, ICompiledValidator> _validators = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ICompiledValidator> _validatorsByUri = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, ICompiledValidator> _validatorsByHash = new(StringComparer.Ordinal);
 
     // Track registered hosts for quick rejection of non-matching URIs
     private readonly HashSet<string> _registeredHosts = new(StringComparer.OrdinalIgnoreCase);
@@ -20,8 +21,14 @@ public sealed class CompiledValidatorRegistry : ICompiledValidatorRegistry
     public void Register(ICompiledValidator validator)
     {
         var uri = validator.SchemaUri;
-        _validators[uri.AbsoluteUri] = validator;
+        _validatorsByUri[uri.AbsoluteUri] = validator;
         _registeredHosts.Add(uri.Host);
+    }
+
+    /// <inheritdoc />
+    public void RegisterByHash(string contentHash, ICompiledValidator validator)
+    {
+        _validatorsByHash[contentHash] = validator;
     }
 
     /// <inheritdoc />
@@ -33,7 +40,13 @@ public sealed class CompiledValidatorRegistry : ICompiledValidatorRegistry
             validator = null;
             return false;
         }
-        return _validators.TryGetValue(schemaUri.AbsoluteUri, out validator);
+        return _validatorsByUri.TryGetValue(schemaUri.AbsoluteUri, out validator);
+    }
+
+    /// <inheritdoc />
+    public bool TryGetValidatorByHash(string contentHash, [NotNullWhen(true)] out ICompiledValidator? validator)
+    {
+        return _validatorsByHash.TryGetValue(contentHash, out validator);
     }
 
     /// <inheritdoc />
@@ -43,6 +56,12 @@ public sealed class CompiledValidatorRegistry : ICompiledValidatorRegistry
         {
             return false;
         }
-        return _validators.ContainsKey(schemaUri.AbsoluteUri);
+        return _validatorsByUri.ContainsKey(schemaUri.AbsoluteUri);
+    }
+
+    /// <inheritdoc />
+    public bool HasValidatorByHash(string contentHash)
+    {
+        return _validatorsByHash.ContainsKey(contentHash);
     }
 }

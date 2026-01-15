@@ -135,6 +135,28 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_4e011bee05be(JsonElement e)
     {
+        // $ref: #/$defs/simpleTypes
+        if (!Validate_4b8c15195535(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_4b8c15195535(JsonElement e)
+    {
+        // enum check
+        {
+            var _enumValid_ = false;
+            foreach (var _enumVal_ in Enum_4b8c15195535)
+            {
+                if (JsonElementDeepEquals(e, _enumVal_))
+                {
+                    _enumValid_ = true;
+                    break;
+                }
+            }
+            if (!_enumValid_) return false;
+        }
+
         return true;
     }
 
@@ -213,12 +235,30 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_ebe762b2137b(JsonElement e)
     {
+        // $ref: #/$defs/nonNegativeInteger
+        if (!Validate_0d3ac1e9e006(e)) return false;
+        return true;
+    }
+
+
+    private static bool Validate_0d3ac1e9e006(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Number) return false;
+        if (!e.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intVal_)) return false;
+        if (e.ValueKind == JsonValueKind.Number)
+        {
+            var _num_ = e.GetDecimal();
+            if (_num_ < 0m) return false;
+        }
+
         return true;
     }
 
 
     private static bool Validate_8b7394ccb04a(JsonElement e)
     {
+        // $ref: #/$defs/nonNegativeIntegerDefault0
+        if (!Validate_ebe762b2137b(e)) return false;
         return true;
     }
 
@@ -239,55 +279,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_3f7f12fe7e01(JsonElement e)
     {
-        return true;
-    }
-
-
-    private static bool Validate_1b09a51afb1e(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.Object) return false;
-        if (e.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var _prop_ in e.EnumerateObject())
-            {
-                if (!Validate_3f7f12fe7e01(_prop_.Value)) return false;
-            }
-        }
-
-        return true;
-    }
-
-
-    private static bool Validate_0d3ac1e9e006(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.Number) return false;
-        if (!e.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intVal_)) return false;
-        if (e.ValueKind == JsonValueKind.Number)
-        {
-            var _num_ = e.GetDecimal();
-            if (_num_ < 0m) return false;
-        }
-
-        return true;
-    }
-
-
-    private static bool Validate_4b8c15195535(JsonElement e)
-    {
-        // enum check
-        {
-            var _enumValid_ = false;
-            foreach (var _enumVal_ in Enum_4b8c15195535)
-            {
-                if (JsonElementDeepEquals(e, _enumVal_))
-                {
-                    _enumValid_ = true;
-                    break;
-                }
-            }
-            if (!_enumValid_) return false;
-        }
-
+        // $ref: #/$defs/stringArray
+        if (!Validate_822d2c4e6703(e)) return false;
         return true;
     }
 
@@ -325,6 +318,21 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_00404e686415(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        return true;
+    }
+
+
+    private static bool Validate_1b09a51afb1e(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Object) return false;
+        if (e.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var _prop_ in e.EnumerateObject())
+            {
+                if (!Validate_3f7f12fe7e01(_prop_.Value)) return false;
+            }
+        }
+
         return true;
     }
 

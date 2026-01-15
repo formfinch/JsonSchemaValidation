@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.CodeGenerator;
+namespace JsonSchemaValidation.CodeGeneration.Generator;
 
 /// <summary>
 /// Information about a unique subschema identified during schema analysis.

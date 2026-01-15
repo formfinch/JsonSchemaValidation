@@ -212,6 +212,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_b17aa97428d3(JsonElement e)
     {
+        // $ref: #
+        if (!Validate_d4d6bcd0e2ea(e)) return false;
         return true;
     }
 

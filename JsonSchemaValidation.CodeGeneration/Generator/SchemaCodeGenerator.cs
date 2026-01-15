@@ -1,9 +1,10 @@
 using System.Text;
 using System.Text.Json;
-using JsonSchemaValidation.CodeGenerator.Keywords;
-using static JsonSchemaValidation.CodeGenerator.Keywords.BooleanSchemaCodeGenerator;
+using JsonSchemaValidation.CodeGeneration.Keywords;
+using JsonSchemaValidation.Common;
+using static JsonSchemaValidation.CodeGeneration.Keywords.BooleanSchemaCodeGenerator;
 
-namespace JsonSchemaValidation.CodeGenerator.CodeGenerator;
+namespace JsonSchemaValidation.CodeGeneration.Generator;
 
 /// <summary>
 /// Main code generator that orchestrates the generation of compiled validators.
@@ -11,7 +12,6 @@ namespace JsonSchemaValidation.CodeGenerator.CodeGenerator;
 public sealed class SchemaCodeGenerator
 {
     private readonly List<IKeywordCodeGenerator> _keywordGenerators;
-    private readonly SchemaHasher _hasher = new();
     private readonly SubschemaExtractor _extractor = new();
 
     public SchemaCodeGenerator()
@@ -78,7 +78,7 @@ public sealed class SchemaCodeGenerator
 
             // Extract all unique subschemas
             var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema);
-            var rootHash = _hasher.ComputeHash(schema);
+            var rootHash = SchemaHasher.ComputeHash(schema);
 
             // Collect all static fields
             var allStaticFields = new List<StaticFieldInfo>();
@@ -183,7 +183,8 @@ public sealed class SchemaCodeGenerator
         {
             CurrentSchema = subschemaInfo.Schema,
             CurrentHash = subschemaInfo.Hash,
-            GetSubschemaHash = element => _hasher.ComputeHash(element)
+            GetSubschemaHash = element => SchemaHasher.ComputeHash(element),
+            ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue)
         };
     }
 
