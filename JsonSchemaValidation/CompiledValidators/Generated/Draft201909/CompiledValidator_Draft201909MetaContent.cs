@@ -12,15 +12,15 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909MetaFormat : ICompiledValidator
+    public sealed class CompiledValidator_Draft201909MetaContent : ICompiledValidator
     {
-        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/format");
+        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/content");
 
-        public bool IsValid(JsonElement instance) => Validate_842876485962(instance);
+        public bool IsValid(JsonElement instance) => Validate_09364a9b2d52(instance);
 
-    private static bool Validate_842876485962(JsonElement e)
+    private static bool Validate_09364a9b2d52(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -31,9 +31,17 @@ namespace JsonSchemaValidation.CompiledMetaschemas
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("format", out var _format_))
+            if (e.TryGetProperty("contentMediaType", out var _contentMediaType_))
             {
-                if (!Validate_00404e686415(_format_)) return false;
+                if (!Validate_00404e686415(_contentMediaType_)) return false;
+            }
+            if (e.TryGetProperty("contentEncoding", out var _contentEncoding_))
+            {
+                if (!Validate_00404e686415(_contentEncoding_)) return false;
+            }
+            if (e.TryGetProperty("contentSchema", out var _contentSchema_))
+            {
+                if (!Validate_f408d0871962(_contentSchema_)) return false;
             }
         }
 
@@ -44,6 +52,12 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     private static bool Validate_00404e686415(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        return true;
+    }
+
+
+    private static bool Validate_f408d0871962(JsonElement e)
+    {
         return true;
     }
 

@@ -307,9 +307,16 @@ public sealed class SchemaCodeGenerator
             return null;
         }
 
+        // Check for $id (Draft 2019-09 and later)
         if (schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
         {
             return idElement.GetString();
+        }
+
+        // Check for id (Draft 4 and earlier)
+        if (schema.TryGetProperty("id", out var legacyIdElement) && legacyIdElement.ValueKind == JsonValueKind.String)
+        {
+            return legacyIdElement.GetString();
         }
 
         return null;

@@ -12,15 +12,15 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012MetaMetaData : ICompiledValidator
+    public sealed class CompiledValidator_Draft201909MetaMetaData : ICompiledValidator
     {
-        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/meta-data");
+        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/meta-data");
 
-        public bool IsValid(JsonElement instance) => Validate_dd02d6a81eba(instance);
+        public bool IsValid(JsonElement instance) => Validate_20fc33fb5de1(instance);
 
-    private static bool Validate_dd02d6a81eba(JsonElement e)
+    private static bool Validate_20fc33fb5de1(JsonElement e)
     {
         {
             var _typeValid_ = false;

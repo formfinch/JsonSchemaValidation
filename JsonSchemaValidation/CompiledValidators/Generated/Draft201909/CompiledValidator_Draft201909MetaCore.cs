@@ -12,18 +12,18 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012MetaCore : ICompiledValidator
+    public sealed class CompiledValidator_Draft201909MetaCore : ICompiledValidator
     {
-        private static readonly Regex Pattern_683e0a045989 = new Regex(@"^[^#]*#?$", RegexOptions.Compiled);
-        private static readonly Regex Pattern_97b3610c8717 = new Regex(@"^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled);
+        private static readonly Regex Pattern_edcdb22c519d = new Regex(@"^[^#]*#?$", RegexOptions.Compiled);
+        private static readonly Regex Pattern_4657485aab9e = new Regex(@"^[A-Za-z][-A-Za-z0-9.:_]*$", RegexOptions.Compiled);
 
-        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/core");
+        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/core");
 
-        public bool IsValid(JsonElement instance) => Validate_7762a39da63f(instance);
+        public bool IsValid(JsonElement instance) => Validate_08271e55a5a9(instance);
 
-    private static bool Validate_7762a39da63f(JsonElement e)
+    private static bool Validate_08271e55a5a9(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -36,31 +36,31 @@ namespace JsonSchemaValidation.CompiledMetaschemas
         {
             if (e.TryGetProperty("$id", out var __id_))
             {
-                if (!Validate_683e0a045989(__id_)) return false;
+                if (!Validate_edcdb22c519d(__id_)) return false;
             }
             if (e.TryGetProperty("$schema", out var __schema_))
             {
-                if (!Validate_ee31a97f81af(__schema_)) return false;
-            }
-            if (e.TryGetProperty("$ref", out var __ref_))
-            {
-                if (!Validate_75560a999e95(__ref_)) return false;
+                if (!Validate_f9757109fae3(__schema_)) return false;
             }
             if (e.TryGetProperty("$anchor", out var __anchor_))
             {
-                if (!Validate_3565c9ce7bc5(__anchor_)) return false;
+                if (!Validate_4657485aab9e(__anchor_)) return false;
             }
-            if (e.TryGetProperty("$dynamicRef", out var __dynamicRef_))
+            if (e.TryGetProperty("$ref", out var __ref_))
             {
-                if (!Validate_75560a999e95(__dynamicRef_)) return false;
+                if (!Validate_5dc527ab08dc(__ref_)) return false;
             }
-            if (e.TryGetProperty("$dynamicAnchor", out var __dynamicAnchor_))
+            if (e.TryGetProperty("$recursiveRef", out var __recursiveRef_))
             {
-                if (!Validate_3565c9ce7bc5(__dynamicAnchor_)) return false;
+                if (!Validate_5dc527ab08dc(__recursiveRef_)) return false;
+            }
+            if (e.TryGetProperty("$recursiveAnchor", out var __recursiveAnchor_))
+            {
+                if (!Validate_7cb541e84f22(__recursiveAnchor_)) return false;
             }
             if (e.TryGetProperty("$vocabulary", out var __vocabulary_))
             {
-                if (!Validate_df1321c1f877(__vocabulary_)) return false;
+                if (!Validate_f46f77c6529f(__vocabulary_)) return false;
             }
             if (e.TryGetProperty("$comment", out var __comment_))
             {
@@ -68,7 +68,7 @@ namespace JsonSchemaValidation.CompiledMetaschemas
             }
             if (e.TryGetProperty("$defs", out var __defs_))
             {
-                if (!Validate_6e9e6f7fe026(__defs_)) return false;
+                if (!Validate_b3a76762e1d8(__defs_)) return false;
             }
         }
 
@@ -76,36 +76,52 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     }
 
 
-    private static bool Validate_683e0a045989(JsonElement e)
+    private static bool Validate_edcdb22c519d(JsonElement e)
     {
+        if (e.ValueKind != JsonValueKind.String) return false;
         if (e.ValueKind == JsonValueKind.String)
         {
             var _str_ = e.GetString();
-            if (_str_ != null && !Pattern_683e0a045989.IsMatch(_str_)) return false;
+            if (_str_ != null && !Pattern_edcdb22c519d.IsMatch(_str_)) return false;
         }
         return true;
     }
 
 
-    private static bool Validate_ee31a97f81af(JsonElement e)
+    private static bool Validate_f9757109fae3(JsonElement e)
     {
+        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private static bool Validate_75560a999e95(JsonElement e)
+    private static bool Validate_4657485aab9e(JsonElement e)
     {
+        if (e.ValueKind != JsonValueKind.String) return false;
+        if (e.ValueKind == JsonValueKind.String)
+        {
+            var _str_ = e.GetString();
+            if (_str_ != null && !Pattern_4657485aab9e.IsMatch(_str_)) return false;
+        }
         return true;
     }
 
 
-    private static bool Validate_3565c9ce7bc5(JsonElement e)
+    private static bool Validate_5dc527ab08dc(JsonElement e)
     {
+        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private static bool Validate_df1321c1f877(JsonElement e)
+    private static bool Validate_7cb541e84f22(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
+        return true;
+    }
+
+
+    private static bool Validate_f46f77c6529f(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -113,7 +129,7 @@ namespace JsonSchemaValidation.CompiledMetaschemas
             foreach (var _pnProp_ in e.EnumerateObject())
             {
                 using var _pnDoc_ = JsonDocument.Parse($"\"{_pnProp_.Name}\"");
-                if (!Validate_ee31a97f81af(_pnDoc_.RootElement)) return false;
+                if (!Validate_f9757109fae3(_pnDoc_.RootElement)) return false;
             }
         }
 
@@ -129,13 +145,6 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     }
 
 
-    private static bool Validate_7cb541e84f22(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
-        return true;
-    }
-
-
     private static bool Validate_00404e686415(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
@@ -143,14 +152,14 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     }
 
 
-    private static bool Validate_6e9e6f7fe026(JsonElement e)
+    private static bool Validate_b3a76762e1d8(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
         {
             foreach (var _prop_ in e.EnumerateObject())
             {
-                if (!Validate_380c73c6d6de(_prop_.Value)) return false;
+                if (!Validate_f408d0871962(_prop_.Value)) return false;
             }
         }
 
@@ -158,34 +167,8 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     }
 
 
-    private static bool Validate_380c73c6d6de(JsonElement e)
+    private static bool Validate_f408d0871962(JsonElement e)
     {
-        return true;
-    }
-
-
-    private static bool Validate_97b3610c8717(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
-        if (e.ValueKind == JsonValueKind.String)
-        {
-            var _str_ = e.GetString();
-            if (_str_ != null && !Pattern_97b3610c8717.IsMatch(_str_)) return false;
-        }
-        return true;
-    }
-
-
-    private static bool Validate_f9757109fae3(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
-        return true;
-    }
-
-
-    private static bool Validate_5dc527ab08dc(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 

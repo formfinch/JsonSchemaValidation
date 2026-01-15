@@ -12,15 +12,15 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909MetaMetaData : ICompiledValidator
+    public sealed class CompiledValidator_Draft201909Schema : ICompiledValidator
     {
-        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/meta-data");
+        public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/schema");
 
-        public bool IsValid(JsonElement instance) => Validate_20fc33fb5de1(instance);
+        public bool IsValid(JsonElement instance) => Validate_d5c7208278de(instance);
 
-    private static bool Validate_20fc33fb5de1(JsonElement e)
+    private static bool Validate_d5c7208278de(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -31,71 +31,116 @@ namespace JsonSchemaValidation.CompiledMetaschemas
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("title", out var _title_))
+            if (e.TryGetProperty("definitions", out var _definitions_))
             {
-                if (!Validate_00404e686415(_title_)) return false;
+                if (!Validate_b3a76762e1d8(_definitions_)) return false;
             }
-            if (e.TryGetProperty("description", out var _description_))
+            if (e.TryGetProperty("dependencies", out var _dependencies_))
             {
-                if (!Validate_00404e686415(_description_)) return false;
-            }
-            if (e.TryGetProperty("default", out var _default_))
-            {
-                if (!Validate_b5bea41b6c62(_default_)) return false;
-            }
-            if (e.TryGetProperty("deprecated", out var _deprecated_))
-            {
-                if (!Validate_7cb541e84f22(_deprecated_)) return false;
-            }
-            if (e.TryGetProperty("readOnly", out var _readOnly_))
-            {
-                if (!Validate_7cb541e84f22(_readOnly_)) return false;
-            }
-            if (e.TryGetProperty("writeOnly", out var _writeOnly_))
-            {
-                if (!Validate_7cb541e84f22(_writeOnly_)) return false;
-            }
-            if (e.TryGetProperty("examples", out var _examples_))
-            {
-                if (!Validate_11d4ea710c08(_examples_)) return false;
+                if (!Validate_bdc4000cc169(_dependencies_)) return false;
             }
         }
 
+        // allOf: all subschemas must match
+        if (!Validate_481322343c1e(e)) return false;
+        if (!Validate_abc697708893(e)) return false;
+        if (!Validate_81909b659d2d(e)) return false;
+        if (!Validate_b361f1ea9acc(e)) return false;
+        if (!Validate_b044c87fd714(e)) return false;
+        if (!Validate_487cf610ea12(e)) return false;
+
         return true;
     }
 
 
-    private static bool Validate_00404e686415(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.String) return false;
-        return true;
-    }
-
-
-    private static bool Validate_b5bea41b6c62(JsonElement e)
+    private static bool Validate_481322343c1e(JsonElement e)
     {
         return true;
     }
 
 
-    private static bool Validate_7cb541e84f22(JsonElement e)
+    private static bool Validate_abc697708893(JsonElement e)
     {
-        if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
         return true;
     }
 
 
-    private static bool Validate_11d4ea710c08(JsonElement e)
+    private static bool Validate_81909b659d2d(JsonElement e)
     {
-        if (e.ValueKind != JsonValueKind.Array) return false;
-        if (e.ValueKind == JsonValueKind.Array)
+        return true;
+    }
+
+
+    private static bool Validate_b361f1ea9acc(JsonElement e)
+    {
+        return true;
+    }
+
+
+    private static bool Validate_b044c87fd714(JsonElement e)
+    {
+        return true;
+    }
+
+
+    private static bool Validate_487cf610ea12(JsonElement e)
+    {
+        return true;
+    }
+
+
+    private static bool Validate_b3a76762e1d8(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Object) return false;
+        if (e.ValueKind == JsonValueKind.Object)
         {
-            foreach (var _arrItem_ in e.EnumerateArray())
+            foreach (var _prop_ in e.EnumerateObject())
             {
-                if (!Validate_b5bea41b6c62(_arrItem_)) return false;
+                if (!Validate_f408d0871962(_prop_.Value)) return false;
             }
         }
 
+        return true;
+    }
+
+
+    private static bool Validate_f408d0871962(JsonElement e)
+    {
+        return true;
+    }
+
+
+    private static bool Validate_bdc4000cc169(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.Object) return false;
+        if (e.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var _prop_ in e.EnumerateObject())
+            {
+                if (!Validate_ba6513635275(_prop_.Value)) return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    private static bool Validate_ba6513635275(JsonElement e)
+    {
+        // anyOf: at least one subschema must match
+        {
+            var _anyValid_ = false;
+            if (Validate_f408d0871962(e)) _anyValid_ = true;
+            if (Validate_380e034afba7(e)) _anyValid_ = true;
+            if (!_anyValid_) return false;
+        }
+
+        return true;
+    }
+
+
+    private static bool Validate_380e034afba7(JsonElement e)
+    {
         return true;
     }
 

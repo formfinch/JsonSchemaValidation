@@ -12,7 +12,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
     public sealed class CompiledValidator_Draft202012MetaApplicator : ICompiledValidator
     {

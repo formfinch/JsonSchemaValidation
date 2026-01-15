@@ -12,13 +12,13 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
     public sealed class CompiledValidator_Draft4Schema : ICompiledValidator
     {
         private static readonly JsonElement[] Enum_4b8c15195535 = new JsonElement[] { JsonDocument.Parse("\"array\"").RootElement, JsonDocument.Parse("\"boolean\"").RootElement, JsonDocument.Parse("\"integer\"").RootElement, JsonDocument.Parse("\"null\"").RootElement, JsonDocument.Parse("\"number\"").RootElement, JsonDocument.Parse("\"object\"").RootElement, JsonDocument.Parse("\"string\"").RootElement };
 
-        public Uri SchemaUri => throw new NotSupportedException("Schema has no $id");
+        public Uri SchemaUri => new Uri("http://json-schema.org/draft-04/schema");
 
         public bool IsValid(JsonElement instance) => Validate_5b979b5c4e9c(instance);
 

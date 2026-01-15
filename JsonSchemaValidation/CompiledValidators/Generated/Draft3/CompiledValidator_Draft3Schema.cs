@@ -12,11 +12,11 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
     public sealed class CompiledValidator_Draft3Schema : ICompiledValidator
     {
-        public Uri SchemaUri => throw new NotSupportedException("Schema has no $id");
+        public Uri SchemaUri => new Uri("http://json-schema.org/draft-03/schema");
 
         public bool IsValid(JsonElement instance) => Validate_d4d6bcd0e2ea(instance);
 
