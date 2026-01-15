@@ -12,17 +12,17 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledMetaschemas
+namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft7Schema : ICompiledValidator
+    public sealed class CompiledValidator_Draft6Schema : ICompiledValidator
     {
         private static readonly JsonElement[] Enum_4b8c15195535 = new JsonElement[] { JsonDocument.Parse("\"array\"").RootElement, JsonDocument.Parse("\"boolean\"").RootElement, JsonDocument.Parse("\"integer\"").RootElement, JsonDocument.Parse("\"null\"").RootElement, JsonDocument.Parse("\"number\"").RootElement, JsonDocument.Parse("\"object\"").RootElement, JsonDocument.Parse("\"string\"").RootElement };
 
-        public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema");
+        public Uri SchemaUri => new Uri("http://json-schema.org/draft-06/schema");
 
-        public bool IsValid(JsonElement instance) => Validate_72a462cd20e9(instance);
+        public bool IsValid(JsonElement instance) => Validate_e52cdd3457c1(instance);
 
-    private static bool Validate_72a462cd20e9(JsonElement e)
+    private static bool Validate_e52cdd3457c1(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -45,10 +45,6 @@ namespace JsonSchemaValidation.CompiledMetaschemas
             {
                 if (!Validate_5dc527ab08dc(__ref_)) return false;
             }
-            if (e.TryGetProperty("$comment", out var __comment_))
-            {
-                if (!Validate_00404e686415(__comment_)) return false;
-            }
             if (e.TryGetProperty("title", out var _title_))
             {
                 if (!Validate_00404e686415(_title_)) return false;
@@ -59,19 +55,11 @@ namespace JsonSchemaValidation.CompiledMetaschemas
             }
             if (e.TryGetProperty("default", out var _default_))
             {
-                if (!Validate_b5bea41b6c62(_default_)) return false;
-            }
-            if (e.TryGetProperty("readOnly", out var _readOnly_))
-            {
-                if (!Validate_7cb541e84f22(_readOnly_)) return false;
-            }
-            if (e.TryGetProperty("writeOnly", out var _writeOnly_))
-            {
-                if (!Validate_7cb541e84f22(_writeOnly_)) return false;
+                if (!Validate_44136fa355b3(_default_)) return false;
             }
             if (e.TryGetProperty("examples", out var _examples_))
             {
-                if (!Validate_11d4ea710c08(_examples_)) return false;
+                if (!Validate_5483e69d7515(_examples_)) return false;
             }
             if (e.TryGetProperty("multipleOf", out var _multipleOf_))
             {
@@ -167,11 +155,11 @@ namespace JsonSchemaValidation.CompiledMetaschemas
             }
             if (e.TryGetProperty("const", out var _const_))
             {
-                if (!Validate_b5bea41b6c62(_const_)) return false;
+                if (!Validate_44136fa355b3(_const_)) return false;
             }
             if (e.TryGetProperty("enum", out var _enum_))
             {
-                if (!Validate_6760e7c71c97(_enum_)) return false;
+                if (!Validate_44ba26b0a159(_enum_)) return false;
             }
             if (e.TryGetProperty("type", out var _type_))
             {
@@ -180,26 +168,6 @@ namespace JsonSchemaValidation.CompiledMetaschemas
             if (e.TryGetProperty("format", out var _format_))
             {
                 if (!Validate_00404e686415(_format_)) return false;
-            }
-            if (e.TryGetProperty("contentMediaType", out var _contentMediaType_))
-            {
-                if (!Validate_00404e686415(_contentMediaType_)) return false;
-            }
-            if (e.TryGetProperty("contentEncoding", out var _contentEncoding_))
-            {
-                if (!Validate_00404e686415(_contentEncoding_)) return false;
-            }
-            if (e.TryGetProperty("if", out var _if_))
-            {
-                if (!Validate_b17aa97428d3(_if_)) return false;
-            }
-            if (e.TryGetProperty("then", out var _then_))
-            {
-                if (!Validate_b17aa97428d3(_then_)) return false;
-            }
-            if (e.TryGetProperty("else", out var _else_))
-            {
-                if (!Validate_b17aa97428d3(_else_)) return false;
             }
             if (e.TryGetProperty("allOf", out var _allOf_))
             {
@@ -357,27 +325,14 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     }
 
 
-    private static bool Validate_b5bea41b6c62(JsonElement e)
-    {
-        return true;
-    }
-
-
-    private static bool Validate_7cb541e84f22(JsonElement e)
-    {
-        if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
-        return true;
-    }
-
-
-    private static bool Validate_11d4ea710c08(JsonElement e)
+    private static bool Validate_5483e69d7515(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
         {
             foreach (var _arrItem_ in e.EnumerateArray())
             {
-                if (!Validate_b5bea41b6c62(_arrItem_)) return false;
+                if (!Validate_44136fa355b3(_arrItem_)) return false;
             }
         }
 
@@ -434,6 +389,13 @@ namespace JsonSchemaValidation.CompiledMetaschemas
 
     private static bool Validate_70ad97a912ba(JsonElement e)
     {
+        return true;
+    }
+
+
+    private static bool Validate_7cb541e84f22(JsonElement e)
+    {
+        if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
         return true;
     }
 
@@ -518,7 +480,7 @@ namespace JsonSchemaValidation.CompiledMetaschemas
     }
 
 
-    private static bool Validate_6760e7c71c97(JsonElement e)
+    private static bool Validate_44ba26b0a159(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -534,14 +496,6 @@ namespace JsonSchemaValidation.CompiledMetaschemas
                     if (JsonElementDeepEquals(_item_, _existing_)) return false;
                 }
                 _items_.Add(_item_);
-            }
-        }
-
-        if (e.ValueKind == JsonValueKind.Array)
-        {
-            foreach (var _arrItem_ in e.EnumerateArray())
-            {
-                if (!Validate_b5bea41b6c62(_arrItem_)) return false;
             }
         }
 

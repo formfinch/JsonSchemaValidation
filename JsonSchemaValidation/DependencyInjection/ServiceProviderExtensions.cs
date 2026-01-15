@@ -22,11 +22,18 @@ namespace JsonSchemaValidation.DependencyInjection
                 serviceProvider.GetRequiredService(serviceType);
             }
 
-            // Register compiled validators if any were added
+            // Register compiled metaschema validators (always loaded by default)
+            var registry = serviceProvider.GetRequiredService<ICompiledValidatorRegistry>();
+            var metaschemaValidators = CompiledMetaschemas.GetAll();
+            for (int i = 0; i < metaschemaValidators.Length; i++)
+            {
+                registry.Register(metaschemaValidators[i]);
+            }
+
+            // Register any additional compiled validators added via AddCompiledValidators
             var compiledValidators = serviceProvider.GetService<ICompiledValidator[]>();
             if (compiledValidators != null)
             {
-                var registry = serviceProvider.GetRequiredService<ICompiledValidatorRegistry>();
                 for (int i = 0; i < compiledValidators.Length; i++)
                 {
                     registry.Register(compiledValidators[i]);

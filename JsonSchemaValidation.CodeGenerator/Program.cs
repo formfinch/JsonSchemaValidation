@@ -213,7 +213,7 @@ internal static class Program
 
             var result = generator.Generate(
                 schemaPath,
-                "JsonSchemaValidation.CompiledMetaschemas",
+                "JsonSchemaValidation.CompiledValidators.Generated",
                 $"CompiledValidator_{schema.ClassName}");
 
             if (result.Success)
