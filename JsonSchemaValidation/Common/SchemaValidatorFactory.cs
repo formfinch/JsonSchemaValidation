@@ -71,7 +71,25 @@ namespace JsonSchemaValidation.Common
             return new ScopeAwareSchemaValidator(validator, schemaMetaData);
         }
 
+        // Closure allocation is acceptable here as CreateValidator is not in the validation hot path
+#pragma warning disable HAA0301, HAA0302
         public ISchemaValidator CreateValidator(SchemaMetadata schemaMetaData)
+        {
+            // Check compiled validator registry first
+            if (schemaMetaData.SchemaUri != null &&
+                _compiledValidatorRegistry != null &&
+                _compiledValidatorRegistry.TryGetValidator(schemaMetaData.SchemaUri, out var compiledValidator))
+            {
+                return new CompiledSchemaValidator(
+                    compiledValidator,
+                    () => CreateDynamicValidatorInternal(schemaMetaData));
+            }
+
+            return CreateDynamicValidatorInternal(schemaMetaData);
+        }
+#pragma warning restore HAA0301, HAA0302
+
+        private ISchemaValidator CreateDynamicValidatorInternal(SchemaMetadata schemaMetaData)
         {
             string version = schemaMetaData.DraftVersion!;
             bool usingFallback = false;
