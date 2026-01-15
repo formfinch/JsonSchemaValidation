@@ -7,9 +7,10 @@
     <IsPackable>false</IsPackable>
   </PropertyGroup>
 
-  <!-- Main library reference -->
+  <!-- Main library and runtime compiler -->
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
+    <ProjectReference Include="..\JsonSchemaValidation.Compiler\JsonSchemaValidation.Compiler.csproj" />
   </ItemGroup>
 
   <!-- Competing .NET libraries -->

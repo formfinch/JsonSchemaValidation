@@ -188,6 +188,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_b17aa97428d3(JsonElement e)
     {
+        // $ref: #
+        if (!Validate_5b979b5c4e9c(e)) return false;
         return true;
     }
 
@@ -218,6 +220,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_45f783c5cbd2(JsonElement e)
     {
+        // $ref: #/definitions/positiveInteger
+        if (!Validate_0d3ac1e9e006(e)) return false;
         return true;
     }
 
@@ -316,6 +320,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_e4767d88c656(JsonElement e)
     {
+        // $ref: #/definitions/positiveIntegerDefault0
+        if (!Validate_59212ee1bea4(e)) return false;
         return true;
     }
 
@@ -357,12 +363,16 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_70ad97a912ba(JsonElement e)
     {
+        // $ref: #/definitions/schemaArray
+        if (!Validate_21b31fd4a956(e)) return false;
         return true;
     }
 
 
     private static bool Validate_8831a4f86008(JsonElement e)
     {
+        // $ref: #/definitions/stringArray
+        if (!Validate_34838f99382e(e)) return false;
         return true;
     }
 
@@ -450,6 +460,8 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_ef13d5113a2b(JsonElement e)
     {
+        // $ref: #/definitions/simpleTypes
+        if (!Validate_4b8c15195535(e)) return false;
         return true;
     }
 

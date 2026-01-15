@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.CodeGenerator.CodeGenerator;
+namespace JsonSchemaValidation.CodeGeneration.Generator;
 
 /// <summary>
 /// Result of code generation.

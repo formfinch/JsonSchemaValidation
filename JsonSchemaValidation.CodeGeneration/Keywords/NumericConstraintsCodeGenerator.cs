@@ -2,7 +2,7 @@ using System.Globalization;
 using System.Text;
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.Keywords;
+namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for numeric constraint keywords: minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf.

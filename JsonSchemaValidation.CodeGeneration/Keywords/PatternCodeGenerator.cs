@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.Keywords;
+namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "pattern" keyword.

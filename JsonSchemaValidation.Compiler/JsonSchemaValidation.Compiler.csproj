@@ -1,11 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>JsonSchemaValidation.CodeGenerator</RootNamespace>
-    <AssemblyName>jsv-codegen</AssemblyName>
+    <RootNamespace>JsonSchemaValidation.Compiler</RootNamespace>
   </PropertyGroup>
   <PropertyGroup>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -13,5 +11,9 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration\JsonSchemaValidation.CodeGeneration.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Roslyn for runtime C# compilation -->
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.*" />
   </ItemGroup>
 </Project>

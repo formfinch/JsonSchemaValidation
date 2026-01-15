@@ -1,5 +1,5 @@
 using System.Text.Json;
-using JsonSchemaValidation.CodeGenerator.CodeGenerator;
+using JsonSchemaValidation.CodeGeneration.Generator;
 using Xunit;
 
 namespace JsonSchemaValidation.CodeGenerator.Tests;

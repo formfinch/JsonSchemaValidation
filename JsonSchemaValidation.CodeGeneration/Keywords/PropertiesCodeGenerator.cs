@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.Keywords;
+namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "properties" keyword.
@@ -36,17 +36,19 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Object)");
         sb.AppendLine("{");
 
+        var idx = 0;
         foreach (var prop in propertiesElement.EnumerateObject())
         {
             var propName = prop.Name;
             var escaped = EscapeString(propName);
             var propHash = context.GetSubschemaHash(prop.Value);
-            var varName = SanitizeVariableName(propName);
+            var varName = $"prop{idx}";
 
             sb.AppendLine($"    if ({e}.TryGetProperty(\"{escaped}\", out var _{varName}_))");
             sb.AppendLine("    {");
             sb.AppendLine($"        if (!Validate_{propHash}(_{varName}_)) return false;");
             sb.AppendLine("    }");
+            idx++;
         }
 
         sb.AppendLine("}");
@@ -61,7 +63,23 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
 
     private static string EscapeString(string s)
     {
-        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        var sb = new StringBuilder();
+        foreach (var c in s)
+        {
+            sb.Append(c switch
+            {
+                '\\' => "\\\\",
+                '"' => "\\\"",
+                '\n' => "\\n",
+                '\r' => "\\r",
+                '\t' => "\\t",
+                '\f' => "\\f",
+                '\b' => "\\b",
+                _ when c < 32 => $"\\u{(int)c:X4}",
+                _ => c.ToString()
+            });
+        }
+        return sb.ToString();
     }
 
     private static string SanitizeVariableName(string name)

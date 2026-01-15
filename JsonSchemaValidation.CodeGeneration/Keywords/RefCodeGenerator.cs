@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.Keywords;
+namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for local "$ref" references.
@@ -36,13 +36,30 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
-        // $ref handling is done at schema resolution time, not code generation time
-        // The referenced schema should already be resolved and have its own Validate_ function
-        // This generator is a placeholder - actual $ref resolution happens in SubschemaExtractor
+        if (!context.CurrentSchema.TryGetProperty("$ref", out var refElement))
+        {
+            return string.Empty;
+        }
 
-        // For now, we don't generate any code here because $ref schemas
-        // should be resolved to their target schemas during extraction
-        return string.Empty;
+        var refValue = refElement.GetString();
+        if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#'))
+        {
+            return string.Empty;
+        }
+
+        // Resolve the $ref to get the target schema
+        var targetSchema = context.ResolveLocalRef(refValue);
+        if (!targetSchema.HasValue)
+        {
+            // Cannot resolve - this shouldn't happen if SubschemaExtractor did its job
+            return $"// WARNING: Could not resolve $ref: {refValue}";
+        }
+
+        // Get the hash of the target schema and generate a call to its validation method
+        var targetHash = context.GetSubschemaHash(targetSchema.Value);
+        var e = context.ElementVariable;
+
+        return $"// $ref: {refValue}\nif (!Validate_{targetHash}({e})) return false;";
     }
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)

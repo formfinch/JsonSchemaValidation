@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGenerator.Keywords;
+namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Interface for keyword-specific code generators.
@@ -65,6 +65,12 @@ public sealed class CodeGenerationContext
     /// Function to get the hash for a subschema.
     /// </summary>
     public required Func<JsonElement, string> GetSubschemaHash { get; init; }
+
+    /// <summary>
+    /// Function to resolve a local $ref (e.g., "#/$defs/foo") to the target schema.
+    /// Returns null if the reference cannot be resolved.
+    /// </summary>
+    public required Func<string, JsonElement?> ResolveLocalRef { get; init; }
 
     /// <summary>
     /// The variable name for the element being validated (usually "e").

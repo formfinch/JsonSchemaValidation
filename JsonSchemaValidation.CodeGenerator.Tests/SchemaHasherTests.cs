@@ -1,12 +1,11 @@
 using System.Text.Json;
-using JsonSchemaValidation.CodeGenerator.CodeGenerator;
+using JsonSchemaValidation.Common;
 using Xunit;
 
 namespace JsonSchemaValidation.CodeGenerator.Tests;
 
 public class SchemaHasherTests
 {
-    private readonly SchemaHasher _hasher = new();
 
     [Fact]
     public void ComputeHash_SameSchema_ReturnsSameHash()
@@ -16,8 +15,8 @@ public class SchemaHasherTests
         var schema2 = JsonDocument.Parse("""{"type": "string"}""").RootElement;
 
         // Act
-        var hash1 = _hasher.ComputeHash(schema1);
-        var hash2 = _hasher.ComputeHash(schema2);
+        var hash1 = SchemaHasher.ComputeHash(schema1);
+        var hash2 = SchemaHasher.ComputeHash(schema2);
 
         // Assert
         Assert.Equal(hash1, hash2);
@@ -31,8 +30,8 @@ public class SchemaHasherTests
         var schema2 = JsonDocument.Parse("""{"type": "number"}""").RootElement;
 
         // Act
-        var hash1 = _hasher.ComputeHash(schema1);
-        var hash2 = _hasher.ComputeHash(schema2);
+        var hash1 = SchemaHasher.ComputeHash(schema1);
+        var hash2 = SchemaHasher.ComputeHash(schema2);
 
         // Assert
         Assert.NotEqual(hash1, hash2);
@@ -46,8 +45,8 @@ public class SchemaHasherTests
         var schema2 = JsonDocument.Parse("""{"type": "string", "title": "Test", "description": "A test"}""").RootElement;
 
         // Act
-        var hash1 = _hasher.ComputeHash(schema1);
-        var hash2 = _hasher.ComputeHash(schema2);
+        var hash1 = SchemaHasher.ComputeHash(schema1);
+        var hash2 = SchemaHasher.ComputeHash(schema2);
 
         // Assert
         Assert.Equal(hash1, hash2);
@@ -61,8 +60,8 @@ public class SchemaHasherTests
         var schema2 = JsonDocument.Parse("""{"minLength": 1, "type": "string"}""").RootElement;
 
         // Act
-        var hash1 = _hasher.ComputeHash(schema1);
-        var hash2 = _hasher.ComputeHash(schema2);
+        var hash1 = SchemaHasher.ComputeHash(schema1);
+        var hash2 = SchemaHasher.ComputeHash(schema2);
 
         // Assert
         Assert.Equal(hash1, hash2);
@@ -76,8 +75,8 @@ public class SchemaHasherTests
         var schema2 = JsonDocument.Parse("true").RootElement;
 
         // Act
-        var hash1 = _hasher.ComputeHash(schema1);
-        var hash2 = _hasher.ComputeHash(schema2);
+        var hash1 = SchemaHasher.ComputeHash(schema1);
+        var hash2 = SchemaHasher.ComputeHash(schema2);
 
         // Assert
         Assert.Equal(hash1, hash2);
@@ -91,8 +90,8 @@ public class SchemaHasherTests
         var schemaFalse = JsonDocument.Parse("false").RootElement;
 
         // Act
-        var hashTrue = _hasher.ComputeHash(schemaTrue);
-        var hashFalse = _hasher.ComputeHash(schemaFalse);
+        var hashTrue = SchemaHasher.ComputeHash(schemaTrue);
+        var hashFalse = SchemaHasher.ComputeHash(schemaFalse);
 
         // Assert
         Assert.NotEqual(hashTrue, hashFalse);
@@ -114,7 +113,7 @@ public class SchemaHasherTests
             """).RootElement;
 
         // Act
-        var hash = _hasher.ComputeHash(schema);
+        var hash = SchemaHasher.ComputeHash(schema);
 
         // Assert
         Assert.NotNull(hash);
