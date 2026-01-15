@@ -24,7 +24,13 @@ internal sealed class CompiledSchemaValidator : ISchemaValidator
     }
 
     /// <inheritdoc />
-    public bool RequiresAnnotationTracking => _fallbackValidator.Value.RequiresAnnotationTracking;
+    /// <remarks>
+    /// Compiled validators don't track annotations in their fast IsValid path.
+    /// When Validate() is called (which needs annotations), the fallback validator
+    /// handles annotation tracking. For the IsValid fast path, we return false
+    /// to avoid creating the fallback validator unnecessarily.
+    /// </remarks>
+    public bool RequiresAnnotationTracking => false;
 
     /// <inheritdoc />
     public bool IsValid(IJsonValidationContext context)
