@@ -40,6 +40,26 @@ namespace JsonSchemaValidation.DependencyInjection
                 }
             }
 
+            // Initialize registry-aware validators (must happen after all validators are registered)
+            foreach (var validator in metaschemaValidators)
+            {
+                if (validator is IRegistryAwareCompiledValidator registryAware)
+                {
+                    registryAware.Initialize(registry);
+                }
+            }
+
+            if (compiledValidators != null)
+            {
+                foreach (var validator in compiledValidators)
+                {
+                    if (validator is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.Initialize(registry);
+                    }
+                }
+            }
+
             // load draft meta schemas
             var schemaRepository = serviceProvider.GetRequiredService<ISchemaRepository>();
             var drafts = serviceProvider.GetServices<ISchemaDraftMeta>();

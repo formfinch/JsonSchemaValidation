@@ -76,18 +76,42 @@ public sealed class SchemaCodeGenerator
             var schemaUri = ExtractSchemaUri(schema);
             var resolvedClassName = className ?? DeriveClassName(schemaUri, sourcePath);
 
+            // Determine base URI for resolving relative $refs
+            Uri? baseUri = null;
+            if (!string.IsNullOrEmpty(schemaUri))
+            {
+                Uri.TryCreate(schemaUri, UriKind.Absolute, out baseUri);
+            }
+
             // Extract all unique subschemas
             var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema);
             var rootHash = SchemaHasher.ComputeHash(schema);
 
-            // Collect all static fields
+            // Collect all static fields and external refs
             var allStaticFields = new List<StaticFieldInfo>();
+            var allExternalRefs = new List<ExternalRefInfo>();
+
+            // Pre-scan pass: detect external refs to determine if methods should be static
+            foreach (var (hash, subschemaInfo) in uniqueSchemas)
+            {
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs);
+                foreach (var generator in _keywordGenerators)
+                {
+                    if (generator.CanGenerate(subschemaInfo.Schema))
+                    {
+                        // This populates allExternalRefs via the context
+                        generator.GenerateCode(context);
+                    }
+                }
+            }
+
+            var hasExternalRefs = allExternalRefs.Count > 0;
 
             // Generate validation methods for each unique subschema
             var methods = new StringBuilder();
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas);
+                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, hasExternalRefs);
                 methods.AppendLine(methodCode);
                 methods.AppendLine();
             }
@@ -95,7 +119,7 @@ public sealed class SchemaCodeGenerator
             // Collect static fields from all subschemas
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var context = CreateContext(subschemaInfo, uniqueSchemas);
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs);
                 foreach (var generator in _keywordGenerators)
                 {
                     if (generator.CanGenerate(subschemaInfo.Schema))
@@ -112,13 +136,14 @@ public sealed class SchemaCodeGenerator
                 }
             }
 
-            // Generate the full class
+            // Generate the full class (registry-aware if there are external refs)
             var code = GenerateClass(
                 namespaceName,
                 resolvedClassName,
                 schemaUri,
                 rootHash,
                 allStaticFields,
+                allExternalRefs,
                 methods.ToString());
 
             var fileName = $"{resolvedClassName}.cs";
@@ -130,12 +155,14 @@ public sealed class SchemaCodeGenerator
         }
     }
 
-    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas)
+    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool hasExternalRefs)
     {
-        var context = CreateContext(subschemaInfo, allSchemas);
+        var context = CreateContext(subschemaInfo, allSchemas, baseUri, externalRefs);
         var sb = new StringBuilder();
 
-        sb.AppendLine($"    private static bool Validate_{subschemaInfo.Hash}(JsonElement e)");
+        // Use instance methods if there are external refs (to access instance fields)
+        var staticModifier = hasExternalRefs ? "" : "static ";
+        sb.AppendLine($"    private {staticModifier}bool Validate_{subschemaInfo.Hash}(JsonElement e)");
         sb.AppendLine("    {");
 
         // Handle boolean schemas specially
@@ -177,14 +204,16 @@ public sealed class SchemaCodeGenerator
         return sb.ToString();
     }
 
-    private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas)
+    private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs)
     {
         return new CodeGenerationContext
         {
             CurrentSchema = subschemaInfo.Schema,
             CurrentHash = subschemaInfo.Hash,
             GetSubschemaHash = element => SchemaHasher.ComputeHash(element),
-            ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue)
+            ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue),
+            BaseUri = baseUri,
+            ExternalRefs = externalRefs
         };
     }
 
@@ -194,8 +223,10 @@ public sealed class SchemaCodeGenerator
         string? schemaUri,
         string rootHash,
         List<StaticFieldInfo> staticFields,
+        List<ExternalRefInfo> externalRefs,
         string methods)
     {
+        var hasExternalRefs = externalRefs.Count > 0;
         var sb = new StringBuilder();
 
         // File header
@@ -212,12 +243,17 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.RegularExpressions;");
         sb.AppendLine("using JsonSchemaValidation.Abstractions;");
+        if (hasExternalRefs)
+        {
+            sb.AppendLine("using JsonSchemaValidation.CompiledValidators;");
+        }
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName}");
         sb.AppendLine("{");
 
-        // Class declaration
-        sb.AppendLine($"    public sealed class {className} : ICompiledValidator");
+        // Class declaration - use IRegistryAwareCompiledValidator if there are external refs
+        var interfaceName = hasExternalRefs ? "IRegistryAwareCompiledValidator" : "ICompiledValidator";
+        sb.AppendLine($"    public sealed class {className} : {interfaceName}");
         sb.AppendLine("    {");
 
         // Static fields
@@ -226,6 +262,16 @@ public sealed class SchemaCodeGenerator
             foreach (var field in staticFields)
             {
                 sb.AppendLine($"        private static readonly {field.Type} {field.Name} = {field.Initializer};");
+            }
+            sb.AppendLine();
+        }
+
+        // Instance fields for external refs
+        if (hasExternalRefs)
+        {
+            foreach (var extRef in externalRefs)
+            {
+                sb.AppendLine($"        private ICompiledValidator {extRef.FieldName} = null!;");
             }
             sb.AppendLine();
         }
@@ -240,6 +286,22 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("        public Uri SchemaUri => throw new NotSupportedException(\"Schema has no $id\");");
         }
         sb.AppendLine();
+
+        // Initialize method for registry-aware validators
+        if (hasExternalRefs)
+        {
+            sb.AppendLine("        public void Initialize(ICompiledValidatorRegistry registry)");
+            sb.AppendLine("        {");
+            foreach (var extRef in externalRefs)
+            {
+                sb.AppendLine($"            // External $ref: {extRef.OriginalRef}");
+                sb.AppendLine($"            if (!registry.TryGetValidator(new Uri(\"{EscapeString(extRef.TargetUri.AbsoluteUri)}\"), out var {extRef.FieldName}Resolved) || {extRef.FieldName}Resolved is null)");
+                sb.AppendLine($"                throw new InvalidOperationException(\"Failed to resolve $ref: {EscapeString(extRef.OriginalRef)}\");");
+                sb.AppendLine($"            {extRef.FieldName} = {extRef.FieldName}Resolved;");
+            }
+            sb.AppendLine("        }");
+            sb.AppendLine();
+        }
 
         // IsValid entry point
         sb.AppendLine($"        public bool IsValid(JsonElement instance) => Validate_{rootHash}(instance);");

@@ -51,4 +51,12 @@ public interface ICompiledValidatorRegistry
     /// <param name="contentHash">The content hash of the schema.</param>
     /// <returns>True if a compiled validator is registered; otherwise, false.</returns>
     bool HasValidatorByHash(string contentHash);
+
+    /// <summary>
+    /// Registers a compiled validator for a specific URI (which may include a fragment).
+    /// Use this to register subschema validators by their full URI with JSON Pointer fragment.
+    /// </summary>
+    /// <param name="schemaUri">The URI to register the validator under (may include fragment).</param>
+    /// <param name="validator">The compiled validator to register.</param>
+    void RegisterForUri(Uri schemaUri, ICompiledValidator validator);
 }

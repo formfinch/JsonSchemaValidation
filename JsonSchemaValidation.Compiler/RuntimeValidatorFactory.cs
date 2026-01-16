@@ -4,6 +4,7 @@ using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.CodeGeneration.Generator;
 using JsonSchemaValidation.Common;
+using JsonSchemaValidation.CompiledValidators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
@@ -18,8 +19,26 @@ public sealed class RuntimeValidatorFactory : IDisposable
     private readonly Dictionary<string, ICompiledValidator> _cache = new(StringComparer.Ordinal);
     private readonly List<AssemblyLoadContext> _loadContexts = [];
     private readonly object _lock = new();
+    private readonly ICompiledValidatorRegistry? _registry;
 
     private const string GeneratedNamespace = "JsonSchemaValidation.RuntimeCompiled";
+
+    /// <summary>
+    /// Creates a new RuntimeValidatorFactory without a registry.
+    /// Compiled validators with external $ref will fail to initialize.
+    /// </summary>
+    public RuntimeValidatorFactory() : this(null)
+    {
+    }
+
+    /// <summary>
+    /// Creates a new RuntimeValidatorFactory with a registry for resolving external $ref.
+    /// </summary>
+    /// <param name="registry">The registry for resolving external $ref dependencies.</param>
+    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry)
+    {
+        _registry = registry;
+    }
 
     /// <summary>
     /// Compiles a single schema to a validator.
@@ -226,6 +245,21 @@ public sealed class RuntimeValidatorFactory : IDisposable
                 ?? throw new InvalidOperationException($"Failed to create instance of {fullTypeName}"));
 
             result[hash] = validator;
+        }
+
+        // Initialize registry-aware validators
+        foreach (var validator in result.Values)
+        {
+            if (validator is IRegistryAwareCompiledValidator registryAware)
+            {
+                if (_registry == null)
+                {
+                    throw new InvalidOperationException(
+                        $"Validator {validator.GetType().Name} has external $ref dependencies but no registry was provided. " +
+                        "Create RuntimeValidatorFactory with a registry to resolve external references.");
+                }
+                registryAware.Initialize(_registry);
+            }
         }
 
         return result;

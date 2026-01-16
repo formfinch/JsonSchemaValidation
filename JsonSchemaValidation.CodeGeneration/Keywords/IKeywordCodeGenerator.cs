@@ -76,4 +76,36 @@ public sealed class CodeGenerationContext
     /// The variable name for the element being validated (usually "e").
     /// </summary>
     public string ElementVariable { get; init; } = "e";
+
+    /// <summary>
+    /// The base URI of the schema being compiled (used to resolve relative $ref).
+    /// </summary>
+    public Uri? BaseUri { get; init; }
+
+    /// <summary>
+    /// Collection of external $ref URIs that need to be resolved from the registry.
+    /// Populated during code generation, consumed by SchemaCodeGenerator for field generation.
+    /// </summary>
+    public List<ExternalRefInfo> ExternalRefs { get; init; } = [];
+}
+
+/// <summary>
+/// Information about an external $ref that needs to be resolved from the registry.
+/// </summary>
+public sealed class ExternalRefInfo
+{
+    /// <summary>
+    /// The field name to use for caching this external validator.
+    /// </summary>
+    public required string FieldName { get; init; }
+
+    /// <summary>
+    /// The target URI of the external $ref (absolute, with fragment if present).
+    /// </summary>
+    public required Uri TargetUri { get; init; }
+
+    /// <summary>
+    /// The original $ref value as it appeared in the schema.
+    /// </summary>
+    public required string OriginalRef { get; init; }
 }
