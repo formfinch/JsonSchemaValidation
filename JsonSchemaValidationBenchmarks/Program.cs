@@ -15,7 +15,7 @@ librariesOption.AddAlias("-l");
 var scenariosOption = new Option<string[]>(
     name: "--scenarios",
     getDefaultValue: () => new[] { "testsuite" },
-    description: "Scenario sources: manifest, testsuite (draft2020-12), testsuite-2019-09, testsuite-7, testsuite-6, or specific scenario IDs");
+    description: "Scenario sources: manifest, testsuite (draft2020-12), testsuite-2019-09, testsuite-7, testsuite-6, production, or specific scenario IDs");
 scenariosOption.AddAlias("-s");
 
 var categoriesOption = new Option<string[]>(
@@ -117,8 +117,9 @@ static async Task RunBenchmarks(
     var basePath = AppContext.BaseDirectory;
     var benchmarksPath = Path.Combine(basePath, "benchmarks");
     var testSuitePath = FindTestSuitePath(basePath);
+    var scenariosPath = FindScenariosPath(basePath);
 
-    var allScenarios = LoadScenarios(scenarioSources, benchmarksPath, testSuitePath, categories);
+    var allScenarios = LoadScenarios(scenarioSources, benchmarksPath, testSuitePath, scenariosPath, categories);
 
     if (allScenarios.Count == 0)
     {
@@ -202,6 +203,7 @@ static List<BenchmarkScenario> LoadScenarios(
     string[] sources,
     string benchmarksPath,
     string testSuitePath,
+    string scenariosPath,
     string[] categories)
 {
     var scenarios = new List<BenchmarkScenario>();
@@ -216,6 +218,7 @@ static List<BenchmarkScenario> LoadScenarios(
             "testsuite-2019-09" => new TestSuiteScenarioSource(testSuitePath, "draft2019-09"),
             "testsuite-7" or "testsuite-draft7" => new TestSuiteScenarioSource(testSuitePath, "draft7"),
             "testsuite-6" or "testsuite-draft6" => new TestSuiteScenarioSource(testSuitePath, "draft6"),
+            "production" => new ProductionScenarioSource(scenariosPath),
             _ => null
         };
 
@@ -268,6 +271,29 @@ static string FindTestSuitePath(string basePath)
         current = parent.FullName;
     }
     return Path.Combine(basePath, "submodules", "JSON-Schema-Test-Suite");
+}
+
+static string FindScenariosPath(string basePath)
+{
+    var current = basePath;
+    for (int i = 0; i < 10; i++)
+    {
+        var scenariosPath = Path.Combine(current, "JsonSchemaValidationBenchmarks", "scenarios");
+        if (Directory.Exists(scenariosPath))
+        {
+            return scenariosPath;
+        }
+        // Also check directly under current (for when running from project dir)
+        scenariosPath = Path.Combine(current, "scenarios");
+        if (Directory.Exists(scenariosPath))
+        {
+            return scenariosPath;
+        }
+        var parent = Directory.GetParent(current);
+        if (parent is null) break;
+        current = parent.FullName;
+    }
+    return Path.Combine(basePath, "scenarios");
 }
 
 static void PrintSummary(List<BenchmarkResult> results)

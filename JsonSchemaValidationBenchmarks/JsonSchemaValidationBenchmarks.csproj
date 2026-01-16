@@ -34,4 +34,9 @@
   <ItemGroup>
     <None Include="..\benchmarks\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="benchmarks" />
   </ItemGroup>
+
+  <!-- Copy production scenarios to output -->
+  <ItemGroup>
+    <None Include="scenarios\**\*" CopyToOutputDirectory="PreserveNewest" LinkBase="scenarios" />
+  </ItemGroup>
 </Project>
