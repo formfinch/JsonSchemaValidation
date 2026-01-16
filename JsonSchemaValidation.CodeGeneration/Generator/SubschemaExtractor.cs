@@ -9,11 +9,11 @@ namespace JsonSchemaValidation.CodeGeneration.Generator;
 public sealed class SubschemaExtractor
 {
     // Keywords that require fallback to dynamic validators
+    // Note: $dynamicRef is NOT here because local $dynamicRef can be resolved statically
     private static readonly HashSet<string> FallbackKeywords = new(StringComparer.Ordinal)
     {
         "unevaluatedProperties",
-        "unevaluatedItems",
-        "$dynamicRef"
+        "unevaluatedItems"
     };
 
     // Keywords that contain object-valued subschemas
@@ -54,6 +54,7 @@ public sealed class SubschemaExtractor
 
     private readonly Dictionary<string, SubschemaInfo> _uniqueSchemas = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visitedRefs = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, JsonElement> _anchors = new(StringComparer.Ordinal);
     private int _totalCount;
     private JsonElement _rootSchema;
 
@@ -66,6 +67,7 @@ public sealed class SubschemaExtractor
     {
         _uniqueSchemas.Clear();
         _visitedRefs.Clear();
+        _anchors.Clear();
         _totalCount = 0;
         _rootSchema = rootSchema;
 
@@ -93,7 +95,7 @@ public sealed class SubschemaExtractor
     }
 
     /// <summary>
-    /// Resolves a local $ref (e.g., "#/$defs/foo" or "#") to the target schema.
+    /// Resolves a local $ref (e.g., "#/$defs/foo", "#", or "#anchorName") to the target schema.
     /// </summary>
     /// <param name="refValue">The $ref value (must start with #).</param>
     /// <returns>The resolved schema, or null if not found.</returns>
@@ -111,14 +113,29 @@ public sealed class SubschemaExtractor
         }
 
         // Handle JSON Pointer (e.g., "#/$defs/foo" or "#/properties/bar")
-        if (!refValue.StartsWith("#/"))
+        if (refValue.StartsWith("#/"))
         {
-            // Could be an anchor like "#myAnchor" - not supported in compiled mode
-            return null;
+            var pointer = refValue[1..]; // Remove the leading #
+            return ResolveJsonPointer(_rootSchema, pointer);
         }
 
-        var pointer = refValue[1..]; // Remove the leading #
-        return ResolveJsonPointer(_rootSchema, pointer);
+        // Handle anchor reference (e.g., "#myAnchor")
+        var anchorName = refValue[1..]; // Remove the leading #
+        return ResolveAnchor(anchorName);
+    }
+
+    /// <summary>
+    /// Resolves an anchor name to the schema that declares it.
+    /// </summary>
+    /// <param name="anchorName">The anchor name (without the # prefix).</param>
+    /// <returns>The schema with the anchor, or null if not found.</returns>
+    public JsonElement? ResolveAnchor(string anchorName)
+    {
+        if (_anchors.TryGetValue(anchorName, out var schema))
+        {
+            return schema;
+        }
+        return null;
     }
 
     private static JsonElement? ResolveJsonPointer(JsonElement root, string pointer)
@@ -128,10 +145,15 @@ public sealed class SubschemaExtractor
             return root;
         }
 
-        var current = root;
-        var segments = pointer.Split('/', StringSplitOptions.RemoveEmptyEntries);
+        // URL-decode the pointer first (handles %25 -> %, %22 -> ", etc.)
+        pointer = Uri.UnescapeDataString(pointer);
 
-        foreach (var segment in segments)
+        var current = root;
+        // Don't use RemoveEmptyEntries - empty string segments are valid in JSON Pointer
+        var segments = pointer.Split('/');
+
+        // Skip first empty segment (pointer starts with /)
+        foreach (var segment in segments.Skip(1))
         {
             // Unescape JSON Pointer tokens (RFC 6901)
             var unescaped = segment.Replace("~1", "/").Replace("~0", "~");
@@ -274,6 +296,8 @@ public sealed class SubschemaExtractor
 
         if (_uniqueSchemas.ContainsKey(hash))
         {
+            // Even if schema is already registered, we still need to register any anchor
+            RegisterAnchor(schema);
             return;
         }
 
@@ -286,6 +310,42 @@ public sealed class SubschemaExtractor
             RequiresFallback = fallbackKeywords.Count > 0,
             FallbackKeywords = fallbackKeywords
         };
+
+        // Register anchor if present
+        RegisterAnchor(schema);
+    }
+
+    private void RegisterAnchor(JsonElement schema)
+    {
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        // Register $anchor
+        if (schema.TryGetProperty("$anchor", out var anchorElement) &&
+            anchorElement.ValueKind == JsonValueKind.String)
+        {
+            var anchorName = anchorElement.GetString();
+            if (!string.IsNullOrEmpty(anchorName))
+            {
+                // Register anchor (first one wins if there are duplicates)
+                _anchors.TryAdd(anchorName, schema);
+            }
+        }
+
+        // Also register $dynamicAnchor - when accessed via $ref (not $dynamicRef),
+        // it resolves statically just like a regular anchor
+        if (schema.TryGetProperty("$dynamicAnchor", out var dynamicAnchorElement) &&
+            dynamicAnchorElement.ValueKind == JsonValueKind.String)
+        {
+            var anchorName = dynamicAnchorElement.GetString();
+            if (!string.IsNullOrEmpty(anchorName))
+            {
+                // Register anchor (first one wins if there are duplicates)
+                _anchors.TryAdd(anchorName, schema);
+            }
+        }
     }
 
     private static List<string> DetectFallbackKeywords(JsonElement schema)

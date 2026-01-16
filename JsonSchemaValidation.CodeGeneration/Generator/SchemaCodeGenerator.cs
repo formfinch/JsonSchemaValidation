@@ -21,6 +21,7 @@ public sealed class SchemaCodeGenerator
         [
             new BooleanSchemaCodeGenerator(),
             new RefCodeGenerator(),
+            new DynamicRefCodeGenerator(),
             new TypeCodeGenerator(),
             new RequiredCodeGenerator(),
             new EnumCodeGenerator(),
@@ -28,6 +29,7 @@ public sealed class SchemaCodeGenerator
             new StringConstraintsCodeGenerator(),
             new NumericConstraintsCodeGenerator(),
             new ArrayConstraintsCodeGenerator(),
+            new ObjectConstraintsCodeGenerator(),
             new PrefixItemsCodeGenerator(),
             new ItemsCodeGenerator(),
             new ContainsCodeGenerator(),

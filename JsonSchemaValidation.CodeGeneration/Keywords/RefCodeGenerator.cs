@@ -52,6 +52,27 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             return GenerateLocalRefCode(context, refValue);
         }
 
+        // Check if this is a self-reference (same base URI as the schema's $id)
+        // e.g., "urn:uuid:xxx#/$defs/bar" when $id is "urn:uuid:xxx"
+        if (context.BaseUri != null && refValue.Contains('#'))
+        {
+            var hashIndex = refValue.IndexOf('#');
+            var refBase = refValue[..hashIndex];
+            var fragment = refValue[hashIndex..]; // includes the #
+
+            // Try to parse the ref base as a URI and compare with BaseUri
+            if (Uri.TryCreate(refBase, UriKind.Absolute, out var refBaseUri))
+            {
+                // Compare URIs (ignoring fragment on both)
+                var baseUriWithoutFragment = new Uri(context.BaseUri.GetLeftPart(UriPartial.Query));
+                if (refBaseUri.Equals(baseUriWithoutFragment))
+                {
+                    // Same base URI - treat the fragment as a local reference
+                    return GenerateLocalRefCode(context, fragment);
+                }
+            }
+        }
+
         // External reference
         return GenerateExternalRefCode(context, refValue);
     }
@@ -128,9 +149,10 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
 
+        // Generate null check - if external ref wasn't initialized (no registry), validation fails
         return $"""
             // External $ref: {refValue}
-            if (!{fieldName}.IsValid({e})) return false;
+            if ({fieldName} == null || !{fieldName}.IsValid({e})) return false;
             """;
     }
 
