@@ -17,13 +17,13 @@ public sealed class SchemaHasher
     public static SchemaHasher Instance { get; } = new();
 
     // Keywords that don't affect validation behavior and should be ignored for hashing
+    // Note: $defs and definitions ARE included in hashing because their contents
+    // affect validation when referenced via $ref
     private static readonly HashSet<string> MetadataKeywords = new(StringComparer.Ordinal)
     {
         "$id",
         "$schema",
         "$comment",
-        "$defs",
-        "definitions",
         "title",
         "description",
         "default",

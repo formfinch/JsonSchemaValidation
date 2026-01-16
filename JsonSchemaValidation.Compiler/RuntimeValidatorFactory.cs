@@ -247,18 +247,30 @@ public sealed class RuntimeValidatorFactory : IDisposable
             result[hash] = validator;
         }
 
-        // Initialize registry-aware validators
-        foreach (var validator in result.Values)
+        // Initialize registry-aware validators (if registry is available)
+        // If no registry is provided, external refs remain unresolved and validation will fail
+        // for those refs (the generated code has null checks that return false)
+        if (_registry != null)
         {
-            if (validator is IRegistryAwareCompiledValidator registryAware)
+            foreach (var validator in result.Values)
             {
-                if (_registry == null)
+                if (validator is IRegistryAwareCompiledValidator registryAware)
+                {
+                    registryAware.Initialize(_registry);
+                }
+            }
+        }
+        else
+        {
+            // Check if any validators require a registry but none was provided
+            foreach (var validator in result.Values)
+            {
+                if (validator is IRegistryAwareCompiledValidator)
                 {
                     throw new InvalidOperationException(
                         $"Validator {validator.GetType().Name} has external $ref dependencies but no registry was provided. " +
                         "Create RuntimeValidatorFactory with a registry to resolve external references.");
                 }
-                registryAware.Initialize(_registry);
             }
         }
 
