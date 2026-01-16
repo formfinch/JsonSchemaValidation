@@ -3,8 +3,9 @@ using System.Text.Json;
 namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
-/// Generates code for local "$ref" references.
-/// External references require fallback to dynamic validators.
+/// Generates code for "$ref" references, both local and external.
+/// Local references are resolved at compile time and inlined.
+/// External references are resolved at initialization time via the registry.
 /// </summary>
 public sealed class RefCodeGenerator : IKeywordCodeGenerator
 {
@@ -29,9 +30,7 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         }
 
         var refValue = refElement.GetString();
-
-        // Only handle local references (starting with #)
-        return !string.IsNullOrEmpty(refValue) && refValue.StartsWith('#');
+        return !string.IsNullOrEmpty(refValue);
     }
 
     public string GenerateCode(CodeGenerationContext context)
@@ -42,11 +41,23 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         }
 
         var refValue = refElement.GetString();
-        if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#'))
+        if (string.IsNullOrEmpty(refValue))
         {
             return string.Empty;
         }
 
+        // Local reference (starts with #)
+        if (refValue.StartsWith('#'))
+        {
+            return GenerateLocalRefCode(context, refValue);
+        }
+
+        // External reference
+        return GenerateExternalRefCode(context, refValue);
+    }
+
+    private static string GenerateLocalRefCode(CodeGenerationContext context, string refValue)
+    {
         // Resolve the $ref to get the target schema
         var targetSchema = context.ResolveLocalRef(refValue);
         if (!targetSchema.HasValue)
@@ -60,6 +71,78 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         var e = context.ElementVariable;
 
         return $"// $ref: {refValue}\nif (!Validate_{targetHash}({e})) return false;";
+    }
+
+    private static string GenerateExternalRefCode(CodeGenerationContext context, string refValue)
+    {
+        // Resolve the external URI
+        Uri targetUri;
+        if (Uri.TryCreate(refValue, UriKind.Absolute, out var absoluteUri))
+        {
+            targetUri = absoluteUri;
+        }
+        else if (context.BaseUri != null && Uri.TryCreate(context.BaseUri, refValue, out var resolvedUri))
+        {
+            targetUri = resolvedUri;
+        }
+        else
+        {
+            // Cannot resolve - treat as absolute URI anyway
+            try
+            {
+                targetUri = new Uri(refValue, UriKind.RelativeOrAbsolute);
+            }
+            catch
+            {
+                return $"// WARNING: Could not parse $ref URI: {refValue}";
+            }
+        }
+
+        // External refs with fragments are not yet supported (would require subschema registration)
+        // Return empty to skip this keyword and let other validators handle it
+        if (!string.IsNullOrEmpty(targetUri.Fragment) && targetUri.Fragment != "#")
+        {
+            return $"// External $ref with fragment not supported in compiled mode: {refValue}";
+        }
+
+        // Generate a unique field name based on the hash of the target URI
+        var fieldName = $"_extRef_{GenerateFieldNameSuffix(targetUri.AbsoluteUri)}";
+
+        // Register this external ref for field generation
+        // Check if already registered (same target URI)
+        var existingRef = context.ExternalRefs.Find(r => r.TargetUri.AbsoluteUri == targetUri.AbsoluteUri);
+        if (existingRef == null)
+        {
+            context.ExternalRefs.Add(new ExternalRefInfo
+            {
+                FieldName = fieldName,
+                TargetUri = targetUri,
+                OriginalRef = refValue
+            });
+        }
+        else
+        {
+            // Reuse existing field name
+            fieldName = existingRef.FieldName;
+        }
+
+        var e = context.ElementVariable;
+
+        return $"""
+            // External $ref: {refValue}
+            if (!{fieldName}.IsValid({e})) return false;
+            """;
+    }
+
+    private static string GenerateFieldNameSuffix(string input)
+    {
+        // Generate a short hash suffix for field naming
+        var hash = 0u;
+        foreach (var c in input)
+        {
+            hash = (hash * 31) + c;
+        }
+        return hash.ToString("x8");
     }
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)

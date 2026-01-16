@@ -64,4 +64,11 @@ public sealed class CompiledValidatorRegistry : ICompiledValidatorRegistry
     {
         return _validatorsByHash.ContainsKey(contentHash);
     }
+
+    /// <inheritdoc />
+    public void RegisterForUri(Uri schemaUri, ICompiledValidator validator)
+    {
+        _validatorsByUri[schemaUri.AbsoluteUri] = validator;
+        _registeredHosts.Add(schemaUri.Host);
+    }
 }

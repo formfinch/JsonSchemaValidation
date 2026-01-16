@@ -304,13 +304,20 @@ public sealed class SubschemaExtractor
                 result.Add(property.Name);
             }
 
-            // Check for external $ref
+            // External $ref without fragment is supported via IRegistryAwareCompiledValidator
+            // External $ref WITH fragment still requires fallback (subschema registration not implemented)
             if (property.Name == "$ref" && property.Value.ValueKind == JsonValueKind.String)
             {
                 var refValue = property.Value.GetString();
                 if (!string.IsNullOrEmpty(refValue) && !refValue.StartsWith('#'))
                 {
-                    result.Add("$ref (external)");
+                    // Check if it has a fragment
+                    var fragmentIndex = refValue.IndexOf('#');
+                    if (fragmentIndex > 0)
+                    {
+                        // External ref with fragment - requires fallback
+                        result.Add("$ref (external with fragment)");
+                    }
                 }
             }
         }
