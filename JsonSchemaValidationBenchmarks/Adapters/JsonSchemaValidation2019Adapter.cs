@@ -10,7 +10,7 @@ namespace JsonSchemaValidationBenchmarks.Adapters;
 /// <summary>
 /// Adapter that forces Draft 2019-09 for all schemas, enabling fair comparison with Draft 2020-12.
 /// </summary>
-public sealed class JsonSchemaValidation2019Adapter : ISchemaValidatorAdapter
+public sealed class JsonSchemaValidation2019Adapter : IPreparsedSchemaValidatorAdapter
 {
     private const string DraftUri = "https://json-schema.org/draft/2019-09/schema";
 
@@ -54,6 +54,12 @@ public sealed class JsonSchemaValidation2019Adapter : ISchemaValidatorAdapter
     {
         using var doc = JsonDocument.Parse(dataJson);
         var context = _contextFactory!.CreateContextForRoot(doc.RootElement);
+        return _validator!.IsValidRoot(context);
+    }
+
+    public bool Validate(JsonElement data)
+    {
+        var context = _contextFactory!.CreateContextForRoot(data);
         return _validator!.IsValidRoot(context);
     }
 

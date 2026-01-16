@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace JsonSchemaValidationBenchmarks.Adapters;
 
 public interface ISchemaValidatorAdapter : IDisposable
@@ -9,6 +11,15 @@ public interface ISchemaValidatorAdapter : IDisposable
     void PrepareSchema(string schemaJson);
 
     bool Validate(string dataJson);
+}
+
+/// <summary>
+/// Adapter that supports validation of pre-parsed JSON data.
+/// This enables fair benchmarking by excluding JSON parsing time.
+/// </summary>
+public interface IPreparsedSchemaValidatorAdapter : ISchemaValidatorAdapter
+{
+    bool Validate(JsonElement data);
 }
 
 public interface IAsyncSchemaValidatorAdapter : ISchemaValidatorAdapter

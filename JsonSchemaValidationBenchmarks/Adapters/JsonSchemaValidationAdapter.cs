@@ -6,7 +6,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace JsonSchemaValidationBenchmarks.Adapters;
 
-public sealed class JsonSchemaValidationAdapter : ISchemaValidatorAdapter
+public sealed class JsonSchemaValidationAdapter : IPreparsedSchemaValidatorAdapter
 {
     public string Name => "JsonSchemaValidation";
     public string Runtime => "dotnet";
@@ -45,6 +45,12 @@ public sealed class JsonSchemaValidationAdapter : ISchemaValidatorAdapter
     {
         using var doc = JsonDocument.Parse(dataJson);
         var context = _contextFactory!.CreateContextForRoot(doc.RootElement);
+        return _validator!.IsValidRoot(context);
+    }
+
+    public bool Validate(JsonElement data)
+    {
+        var context = _contextFactory!.CreateContextForRoot(data);
         return _validator!.IsValidRoot(context);
     }
 

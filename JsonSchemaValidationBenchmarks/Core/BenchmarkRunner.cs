@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Text.Json;
 using JsonSchemaValidationBenchmarks.Adapters;
 
 namespace JsonSchemaValidationBenchmarks.Core;
@@ -28,10 +29,17 @@ public sealed class BenchmarkRunner
 
         ForceGarbageCollection();
 
+        // Pre-parse JSON for fair comparison (matches AJV benchmark methodology)
+        using var jsonDoc = JsonDocument.Parse(dataJson);
+        var jsonElement = jsonDoc.RootElement.Clone();
+
+        // Check if adapter supports pre-parsed data
+        var preparsedAdapter = adapter as IPreparsedSchemaValidatorAdapter;
+
         bool? validationResult = null;
         for (int i = 0; i < _options.WarmupIterations; i++)
         {
-            validationResult = adapter.Validate(dataJson);
+            validationResult = preparsedAdapter?.Validate(jsonElement) ?? adapter.Validate(dataJson);
         }
 
         var timings = new List<double>(_options.Iterations);
@@ -48,12 +56,27 @@ public sealed class BenchmarkRunner
 
         var stopwatch = new Stopwatch();
 
-        for (int i = 0; i < _options.Iterations; i++)
+        if (preparsedAdapter != null)
         {
-            stopwatch.Restart();
-            adapter.Validate(dataJson);
-            stopwatch.Stop();
-            timings.Add(stopwatch.Elapsed.TotalMicroseconds);
+            // Fair benchmark: validate pre-parsed data (no JSON parsing in loop)
+            for (int i = 0; i < _options.Iterations; i++)
+            {
+                stopwatch.Restart();
+                preparsedAdapter.Validate(jsonElement);
+                stopwatch.Stop();
+                timings.Add(stopwatch.Elapsed.TotalMicroseconds);
+            }
+        }
+        else
+        {
+            // Fallback: include JSON parsing in each iteration
+            for (int i = 0; i < _options.Iterations; i++)
+            {
+                stopwatch.Restart();
+                adapter.Validate(dataJson);
+                stopwatch.Stop();
+                timings.Add(stopwatch.Elapsed.TotalMicroseconds);
+            }
         }
 
         long memoryAllocated = 0;

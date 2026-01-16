@@ -9,7 +9,7 @@ namespace JsonSchemaValidationBenchmarks.Adapters;
 /// Schema compilation happens in PrepareSchema (not benchmarked).
 /// Validation is benchmarked and runs compiled native code.
 /// </summary>
-public sealed class JsonSchemaValidationCompiledAdapter : ISchemaValidatorAdapter
+public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValidatorAdapter
 {
     public string Name => "JSV-Compiled";
     public string Runtime => "dotnet";
@@ -34,6 +34,16 @@ public sealed class JsonSchemaValidationCompiledAdapter : ISchemaValidatorAdapte
 
         using var doc = JsonDocument.Parse(dataJson);
         return _compiledValidator.IsValid(doc.RootElement);
+    }
+
+    public bool Validate(JsonElement data)
+    {
+        if (_compiledValidator == null)
+        {
+            throw new InvalidOperationException("PrepareSchema must be called before Validate.");
+        }
+
+        return _compiledValidator.IsValid(data);
     }
 
     public void Dispose()

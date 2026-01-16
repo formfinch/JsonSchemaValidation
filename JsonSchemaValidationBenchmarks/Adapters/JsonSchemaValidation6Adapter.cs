@@ -10,7 +10,7 @@ namespace JsonSchemaValidationBenchmarks.Adapters;
 /// <summary>
 /// Adapter that forces Draft 6 for all schemas, enabling fair comparison with other draft versions.
 /// </summary>
-public sealed class JsonSchemaValidation6Adapter : ISchemaValidatorAdapter
+public sealed class JsonSchemaValidation6Adapter : IPreparsedSchemaValidatorAdapter
 {
     // Use the same URI format as the internal system (without trailing #)
     private const string DraftUri = "http://json-schema.org/draft-06/schema";
@@ -57,6 +57,12 @@ public sealed class JsonSchemaValidation6Adapter : ISchemaValidatorAdapter
     {
         using var doc = JsonDocument.Parse(dataJson);
         var context = _contextFactory!.CreateContextForRoot(doc.RootElement);
+        return _validator!.IsValidRoot(context);
+    }
+
+    public bool Validate(JsonElement data)
+    {
+        var context = _contextFactory!.CreateContextForRoot(data);
         return _validator!.IsValidRoot(context);
     }
 
