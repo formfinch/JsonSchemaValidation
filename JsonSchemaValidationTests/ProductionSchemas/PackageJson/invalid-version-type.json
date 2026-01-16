@@ -1,0 +1,5 @@
+{
+  "name": "@myorg/test-package",
+  "version": 1.0,
+  "description": "Version should be a string, not a number"
+}

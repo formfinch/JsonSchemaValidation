@@ -1,0 +1,15 @@
+{
+  "name": "Test Workflow",
+  "on": "push",
+  "env": {
+    "MY_VAR": ["should", "be", "string"]
+  },
+  "jobs": {
+    "build": {
+      "runs-on": "ubuntu-latest",
+      "steps": [
+        { "run": "echo hello" }
+      ]
+    }
+  }
+}

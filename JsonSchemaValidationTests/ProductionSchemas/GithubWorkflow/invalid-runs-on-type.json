@@ -1,0 +1,12 @@
+{
+  "name": "Test Workflow",
+  "on": "push",
+  "jobs": {
+    "build": {
+      "runs-on": 12345,
+      "steps": [
+        { "run": "echo hello" }
+      ]
+    }
+  }
+}

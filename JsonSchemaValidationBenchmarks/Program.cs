@@ -173,11 +173,21 @@ static async Task RunBenchmarks(
                             adapter, scenario.SchemaJson, testCase.DataJson, scenarioId, scenarioName);
                     }
 
+                    // Verify correctness: check if validation result matches expected
+                    var isCorrect = result.ValidationResult == testCase.ExpectedValid;
+                    result.IsCorrect = isCorrect;
+                    result.ExpectedValid = testCase.ExpectedValid;
+
                     results.Add(result);
 
                     if (verbose)
                     {
-                        Console.WriteLine($"    {testCase.Name}: {result.MedianMicroseconds:F2} us (valid={result.ValidationResult})");
+                        var correctMarker = isCorrect ? "" : " [WRONG!]";
+                        Console.WriteLine($"    {testCase.Name}: {result.MedianMicroseconds:F2} us (valid={result.ValidationResult}, expected={testCase.ExpectedValid}){correctMarker}");
+                    }
+                    else if (!isCorrect)
+                    {
+                        Console.WriteLine($"  CORRECTNESS ERROR: {scenarioName} - got {result.ValidationResult}, expected {testCase.ExpectedValid}");
                     }
                 }
                 catch (Exception ex)
@@ -420,8 +430,22 @@ static void PrintOverallSummary(List<BenchmarkResult> results, List<string> libr
         var avgThroughput = avgMedian > 0 ? 1_000_000.0 / avgMedian : 0;
         var avgMemory = libResults.Average(r => r.MemoryAllocatedKB);
 
+        // Correctness stats
+        var correctCount = libResults.Count(r => r.IsCorrect == true);
+        var incorrectCount = libResults.Count(r => r.IsCorrect == false);
+        var correctPct = libResults.Count > 0 ? (double)correctCount / libResults.Count * 100 : 0;
+
         Console.WriteLine($"{lib}:");
         Console.WriteLine($"  Scenarios: {libResults.Count}");
+        Console.WriteLine($"  Correctness: {correctCount}/{libResults.Count} ({correctPct:F0}%)");
+        if (incorrectCount > 0)
+        {
+            Console.WriteLine($"  FAILURES: {incorrectCount} incorrect results!");
+            foreach (var failure in libResults.Where(r => r.IsCorrect == false))
+            {
+                Console.WriteLine($"    - {failure.ScenarioName}: got {failure.ValidationResult}, expected {failure.ExpectedValid}");
+            }
+        }
         Console.WriteLine($"  Median time: {FormatMicroseconds(avgMedian)} avg ({FormatMicroseconds(minMedian)} - {FormatMicroseconds(maxMedian)})");
         Console.WriteLine($"  Throughput: {FormatThroughput(avgThroughput)} avg");
         if (avgMemory > 0)
