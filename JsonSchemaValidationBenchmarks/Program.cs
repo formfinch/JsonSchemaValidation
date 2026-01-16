@@ -338,6 +338,7 @@ static void PrintComparisonTable(
 {
     Console.WriteLine();
     Console.WriteLine("=== PERFORMANCE COMPARISON ===");
+    Console.WriteLine("(* = INCORRECT result, time not comparable)");
     Console.WriteLine();
 
     // Build header with fixed-width columns
@@ -354,8 +355,10 @@ static void PrintComparisonTable(
     foreach (var group in scenarios)
     {
         var scenarioResults = group.ToDictionary(r => r.LibraryName);
-        var fastest = group.MinBy(r => r.MedianMicroseconds);
-        if (fastest is null) continue;
+
+        // For winner, only consider correct results
+        var correctResults = group.Where(r => r.IsCorrect == true).ToList();
+        var fastest = correctResults.Count > 0 ? correctResults.MinBy(r => r.MedianMicroseconds) : null;
 
         // Truncate scenario name
         var scenarioName = group.First().ScenarioName;
@@ -369,12 +372,26 @@ static void PrintComparisonTable(
             if (scenarioResults.TryGetValue(lib, out var result))
             {
                 var timeStr = FormatMicroseconds(result.MedianMicroseconds);
-                var relativeSpeed = result.MedianMicroseconds / fastest.MedianMicroseconds;
 
-                if (relativeSpeed <= 1.1)
-                    Console.Write($"{timeStr,colWidth}");
+                // Mark incorrect results
+                if (result.IsCorrect == false)
+                {
+                    Console.ForegroundColor = ConsoleColor.Red;
+                    Console.Write($"{timeStr + "*",colWidth}");
+                    Console.ResetColor();
+                }
+                else if (fastest != null)
+                {
+                    var relativeSpeed = result.MedianMicroseconds / fastest.MedianMicroseconds;
+                    if (relativeSpeed <= 1.1)
+                        Console.Write($"{timeStr,colWidth}");
+                    else
+                        Console.Write($"{timeStr,9} {relativeSpeed,5:F1}x");
+                }
                 else
-                    Console.Write($"{timeStr,9} {relativeSpeed,5:F1}x");
+                {
+                    Console.Write($"{timeStr,colWidth}");
+                }
             }
             else
             {
@@ -382,7 +399,17 @@ static void PrintComparisonTable(
             }
         }
 
-        Console.WriteLine($"{GetShortLibraryName(fastest.LibraryName),10}");
+        // Winner is only from correct results
+        if (fastest != null)
+        {
+            Console.WriteLine($"{GetShortLibraryName(fastest.LibraryName),10}");
+        }
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Yellow;
+            Console.WriteLine($"{"N/A",10}");
+            Console.ResetColor();
+        }
     }
 }
 
@@ -390,6 +417,7 @@ static void PrintSingleLibraryTable(List<BenchmarkResult> results, List<IGroupin
 {
     Console.WriteLine();
     Console.WriteLine($"=== BENCHMARK RESULTS: {results.First().LibraryName} ===");
+    Console.WriteLine("(* = INCORRECT result)");
     Console.WriteLine();
     Console.WriteLine($"{"Scenario",-50} {"Median",10} {"Memory",10} {"Throughput",12}");
     Console.WriteLine(new string('-', 85));
@@ -406,7 +434,16 @@ static void PrintSingleLibraryTable(List<BenchmarkResult> results, List<IGroupin
             var memStr = result.MemoryAllocatedKB > 0 ? $"{result.MemoryAllocatedKB:F1} KB" : "--";
             var throughputStr = FormatThroughput(result.ThroughputPerSecond);
 
-            Console.WriteLine($"{scenarioName,-50} {timeStr,10} {memStr,10} {throughputStr,12}");
+            if (result.IsCorrect == false)
+            {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"{scenarioName,-47}*   {timeStr,10} {memStr,10} {throughputStr,12}");
+                Console.ResetColor();
+            }
+            else
+            {
+                Console.WriteLine($"{scenarioName,-50} {timeStr,10} {memStr,10} {throughputStr,12}");
+            }
         }
     }
 }
@@ -422,57 +459,110 @@ static void PrintOverallSummary(List<BenchmarkResult> results, List<string> libr
         var libResults = results.Where(r => r.LibraryName == lib).ToList();
         if (libResults.Count == 0) continue;
 
-        var medians = libResults.Select(r => r.MedianMicroseconds).ToList();
-        var avgMedian = medians.Average();
-        var minMedian = medians.Min();
-        var maxMedian = medians.Max();
-        // Calculate throughput from average time (not arithmetic mean of throughputs)
-        var avgThroughput = avgMedian > 0 ? 1_000_000.0 / avgMedian : 0;
-        var avgMemory = libResults.Average(r => r.MemoryAllocatedKB);
+        // Separate correct and incorrect results
+        var correctResults = libResults.Where(r => r.IsCorrect == true).ToList();
+        var incorrectResults = libResults.Where(r => r.IsCorrect == false).ToList();
 
-        // Correctness stats
-        var correctCount = libResults.Count(r => r.IsCorrect == true);
-        var incorrectCount = libResults.Count(r => r.IsCorrect == false);
-        var correctPct = libResults.Count > 0 ? (double)correctCount / libResults.Count * 100 : 0;
+        // Correctness stats (show prominently first)
+        var correctPct = libResults.Count > 0 ? (double)correctResults.Count / libResults.Count * 100 : 0;
 
         Console.WriteLine($"{lib}:");
-        Console.WriteLine($"  Scenarios: {libResults.Count}");
-        Console.WriteLine($"  Correctness: {correctCount}/{libResults.Count} ({correctPct:F0}%)");
-        if (incorrectCount > 0)
+        Console.WriteLine($"  Total scenarios: {libResults.Count}");
+
+        if (incorrectResults.Count > 0)
         {
-            Console.WriteLine($"  FAILURES: {incorrectCount} incorrect results!");
-            foreach (var failure in libResults.Where(r => r.IsCorrect == false))
+            Console.ForegroundColor = ConsoleColor.Red;
+            Console.WriteLine($"  *** CORRECTNESS: {correctResults.Count}/{libResults.Count} ({correctPct:F0}%) - {incorrectResults.Count} FAILURES ***");
+            Console.ResetColor();
+
+            // Group failures by category (extract from scenario name)
+            var failuresByCategory = incorrectResults
+                .GroupBy(r => ExtractCategory(r.ScenarioName))
+                .OrderByDescending(g => g.Count())
+                .ToList();
+
+            Console.WriteLine($"  Failure breakdown:");
+            foreach (var category in failuresByCategory)
             {
-                Console.WriteLine($"    - {failure.ScenarioName}: got {failure.ValidationResult}, expected {failure.ExpectedValid}");
+                Console.WriteLine($"    - {category.Key}: {category.Count()} failures");
             }
         }
-        Console.WriteLine($"  Median time: {FormatMicroseconds(avgMedian)} avg ({FormatMicroseconds(minMedian)} - {FormatMicroseconds(maxMedian)})");
-        Console.WriteLine($"  Throughput: {FormatThroughput(avgThroughput)} avg");
-        if (avgMemory > 0)
-            Console.WriteLine($"  Memory: {avgMemory:F1} KB avg");
+        else
+        {
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine($"  Correctness: {correctResults.Count}/{libResults.Count} (100%) - ALL PASS");
+            Console.ResetColor();
+        }
+
+        // Only compute performance stats from CORRECT results
+        if (correctResults.Count > 0)
+        {
+            var medians = correctResults.Select(r => r.MedianMicroseconds).ToList();
+            var avgMedian = medians.Average();
+            var minMedian = medians.Min();
+            var maxMedian = medians.Max();
+            var avgThroughput = avgMedian > 0 ? 1_000_000.0 / avgMedian : 0;
+            var avgMemory = correctResults.Average(r => r.MemoryAllocatedKB);
+
+            Console.WriteLine($"  Performance (correct results only):");
+            Console.WriteLine($"    Median time: {FormatMicroseconds(avgMedian)} avg ({FormatMicroseconds(minMedian)} - {FormatMicroseconds(maxMedian)})");
+            Console.WriteLine($"    Throughput: {FormatThroughput(avgThroughput)} avg");
+            if (avgMemory > 0)
+                Console.WriteLine($"    Memory: {avgMemory:F1} KB avg");
+        }
+        else
+        {
+            Console.WriteLine($"  Performance: N/A (no correct results)");
+        }
         Console.WriteLine();
     }
 
-    // Win count if multiple libraries
+    // Win count if multiple libraries (only count scenarios where both libraries got correct results)
     if (libraries.Count > 1)
     {
-        var winCounts = results
+        // Only compare on scenarios where ALL libraries got correct answers
+        var comparableScenarios = results
             .GroupBy(r => r.ScenarioId)
-            .Select(g => g.MinBy(r => r.MedianMicroseconds)?.LibraryName)
-            .Where(n => n is not null)
-            .GroupBy(n => n!)
-            .ToDictionary(g => g.Key, g => g.Count());
+            .Where(g => libraries.All(lib =>
+                g.Any(r => r.LibraryName == lib && r.IsCorrect == true)))
+            .ToList();
 
-        Console.WriteLine("Wins by library:");
-        foreach (var lib in libraries.OrderByDescending(l => winCounts.GetValueOrDefault(l, 0)))
+        if (comparableScenarios.Count > 0)
         {
-            var wins = winCounts.GetValueOrDefault(lib, 0);
-            var pct = results.GroupBy(r => r.ScenarioId).Count() > 0
-                ? (double)wins / results.GroupBy(r => r.ScenarioId).Count() * 100
-                : 0;
-            Console.WriteLine($"  {GetShortLibraryName(lib),-20} {wins,4} wins ({pct:F0}%)");
+            var winCounts = comparableScenarios
+                .Select(g => g.Where(r => r.IsCorrect == true).MinBy(r => r.MedianMicroseconds)?.LibraryName)
+                .Where(n => n is not null)
+                .GroupBy(n => n!)
+                .ToDictionary(g => g.Key, g => g.Count());
+
+            Console.WriteLine($"Wins by library (on {comparableScenarios.Count} commonly-correct scenarios):");
+            foreach (var lib in libraries.OrderByDescending(l => winCounts.GetValueOrDefault(l, 0)))
+            {
+                var wins = winCounts.GetValueOrDefault(lib, 0);
+                var pct = comparableScenarios.Count > 0
+                    ? (double)wins / comparableScenarios.Count * 100
+                    : 0;
+                Console.WriteLine($"  {GetShortLibraryName(lib),-20} {wins,4} wins ({pct:F0}%)");
+            }
+        }
+        else
+        {
+            Console.WriteLine("No comparable scenarios (no scenarios where all libraries got correct results).");
         }
     }
+}
+
+static string ExtractCategory(string scenarioName)
+{
+    // Extract the test file category from scenario name
+    // Format is typically "filename (testcase name)"
+    var parenIdx = scenarioName.IndexOf('(');
+    if (parenIdx > 0)
+    {
+        var filename = scenarioName[..parenIdx].Trim();
+        return filename;
+    }
+    return scenarioName;
 }
 
 static string GetShortLibraryName(string name) => name switch
