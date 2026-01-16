@@ -1,0 +1,7 @@
+{
+  "services": {
+    "invalid service name": {
+      "image": "nginx:alpine"
+    }
+  }
+}

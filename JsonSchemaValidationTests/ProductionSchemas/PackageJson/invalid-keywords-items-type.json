@@ -1,0 +1,5 @@
+{
+  "name": "@myorg/test-package",
+  "version": "1.0.0",
+  "keywords": ["valid", 123, "another"]
+}

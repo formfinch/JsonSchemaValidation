@@ -22,6 +22,16 @@ public sealed class BenchmarkResult
 
     public bool? ValidationResult { get; init; }
 
+    /// <summary>
+    /// Whether the validation result matched the expected result.
+    /// </summary>
+    public bool? IsCorrect { get; set; }
+
+    /// <summary>
+    /// The expected validation result for this test case.
+    /// </summary>
+    public bool? ExpectedValid { get; set; }
+
     [JsonIgnore]
     public double MedianMicroseconds => BenchmarkStatistics.Median(Timings);
 
