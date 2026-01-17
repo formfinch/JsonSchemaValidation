@@ -1,6 +1,7 @@
 using System.Text.Json;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Compiler;
+using JsonSchemaValidation.CompiledValidators;
 
 namespace JsonSchemaValidationBenchmarks.Adapters;
 
@@ -14,8 +15,9 @@ public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValida
     public string Name => "JSV-Compiled";
     public string Runtime => "dotnet";
 
-    // Shared factory with caching across all adapter instances
-    private static readonly RuntimeValidatorFactory Factory = new();
+    // Shared registry and factory with caching across all adapter instances
+    private static readonly CompiledValidatorRegistry Registry = new();
+    private static readonly RuntimeValidatorFactory Factory = new(Registry);
 
     private ICompiledValidator? _compiledValidator;
 
@@ -23,6 +25,19 @@ public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValida
     {
         // Compile the schema (cached if already compiled)
         _compiledValidator = Factory.Compile(schemaJson);
+
+        // Register the validator in the registry so it can be used by other schemas with external $ref
+        if (_compiledValidator != null)
+        {
+            try
+            {
+                Registry.Register(_compiledValidator);
+            }
+            catch
+            {
+                // Ignore registration errors (e.g., schema has no $id)
+            }
+        }
     }
 
     public bool Validate(string dataJson)
