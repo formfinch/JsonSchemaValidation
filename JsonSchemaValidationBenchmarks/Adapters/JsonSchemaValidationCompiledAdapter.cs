@@ -16,8 +16,28 @@ public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValida
     public string Runtime => "dotnet";
 
     // Shared registry and factory with caching across all adapter instances
-    private static readonly CompiledValidatorRegistry Registry = new();
+    private static readonly CompiledValidatorRegistry Registry = CreateRegistryWithMetaschemas();
     private static readonly RuntimeValidatorFactory Factory = new(Registry);
+
+    private static CompiledValidatorRegistry CreateRegistryWithMetaschemas()
+    {
+        var registry = new CompiledValidatorRegistry();
+
+        // Pre-register all metaschemas so they can be resolved by external $ref
+        foreach (var metaschema in CompiledMetaschemas.GetAll())
+        {
+            try
+            {
+                registry.Register(metaschema);
+            }
+            catch
+            {
+                // Ignore registration errors
+            }
+        }
+
+        return registry;
+    }
 
     private ICompiledValidator? _compiledValidator;
 
