@@ -10,10 +10,10 @@ public sealed class SubschemaExtractor
 {
     // Keywords that require fallback to dynamic validators
     // Note: $dynamicRef is NOT here because local $dynamicRef can be resolved statically
+    // Note: unevaluatedProperties/unevaluatedItems are now supported via annotation tracking
     private static readonly HashSet<string> FallbackKeywords = new(StringComparer.Ordinal)
     {
-        "unevaluatedProperties",
-        "unevaluatedItems"
+        // Currently empty - all keywords are handled by code generation
     };
 
     // Keywords that contain object-valued subschemas
@@ -57,6 +57,8 @@ public sealed class SubschemaExtractor
     private readonly Dictionary<string, JsonElement> _anchors = new(StringComparer.Ordinal);
     private int _totalCount;
     private JsonElement _rootSchema;
+    private bool _hasUnevaluatedProperties;
+    private bool _hasUnevaluatedItems;
 
     /// <summary>
     /// Extracts all unique subschemas from a root schema.
@@ -70,6 +72,8 @@ public sealed class SubschemaExtractor
         _anchors.Clear();
         _totalCount = 0;
         _rootSchema = rootSchema;
+        _hasUnevaluatedProperties = false;
+        _hasUnevaluatedItems = false;
 
         WalkSchema(rootSchema);
 
@@ -85,6 +89,16 @@ public sealed class SubschemaExtractor
     /// Gets the total count of subschemas encountered (including duplicates).
     /// </summary>
     public int TotalSubschemaCount => _totalCount;
+
+    /// <summary>
+    /// Gets whether the schema tree contains unevaluatedProperties keyword.
+    /// </summary>
+    public bool HasUnevaluatedProperties => _hasUnevaluatedProperties;
+
+    /// <summary>
+    /// Gets whether the schema tree contains unevaluatedItems keyword.
+    /// </summary>
+    public bool HasUnevaluatedItems => _hasUnevaluatedItems;
 
     /// <summary>
     /// Gets the hash for a schema element.
@@ -209,6 +223,16 @@ public sealed class SubschemaExtractor
         // Walk all subschema-containing keywords
         foreach (var property in schema.EnumerateObject())
         {
+            // Detect unevaluated* keywords
+            if (property.Name == "unevaluatedProperties")
+            {
+                _hasUnevaluatedProperties = true;
+            }
+            else if (property.Name == "unevaluatedItems")
+            {
+                _hasUnevaluatedItems = true;
+            }
+
             if (ObjectSubschemaKeywords.Contains(property.Name))
             {
                 WalkSubschema(property.Value);

@@ -31,6 +31,8 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var trackAnnotations = context.RequiresPropertyAnnotations;
         var sb = new StringBuilder();
 
         sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Object)");
@@ -47,6 +49,10 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine($"    if ({e}.TryGetProperty(\"{escaped}\", out var _{varName}_))");
             sb.AppendLine("    {");
             sb.AppendLine($"        if (!Validate_{propHash}(_{varName}_)) return false;");
+            if (trackAnnotations)
+            {
+                sb.AppendLine($"        {eval}.EvaluatedProperties.Add(\"{escaped}\");");
+            }
             sb.AppendLine("    }");
             idx++;
         }

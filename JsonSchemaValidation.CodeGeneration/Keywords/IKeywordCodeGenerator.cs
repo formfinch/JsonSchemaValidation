@@ -87,6 +87,24 @@ public sealed class CodeGenerationContext
     /// Populated during code generation, consumed by SchemaCodeGenerator for field generation.
     /// </summary>
     public List<ExternalRefInfo> ExternalRefs { get; init; } = [];
+
+    /// <summary>
+    /// Whether the schema tree contains unevaluatedProperties.
+    /// When true, property evaluation must be tracked.
+    /// </summary>
+    public bool RequiresPropertyAnnotations { get; init; }
+
+    /// <summary>
+    /// Whether the schema tree contains unevaluatedItems.
+    /// When true, item evaluation must be tracked.
+    /// </summary>
+    public bool RequiresItemAnnotations { get; init; }
+
+    /// <summary>
+    /// The variable name for the evaluated state (e.g., "_eval_").
+    /// Only used when RequiresPropertyAnnotations or RequiresItemAnnotations is true.
+    /// </summary>
+    public string EvaluatedStateVariable { get; init; } = "_eval_";
 }
 
 /// <summary>
