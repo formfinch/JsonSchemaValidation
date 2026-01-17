@@ -25,6 +25,8 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var trackAnnotations = context.RequiresPropertyAnnotations;
         var sb = new StringBuilder();
 
         // Get defined property names and pattern property patterns
@@ -71,11 +73,24 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    }");
             sb.AppendLine("}");
         }
-        // Handle additionalProperties: true (no-op, always valid)
+        // Handle additionalProperties: true
         else if (addPropsElement.ValueKind == JsonValueKind.True)
         {
-            // No code needed
-            return string.Empty;
+            // Only generate code if we need to track annotations
+            if (trackAnnotations)
+            {
+                sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Object)");
+                sb.AppendLine("{");
+                sb.AppendLine($"    foreach (var _prop_ in {e}.EnumerateObject())");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        {eval}.EvaluatedProperties.Add(_prop_.Name);");
+                sb.AppendLine("    }");
+                sb.AppendLine("}");
+            }
+            else
+            {
+                return string.Empty;
+            }
         }
         // Handle additionalProperties: schema
         else if (addPropsElement.ValueKind == JsonValueKind.Object)
@@ -106,6 +121,10 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
             }
 
             sb.AppendLine($"        if (!Validate_{hash}(_prop_.Value)) return false;");
+            if (trackAnnotations)
+            {
+                sb.AppendLine($"        {eval}.EvaluatedProperties.Add(_prop_.Name);");
+            }
             sb.AppendLine("    }");
             sb.AppendLine("}");
         }

@@ -44,7 +44,9 @@ public sealed class SchemaCodeGenerator
             new OneOfCodeGenerator(),
             new NotCodeGenerator(),
             new IfThenElseCodeGenerator(),
-            new PatternCodeGenerator()
+            new PatternCodeGenerator(),
+            new UnevaluatedPropertiesCodeGenerator(),
+            new UnevaluatedItemsCodeGenerator()
         ];
 
         _keywordGenerators.Sort((a, b) => b.Priority.CompareTo(a.Priority));
@@ -89,6 +91,10 @@ public sealed class SchemaCodeGenerator
             var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema);
             var rootHash = SchemaHasher.ComputeHash(schema);
 
+            // Check if annotation tracking is needed
+            var requiresPropertyAnnotations = _extractor.HasUnevaluatedProperties;
+            var requiresItemAnnotations = _extractor.HasUnevaluatedItems;
+
             // Collect all static fields and external refs
             var allStaticFields = new List<StaticFieldInfo>();
             var allExternalRefs = new List<ExternalRefInfo>();
@@ -96,7 +102,7 @@ public sealed class SchemaCodeGenerator
             // Pre-scan pass: detect external refs to determine if methods should be static
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs);
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
                 foreach (var generator in _keywordGenerators)
                 {
                     if (generator.CanGenerate(subschemaInfo.Schema))
@@ -113,7 +119,7 @@ public sealed class SchemaCodeGenerator
             var methods = new StringBuilder();
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, hasExternalRefs);
+                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, hasExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
                 methods.AppendLine(methodCode);
                 methods.AppendLine();
             }
@@ -121,7 +127,7 @@ public sealed class SchemaCodeGenerator
             // Collect static fields from all subschemas
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs);
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
                 foreach (var generator in _keywordGenerators)
                 {
                     if (generator.CanGenerate(subschemaInfo.Schema))
@@ -146,7 +152,9 @@ public sealed class SchemaCodeGenerator
                 rootHash,
                 allStaticFields,
                 allExternalRefs,
-                methods.ToString());
+                methods.ToString(),
+                requiresPropertyAnnotations,
+                requiresItemAnnotations);
 
             var fileName = $"{resolvedClassName}.cs";
             return GenerationResult.Succeeded(code, fileName);
@@ -157,13 +165,14 @@ public sealed class SchemaCodeGenerator
         }
     }
 
-    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool hasExternalRefs)
+    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool hasExternalRefs, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
     {
-        var context = CreateContext(subschemaInfo, allSchemas, baseUri, externalRefs);
+        var context = CreateContext(subschemaInfo, allSchemas, baseUri, externalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
         var sb = new StringBuilder();
 
-        // Use instance methods if there are external refs (to access instance fields)
-        var staticModifier = hasExternalRefs ? "" : "static ";
+        // Use instance methods if there are external refs or annotation tracking (to access instance fields)
+        var requiresInstance = hasExternalRefs || requiresPropertyAnnotations || requiresItemAnnotations;
+        var staticModifier = requiresInstance ? "" : "static ";
         sb.AppendLine($"    private {staticModifier}bool Validate_{subschemaInfo.Hash}(JsonElement e)");
         sb.AppendLine("    {");
 
@@ -206,7 +215,7 @@ public sealed class SchemaCodeGenerator
         return sb.ToString();
     }
 
-    private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs)
+    private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
     {
         return new CodeGenerationContext
         {
@@ -215,7 +224,9 @@ public sealed class SchemaCodeGenerator
             GetSubschemaHash = element => SchemaHasher.ComputeHash(element),
             ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue),
             BaseUri = baseUri,
-            ExternalRefs = externalRefs
+            ExternalRefs = externalRefs,
+            RequiresPropertyAnnotations = requiresPropertyAnnotations,
+            RequiresItemAnnotations = requiresItemAnnotations
         };
     }
 
@@ -226,9 +237,12 @@ public sealed class SchemaCodeGenerator
         string rootHash,
         List<StaticFieldInfo> staticFields,
         List<ExternalRefInfo> externalRefs,
-        string methods)
+        string methods,
+        bool requiresPropertyAnnotations,
+        bool requiresItemAnnotations)
     {
         var hasExternalRefs = externalRefs.Count > 0;
+        var hasAnnotationTracking = requiresPropertyAnnotations || requiresItemAnnotations;
         var sb = new StringBuilder();
 
         // File header
@@ -278,6 +292,14 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine();
         }
 
+        // Instance field for annotation tracking
+        if (hasAnnotationTracking)
+        {
+            sb.AppendLine("        // Evaluation state for tracking annotations (unevaluatedProperties/unevaluatedItems)");
+            sb.AppendLine("        private readonly EvaluatedState _eval_ = new();");
+            sb.AppendLine();
+        }
+
         // SchemaUri property
         if (!string.IsNullOrEmpty(schemaUri))
         {
@@ -305,8 +327,19 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine();
         }
 
-        // IsValid entry point
-        sb.AppendLine($"        public bool IsValid(JsonElement instance) => Validate_{rootHash}(instance);");
+        // IsValid entry point - reset evaluation state if annotation tracking is enabled
+        if (hasAnnotationTracking)
+        {
+            sb.AppendLine("        public bool IsValid(JsonElement instance)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            _eval_.Reset();");
+            sb.AppendLine($"            return Validate_{rootHash}(instance);");
+            sb.AppendLine("        }");
+        }
+        else
+        {
+            sb.AppendLine($"        public bool IsValid(JsonElement instance) => Validate_{rootHash}(instance);");
+        }
         sb.AppendLine();
 
         // Validation methods
@@ -357,6 +390,41 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("            }");
         sb.AppendLine("            return true;");
         sb.AppendLine("        }");
+
+        // Generate EvaluatedState class if annotation tracking is enabled
+        if (hasAnnotationTracking)
+        {
+            sb.AppendLine();
+            sb.AppendLine("        /// <summary>");
+            sb.AppendLine("        /// Tracks which properties and items have been evaluated during validation.");
+            sb.AppendLine("        /// Used by unevaluatedProperties and unevaluatedItems keywords.");
+            sb.AppendLine("        /// </summary>");
+            sb.AppendLine("        private sealed class EvaluatedState");
+            sb.AppendLine("        {");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("            public HashSet<string> EvaluatedProperties { get; } = new(StringComparer.Ordinal);");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("            public int EvaluatedItemsUpTo { get; set; }");
+                sb.AppendLine("            public HashSet<int> EvaluatedItemIndices { get; } = new();");
+            }
+            sb.AppendLine();
+            sb.AppendLine("            public void Reset()");
+            sb.AppendLine("            {");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("                EvaluatedProperties.Clear();");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("                EvaluatedItemsUpTo = 0;");
+                sb.AppendLine("                EvaluatedItemIndices.Clear();");
+            }
+            sb.AppendLine("            }");
+            sb.AppendLine("        }");
+        }
 
         // Close class and namespace
         sb.AppendLine("    }");

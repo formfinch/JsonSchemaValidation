@@ -31,6 +31,8 @@ public sealed class PatternPropertiesCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var trackAnnotations = context.RequiresPropertyAnnotations;
         var sb = new StringBuilder();
 
         sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Object)");
@@ -47,6 +49,10 @@ public sealed class PatternPropertiesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine($"        if ({fieldName}.IsMatch(_ppProp_.Name))");
             sb.AppendLine("        {");
             sb.AppendLine($"            if (!Validate_{schemaHash}(_ppProp_.Value)) return false;");
+            if (trackAnnotations)
+            {
+                sb.AppendLine($"            {eval}.EvaluatedProperties.Add(_ppProp_.Name);");
+            }
             sb.AppendLine("        }");
             idx++;
         }

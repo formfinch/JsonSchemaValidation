@@ -43,6 +43,8 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var trackAnnotations = context.RequiresItemAnnotations;
         var hash = context.GetSubschemaHash(itemsElement);
 
         // Check if prefixItems exists (2020-12) - if so, items only validates after prefixItems
@@ -68,6 +70,11 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("        }");
             sb.AppendLine("        _itemIdx_++;");
             sb.AppendLine("    }");
+            if (trackAnnotations)
+            {
+                // items evaluates all items from prefixCount onwards
+                sb.AppendLine($"    {eval}.EvaluatedItemsUpTo = {e}.GetArrayLength();");
+            }
         }
         else
         {
@@ -75,6 +82,11 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    {");
             sb.AppendLine($"        if (!Validate_{hash}(_arrItem_)) return false;");
             sb.AppendLine("    }");
+            if (trackAnnotations)
+            {
+                // items evaluates all items
+                sb.AppendLine($"    {eval}.EvaluatedItemsUpTo = {e}.GetArrayLength();");
+            }
         }
 
         sb.AppendLine("}");
@@ -111,7 +123,11 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var trackAnnotations = context.RequiresItemAnnotations;
         var sb = new StringBuilder();
+
+        var prefixCount = prefixItemsElement.GetArrayLength();
 
         sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Array)");
         sb.AppendLine("{");
@@ -133,6 +149,12 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine($"        if (_prefixIdx_ >= {idx}) break;");
         sb.AppendLine("        _prefixIdx_++;");
         sb.AppendLine("    }");
+        if (trackAnnotations)
+        {
+            // prefixItems evaluates items up to the smaller of prefixItems.length and array.length
+            sb.AppendLine($"    var _evalCount_ = Math.Min({prefixCount}, {e}.GetArrayLength());");
+            sb.AppendLine($"    if (_evalCount_ > {eval}.EvaluatedItemsUpTo) {eval}.EvaluatedItemsUpTo = _evalCount_;");
+        }
         sb.AppendLine("}");
 
         return sb.ToString();
