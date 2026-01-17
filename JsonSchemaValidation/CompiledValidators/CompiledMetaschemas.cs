@@ -6,7 +6,7 @@ namespace JsonSchemaValidation.CompiledValidators;
 /// <summary>
 /// Provides access to all pre-compiled metaschema validators.
 /// </summary>
-internal static class CompiledMetaschemas
+public static class CompiledMetaschemas
 {
     /// <summary>
     /// Gets all compiled metaschema validators for registration.
