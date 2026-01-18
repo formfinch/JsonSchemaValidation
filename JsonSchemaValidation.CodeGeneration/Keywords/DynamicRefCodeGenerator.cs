@@ -69,9 +69,8 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
 
         // Get the hash of the target schema and generate a call to its validation method
         var targetHash = context.GetSubschemaHash(targetSchema.Value);
-        var e = context.ElementVariable;
 
-        return $"// $dynamicRef: {refValue}\nif (!Validate_{targetHash}({e})) return false;";
+        return $"// $dynamicRef: {refValue}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
     }
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)

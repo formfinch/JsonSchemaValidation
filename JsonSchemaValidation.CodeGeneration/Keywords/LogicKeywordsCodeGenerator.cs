@@ -31,6 +31,8 @@ public sealed class AllOfCodeGenerator : IKeywordCodeGenerator
         var sb = new StringBuilder();
 
         // If annotation tracking is enabled, isolate each branch's state
+        // Each subschema starts with fresh annotations (per JSON Schema spec: unevaluatedProperties
+        // only considers annotations from "adjacent keywords" within the same schema object)
         if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
         {
             var branches = allOfElement.EnumerateArray().ToArray();
@@ -41,14 +43,14 @@ public sealed class AllOfCodeGenerator : IKeywordCodeGenerator
             for (int i = 0; i < branches.Length; i++)
             {
                 var hash = context.GetSubschemaHash(branches[i]);
-                sb.AppendLine($"    // Branch {i}");
-                sb.AppendLine($"    {eval}.RestoreFrom(_allOfBase_);");
-                sb.AppendLine($"    if (!Validate_{hash}({e})) return false;");
+                sb.AppendLine($"    // Branch {i} - start with fresh annotations");
+                sb.AppendLine($"    {eval}.Reset();");
+                sb.AppendLine($"    if (!{context.GenerateValidateCall(hash)}) return false;");
                 sb.AppendLine($"    var _allOfBranch{i}_ = {eval}.Clone();");
             }
 
             // Merge all branches' annotations into the base state
-            sb.AppendLine("    // Merge all branches' annotations");
+            sb.AppendLine("    // Merge all branches' annotations back to parent");
             sb.AppendLine($"    {eval}.RestoreFrom(_allOfBase_);");
             for (int i = 0; i < branches.Length; i++)
             {
@@ -62,7 +64,7 @@ public sealed class AllOfCodeGenerator : IKeywordCodeGenerator
         foreach (var subschema in allOfElement.EnumerateArray())
         {
             var hash = context.GetSubschemaHash(subschema);
-            sb.AppendLine($"if (!Validate_{hash}({e})) return false;");
+            sb.AppendLine($"if (!{context.GenerateValidateCall(hash)}) return false;");
         }
 
         return sb.ToString();
@@ -102,6 +104,7 @@ public sealed class AnyOfCodeGenerator : IKeywordCodeGenerator
         var sb = new StringBuilder();
 
         // If annotation tracking is enabled, isolate each branch's state
+        // Each subschema starts with fresh annotations
         if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
         {
             var branches = anyOfElement.EnumerateArray().ToArray();
@@ -113,14 +116,14 @@ public sealed class AnyOfCodeGenerator : IKeywordCodeGenerator
             for (int i = 0; i < branches.Length; i++)
             {
                 var hash = context.GetSubschemaHash(branches[i]);
-                sb.AppendLine($"    // Branch {i}");
-                sb.AppendLine($"    {eval}.RestoreFrom(_anyOfBase_);");
-                sb.AppendLine($"    if (Validate_{hash}({e}))");
+                sb.AppendLine($"    // Branch {i} - start with fresh annotations");
+                sb.AppendLine($"    {eval}.Reset();");
+                sb.AppendLine($"    if ({context.GenerateValidateCall(hash)})");
                 sb.AppendLine($"        _anyOfMatches_.Add({eval}.Clone());");
             }
 
             sb.AppendLine("    if (_anyOfMatches_.Count == 0) return false;");
-            sb.AppendLine("    // Merge successful branches' annotations");
+            sb.AppendLine("    // Merge successful branches' annotations back to parent");
             sb.AppendLine($"    {eval}.RestoreFrom(_anyOfBase_);");
             sb.AppendLine("    foreach (var _m_ in _anyOfMatches_)");
             sb.AppendLine($"        {eval}.MergeFrom(_m_);");
@@ -135,7 +138,7 @@ public sealed class AnyOfCodeGenerator : IKeywordCodeGenerator
         foreach (var subschema in anyOfElement.EnumerateArray())
         {
             var hash = context.GetSubschemaHash(subschema);
-            sb.AppendLine($"    if (Validate_{hash}({e})) _anyValid_ = true;");
+            sb.AppendLine($"    if ({context.GenerateValidateCall(hash)}) _anyValid_ = true;");
         }
 
         sb.AppendLine("    if (!_anyValid_) return false;");
@@ -178,6 +181,7 @@ public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
         var sb = new StringBuilder();
 
         // If annotation tracking is enabled, isolate each branch's state
+        // Each subschema starts with fresh annotations
         if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
         {
             var branches = oneOfElement.EnumerateArray().ToArray();
@@ -190,9 +194,9 @@ public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
             for (int i = 0; i < branches.Length; i++)
             {
                 var hash = context.GetSubschemaHash(branches[i]);
-                sb.AppendLine($"    // Branch {i}");
-                sb.AppendLine($"    {eval}.RestoreFrom(_oneOfBase_);");
-                sb.AppendLine($"    if (Validate_{hash}({e}))");
+                sb.AppendLine($"    // Branch {i} - start with fresh annotations");
+                sb.AppendLine($"    {eval}.Reset();");
+                sb.AppendLine($"    if ({context.GenerateValidateCall(hash)})");
                 sb.AppendLine("    {");
                 sb.AppendLine("        _matchCount_++;");
                 sb.AppendLine("        if (_matchCount_ > 1) return false;");
@@ -201,7 +205,7 @@ public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
             }
 
             sb.AppendLine("    if (_matchCount_ != 1) return false;");
-            sb.AppendLine("    // Merge the one matching branch's annotations");
+            sb.AppendLine("    // Merge the one matching branch's annotations back to parent");
             sb.AppendLine($"    {eval}.RestoreFrom(_oneOfBase_);");
             sb.AppendLine($"    {eval}.MergeFrom(_oneOfMatch_!);");
             sb.AppendLine("}");
@@ -215,7 +219,7 @@ public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
         foreach (var subschema in oneOfElement.EnumerateArray())
         {
             var hash = context.GetSubschemaHash(subschema);
-            sb.AppendLine($"    if (Validate_{hash}({e})) _matchCount_++;");
+            sb.AppendLine($"    if ({context.GenerateValidateCall(hash)}) _matchCount_++;");
             sb.AppendLine("    if (_matchCount_ > 1) return false;");
         }
 
@@ -261,20 +265,22 @@ public sealed class NotCodeGenerator : IKeywordCodeGenerator
         var hash = context.GetSubschemaHash(notElement);
 
         // If annotation tracking is enabled, save/restore state to discard annotations from "not"
+        // The subschema starts with fresh annotations (which will be discarded)
         if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
         {
             var sb = new StringBuilder();
             sb.AppendLine("// not: subschema must NOT match (annotations discarded)");
             sb.AppendLine("{");
             sb.AppendLine($"    {eval}.SaveTo(out var _notSnapshot_);");
-            sb.AppendLine($"    var _notResult_ = Validate_{hash}({e});");
+            sb.AppendLine($"    {eval}.Reset();");
+            sb.AppendLine($"    var _notResult_ = {context.GenerateValidateCall(hash)};");
             sb.AppendLine($"    {eval}.RestoreFrom(_notSnapshot_);");
             sb.AppendLine("    if (_notResult_) return false;");
             sb.AppendLine("}");
             return sb.ToString();
         }
 
-        return $"// not: subschema must NOT match\nif (Validate_{hash}({e})) return false;";
+        return $"// not: subschema must NOT match\nif ({context.GenerateValidateCall(hash)}) return false;";
     }
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)

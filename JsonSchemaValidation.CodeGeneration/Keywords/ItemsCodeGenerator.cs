@@ -44,6 +44,7 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var trackAnnotations = context.RequiresItemAnnotations;
         var hash = context.GetSubschemaHash(itemsElement);
 
@@ -66,26 +67,28 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    {");
             sb.AppendLine($"        if (_itemIdx_ >= {prefixCount})");
             sb.AppendLine("        {");
-            sb.AppendLine($"            if (!Validate_{hash}(_arrItem_)) return false;");
+            sb.AppendLine($"            if (!{context.GenerateValidateCallForItem(hash, "_arrItem_", "_itemIdx_")}) return false;");
             sb.AppendLine("        }");
             sb.AppendLine("        _itemIdx_++;");
             sb.AppendLine("    }");
             if (trackAnnotations)
             {
                 // items evaluates all items from prefixCount onwards
-                sb.AppendLine($"    {eval}.EvaluatedItemsUpTo = {e}.GetArrayLength();");
+                sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
             }
         }
         else
         {
+            sb.AppendLine("    var _itemIdx_ = 0;");
             sb.AppendLine($"    foreach (var _arrItem_ in {e}.EnumerateArray())");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (!Validate_{hash}(_arrItem_)) return false;");
+            sb.AppendLine($"        if (!{context.GenerateValidateCallForItem(hash, "_arrItem_", "_itemIdx_")}) return false;");
+            sb.AppendLine("        _itemIdx_++;");
             sb.AppendLine("    }");
             if (trackAnnotations)
             {
                 // items evaluates all items
-                sb.AppendLine($"    {eval}.EvaluatedItemsUpTo = {e}.GetArrayLength();");
+                sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
             }
         }
 
@@ -124,6 +127,7 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var trackAnnotations = context.RequiresItemAnnotations;
         var sb = new StringBuilder();
 
@@ -141,7 +145,7 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
             var hash = context.GetSubschemaHash(subschema);
             sb.AppendLine($"        if (_prefixIdx_ == {idx})");
             sb.AppendLine("        {");
-            sb.AppendLine($"            if (!Validate_{hash}(_prefixItem_)) return false;");
+            sb.AppendLine($"            if (!{context.GenerateValidateCallForItem(hash, "_prefixItem_", "_prefixIdx_")}) return false;");
             sb.AppendLine("        }");
             idx++;
         }
@@ -153,7 +157,7 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
         {
             // prefixItems evaluates items up to the smaller of prefixItems.length and array.length
             sb.AppendLine($"    var _evalCount_ = Math.Min({prefixCount}, {e}.GetArrayLength());");
-            sb.AppendLine($"    if (_evalCount_ > {eval}.EvaluatedItemsUpTo) {eval}.EvaluatedItemsUpTo = _evalCount_;");
+            sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, _evalCount_);");
         }
         sb.AppendLine("}");
 

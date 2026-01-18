@@ -351,12 +351,6 @@ namespace JsonSchemaValidationTests.Draft202012
                 // Vocabulary - validate definition against metaschema
                 new("validate definition against metaschema", "*"),
 
-                // Unevaluated edge cases
-                new("Evaluated items collection needs to consider instance location", "*"),
-                new("nested unevaluatedProperties, outer true, inner false, properties outside", "*"),
-                new("in-place applicator siblings, anyOf has unevaluated", "*"),
-                new("Evaluated properties collection needs to consider instance location", "*"),
-
                 // Format-assertion vocabulary tests
                 new("schema that uses custom metaschema with with no validation vocabulary", "*"),
                 new("schema that uses custom metaschema with format-assertion: false", "*"),

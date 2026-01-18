@@ -26,6 +26,7 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var trackAnnotations = context.RequiresItemAnnotations;
         var containsHash = context.GetSubschemaHash(containsElement);
 
@@ -49,18 +50,15 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Array)");
         sb.AppendLine("{");
         sb.AppendLine("    var _containsCount_ = 0;");
-        if (trackAnnotations)
-        {
-            sb.AppendLine("    var _containsIdx_ = 0;");
-        }
+        sb.AppendLine("    var _containsIdx_ = 0;");
         sb.AppendLine($"    foreach (var _containsItem_ in {e}.EnumerateArray())");
         sb.AppendLine("    {");
-        sb.AppendLine($"        if (Validate_{containsHash}(_containsItem_))");
+        sb.AppendLine($"        if ({context.GenerateValidateCallForItem(containsHash, "_containsItem_", "_containsIdx_")})");
         sb.AppendLine("        {");
         sb.AppendLine("            _containsCount_++;");
         if (trackAnnotations)
         {
-            sb.AppendLine($"            {eval}.EvaluatedItemIndices.Add(_containsIdx_);");
+            sb.AppendLine($"            {eval}.MarkItemEvaluated({loc}, _containsIdx_);");
         }
 
         if (maxContains != (long)int.MaxValue)
@@ -69,10 +67,7 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
         }
 
         sb.AppendLine("        }");
-        if (trackAnnotations)
-        {
-            sb.AppendLine("        _containsIdx_++;");
-        }
+        sb.AppendLine("        _containsIdx_++;");
         sb.AppendLine("    }");
         sb.AppendLine($"    if (_containsCount_ < {minContains}) return false;");
         sb.AppendLine("}");

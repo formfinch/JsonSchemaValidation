@@ -99,9 +99,8 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
 
         // Get the hash of the target schema and generate a call to its validation method
         var targetHash = context.GetSubschemaHash(targetSchema.Value);
-        var e = context.ElementVariable;
 
-        return $"// $ref: {refValue}\nif (!Validate_{targetHash}({e})) return false;";
+        return $"// $ref: {refValue}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
     }
 
     private static string GenerateExternalRefCode(CodeGenerationContext context, string refValue)
@@ -136,8 +135,7 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         {
             // This is an internal reference - generate a local method call
             var targetHash = context.GetSubschemaHash(internalSchema.Value);
-            var e = context.ElementVariable;
-            return $"// $ref: {refValue} (internal $id)\nif (!Validate_{targetHash}({e})) return false;";
+            return $"// $ref: {refValue} (internal $id)\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
         }
 
         // External refs with fragments are not yet supported (would require subschema registration)

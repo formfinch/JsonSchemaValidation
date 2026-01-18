@@ -33,6 +33,7 @@ public sealed class UnevaluatedPropertiesCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var sb = new StringBuilder();
 
         // Handle unevaluatedProperties: false
@@ -42,7 +43,7 @@ public sealed class UnevaluatedPropertiesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("{");
             sb.AppendLine($"    foreach (var _prop_ in {e}.EnumerateObject())");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (!{eval}.EvaluatedProperties.Contains(_prop_.Name))");
+            sb.AppendLine($"        if (!{eval}.IsPropertyEvaluated({loc}, _prop_.Name))");
             sb.AppendLine("        {");
             sb.AppendLine("            return false; // Unevaluated property not allowed");
             sb.AppendLine("        }");
@@ -56,7 +57,7 @@ public sealed class UnevaluatedPropertiesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("{");
             sb.AppendLine($"    foreach (var _prop_ in {e}.EnumerateObject())");
             sb.AppendLine("    {");
-            sb.AppendLine($"        {eval}.EvaluatedProperties.Add(_prop_.Name);");
+            sb.AppendLine($"        {eval}.MarkPropertyEvaluated({loc}, _prop_.Name);");
             sb.AppendLine("    }");
             sb.AppendLine("}");
         }
@@ -69,10 +70,10 @@ public sealed class UnevaluatedPropertiesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("{");
             sb.AppendLine($"    foreach (var _prop_ in {e}.EnumerateObject())");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (!{eval}.EvaluatedProperties.Contains(_prop_.Name))");
+            sb.AppendLine($"        if (!{eval}.IsPropertyEvaluated({loc}, _prop_.Name))");
             sb.AppendLine("        {");
-            sb.AppendLine($"            if (!Validate_{hash}(_prop_.Value)) return false;");
-            sb.AppendLine($"            {eval}.EvaluatedProperties.Add(_prop_.Name);");
+            sb.AppendLine($"            if (!{context.GenerateValidateCallForProperty(hash, "_prop_.Value", "_prop_.Name")}) return false;");
+            sb.AppendLine($"            {eval}.MarkPropertyEvaluated({loc}, _prop_.Name);");
             sb.AppendLine("        }");
             sb.AppendLine("    }");
             sb.AppendLine("}");

@@ -128,6 +128,52 @@ public sealed class CodeGenerationContext
     /// Only used when RequiresPropertyAnnotations or RequiresItemAnnotations is true.
     /// </summary>
     public string EvaluatedStateVariable { get; init; } = "_eval_";
+
+    /// <summary>
+    /// The variable name for the current instance location (e.g., "_loc_").
+    /// Only used when RequiresPropertyAnnotations or RequiresItemAnnotations is true.
+    /// </summary>
+    public string LocationVariable { get; init; } = "_loc_";
+
+    /// <summary>
+    /// Whether annotation tracking requires passing location through method calls.
+    /// </summary>
+    public bool RequiresLocationTracking => RequiresPropertyAnnotations || RequiresItemAnnotations;
+
+    /// <summary>
+    /// Gets the location argument suffix for method calls (", _loc_" if location tracking is enabled, empty otherwise).
+    /// </summary>
+    public string LocationArgument => RequiresLocationTracking ? $", {LocationVariable}" : "";
+
+    /// <summary>
+    /// Generates a method call to validate a subschema, passing location if needed.
+    /// For same-level calls (allOf, anyOf, etc.)
+    /// </summary>
+    public string GenerateValidateCall(string hash) =>
+        RequiresLocationTracking ? $"Validate_{hash}({ElementVariable}, {LocationVariable})" : $"Validate_{hash}({ElementVariable})";
+
+    /// <summary>
+    /// Generates a method call to validate a subschema with a different element variable.
+    /// For property validation where we're validating a property value.
+    /// </summary>
+    public string GenerateValidateCallForVariable(string hash, string variable) =>
+        RequiresLocationTracking ? $"Validate_{hash}({variable}, {LocationVariable})" : $"Validate_{hash}({variable})";
+
+    /// <summary>
+    /// Generates a method call to validate a child property (pushes property name onto location).
+    /// </summary>
+    public string GenerateValidateCallForProperty(string hash, string propertyValueVar, string propertyNameLiteral) =>
+        RequiresLocationTracking
+            ? $"Validate_{hash}({propertyValueVar}, {LocationVariable} + \"/\" + EscapeJsonPointer({propertyNameLiteral}))"
+            : $"Validate_{hash}({propertyValueVar})";
+
+    /// <summary>
+    /// Generates a method call to validate a child array item (pushes index onto location).
+    /// </summary>
+    public string GenerateValidateCallForItem(string hash, string itemVar, string indexVar) =>
+        RequiresLocationTracking
+            ? $"Validate_{hash}({itemVar}, {LocationVariable} + \"/\" + {indexVar})"
+            : $"Validate_{hash}({itemVar})";
 }
 
 /// <summary>

@@ -27,6 +27,7 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var trackAnnotations = context.RequiresPropertyAnnotations;
         var sb = new StringBuilder();
 
@@ -84,7 +85,7 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
                 sb.AppendLine("{");
                 sb.AppendLine($"    foreach (var _prop_ in {e}.EnumerateObject())");
                 sb.AppendLine("    {");
-                sb.AppendLine($"        {eval}.EvaluatedProperties.Add(_prop_.Name);");
+                sb.AppendLine($"        {eval}.MarkPropertyEvaluated({loc}, _prop_.Name);");
                 sb.AppendLine("    }");
                 sb.AppendLine("}");
             }
@@ -121,10 +122,10 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
                 sb.AppendLine("        if (_matchesPattern_) continue;");
             }
 
-            sb.AppendLine($"        if (!Validate_{hash}(_prop_.Value)) return false;");
+            sb.AppendLine($"        if (!{context.GenerateValidateCallForProperty(hash, "_prop_.Value", "_prop_.Name")}) return false;");
             if (trackAnnotations)
             {
-                sb.AppendLine($"        {eval}.EvaluatedProperties.Add(_prop_.Name);");
+                sb.AppendLine($"        {eval}.MarkPropertyEvaluated({loc}, _prop_.Name);");
             }
             sb.AppendLine("    }");
             sb.AppendLine("}");
