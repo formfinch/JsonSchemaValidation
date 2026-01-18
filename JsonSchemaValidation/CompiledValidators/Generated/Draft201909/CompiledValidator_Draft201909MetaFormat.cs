@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
@@ -31,9 +32,9 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("format", out var _format_))
+            if (e.TryGetProperty("format", out var _prop0_))
             {
-                if (!Validate_00404e686415(_format_)) return false;
+                if (!Validate_00404e686415(_prop0_)) return false;
             }
         }
 

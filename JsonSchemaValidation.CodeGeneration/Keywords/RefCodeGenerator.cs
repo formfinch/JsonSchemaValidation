@@ -138,12 +138,8 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             return $"// $ref: {refValue} (internal $id)\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
         }
 
-        // External refs with fragments are not yet supported (would require subschema registration)
-        // Return empty to skip this keyword and let other validators handle it
-        if (!string.IsNullOrEmpty(targetUri.Fragment) && targetUri.Fragment != "#")
-        {
-            return $"// External $ref with fragment not supported in compiled mode: {refValue}";
-        }
+        // External refs with fragments - the fragment URI should be registered separately
+        // in the registry (e.g., http://example.com/schema.json#/$defs/foo)
 
         // Generate a unique field name based on the hash of the target URI
         var fieldName = $"_extRef_{GenerateFieldNameSuffix(targetUri.AbsoluteUri)}";

@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
@@ -31,33 +32,33 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("title", out var _title_))
+            if (e.TryGetProperty("title", out var _prop0_))
             {
-                if (!Validate_00404e686415(_title_)) return false;
+                if (!Validate_00404e686415(_prop0_)) return false;
             }
-            if (e.TryGetProperty("description", out var _description_))
+            if (e.TryGetProperty("description", out var _prop1_))
             {
-                if (!Validate_00404e686415(_description_)) return false;
+                if (!Validate_00404e686415(_prop1_)) return false;
             }
-            if (e.TryGetProperty("default", out var _default_))
+            if (e.TryGetProperty("default", out var _prop2_))
             {
-                if (!Validate_b5bea41b6c62(_default_)) return false;
+                if (!Validate_b5bea41b6c62(_prop2_)) return false;
             }
-            if (e.TryGetProperty("deprecated", out var _deprecated_))
+            if (e.TryGetProperty("deprecated", out var _prop3_))
             {
-                if (!Validate_7cb541e84f22(_deprecated_)) return false;
+                if (!Validate_7cb541e84f22(_prop3_)) return false;
             }
-            if (e.TryGetProperty("readOnly", out var _readOnly_))
+            if (e.TryGetProperty("readOnly", out var _prop4_))
             {
-                if (!Validate_7cb541e84f22(_readOnly_)) return false;
+                if (!Validate_7cb541e84f22(_prop4_)) return false;
             }
-            if (e.TryGetProperty("writeOnly", out var _writeOnly_))
+            if (e.TryGetProperty("writeOnly", out var _prop5_))
             {
-                if (!Validate_7cb541e84f22(_writeOnly_)) return false;
+                if (!Validate_7cb541e84f22(_prop5_)) return false;
             }
-            if (e.TryGetProperty("examples", out var _examples_))
+            if (e.TryGetProperty("examples", out var _prop6_))
             {
-                if (!Validate_11d4ea710c08(_examples_)) return false;
+                if (!Validate_11d4ea710c08(_prop6_)) return false;
             }
         }
 
@@ -90,9 +91,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_b5bea41b6c62(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 

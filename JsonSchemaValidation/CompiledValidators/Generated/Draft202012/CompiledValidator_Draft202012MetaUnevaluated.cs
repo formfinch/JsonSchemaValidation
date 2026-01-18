@@ -11,16 +11,33 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
+using JsonSchemaValidation.CompiledValidators;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012MetaUnevaluated : ICompiledValidator
+    public sealed class CompiledValidator_Draft202012MetaUnevaluated : IRegistryAwareCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/unevaluated");
 
+        private ICompiledValidator? _dynamicScopeRoot;
+
+        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void Initialize(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void SetDynamicScopeRoot(ICompiledValidator? root)
+        {
+            _dynamicScopeRoot = root;
+        }
+
         public bool IsValid(JsonElement instance) => Validate_c99c4a7d94b9(instance);
 
-    private static bool Validate_c99c4a7d94b9(JsonElement e)
+    private bool Validate_c99c4a7d94b9(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -31,13 +48,13 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("unevaluatedItems", out var _unevaluatedItems_))
+            if (e.TryGetProperty("unevaluatedItems", out var _prop0_))
             {
-                if (!Validate_380c73c6d6de(_unevaluatedItems_)) return false;
+                if (!Validate_380c73c6d6de(_prop0_)) return false;
             }
-            if (e.TryGetProperty("unevaluatedProperties", out var _unevaluatedProperties_))
+            if (e.TryGetProperty("unevaluatedProperties", out var _prop1_))
             {
-                if (!Validate_380c73c6d6de(_unevaluatedProperties_)) return false;
+                if (!Validate_380c73c6d6de(_prop1_)) return false;
             }
         }
 
@@ -45,8 +62,17 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_380c73c6d6de(JsonElement e)
+    private bool Validate_380c73c6d6de(JsonElement e)
     {
+        // $dynamicRef: #meta (with runtime scope check)
+        if (_dynamicScopeRoot != null)
+        {
+            if (!_dynamicScopeRoot.IsValid(e)) return false;
+        }
+        else
+        {
+            if (!Validate_c99c4a7d94b9(e)) return false;
+        }
         return true;
     }
 

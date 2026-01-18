@@ -11,16 +11,124 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
+using JsonSchemaValidation.CompiledValidators;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012Schema : ICompiledValidator
+    public sealed class CompiledValidator_Draft202012Schema : IRegistryAwareCompiledValidator
     {
+        private ICompiledValidator _extRef_5f138f9c = null!;
+        private ICompiledValidator _extRef_634105d8 = null!;
+        private ICompiledValidator _extRef_d740cdd5 = null!;
+        private ICompiledValidator _extRef_767176b6 = null!;
+        private ICompiledValidator _extRef_45848c95 = null!;
+        private ICompiledValidator _extRef_2b2751e8 = null!;
+        private ICompiledValidator _extRef_2524f75c = null!;
+        private ICompiledValidator _extRef_fe7a0409 = null!;
+        private ICompiledValidator _extRef_9d0685eb = null!;
+        private ICompiledValidator _extRef_2c86bf35 = null!;
+
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/schema");
 
-        public bool IsValid(JsonElement instance) => Validate_7ed67a6ae614(instance);
+        private ICompiledValidator? _dynamicScopeRoot;
 
-    private static bool Validate_7ed67a6ae614(JsonElement e)
+        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void Initialize(ICompiledValidatorRegistry registry)
+        {
+            // External $ref: meta/core
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/core"), out var _extRef_5f138f9cResolved) || _extRef_5f138f9cResolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/core");
+            _extRef_5f138f9c = _extRef_5f138f9cResolved;
+            if (_extRef_5f138f9c is IRegistryAwareCompiledValidator _extRef_5f138f9cRegistryAware)
+                _extRef_5f138f9cRegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/applicator
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/applicator"), out var _extRef_634105d8Resolved) || _extRef_634105d8Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/applicator");
+            _extRef_634105d8 = _extRef_634105d8Resolved;
+            if (_extRef_634105d8 is IRegistryAwareCompiledValidator _extRef_634105d8RegistryAware)
+                _extRef_634105d8RegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/unevaluated
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/unevaluated"), out var _extRef_d740cdd5Resolved) || _extRef_d740cdd5Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/unevaluated");
+            _extRef_d740cdd5 = _extRef_d740cdd5Resolved;
+            if (_extRef_d740cdd5 is IRegistryAwareCompiledValidator _extRef_d740cdd5RegistryAware)
+                _extRef_d740cdd5RegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/validation
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/validation"), out var _extRef_767176b6Resolved) || _extRef_767176b6Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/validation");
+            _extRef_767176b6 = _extRef_767176b6Resolved;
+            if (_extRef_767176b6 is IRegistryAwareCompiledValidator _extRef_767176b6RegistryAware)
+                _extRef_767176b6RegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/meta-data
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/meta-data"), out var _extRef_45848c95Resolved) || _extRef_45848c95Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/meta-data");
+            _extRef_45848c95 = _extRef_45848c95Resolved;
+            if (_extRef_45848c95 is IRegistryAwareCompiledValidator _extRef_45848c95RegistryAware)
+                _extRef_45848c95RegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/format-annotation
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/format-annotation"), out var _extRef_2b2751e8Resolved) || _extRef_2b2751e8Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/format-annotation");
+            _extRef_2b2751e8 = _extRef_2b2751e8Resolved;
+            if (_extRef_2b2751e8 is IRegistryAwareCompiledValidator _extRef_2b2751e8RegistryAware)
+                _extRef_2b2751e8RegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/content
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/content"), out var _extRef_2524f75cResolved) || _extRef_2524f75cResolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/content");
+            _extRef_2524f75c = _extRef_2524f75cResolved;
+            if (_extRef_2524f75c is IRegistryAwareCompiledValidator _extRef_2524f75cRegistryAware)
+                _extRef_2524f75cRegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/validation#/$defs/stringArray
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/validation#/$defs/stringArray"), out var _extRef_fe7a0409Resolved) || _extRef_fe7a0409Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/validation#/$defs/stringArray");
+            _extRef_fe7a0409 = _extRef_fe7a0409Resolved;
+            if (_extRef_fe7a0409 is IRegistryAwareCompiledValidator _extRef_fe7a0409RegistryAware)
+                _extRef_fe7a0409RegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/core#/$defs/anchorString
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/core#/$defs/anchorString"), out var _extRef_9d0685ebResolved) || _extRef_9d0685ebResolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/core#/$defs/anchorString");
+            _extRef_9d0685eb = _extRef_9d0685ebResolved;
+            if (_extRef_9d0685eb is IRegistryAwareCompiledValidator _extRef_9d0685ebRegistryAware)
+                _extRef_9d0685ebRegistryAware.SetDynamicScopeRoot(this);
+            // External $ref: meta/core#/$defs/uriReferenceString
+            if (!registry.TryGetValidator(new Uri("https://json-schema.org/draft/2020-12/meta/core#/$defs/uriReferenceString"), out var _extRef_2c86bf35Resolved) || _extRef_2c86bf35Resolved is null)
+                throw new InvalidOperationException("Failed to resolve $ref: meta/core#/$defs/uriReferenceString");
+            _extRef_2c86bf35 = _extRef_2c86bf35Resolved;
+            if (_extRef_2c86bf35 is IRegistryAwareCompiledValidator _extRef_2c86bf35RegistryAware)
+                _extRef_2c86bf35RegistryAware.SetDynamicScopeRoot(this);
+        }
+
+        public void SetDynamicScopeRoot(ICompiledValidator? root)
+        {
+            _dynamicScopeRoot = root;
+            if (_extRef_5f138f9c is IRegistryAwareCompiledValidator _extRef_5f138f9cRegistryAware)
+                _extRef_5f138f9cRegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_634105d8 is IRegistryAwareCompiledValidator _extRef_634105d8RegistryAware)
+                _extRef_634105d8RegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_d740cdd5 is IRegistryAwareCompiledValidator _extRef_d740cdd5RegistryAware)
+                _extRef_d740cdd5RegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_767176b6 is IRegistryAwareCompiledValidator _extRef_767176b6RegistryAware)
+                _extRef_767176b6RegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_45848c95 is IRegistryAwareCompiledValidator _extRef_45848c95RegistryAware)
+                _extRef_45848c95RegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_2b2751e8 is IRegistryAwareCompiledValidator _extRef_2b2751e8RegistryAware)
+                _extRef_2b2751e8RegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_2524f75c is IRegistryAwareCompiledValidator _extRef_2524f75cRegistryAware)
+                _extRef_2524f75cRegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_fe7a0409 is IRegistryAwareCompiledValidator _extRef_fe7a0409RegistryAware)
+                _extRef_fe7a0409RegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_9d0685eb is IRegistryAwareCompiledValidator _extRef_9d0685ebRegistryAware)
+                _extRef_9d0685ebRegistryAware.SetDynamicScopeRoot(root);
+            if (_extRef_2c86bf35 is IRegistryAwareCompiledValidator _extRef_2c86bf35RegistryAware)
+                _extRef_2c86bf35RegistryAware.SetDynamicScopeRoot(root);
+        }
+
+        public bool IsValid(JsonElement instance) => Validate_503649440861(instance);
+
+    private bool Validate_503649440861(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -31,21 +139,21 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("definitions", out var _definitions_))
+            if (e.TryGetProperty("definitions", out var _prop0_))
             {
-                if (!Validate_6e9e6f7fe026(_definitions_)) return false;
+                if (!Validate_6e9e6f7fe026(_prop0_)) return false;
             }
-            if (e.TryGetProperty("dependencies", out var _dependencies_))
+            if (e.TryGetProperty("dependencies", out var _prop1_))
             {
-                if (!Validate_c6a600b23eb6(_dependencies_)) return false;
+                if (!Validate_c6a600b23eb6(_prop1_)) return false;
             }
-            if (e.TryGetProperty("$recursiveAnchor", out var __recursiveAnchor_))
+            if (e.TryGetProperty("$recursiveAnchor", out var _prop2_))
             {
-                if (!Validate_8b43684316a2(__recursiveAnchor_)) return false;
+                if (!Validate_8b43684316a2(_prop2_)) return false;
             }
-            if (e.TryGetProperty("$recursiveRef", out var __recursiveRef_))
+            if (e.TryGetProperty("$recursiveRef", out var _prop3_))
             {
-                if (!Validate_1e7693a55afa(__recursiveRef_)) return false;
+                if (!Validate_1e7693a55afa(_prop3_)) return false;
             }
         }
 
@@ -62,49 +170,63 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_481322343c1e(JsonElement e)
+    private bool Validate_481322343c1e(JsonElement e)
     {
+        // External $ref: meta/core
+        if (_extRef_5f138f9c == null || !_extRef_5f138f9c.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_abc697708893(JsonElement e)
+    private bool Validate_abc697708893(JsonElement e)
     {
+        // External $ref: meta/applicator
+        if (_extRef_634105d8 == null || !_extRef_634105d8.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_2c57575f34a2(JsonElement e)
+    private bool Validate_2c57575f34a2(JsonElement e)
     {
+        // External $ref: meta/unevaluated
+        if (_extRef_d740cdd5 == null || !_extRef_d740cdd5.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_81909b659d2d(JsonElement e)
+    private bool Validate_81909b659d2d(JsonElement e)
     {
+        // External $ref: meta/validation
+        if (_extRef_767176b6 == null || !_extRef_767176b6.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_b361f1ea9acc(JsonElement e)
+    private bool Validate_b361f1ea9acc(JsonElement e)
     {
+        // External $ref: meta/meta-data
+        if (_extRef_45848c95 == null || !_extRef_45848c95.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_2cacafbefa84(JsonElement e)
+    private bool Validate_2cacafbefa84(JsonElement e)
     {
+        // External $ref: meta/format-annotation
+        if (_extRef_2b2751e8 == null || !_extRef_2b2751e8.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_487cf610ea12(JsonElement e)
+    private bool Validate_487cf610ea12(JsonElement e)
     {
+        // External $ref: meta/content
+        if (_extRef_2524f75c == null || !_extRef_2524f75c.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_6e9e6f7fe026(JsonElement e)
+    private bool Validate_6e9e6f7fe026(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -119,13 +241,22 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_380c73c6d6de(JsonElement e)
+    private bool Validate_380c73c6d6de(JsonElement e)
     {
+        // $dynamicRef: #meta (with runtime scope check)
+        if (_dynamicScopeRoot != null)
+        {
+            if (!_dynamicScopeRoot.IsValid(e)) return false;
+        }
+        else
+        {
+            if (!Validate_503649440861(e)) return false;
+        }
         return true;
     }
 
 
-    private static bool Validate_c6a600b23eb6(JsonElement e)
+    private bool Validate_c6a600b23eb6(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -140,7 +271,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_2a46bcd61105(JsonElement e)
+    private bool Validate_2a46bcd61105(JsonElement e)
     {
         // anyOf: at least one subschema must match
         {
@@ -154,20 +285,26 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_380e034afba7(JsonElement e)
+    private bool Validate_380e034afba7(JsonElement e)
     {
+        // External $ref: meta/validation#/$defs/stringArray
+        if (_extRef_fe7a0409 == null || !_extRef_fe7a0409.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_8b43684316a2(JsonElement e)
+    private bool Validate_8b43684316a2(JsonElement e)
     {
+        // External $ref: meta/core#/$defs/anchorString
+        if (_extRef_9d0685eb == null || !_extRef_9d0685eb.IsValid(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_1e7693a55afa(JsonElement e)
+    private bool Validate_1e7693a55afa(JsonElement e)
     {
+        // External $ref: meta/core#/$defs/uriReferenceString
+        if (_extRef_2c86bf35 == null || !_extRef_2c86bf35.IsValid(e)) return false;
         return true;
     }
 
