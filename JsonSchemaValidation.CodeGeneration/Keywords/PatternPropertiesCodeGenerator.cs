@@ -33,6 +33,7 @@ public sealed class PatternPropertiesCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var trackAnnotations = context.RequiresPropertyAnnotations;
         var sb = new StringBuilder();
 
@@ -49,10 +50,10 @@ public sealed class PatternPropertiesCodeGenerator : IKeywordCodeGenerator
 
             sb.AppendLine($"        if ({fieldName}.IsMatch(_ppProp_.Name))");
             sb.AppendLine("        {");
-            sb.AppendLine($"            if (!Validate_{schemaHash}(_ppProp_.Value)) return false;");
+            sb.AppendLine($"            if (!{context.GenerateValidateCallForProperty(schemaHash, "_ppProp_.Value", "_ppProp_.Name")}) return false;");
             if (trackAnnotations)
             {
-                sb.AppendLine($"            {eval}.EvaluatedProperties.Add(_ppProp_.Name);");
+                sb.AppendLine($"            {eval}.MarkPropertyEvaluated({loc}, _ppProp_.Name);");
             }
             sb.AppendLine("        }");
             idx++;

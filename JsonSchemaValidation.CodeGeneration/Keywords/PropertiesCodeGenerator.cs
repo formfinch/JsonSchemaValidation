@@ -32,6 +32,7 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var trackAnnotations = context.RequiresPropertyAnnotations;
         var sb = new StringBuilder();
 
@@ -48,10 +49,10 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
 
             sb.AppendLine($"    if ({e}.TryGetProperty(\"{escaped}\", out var _{varName}_))");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (!Validate_{propHash}(_{varName}_)) return false;");
+            sb.AppendLine($"        if (!{context.GenerateValidateCallForProperty(propHash, $"_{varName}_", $"\"{escaped}\"")}) return false;");
             if (trackAnnotations)
             {
-                sb.AppendLine($"        {eval}.EvaluatedProperties.Add(\"{escaped}\");");
+                sb.AppendLine($"        {eval}.MarkPropertyEvaluated({loc}, \"{escaped}\");");
             }
             sb.AppendLine("    }");
             idx++;

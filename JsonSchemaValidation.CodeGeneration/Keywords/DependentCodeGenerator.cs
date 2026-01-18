@@ -56,7 +56,7 @@ public sealed class DependenciesCodeGenerator : IKeywordCodeGenerator
             {
                 // dependentSchemas-style: schema that must be satisfied
                 var schemaHash = context.GetSubschemaHash(prop.Value);
-                sb.AppendLine($"        if (!Validate_{schemaHash}({e})) return false;");
+                sb.AppendLine($"        if (!{context.GenerateValidateCall(schemaHash)}) return false;");
             }
 
             sb.AppendLine("    }");
@@ -210,7 +210,7 @@ public sealed class DependentSchemasCodeGenerator : IKeywordCodeGenerator
 
             sb.AppendLine($"    if ({e}.TryGetProperty(\"{triggerProp}\", out _))");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (!Validate_{schemaHash}({e})) return false;");
+            sb.AppendLine($"        if (!{context.GenerateValidateCall(schemaHash)}) return false;");
             sb.AppendLine("    }");
         }
 

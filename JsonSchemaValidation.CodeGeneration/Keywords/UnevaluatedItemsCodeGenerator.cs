@@ -33,6 +33,7 @@ public sealed class UnevaluatedItemsCodeGenerator : IKeywordCodeGenerator
 
         var e = context.ElementVariable;
         var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
         var sb = new StringBuilder();
 
         // Handle unevaluatedItems: false
@@ -43,7 +44,7 @@ public sealed class UnevaluatedItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    var _unevalIdx_ = 0;");
             sb.AppendLine($"    foreach (var _item_ in {e}.EnumerateArray())");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (_unevalIdx_ >= {eval}.EvaluatedItemsUpTo && !{eval}.EvaluatedItemIndices.Contains(_unevalIdx_))");
+            sb.AppendLine($"        if (!{eval}.IsItemEvaluated({loc}, _unevalIdx_))");
             sb.AppendLine("        {");
             sb.AppendLine("            return false; // Unevaluated item not allowed");
             sb.AppendLine("        }");
@@ -56,7 +57,7 @@ public sealed class UnevaluatedItemsCodeGenerator : IKeywordCodeGenerator
         {
             sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Array)");
             sb.AppendLine("{");
-            sb.AppendLine($"    {eval}.EvaluatedItemsUpTo = {e}.GetArrayLength();");
+            sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
             sb.AppendLine("}");
         }
         // Handle unevaluatedItems: schema
@@ -69,13 +70,13 @@ public sealed class UnevaluatedItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    var _unevalIdx_ = 0;");
             sb.AppendLine($"    foreach (var _item_ in {e}.EnumerateArray())");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (_unevalIdx_ >= {eval}.EvaluatedItemsUpTo && !{eval}.EvaluatedItemIndices.Contains(_unevalIdx_))");
+            sb.AppendLine($"        if (!{eval}.IsItemEvaluated({loc}, _unevalIdx_))");
             sb.AppendLine("        {");
-            sb.AppendLine($"            if (!Validate_{hash}(_item_)) return false;");
+            sb.AppendLine($"            if (!{context.GenerateValidateCallForItem(hash, "_item_", "_unevalIdx_")}) return false;");
             sb.AppendLine("        }");
             sb.AppendLine("        _unevalIdx_++;");
             sb.AppendLine("    }");
-            sb.AppendLine($"    {eval}.EvaluatedItemsUpTo = {e}.GetArrayLength();");
+            sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
             sb.AppendLine("}");
         }
 

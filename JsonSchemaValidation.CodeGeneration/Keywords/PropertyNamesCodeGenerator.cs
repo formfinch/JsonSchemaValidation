@@ -33,7 +33,7 @@ public sealed class PropertyNamesCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine($"    foreach (var _pnProp_ in {e}.EnumerateObject())");
         sb.AppendLine("    {");
         sb.AppendLine("        using var _pnDoc_ = JsonDocument.Parse($\"\\\"{_pnProp_.Name}\\\"\");");
-        sb.AppendLine($"        if (!Validate_{schemaHash}(_pnDoc_.RootElement)) return false;");
+        sb.AppendLine($"        if (!{context.GenerateValidateCallForVariable(schemaHash, "_pnDoc_.RootElement")}) return false;");
         sb.AppendLine("    }");
         sb.AppendLine("}");
 

@@ -174,8 +174,12 @@ public sealed class SchemaCodeGenerator
 
         // Use instance methods if there are external refs or annotation tracking (to access instance fields)
         var requiresInstance = hasExternalRefs || requiresPropertyAnnotations || requiresItemAnnotations;
+        var hasAnnotationTracking = requiresPropertyAnnotations || requiresItemAnnotations;
         var staticModifier = requiresInstance ? "" : "static ";
-        sb.AppendLine($"    private {staticModifier}bool Validate_{subschemaInfo.Hash}(JsonElement e)");
+
+        // Add location parameter when annotation tracking is enabled (for instance-location-aware tracking)
+        var locationParam = hasAnnotationTracking ? ", string _loc_" : "";
+        sb.AppendLine($"    private {staticModifier}bool Validate_{subschemaInfo.Hash}(JsonElement e{locationParam})");
         sb.AppendLine("    {");
 
         // Handle boolean schemas specially
@@ -343,7 +347,7 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("        public bool IsValid(JsonElement instance)");
             sb.AppendLine("        {");
             sb.AppendLine("            _eval_.Reset();");
-            sb.AppendLine($"            return Validate_{rootHash}(instance);");
+            sb.AppendLine($"            return Validate_{rootHash}(instance, \"\");");
             sb.AppendLine("        }");
         }
         else
@@ -401,36 +405,102 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("            return true;");
         sb.AppendLine("        }");
 
+        // Generate JSON Pointer escape helper if annotation tracking is enabled
+        if (hasAnnotationTracking)
+        {
+            sb.AppendLine();
+            sb.AppendLine("        private static string EscapeJsonPointer(string segment)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return segment.Replace(\"~\", \"~0\").Replace(\"/\", \"~1\");");
+            sb.AppendLine("        }");
+        }
+
         // Generate EvaluatedState class if annotation tracking is enabled
+        // Uses instance-location-aware tracking to properly handle nested objects/arrays
         if (hasAnnotationTracking)
         {
             sb.AppendLine();
             sb.AppendLine("        /// <summary>");
             sb.AppendLine("        /// Tracks which properties and items have been evaluated during validation.");
             sb.AppendLine("        /// Used by unevaluatedProperties and unevaluatedItems keywords.");
+            sb.AppendLine("        /// Tracks by instance location (JSON Pointer) to properly handle nested structures.");
             sb.AppendLine("        /// </summary>");
             sb.AppendLine("        private sealed class EvaluatedState");
             sb.AppendLine("        {");
             if (requiresPropertyAnnotations)
             {
-                sb.AppendLine("            public HashSet<string> EvaluatedProperties { get; } = new(StringComparer.Ordinal);");
+                sb.AppendLine("            private readonly Dictionary<string, HashSet<string>> _evaluatedProperties = new(StringComparer.Ordinal);");
+                sb.AppendLine();
+                sb.AppendLine("            public HashSet<string> GetEvaluatedProperties(string loc)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                if (!_evaluatedProperties.TryGetValue(loc, out var props))");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    props = new HashSet<string>(StringComparer.Ordinal);");
+                sb.AppendLine("                    _evaluatedProperties[loc] = props;");
+                sb.AppendLine("                }");
+                sb.AppendLine("                return props;");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            public void MarkPropertyEvaluated(string loc, string propertyName)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                GetEvaluatedProperties(loc).Add(propertyName);");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            public bool IsPropertyEvaluated(string loc, string propertyName)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                return _evaluatedProperties.TryGetValue(loc, out var props) && props.Contains(propertyName);");
+                sb.AppendLine("            }");
             }
             if (requiresItemAnnotations)
             {
-                sb.AppendLine("            public int EvaluatedItemsUpTo { get; set; }");
-                sb.AppendLine("            public HashSet<int> EvaluatedItemIndices { get; } = new();");
+                sb.AppendLine();
+                sb.AppendLine("            private readonly Dictionary<string, int> _evaluatedItemsUpTo = new(StringComparer.Ordinal);");
+                sb.AppendLine("            private readonly Dictionary<string, HashSet<int>> _evaluatedItemIndices = new(StringComparer.Ordinal);");
+                sb.AppendLine();
+                sb.AppendLine("            public int GetEvaluatedItemsUpTo(string loc)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                return _evaluatedItemsUpTo.TryGetValue(loc, out var upTo) ? upTo : 0;");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            public void SetEvaluatedItemsUpTo(string loc, int upTo)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                if (!_evaluatedItemsUpTo.TryGetValue(loc, out var current) || upTo > current)");
+                sb.AppendLine("                    _evaluatedItemsUpTo[loc] = upTo;");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            public HashSet<int> GetEvaluatedItemIndices(string loc)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                if (!_evaluatedItemIndices.TryGetValue(loc, out var indices))");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    indices = new HashSet<int>();");
+                sb.AppendLine("                    _evaluatedItemIndices[loc] = indices;");
+                sb.AppendLine("                }");
+                sb.AppendLine("                return indices;");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            public void MarkItemEvaluated(string loc, int index)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                GetEvaluatedItemIndices(loc).Add(index);");
+                sb.AppendLine("            }");
+                sb.AppendLine();
+                sb.AppendLine("            public bool IsItemEvaluated(string loc, int index)");
+                sb.AppendLine("            {");
+                sb.AppendLine("                var upTo = GetEvaluatedItemsUpTo(loc);");
+                sb.AppendLine("                if (index < upTo) return true;");
+                sb.AppendLine("                return _evaluatedItemIndices.TryGetValue(loc, out var indices) && indices.Contains(index);");
+                sb.AppendLine("            }");
             }
             sb.AppendLine();
             sb.AppendLine("            public void Reset()");
             sb.AppendLine("            {");
             if (requiresPropertyAnnotations)
             {
-                sb.AppendLine("                EvaluatedProperties.Clear();");
+                sb.AppendLine("                _evaluatedProperties.Clear();");
             }
             if (requiresItemAnnotations)
             {
-                sb.AppendLine("                EvaluatedItemsUpTo = 0;");
-                sb.AppendLine("                EvaluatedItemIndices.Clear();");
+                sb.AppendLine("                _evaluatedItemsUpTo.Clear();");
+                sb.AppendLine("                _evaluatedItemIndices.Clear();");
             }
             sb.AppendLine("            }");
             sb.AppendLine();
@@ -439,12 +509,15 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("                var clone = new EvaluatedState();");
             if (requiresPropertyAnnotations)
             {
-                sb.AppendLine("                foreach (var p in EvaluatedProperties) clone.EvaluatedProperties.Add(p);");
+                sb.AppendLine("                foreach (var kvp in _evaluatedProperties)");
+                sb.AppendLine("                    clone._evaluatedProperties[kvp.Key] = new HashSet<string>(kvp.Value, StringComparer.Ordinal);");
             }
             if (requiresItemAnnotations)
             {
-                sb.AppendLine("                clone.EvaluatedItemsUpTo = EvaluatedItemsUpTo;");
-                sb.AppendLine("                foreach (var i in EvaluatedItemIndices) clone.EvaluatedItemIndices.Add(i);");
+                sb.AppendLine("                foreach (var kvp in _evaluatedItemsUpTo)");
+                sb.AppendLine("                    clone._evaluatedItemsUpTo[kvp.Key] = kvp.Value;");
+                sb.AppendLine("                foreach (var kvp in _evaluatedItemIndices)");
+                sb.AppendLine("                    clone._evaluatedItemIndices[kvp.Key] = new HashSet<int>(kvp.Value);");
             }
             sb.AppendLine("                return clone;");
             sb.AppendLine("            }");
@@ -453,12 +526,32 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("            {");
             if (requiresPropertyAnnotations)
             {
-                sb.AppendLine("                foreach (var p in other.EvaluatedProperties) EvaluatedProperties.Add(p);");
+                sb.AppendLine("                foreach (var kvp in other._evaluatedProperties)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    if (!_evaluatedProperties.TryGetValue(kvp.Key, out var props))");
+                sb.AppendLine("                    {");
+                sb.AppendLine("                        props = new HashSet<string>(StringComparer.Ordinal);");
+                sb.AppendLine("                        _evaluatedProperties[kvp.Key] = props;");
+                sb.AppendLine("                    }");
+                sb.AppendLine("                    props.UnionWith(kvp.Value);");
+                sb.AppendLine("                }");
             }
             if (requiresItemAnnotations)
             {
-                sb.AppendLine("                if (other.EvaluatedItemsUpTo > EvaluatedItemsUpTo) EvaluatedItemsUpTo = other.EvaluatedItemsUpTo;");
-                sb.AppendLine("                foreach (var i in other.EvaluatedItemIndices) EvaluatedItemIndices.Add(i);");
+                sb.AppendLine("                foreach (var kvp in other._evaluatedItemsUpTo)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    if (!_evaluatedItemsUpTo.TryGetValue(kvp.Key, out var current) || kvp.Value > current)");
+                sb.AppendLine("                        _evaluatedItemsUpTo[kvp.Key] = kvp.Value;");
+                sb.AppendLine("                }");
+                sb.AppendLine("                foreach (var kvp in other._evaluatedItemIndices)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    if (!_evaluatedItemIndices.TryGetValue(kvp.Key, out var indices))");
+                sb.AppendLine("                    {");
+                sb.AppendLine("                        indices = new HashSet<int>();");
+                sb.AppendLine("                        _evaluatedItemIndices[kvp.Key] = indices;");
+                sb.AppendLine("                    }");
+                sb.AppendLine("                    indices.UnionWith(kvp.Value);");
+                sb.AppendLine("                }");
             }
             sb.AppendLine("            }");
             sb.AppendLine();
@@ -471,14 +564,18 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("            {");
             if (requiresPropertyAnnotations)
             {
-                sb.AppendLine("                EvaluatedProperties.Clear();");
-                sb.AppendLine("                foreach (var p in snapshot.EvaluatedProperties) EvaluatedProperties.Add(p);");
+                sb.AppendLine("                _evaluatedProperties.Clear();");
+                sb.AppendLine("                foreach (var kvp in snapshot._evaluatedProperties)");
+                sb.AppendLine("                    _evaluatedProperties[kvp.Key] = new HashSet<string>(kvp.Value, StringComparer.Ordinal);");
             }
             if (requiresItemAnnotations)
             {
-                sb.AppendLine("                EvaluatedItemsUpTo = snapshot.EvaluatedItemsUpTo;");
-                sb.AppendLine("                EvaluatedItemIndices.Clear();");
-                sb.AppendLine("                foreach (var i in snapshot.EvaluatedItemIndices) EvaluatedItemIndices.Add(i);");
+                sb.AppendLine("                _evaluatedItemsUpTo.Clear();");
+                sb.AppendLine("                _evaluatedItemIndices.Clear();");
+                sb.AppendLine("                foreach (var kvp in snapshot._evaluatedItemsUpTo)");
+                sb.AppendLine("                    _evaluatedItemsUpTo[kvp.Key] = kvp.Value;");
+                sb.AppendLine("                foreach (var kvp in snapshot._evaluatedItemIndices)");
+                sb.AppendLine("                    _evaluatedItemIndices[kvp.Key] = new HashSet<int>(kvp.Value);");
             }
             sb.AppendLine("            }");
             sb.AppendLine("        }");
