@@ -36,7 +36,72 @@ public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValida
             }
         }
 
+        // Load remote schemas for test suite compatibility
+        LoadRemoteSchemas(registry);
+
         return registry;
+    }
+
+    private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)
+    {
+        // Find test suite remotes path
+        var basePath = AppContext.BaseDirectory;
+        var remotesPath = FindRemotesPath(basePath);
+        if (remotesPath == null) return;
+
+        // Create a temporary factory for compiling remote schemas (use the registry we're populating)
+        using var factory = new RuntimeValidatorFactory(registry);
+
+        // Load draft2020-12 remotes
+        LoadRemotesFromPath(registry, factory, Path.Combine(remotesPath, "draft2020-12"), "http://localhost:1234/draft2020-12/");
+
+        // Load draft2019-09 remotes
+        LoadRemotesFromPath(registry, factory, Path.Combine(remotesPath, "draft2019-09"), "http://localhost:1234/draft2019-09/");
+
+        // Load root-level remotes
+        LoadRemotesFromPath(registry, factory, remotesPath, "http://localhost:1234/", topLevelOnly: true);
+    }
+
+    private static string? FindRemotesPath(string basePath)
+    {
+        var current = basePath;
+        for (int i = 0; i < 10; i++)
+        {
+            var remotesPath = Path.Combine(current, "submodules", "JSON-Schema-Test-Suite", "remotes");
+            if (Directory.Exists(remotesPath))
+                return remotesPath;
+
+            var parent = Directory.GetParent(current);
+            if (parent == null) break;
+            current = parent.FullName;
+        }
+        return null;
+    }
+
+    private static void LoadRemotesFromPath(CompiledValidatorRegistry registry, RuntimeValidatorFactory factory, string path, string baseUrl, bool topLevelOnly = false)
+    {
+        if (!Directory.Exists(path)) return;
+
+        var searchOption = topLevelOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories;
+        foreach (var file in Directory.GetFiles(path, "*.json", searchOption))
+        {
+            try
+            {
+                var content = File.ReadAllText(file);
+                var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
+                var schemaUri = new Uri(baseUrl + relativePath);
+
+                // Compile the schema to a validator
+                var validator = factory.Compile(content);
+
+                // Register with the specific URI (not the $id from the schema)
+                registry.RegisterForUri(schemaUri, validator);
+            }
+            catch
+            {
+                // Ignore errors loading remote schemas
+            }
+        }
     }
 
     private ICompiledValidator? _compiledValidator;

@@ -52,22 +52,23 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             return GenerateLocalRefCode(context, refValue);
         }
 
-        // Check if this is a self-reference (same base URI as the schema's $id)
-        // e.g., "urn:uuid:xxx#/$defs/bar" when $id is "urn:uuid:xxx"
-        if (context.BaseUri != null && refValue.Contains('#'))
+        // Check if this is a self-reference (same base URI as the root schema's $id)
+        // e.g., "urn:uuid:xxx#/$defs/bar" when root $id is "urn:uuid:xxx"
+        // Use RootBaseUri for this check since local refs resolve against the root schema
+        if (context.RootBaseUri != null && refValue.Contains('#'))
         {
             var hashIndex = refValue.IndexOf('#');
             var refBase = refValue[..hashIndex];
             var fragment = refValue[hashIndex..]; // includes the #
 
-            // Try to parse the ref base as a URI and compare with BaseUri
+            // Try to parse the ref base as a URI and compare with RootBaseUri
             if (Uri.TryCreate(refBase, UriKind.Absolute, out var refBaseUri))
             {
                 // Compare URIs (ignoring fragment on both)
-                var baseUriWithoutFragment = new Uri(context.BaseUri.GetLeftPart(UriPartial.Query));
-                if (refBaseUri.Equals(baseUriWithoutFragment))
+                var rootUriWithoutFragment = new Uri(context.RootBaseUri.GetLeftPart(UriPartial.Query));
+                if (refBaseUri.Equals(rootUriWithoutFragment))
                 {
-                    // Same base URI - treat the fragment as a local reference
+                    // Same base URI as root - treat the fragment as a local reference
                     return GenerateLocalRefCode(context, fragment);
                 }
             }
@@ -79,8 +80,17 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
 
     private static string GenerateLocalRefCode(CodeGenerationContext context, string refValue)
     {
-        // Resolve the $ref to get the target schema
-        var targetSchema = context.ResolveLocalRef(refValue);
+        // Resolve the $ref within the current schema resource (not necessarily the root)
+        JsonElement? targetSchema;
+        if (context.ResourceRoot.HasValue)
+        {
+            targetSchema = context.ResolveLocalRefInResource(refValue, context.ResourceRoot.Value);
+        }
+        else
+        {
+            targetSchema = context.ResolveLocalRef(refValue);
+        }
+
         if (!targetSchema.HasValue)
         {
             // Cannot resolve - this shouldn't happen if SubschemaExtractor did its job
@@ -119,6 +129,17 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             }
         }
 
+        // Check if this resolves to an internal $id (a subschema within the same document)
+        var targetUriWithoutFragment = new Uri(targetUri.GetLeftPart(UriPartial.Query));
+        var internalSchema = context.ResolveInternalId(targetUriWithoutFragment.AbsoluteUri);
+        if (internalSchema.HasValue)
+        {
+            // This is an internal reference - generate a local method call
+            var targetHash = context.GetSubschemaHash(internalSchema.Value);
+            var e = context.ElementVariable;
+            return $"// $ref: {refValue} (internal $id)\nif (!Validate_{targetHash}({e})) return false;";
+        }
+
         // External refs with fragments are not yet supported (would require subschema registration)
         // Return empty to skip this keyword and let other validators handle it
         if (!string.IsNullOrEmpty(targetUri.Fragment) && targetUri.Fragment != "#")
@@ -147,12 +168,12 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             fieldName = existingRef.FieldName;
         }
 
-        var e = context.ElementVariable;
+        var e2 = context.ElementVariable;
 
         // Generate null check - if external ref wasn't initialized (no registry), validation fails
         return $"""
             // External $ref: {refValue}
-            if ({fieldName} == null || !{fieldName}.IsValid({e})) return false;
+            if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;
             """;
     }
 

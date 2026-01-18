@@ -87,8 +87,8 @@ public sealed class SchemaCodeGenerator
                 Uri.TryCreate(schemaUri, UriKind.Absolute, out baseUri);
             }
 
-            // Extract all unique subschemas
-            var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema);
+            // Extract all unique subschemas (pass baseUri for $id resolution)
+            var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema, baseUri);
             var rootHash = SchemaHasher.ComputeHash(schema);
 
             // Check if annotation tracking is needed
@@ -217,13 +217,20 @@ public sealed class SchemaCodeGenerator
 
     private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
     {
+        // Use the subschema's effective base URI if available, otherwise fall back to root base URI
+        var effectiveBaseUri = subschemaInfo.EffectiveBaseUri ?? baseUri;
+
         return new CodeGenerationContext
         {
             CurrentSchema = subschemaInfo.Schema,
             CurrentHash = subschemaInfo.Hash,
             GetSubschemaHash = element => SchemaHasher.ComputeHash(element),
             ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue),
-            BaseUri = baseUri,
+            ResolveInternalId = uri => _extractor.ResolveInternalId(uri),
+            ResolveLocalRefInResource = (refValue, resourceRoot) => _extractor.ResolveLocalRefInResource(refValue, resourceRoot),
+            ResourceRoot = subschemaInfo.ResourceRoot,
+            BaseUri = effectiveBaseUri,
+            RootBaseUri = baseUri,
             ExternalRefs = externalRefs,
             RequiresPropertyAnnotations = requiresPropertyAnnotations,
             RequiresItemAnnotations = requiresItemAnnotations
@@ -421,6 +428,54 @@ public sealed class SchemaCodeGenerator
             {
                 sb.AppendLine("                EvaluatedItemsUpTo = 0;");
                 sb.AppendLine("                EvaluatedItemIndices.Clear();");
+            }
+            sb.AppendLine("            }");
+            sb.AppendLine();
+            sb.AppendLine("            public EvaluatedState Clone()");
+            sb.AppendLine("            {");
+            sb.AppendLine("                var clone = new EvaluatedState();");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("                foreach (var p in EvaluatedProperties) clone.EvaluatedProperties.Add(p);");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("                clone.EvaluatedItemsUpTo = EvaluatedItemsUpTo;");
+                sb.AppendLine("                foreach (var i in EvaluatedItemIndices) clone.EvaluatedItemIndices.Add(i);");
+            }
+            sb.AppendLine("                return clone;");
+            sb.AppendLine("            }");
+            sb.AppendLine();
+            sb.AppendLine("            public void MergeFrom(EvaluatedState other)");
+            sb.AppendLine("            {");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("                foreach (var p in other.EvaluatedProperties) EvaluatedProperties.Add(p);");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("                if (other.EvaluatedItemsUpTo > EvaluatedItemsUpTo) EvaluatedItemsUpTo = other.EvaluatedItemsUpTo;");
+                sb.AppendLine("                foreach (var i in other.EvaluatedItemIndices) EvaluatedItemIndices.Add(i);");
+            }
+            sb.AppendLine("            }");
+            sb.AppendLine();
+            sb.AppendLine("            public void SaveTo(out EvaluatedState snapshot)");
+            sb.AppendLine("            {");
+            sb.AppendLine("                snapshot = Clone();");
+            sb.AppendLine("            }");
+            sb.AppendLine();
+            sb.AppendLine("            public void RestoreFrom(EvaluatedState snapshot)");
+            sb.AppendLine("            {");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("                EvaluatedProperties.Clear();");
+                sb.AppendLine("                foreach (var p in snapshot.EvaluatedProperties) EvaluatedProperties.Add(p);");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("                EvaluatedItemsUpTo = snapshot.EvaluatedItemsUpTo;");
+                sb.AppendLine("                EvaluatedItemIndices.Clear();");
+                sb.AppendLine("                foreach (var i in snapshot.EvaluatedItemIndices) EvaluatedItemIndices.Add(i);");
             }
             sb.AppendLine("            }");
             sb.AppendLine("        }");

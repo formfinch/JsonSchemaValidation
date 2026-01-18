@@ -31,4 +31,16 @@ public sealed class SubschemaInfo
     /// Keywords that require fallback in this schema.
     /// </summary>
     public IReadOnlyList<string> FallbackKeywords { get; init; } = [];
+
+    /// <summary>
+    /// The effective base URI for this subschema (used for resolving relative $ref).
+    /// This is the nearest ancestor's resolved $id, or the root schema's base URI.
+    /// </summary>
+    public Uri? EffectiveBaseUri { get; init; }
+
+    /// <summary>
+    /// The schema resource root for this subschema (the nearest ancestor with an $id, or the root schema).
+    /// Used for resolving local JSON Pointer refs (#/$defs/...).
+    /// </summary>
+    public JsonElement? ResourceRoot { get; init; }
 }

@@ -55,8 +55,10 @@ public sealed class SubschemaExtractor
     private readonly Dictionary<string, SubschemaInfo> _uniqueSchemas = new(StringComparer.Ordinal);
     private readonly HashSet<string> _visitedRefs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, JsonElement> _anchors = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, JsonElement> _schemasByResolvedId = new(StringComparer.Ordinal);
     private int _totalCount;
     private JsonElement _rootSchema;
+    private Uri? _baseUri;
     private bool _hasUnevaluatedProperties;
     private bool _hasUnevaluatedItems;
 
@@ -64,18 +66,21 @@ public sealed class SubschemaExtractor
     /// Extracts all unique subschemas from a root schema.
     /// </summary>
     /// <param name="rootSchema">The root schema to analyze.</param>
+    /// <param name="baseUri">Optional base URI for resolving relative $id values.</param>
     /// <returns>Dictionary mapping hash to subschema info.</returns>
-    public Dictionary<string, SubschemaInfo> ExtractUniqueSubschemas(JsonElement rootSchema)
+    public Dictionary<string, SubschemaInfo> ExtractUniqueSubschemas(JsonElement rootSchema, Uri? baseUri = null)
     {
         _uniqueSchemas.Clear();
         _visitedRefs.Clear();
         _anchors.Clear();
+        _schemasByResolvedId.Clear();
         _totalCount = 0;
         _rootSchema = rootSchema;
+        _baseUri = baseUri;
         _hasUnevaluatedProperties = false;
         _hasUnevaluatedItems = false;
 
-        WalkSchema(rootSchema);
+        WalkSchema(rootSchema, baseUri);
 
         return new Dictionary<string, SubschemaInfo>(_uniqueSchemas, StringComparer.Ordinal);
     }
@@ -110,30 +115,43 @@ public sealed class SubschemaExtractor
 
     /// <summary>
     /// Resolves a local $ref (e.g., "#/$defs/foo", "#", or "#anchorName") to the target schema.
+    /// Resolves against the root schema.
     /// </summary>
     /// <param name="refValue">The $ref value (must start with #).</param>
     /// <returns>The resolved schema, or null if not found.</returns>
     public JsonElement? ResolveLocalRef(string refValue)
+    {
+        return ResolveLocalRefInResource(refValue, _rootSchema);
+    }
+
+    /// <summary>
+    /// Resolves a local $ref within a specific schema resource.
+    /// </summary>
+    /// <param name="refValue">The $ref value (must start with #).</param>
+    /// <param name="resourceRoot">The schema resource to resolve within.</param>
+    /// <returns>The resolved schema, or null if not found.</returns>
+    public JsonElement? ResolveLocalRefInResource(string refValue, JsonElement resourceRoot)
     {
         if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#'))
         {
             return null;
         }
 
-        // Handle "#" - reference to root
+        // Handle "#" - reference to resource root
         if (refValue == "#")
         {
-            return _rootSchema;
+            return resourceRoot;
         }
 
         // Handle JSON Pointer (e.g., "#/$defs/foo" or "#/properties/bar")
         if (refValue.StartsWith("#/"))
         {
             var pointer = refValue[1..]; // Remove the leading #
-            return ResolveJsonPointer(_rootSchema, pointer);
+            return ResolveJsonPointer(resourceRoot, pointer);
         }
 
         // Handle anchor reference (e.g., "#myAnchor")
+        // Note: anchors are still resolved globally for now
         var anchorName = refValue[1..]; // Remove the leading #
         return ResolveAnchor(anchorName);
     }
@@ -146,6 +164,20 @@ public sealed class SubschemaExtractor
     public JsonElement? ResolveAnchor(string anchorName)
     {
         if (_anchors.TryGetValue(anchorName, out var schema))
+        {
+            return schema;
+        }
+        return null;
+    }
+
+    /// <summary>
+    /// Resolves a URI to an internal schema that has a matching $id.
+    /// </summary>
+    /// <param name="uri">The absolute URI to look up.</param>
+    /// <returns>The schema with the matching $id, or null if not found.</returns>
+    public JsonElement? ResolveInternalId(string uri)
+    {
+        if (_schemasByResolvedId.TryGetValue(uri, out var schema))
         {
             return schema;
         }
@@ -202,14 +234,14 @@ public sealed class SubschemaExtractor
         return current;
     }
 
-    private void WalkSchema(JsonElement schema)
+    private void WalkSchema(JsonElement schema, Uri? currentBaseUri, JsonElement? currentResourceRoot = null)
     {
         _totalCount++;
 
         // Handle boolean schemas
         if (schema.ValueKind == JsonValueKind.True || schema.ValueKind == JsonValueKind.False)
         {
-            RegisterSchema(schema);
+            RegisterSchema(schema, currentBaseUri, currentResourceRoot ?? _rootSchema);
             return;
         }
 
@@ -218,7 +250,39 @@ public sealed class SubschemaExtractor
             return;
         }
 
-        RegisterSchema(schema);
+        // Check for $id and update base URI and resource root if present
+        var effectiveBaseUri = currentBaseUri;
+        var effectiveResourceRoot = currentResourceRoot ?? _rootSchema;
+        if (schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
+        {
+            var idValue = idElement.GetString();
+            if (!string.IsNullOrEmpty(idValue))
+            {
+                // Resolve the $id against the current base URI
+                Uri? resolvedId = null;
+                if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                {
+                    resolvedId = absoluteId;
+                }
+                else if (currentBaseUri != null && Uri.TryCreate(currentBaseUri, idValue, out var relativeId))
+                {
+                    resolvedId = relativeId;
+                }
+
+                if (resolvedId != null)
+                {
+                    // Register the schema by its resolved $id (without fragment)
+                    var idWithoutFragment = new Uri(resolvedId.GetLeftPart(UriPartial.Query));
+                    _schemasByResolvedId.TryAdd(idWithoutFragment.AbsoluteUri, schema);
+                    // Update base URI for nested schemas
+                    effectiveBaseUri = idWithoutFragment;
+                    // This schema becomes the new resource root for nested schemas
+                    effectiveResourceRoot = schema;
+                }
+            }
+        }
+
+        RegisterSchema(schema, effectiveBaseUri, effectiveResourceRoot);
 
         // Walk all subschema-containing keywords
         foreach (var property in schema.EnumerateObject())
@@ -235,30 +299,30 @@ public sealed class SubschemaExtractor
 
             if (ObjectSubschemaKeywords.Contains(property.Name))
             {
-                WalkSubschema(property.Value);
+                WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot);
             }
             else if (ObjectOfSubschemasKeywords.Contains(property.Name))
             {
-                WalkObjectOfSubschemas(property.Value);
+                WalkObjectOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot);
             }
             else if (ArrayOfSubschemasKeywords.Contains(property.Name))
             {
-                WalkArrayOfSubschemas(property.Value);
+                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot);
             }
             else if (property.Name == "items" && property.Value.ValueKind == JsonValueKind.Array)
             {
                 // Draft 4/6/7 items as array
-                WalkArrayOfSubschemas(property.Value);
+                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot);
             }
             else if (property.Name == "$ref" && property.Value.ValueKind == JsonValueKind.String)
             {
                 // Walk into local $ref targets to ensure they're registered
-                WalkRefTarget(property.Value.GetString());
+                WalkRefTarget(property.Value.GetString(), effectiveBaseUri, effectiveResourceRoot);
             }
         }
     }
 
-    private void WalkRefTarget(string? refValue)
+    private void WalkRefTarget(string? refValue, Uri? currentBaseUri, JsonElement? currentResourceRoot)
     {
         if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#'))
         {
@@ -274,21 +338,21 @@ public sealed class SubschemaExtractor
         var target = ResolveLocalRef(refValue);
         if (target.HasValue)
         {
-            WalkSchema(target.Value);
+            WalkSchema(target.Value, currentBaseUri, currentResourceRoot);
         }
     }
 
-    private void WalkSubschema(JsonElement element)
+    private void WalkSubschema(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot)
     {
         if (element.ValueKind == JsonValueKind.Object ||
             element.ValueKind == JsonValueKind.True ||
             element.ValueKind == JsonValueKind.False)
         {
-            WalkSchema(element);
+            WalkSchema(element, currentBaseUri, currentResourceRoot);
         }
     }
 
-    private void WalkObjectOfSubschemas(JsonElement element)
+    private void WalkObjectOfSubschemas(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot)
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
@@ -297,11 +361,11 @@ public sealed class SubschemaExtractor
 
         foreach (var property in element.EnumerateObject())
         {
-            WalkSubschema(property.Value);
+            WalkSubschema(property.Value, currentBaseUri, currentResourceRoot);
         }
     }
 
-    private void WalkArrayOfSubschemas(JsonElement element)
+    private void WalkArrayOfSubschemas(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot)
     {
         if (element.ValueKind != JsonValueKind.Array)
         {
@@ -310,11 +374,11 @@ public sealed class SubschemaExtractor
 
         foreach (var item in element.EnumerateArray())
         {
-            WalkSubschema(item);
+            WalkSubschema(item, currentBaseUri, currentResourceRoot);
         }
     }
 
-    private void RegisterSchema(JsonElement schema)
+    private void RegisterSchema(JsonElement schema, Uri? effectiveBaseUri, JsonElement? resourceRoot)
     {
         var hash = SchemaHasher.ComputeHash(schema);
 
@@ -332,7 +396,9 @@ public sealed class SubschemaExtractor
             Hash = hash,
             Schema = schema,
             RequiresFallback = fallbackKeywords.Count > 0,
-            FallbackKeywords = fallbackKeywords
+            FallbackKeywords = fallbackKeywords,
+            EffectiveBaseUri = effectiveBaseUri,
+            ResourceRoot = resourceRoot
         };
 
         // Register anchor if present
