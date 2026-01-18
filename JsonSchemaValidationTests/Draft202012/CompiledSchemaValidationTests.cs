@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using JsonSchemaValidation.Abstractions;
 using JsonSchemaValidation.Compiler;
 using JsonSchemaValidation.CompiledValidators;
@@ -31,8 +32,10 @@ namespace JsonSchemaValidationTests.Draft202012
         {
             var registry = new CompiledValidatorRegistry();
 
-            // Pre-register all metaschemas so they can be resolved by external $ref
-            foreach (var metaschema in CompiledMetaschemas.GetAll())
+            var metaschemas = CompiledMetaschemas.GetAll();
+
+            // First pass: register all metaschemas so they can be resolved by external $ref
+            foreach (var metaschema in metaschemas)
             {
                 try
                 {
@@ -44,10 +47,78 @@ namespace JsonSchemaValidationTests.Draft202012
                 }
             }
 
+            // Two-phase initialization: first register all subschemas, then initialize
+            // Phase 1: Register subschemas from all metaschemas
+            foreach (var metaschema in metaschemas)
+            {
+                try
+                {
+                    if (metaschema is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.RegisterSubschemas(registry);
+                    }
+                }
+                catch
+                {
+                    // Ignore registration errors
+                }
+            }
+
             // Load remote schemas for test suite compatibility
             LoadRemoteSchemas(registry);
 
+            // Note: RegisterVocabularyFragments is no longer needed - metaschemas now register
+            // their own $defs subschemas via RegisterSubschemas()
+
+            // Phase 2: Initialize registry-aware validators after all subschemas are registered
+            foreach (var metaschema in metaschemas)
+            {
+                try
+                {
+                    if (metaschema is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.Initialize(registry);
+                    }
+                }
+                catch
+                {
+                    // Ignore initialization errors - some refs may not be resolvable
+                }
+            }
+
             return registry;
+        }
+
+        private static void RegisterVocabularyFragments(CompiledValidatorRegistry registry, RuntimeValidatorFactory factory)
+        {
+            // Register specific $defs fragments from vocabulary schemas that are referenced by the metaschema
+            var fragmentSchemas = new Dictionary<string, string>(StringComparer.Ordinal)
+            {
+                // meta/validation#/$defs/stringArray - referenced by dependencies compatibility
+                ["https://json-schema.org/draft/2020-12/meta/validation#/$defs/stringArray"] =
+                    """{ "type": "array", "items": { "type": "string" }, "default": [] }""",
+
+                // meta/core#/$defs/anchorString - referenced by $recursiveAnchor compatibility
+                ["https://json-schema.org/draft/2020-12/meta/core#/$defs/anchorString"] =
+                    """{ "type": "string", "pattern": "^[A-Za-z_][-A-Za-z0-9._]*$" }""",
+
+                // meta/core#/$defs/uriReferenceString - referenced by $recursiveRef compatibility
+                ["https://json-schema.org/draft/2020-12/meta/core#/$defs/uriReferenceString"] =
+                    """{ "type": "string", "format": "uri-reference" }""",
+            };
+
+            foreach (var (uri, schemaJson) in fragmentSchemas)
+            {
+                try
+                {
+                    var validator = factory.Compile(schemaJson);
+                    registry.RegisterForUri(new Uri(uri), validator);
+                }
+                catch
+                {
+                    // Ignore errors compiling fragment schemas
+                }
+            }
         }
 
         private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)
@@ -55,7 +126,7 @@ namespace JsonSchemaValidationTests.Draft202012
             var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes";
             if (!Directory.Exists(remotesPath)) return;
 
-            // Collect all remote schema files first
+            // Collect all remote schema files first (including subschemas with fragments)
             var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
 
             // Collect draft2020-12 remotes
@@ -126,6 +197,10 @@ namespace JsonSchemaValidationTests.Draft202012
                     var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
                     var schemaUri = new Uri(baseUrl + relativePath);
                     schemas.Add((schemaUri, content));
+
+                    // Extract and register self-contained subschemas (those without internal $refs)
+                    // Subschemas with $ref can't be compiled standalone as the ref can't be resolved
+                    ExtractSelfContainedSubschemas(schemas, schemaUri, content);
                 }
                 catch
                 {
@@ -133,6 +208,95 @@ namespace JsonSchemaValidationTests.Draft202012
                 }
             }
         }
+
+        /// <summary>
+        /// Extract self-contained subschemas that don't have internal $ref/$dynamicRef.
+        /// Subschemas with references can't be compiled standalone.
+        /// </summary>
+        private static void ExtractSelfContainedSubschemas(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, string content)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+
+                if (root.ValueKind != JsonValueKind.Object) return;
+
+                // Extract $defs subschemas that are self-contained
+                if (root.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
+                {
+                    foreach (var def in defs.EnumerateObject())
+                    {
+                        var subschemaContent = def.Value.GetRawText();
+                        // Only extract if no internal $ref or $dynamicRef
+                        if (!subschemaContent.Contains("\"$ref\"") && !subschemaContent.Contains("\"$dynamicRef\""))
+                        {
+                            var fragmentUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/$defs/{def.Name}");
+                            schemas.Add((fragmentUri, subschemaContent));
+                        }
+                    }
+                }
+
+                // Extract anchors that are self-contained
+                ExtractSelfContainedAnchors(schemas, baseUri, root);
+            }
+            catch
+            {
+                // Ignore parsing errors
+            }
+        }
+
+        /// <summary>
+        /// Extract anchors ($anchor) from self-contained subschemas.
+        /// </summary>
+        private static void ExtractSelfContainedAnchors(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, JsonElement element)
+        {
+            if (element.ValueKind != JsonValueKind.Object) return;
+
+            var content = element.GetRawText();
+
+            // Only extract if no internal $ref or $dynamicRef
+            if (!content.Contains("\"$ref\"") && !content.Contains("\"$dynamicRef\""))
+            {
+                // Check for $anchor
+                if (element.TryGetProperty("$anchor", out var anchor) && anchor.ValueKind == JsonValueKind.String)
+                {
+                    var anchorName = anchor.GetString();
+                    if (!string.IsNullOrEmpty(anchorName))
+                    {
+                        var anchorUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchorName}");
+                        if (!schemas.Any(s => s.SchemaUri.AbsoluteUri == anchorUri.AbsoluteUri))
+                        {
+                            schemas.Add((anchorUri, content));
+                        }
+                    }
+                }
+
+                // Check for $dynamicAnchor
+                if (element.TryGetProperty("$dynamicAnchor", out var dynamicAnchor) && dynamicAnchor.ValueKind == JsonValueKind.String)
+                {
+                    var anchorName = dynamicAnchor.GetString();
+                    if (!string.IsNullOrEmpty(anchorName))
+                    {
+                        var anchorUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchorName}");
+                        if (!schemas.Any(s => s.SchemaUri.AbsoluteUri == anchorUri.AbsoluteUri))
+                        {
+                            schemas.Add((anchorUri, content));
+                        }
+                    }
+                }
+            }
+
+            // Recurse into nested objects to find more anchors
+            if (element.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var def in defs.EnumerateObject())
+                {
+                    ExtractSelfContainedAnchors(schemas, baseUri, def.Value);
+                }
+            }
+        }
+
     }
 
     [Trait("Draft", "2020-12")]
@@ -315,13 +479,38 @@ namespace JsonSchemaValidationTests.Draft202012
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
         {
+            // These tests are disabled because they require features that compiled validators
+            // cannot support due to fundamental architectural limitations:
+            //
+            // 1. $dynamicRef with dynamic scope resolution - requires runtime stack inspection
+            //    to find the first matching $dynamicAnchor in the dynamic call chain.
+            //    Compiled validators resolve references statically at compile time.
+            //
+            // 2. Remote refs with internal references - subschemas extracted from remote files
+            //    that contain $ref to sibling definitions can't be compiled standalone because
+            //    the internal references can't be resolved without the full document context.
+            //
+            // 3. Vocabulary-based validation - requires checking $vocabulary in metaschema
+            //    to enable/disable keyword processing. Compiled validators don't support this.
+            //
+            // 4. Cross-draft compatibility - requires processing $ref targets according to
+            //    their declared $schema, which requires runtime schema detection.
+
             var disabledTests = new Tuple<string, string>[]
             {
-                // $dynamicRef - compiled validators don't support dynamic reference resolution
-                new("A $dynamicRef without anchor in fragment behaves identical to $ref", "*"),
-                new("An $anchor with the same name as a $dynamicAnchor is not used for dynamic scope resolution", "*"),
-                new("A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
-                new("A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor", "*"),
+                // === $dynamicRef tests - require dynamic scope resolution ===
+                // The following $dynamicRef tests now pass because they use static resolution patterns:
+                // - "A $dynamicRef without anchor in fragment behaves identical to $ref" (JSON pointer fragments)
+                // - "An $anchor with the same name as a $dynamicAnchor is not used for dynamic scope resolution"
+                // - "A $dynamicRef without a matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor"
+                // - "A $dynamicRef with a non-matching $dynamicAnchor in the same schema resource behaves like a normal $ref to $anchor"
+                // - "A $dynamicRef resolves to the first $dynamicAnchor still in scope..." (root-level outer anchor)
+                // - "A $dynamicRef with intermediate scopes..." (root-level outer anchor)
+                // - "$dynamicRef skips over intermediate resources - direct reference" (local resolution only)
+                // - "unevaluatedItems with $dynamicRef" (root-level outer anchor with annotation tracking)
+                // - "unevaluatedProperties with $dynamicRef" (root-level outer anchor with annotation tracking)
+                //
+                // These tests require runtime dynamic scope resolution (non-local $dynamicRef or complex paths):
                 new("A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope", "*"),
                 new("multiple dynamic paths to the $dynamicRef keyword", "*"),
                 new("after leaving a dynamic scope, it is not used by a $dynamicRef", "*"),
@@ -333,14 +522,13 @@ namespace JsonSchemaValidationTests.Draft202012
                 new("$dynamicRef avoids the root of each schema, but scopes are still registered", "*"),
                 new("$dynamicRef skips over intermediate resources - pointer reference across resource boundary", "*"),
 
-                // anchor - $id with base URI change
+                // === anchor tests with base URI changes (2 tests) ===
                 new("Location-independent identifier with base URI change in subschema", "*"),
                 new("same $anchor with different base uri", "*"),
 
-                // Remote refs - compiled validators have issues with external refs containing fragments
-                new("remote ref, containing refs itself", "*"),
-                new("fragment within remote ref", "*"),
-                new("anchor within remote ref", "*"),
+                // === Remote refs with internal references (5 tests) ===
+                // These require the full remote document context to resolve internal $refs
+                // Note: "remote ref, containing refs itself" now passes with proper metaschema initialization
                 new("ref within remote ref", "*"),
                 new("base URI change - change folder in subschema", "*"),
                 new("root ref in remote ref", "*"),
@@ -348,15 +536,13 @@ namespace JsonSchemaValidationTests.Draft202012
                 new("retrieved nested refs resolve relative to their URI not $id", "*"),
                 new("$ref to $ref finds detached $anchor", "*"),
 
-                // Vocabulary - validate definition against metaschema
-                new("validate definition against metaschema", "*"),
-
-                // Format-assertion vocabulary tests
+                // === Vocabulary tests (1 test) ===
+                // "validate definition against metaschema" now passes with dynamic scope root support.
+                // $dynamicRef in meta/core resolves to the outermost scope root (Draft202012Schema)
+                // which validates against all vocabulary schemas including meta/validation.
                 new("schema that uses custom metaschema with with no validation vocabulary", "*"),
-                new("schema that uses custom metaschema with format-assertion: false", "*"),
-                new("schema that uses custom metaschema with format-assertion: true", "*"),
 
-                // Cross-draft tests
+                // === Cross-draft tests (1 test) ===
                 new("refs to historic drafts are processed as historic drafts", "*"),
             };
 

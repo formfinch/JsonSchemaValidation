@@ -11,16 +11,36 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
+using JsonSchemaValidation.CompiledValidators;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012MetaApplicator : ICompiledValidator
+    public sealed class CompiledValidator_Draft202012MetaApplicator : IRegistryAwareCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/applicator");
 
-        public bool IsValid(JsonElement instance) => Validate_c6dd457f20ad(instance);
+        private ICompiledValidator? _dynamicScopeRoot;
 
-    private static bool Validate_c6dd457f20ad(JsonElement e)
+        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
+        {
+            // Register subschemas by fragment URI so other validators can reference them
+            registry.RegisterForUri(new Uri("https://json-schema.org/draft/2020-12/meta/applicator#/$defs/schemaArray"), new SubschemaValidator_5856e32466b7(this));
+            registry.RegisterForUri(new Uri("https://json-schema.org/draft/2020-12/meta/applicator#/$defs/schemaArray/items"), new SubschemaValidator_380c73c6d6de(this));
+        }
+
+        public void Initialize(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void SetDynamicScopeRoot(ICompiledValidator? root)
+        {
+            _dynamicScopeRoot = root;
+        }
+
+        public bool IsValid(JsonElement instance) => Validate_92ff7f249a22(instance);
+
+    private bool Validate_92ff7f249a22(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -31,65 +51,65 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("prefixItems", out var _prefixItems_))
+            if (e.TryGetProperty("prefixItems", out var _prop0_))
             {
-                if (!Validate_418a8c4278fe(_prefixItems_)) return false;
+                if (!Validate_418a8c4278fe(_prop0_)) return false;
             }
-            if (e.TryGetProperty("items", out var _items_))
+            if (e.TryGetProperty("items", out var _prop1_))
             {
-                if (!Validate_380c73c6d6de(_items_)) return false;
+                if (!Validate_380c73c6d6de(_prop1_)) return false;
             }
-            if (e.TryGetProperty("contains", out var _contains_))
+            if (e.TryGetProperty("contains", out var _prop2_))
             {
-                if (!Validate_380c73c6d6de(_contains_)) return false;
+                if (!Validate_380c73c6d6de(_prop2_)) return false;
             }
-            if (e.TryGetProperty("additionalProperties", out var _additionalProperties_))
+            if (e.TryGetProperty("additionalProperties", out var _prop3_))
             {
-                if (!Validate_380c73c6d6de(_additionalProperties_)) return false;
+                if (!Validate_380c73c6d6de(_prop3_)) return false;
             }
-            if (e.TryGetProperty("properties", out var _properties_))
+            if (e.TryGetProperty("properties", out var _prop4_))
             {
-                if (!Validate_6e9e6f7fe026(_properties_)) return false;
+                if (!Validate_6e9e6f7fe026(_prop4_)) return false;
             }
-            if (e.TryGetProperty("patternProperties", out var _patternProperties_))
+            if (e.TryGetProperty("patternProperties", out var _prop5_))
             {
-                if (!Validate_3ea22b11318e(_patternProperties_)) return false;
+                if (!Validate_3ea22b11318e(_prop5_)) return false;
             }
-            if (e.TryGetProperty("dependentSchemas", out var _dependentSchemas_))
+            if (e.TryGetProperty("dependentSchemas", out var _prop6_))
             {
-                if (!Validate_6e9e6f7fe026(_dependentSchemas_)) return false;
+                if (!Validate_6e9e6f7fe026(_prop6_)) return false;
             }
-            if (e.TryGetProperty("propertyNames", out var _propertyNames_))
+            if (e.TryGetProperty("propertyNames", out var _prop7_))
             {
-                if (!Validate_380c73c6d6de(_propertyNames_)) return false;
+                if (!Validate_380c73c6d6de(_prop7_)) return false;
             }
-            if (e.TryGetProperty("if", out var _if_))
+            if (e.TryGetProperty("if", out var _prop8_))
             {
-                if (!Validate_380c73c6d6de(_if_)) return false;
+                if (!Validate_380c73c6d6de(_prop8_)) return false;
             }
-            if (e.TryGetProperty("then", out var _then_))
+            if (e.TryGetProperty("then", out var _prop9_))
             {
-                if (!Validate_380c73c6d6de(_then_)) return false;
+                if (!Validate_380c73c6d6de(_prop9_)) return false;
             }
-            if (e.TryGetProperty("else", out var _else_))
+            if (e.TryGetProperty("else", out var _prop10_))
             {
-                if (!Validate_380c73c6d6de(_else_)) return false;
+                if (!Validate_380c73c6d6de(_prop10_)) return false;
             }
-            if (e.TryGetProperty("allOf", out var _allOf_))
+            if (e.TryGetProperty("allOf", out var _prop11_))
             {
-                if (!Validate_418a8c4278fe(_allOf_)) return false;
+                if (!Validate_418a8c4278fe(_prop11_)) return false;
             }
-            if (e.TryGetProperty("anyOf", out var _anyOf_))
+            if (e.TryGetProperty("anyOf", out var _prop12_))
             {
-                if (!Validate_418a8c4278fe(_anyOf_)) return false;
+                if (!Validate_418a8c4278fe(_prop12_)) return false;
             }
-            if (e.TryGetProperty("oneOf", out var _oneOf_))
+            if (e.TryGetProperty("oneOf", out var _prop13_))
             {
-                if (!Validate_418a8c4278fe(_oneOf_)) return false;
+                if (!Validate_418a8c4278fe(_prop13_)) return false;
             }
-            if (e.TryGetProperty("not", out var _not_))
+            if (e.TryGetProperty("not", out var _prop14_))
             {
-                if (!Validate_380c73c6d6de(_not_)) return false;
+                if (!Validate_380c73c6d6de(_prop14_)) return false;
             }
         }
 
@@ -97,7 +117,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_418a8c4278fe(JsonElement e)
+    private bool Validate_418a8c4278fe(JsonElement e)
     {
         // $ref: #/$defs/schemaArray
         if (!Validate_5856e32466b7(e)) return false;
@@ -105,7 +125,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_5856e32466b7(JsonElement e)
+    private bool Validate_5856e32466b7(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -116,9 +136,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_380c73c6d6de(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 
@@ -126,13 +148,15 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_380c73c6d6de(JsonElement e)
+    private bool Validate_380c73c6d6de(JsonElement e)
     {
+        // $dynamicRef: #meta (resolved to outer $dynamicAnchor at root)
+        if (!Validate_92ff7f249a22(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_6e9e6f7fe026(JsonElement e)
+    private bool Validate_6e9e6f7fe026(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -147,7 +171,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_3ea22b11318e(JsonElement e)
+    private bool Validate_3ea22b11318e(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -171,8 +195,9 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_a0c839cc99e3(JsonElement e)
+    private bool Validate_a0c839cc99e3(JsonElement e)
     {
+        if (!FormatValidators.IsValidRegex(e)) return false;
         return true;
     }
 
@@ -220,6 +245,21 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
                 if (!JsonElementDeepEquals(enumA.Current, enumB.Current)) return false;
             }
             return true;
+        }
+
+        private sealed class SubschemaValidator_5856e32466b7 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft202012MetaApplicator _parent;
+            public SubschemaValidator_5856e32466b7(CompiledValidator_Draft202012MetaApplicator parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/applicator#/$defs/schemaArray");
+            public bool IsValid(JsonElement instance) => _parent.Validate_5856e32466b7(instance);
+        }
+        private sealed class SubschemaValidator_380c73c6d6de : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft202012MetaApplicator _parent;
+            public SubschemaValidator_380c73c6d6de(CompiledValidator_Draft202012MetaApplicator parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/applicator#/$defs/schemaArray/items");
+            public bool IsValid(JsonElement instance) => _parent.Validate_380c73c6d6de(instance);
         }
     }
 }

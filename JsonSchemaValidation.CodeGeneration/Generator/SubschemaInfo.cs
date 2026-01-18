@@ -43,4 +43,40 @@ public sealed class SubschemaInfo
     /// Used for resolving local JSON Pointer refs (#/$defs/...).
     /// </summary>
     public JsonElement? ResourceRoot { get; init; }
+
+    /// <summary>
+    /// The depth of the resource this subschema belongs to.
+    /// Root is depth 0, nested resources with $id increment the depth.
+    /// Used for $dynamicRef scope resolution.
+    /// </summary>
+    public int ResourceDepth { get; init; }
+
+    /// <summary>
+    /// The JSON Pointer path to this subschema from the root (e.g., "/$defs/stringArray").
+    /// Null for the root schema or schemas without a canonical path.
+    /// Used to register subschemas by their fragment URIs.
+    /// </summary>
+    public string? JsonPointerPath { get; init; }
+}
+
+/// <summary>
+/// Information about a $dynamicAnchor discovered during schema analysis.
+/// </summary>
+public sealed class DynamicAnchorInfo
+{
+    /// <summary>
+    /// The name of the $dynamicAnchor.
+    /// </summary>
+    public required string Name { get; init; }
+
+    /// <summary>
+    /// The schema element that contains this $dynamicAnchor.
+    /// </summary>
+    public required JsonElement Schema { get; init; }
+
+    /// <summary>
+    /// The depth of the resource containing this anchor.
+    /// Used to determine which anchor is "outermost" (closest to entry point).
+    /// </summary>
+    public required int ResourceDepth { get; init; }
 }

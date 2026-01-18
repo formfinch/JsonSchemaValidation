@@ -40,7 +40,28 @@ namespace JsonSchemaValidation.DependencyInjection
                 }
             }
 
-            // Initialize registry-aware validators (must happen after all validators are registered)
+            // Two-phase initialization of registry-aware validators:
+            // Phase 1: Register all subschemas first (so they're available for external refs)
+            foreach (var validator in metaschemaValidators)
+            {
+                if (validator is IRegistryAwareCompiledValidator registryAware)
+                {
+                    registryAware.RegisterSubschemas(registry);
+                }
+            }
+
+            if (compiledValidators != null)
+            {
+                foreach (var validator in compiledValidators)
+                {
+                    if (validator is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.RegisterSubschemas(registry);
+                    }
+                }
+            }
+
+            // Phase 2: Initialize (resolve external refs) after all subschemas are registered
             foreach (var validator in metaschemaValidators)
             {
                 if (validator is IRegistryAwareCompiledValidator registryAware)

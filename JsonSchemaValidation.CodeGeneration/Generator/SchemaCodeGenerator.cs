@@ -101,7 +101,30 @@ public sealed class SchemaCodeGenerator
             var allStaticFields = new List<StaticFieldInfo>();
             var allExternalRefs = new List<ExternalRefInfo>();
 
-            // Pre-scan pass: detect external refs to determine if methods should be static
+            // Collect subschemas that should be registered by fragment URI
+            // (e.g., #/$defs/foo should be registered as baseUri#/$defs/foo)
+            var fragmentSubschemas = new List<(string Hash, string FragmentUri)>();
+            if (baseUri != null)
+            {
+                foreach (var (hash, subschemaInfo) in uniqueSchemas)
+                {
+                    // Debug: Print all subschema paths (uncomment for debugging)
+                    // Console.WriteLine($"Subschema {hash}: Path={subschemaInfo.JsonPointerPath ?? "(null)"}");
+
+                    if (!string.IsNullOrEmpty(subschemaInfo.JsonPointerPath) && subschemaInfo.JsonPointerPath != "")
+                    {
+                        // Only register subschemas under $defs (the most common case for external refs)
+                        if (subschemaInfo.JsonPointerPath.StartsWith("/$defs/"))
+                        {
+                            var fragmentUri = $"{baseUri.AbsoluteUri}#{subschemaInfo.JsonPointerPath}";
+                            fragmentSubschemas.Add((hash, fragmentUri));
+                        }
+                    }
+                }
+            }
+
+            // Pre-scan pass: detect external refs and dynamic scope requirements
+            var hasDynamicRefWithBookend = false;
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
                 var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
@@ -110,18 +133,25 @@ public sealed class SchemaCodeGenerator
                     if (generator.CanGenerate(subschemaInfo.Schema))
                     {
                         // This populates allExternalRefs via the context
-                        generator.GenerateCode(context);
+                        var generatedCode = generator.GenerateCode(context);
+                        // Track if any $dynamicRef code uses _dynamicScopeRoot
+                        if (generatedCode.Contains("_dynamicScopeRoot"))
+                        {
+                            hasDynamicRefWithBookend = true;
+                        }
                     }
                 }
             }
 
             var hasExternalRefs = allExternalRefs.Count > 0;
+            var hasFragmentSubschemas = fragmentSubschemas.Count > 0;
+            var needsRegistryAware = hasExternalRefs || hasFragmentSubschemas || hasDynamicRefWithBookend;
 
             // Generate validation methods for each unique subschema
             var methods = new StringBuilder();
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, hasExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
+                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, needsRegistryAware, requiresPropertyAnnotations, requiresItemAnnotations);
                 methods.AppendLine(methodCode);
                 methods.AppendLine();
             }
@@ -146,7 +176,7 @@ public sealed class SchemaCodeGenerator
                 }
             }
 
-            // Generate the full class (registry-aware if there are external refs)
+            // Generate the full class (registry-aware if needed for external refs, fragments, or dynamic scope)
             var code = GenerateClass(
                 namespaceName,
                 resolvedClassName,
@@ -154,6 +184,8 @@ public sealed class SchemaCodeGenerator
                 rootHash,
                 allStaticFields,
                 allExternalRefs,
+                fragmentSubschemas,
+                needsRegistryAware,
                 methods.ToString(),
                 requiresPropertyAnnotations,
                 requiresItemAnnotations);
@@ -167,13 +199,13 @@ public sealed class SchemaCodeGenerator
         }
     }
 
-    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool hasExternalRefs, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
+    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool needsRegistryAware, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
     {
         var context = CreateContext(subschemaInfo, allSchemas, baseUri, externalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
         var sb = new StringBuilder();
 
-        // Use instance methods if there are external refs or annotation tracking (to access instance fields)
-        var requiresInstance = hasExternalRefs || requiresPropertyAnnotations || requiresItemAnnotations;
+        // Use instance methods if registry-aware or annotation tracking (need instance fields)
+        var requiresInstance = needsRegistryAware || requiresPropertyAnnotations || requiresItemAnnotations;
         var hasAnnotationTracking = requiresPropertyAnnotations || requiresItemAnnotations;
         var staticModifier = requiresInstance ? "" : "static ";
 
@@ -235,6 +267,9 @@ public sealed class SchemaCodeGenerator
             ResolveInternalId = uri => _extractor.ResolveInternalId(uri),
             ResolveLocalRefInResource = (refValue, resourceRoot) => _extractor.ResolveLocalRefInResource(refValue, resourceRoot),
             ResourceRoot = subschemaInfo.ResourceRoot,
+            ResourceDepth = subschemaInfo.ResourceDepth,
+            FindOutermostDynamicAnchor = anchorName => _extractor.FindOutermostDynamicAnchor(anchorName),
+            FindOuterDynamicAnchor = (anchorName, depth) => _extractor.FindOuterDynamicAnchor(anchorName, depth),
             BaseUri = effectiveBaseUri,
             RootBaseUri = baseUri,
             ExternalRefs = externalRefs,
@@ -250,11 +285,14 @@ public sealed class SchemaCodeGenerator
         string rootHash,
         List<StaticFieldInfo> staticFields,
         List<ExternalRefInfo> externalRefs,
+        List<(string Hash, string FragmentUri)> fragmentSubschemas,
+        bool needsRegistryAware,
         string methods,
         bool requiresPropertyAnnotations,
         bool requiresItemAnnotations)
     {
         var hasExternalRefs = externalRefs.Count > 0;
+        var hasFragmentSubschemas = fragmentSubschemas.Count > 0;
         var hasAnnotationTracking = requiresPropertyAnnotations || requiresItemAnnotations;
         var sb = new StringBuilder();
 
@@ -273,7 +311,7 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("using System.Text.RegularExpressions;");
         sb.AppendLine("using JsonSchemaValidation.Abstractions;");
         sb.AppendLine("using JsonSchemaValidation.Draft202012.Keywords.Format;");
-        if (hasExternalRefs)
+        if (needsRegistryAware)
         {
             sb.AppendLine("using JsonSchemaValidation.CompiledValidators;");
         }
@@ -281,8 +319,8 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine($"namespace {namespaceName}");
         sb.AppendLine("{");
 
-        // Class declaration - use IRegistryAwareCompiledValidator if there are external refs
-        var interfaceName = hasExternalRefs ? "IRegistryAwareCompiledValidator" : "ICompiledValidator";
+        // Class declaration - use IRegistryAwareCompiledValidator if needed for external refs, fragments, or dynamic scope
+        var interfaceName = needsRegistryAware ? "IRegistryAwareCompiledValidator" : "ICompiledValidator";
         sb.AppendLine($"    public sealed class {className} : {interfaceName}");
         sb.AppendLine("    {");
 
@@ -325,17 +363,59 @@ public sealed class SchemaCodeGenerator
         }
         sb.AppendLine();
 
-        // Initialize method for registry-aware validators
-        if (hasExternalRefs)
+        // RegisterSubschemas, Initialize, and SetDynamicScopeRoot methods for registry-aware validators
+        if (needsRegistryAware)
         {
+            // Field for dynamic scope root (for $dynamicRef resolution)
+            sb.AppendLine("        private ICompiledValidator? _dynamicScopeRoot;");
+            sb.AppendLine();
+
+            // RegisterSubschemas - registers $defs subschemas for other validators to reference
+            sb.AppendLine("        public void RegisterSubschemas(ICompiledValidatorRegistry registry)");
+            sb.AppendLine("        {");
+            if (hasFragmentSubschemas)
+            {
+                sb.AppendLine("            // Register subschemas by fragment URI so other validators can reference them");
+                foreach (var (hash, fragmentUri) in fragmentSubschemas)
+                {
+                    sb.AppendLine($"            registry.RegisterForUri(new Uri(\"{EscapeString(fragmentUri)}\"), new SubschemaValidator_{hash}(this));");
+                }
+            }
+            sb.AppendLine("        }");
+            sb.AppendLine();
+
+            // Initialize - resolves external refs and sets up dynamic scope
             sb.AppendLine("        public void Initialize(ICompiledValidatorRegistry registry)");
             sb.AppendLine("        {");
-            foreach (var extRef in externalRefs)
+            if (hasExternalRefs)
             {
-                sb.AppendLine($"            // External $ref: {extRef.OriginalRef}");
-                sb.AppendLine($"            if (!registry.TryGetValidator(new Uri(\"{EscapeString(extRef.TargetUri.AbsoluteUri)}\"), out var {extRef.FieldName}Resolved) || {extRef.FieldName}Resolved is null)");
-                sb.AppendLine($"                throw new InvalidOperationException(\"Failed to resolve $ref: {EscapeString(extRef.OriginalRef)}\");");
-                sb.AppendLine($"            {extRef.FieldName} = {extRef.FieldName}Resolved;");
+                // Resolve external refs
+                foreach (var extRef in externalRefs)
+                {
+                    sb.AppendLine($"            // External $ref: {extRef.OriginalRef}");
+                    sb.AppendLine($"            if (!registry.TryGetValidator(new Uri(\"{EscapeString(extRef.TargetUri.AbsoluteUri)}\"), out var {extRef.FieldName}Resolved) || {extRef.FieldName}Resolved is null)");
+                    sb.AppendLine($"                throw new InvalidOperationException(\"Failed to resolve $ref: {EscapeString(extRef.OriginalRef)}\");");
+                    sb.AppendLine($"            {extRef.FieldName} = {extRef.FieldName}Resolved;");
+                    // Set this validator as dynamic scope root for external refs (for $dynamicRef resolution)
+                    sb.AppendLine($"            if ({extRef.FieldName} is IRegistryAwareCompiledValidator {extRef.FieldName}RegistryAware)");
+                    sb.AppendLine($"                {extRef.FieldName}RegistryAware.SetDynamicScopeRoot(this);");
+                }
+            }
+            sb.AppendLine("        }");
+            sb.AppendLine();
+
+            // SetDynamicScopeRoot - allows outer validators to set themselves as the dynamic scope root
+            sb.AppendLine("        public void SetDynamicScopeRoot(ICompiledValidator? root)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            _dynamicScopeRoot = root;");
+            if (hasExternalRefs)
+            {
+                // Propagate to external refs
+                foreach (var extRef in externalRefs)
+                {
+                    sb.AppendLine($"            if ({extRef.FieldName} is IRegistryAwareCompiledValidator {extRef.FieldName}RegistryAware)");
+                    sb.AppendLine($"                {extRef.FieldName}RegistryAware.SetDynamicScopeRoot(root);");
+                }
             }
             sb.AppendLine("        }");
             sb.AppendLine();
@@ -579,6 +659,29 @@ public sealed class SchemaCodeGenerator
             }
             sb.AppendLine("            }");
             sb.AppendLine("        }");
+        }
+
+        // Generate inner wrapper classes for fragment subschemas
+        if (hasFragmentSubschemas)
+        {
+            sb.AppendLine();
+            foreach (var (hash, fragmentUri) in fragmentSubschemas)
+            {
+                sb.AppendLine($"        private sealed class SubschemaValidator_{hash} : ICompiledValidator");
+                sb.AppendLine("        {");
+                sb.AppendLine($"            private readonly {className} _parent;");
+                sb.AppendLine($"            public SubschemaValidator_{hash}({className} parent) => _parent = parent;");
+                sb.AppendLine($"            public Uri SchemaUri => new Uri(\"{EscapeString(fragmentUri)}\");");
+                if (hasAnnotationTracking)
+                {
+                    sb.AppendLine($"            public bool IsValid(JsonElement instance) => _parent.Validate_{hash}(instance, \"\");");
+                }
+                else
+                {
+                    sb.AppendLine($"            public bool IsValid(JsonElement instance) => _parent.Validate_{hash}(instance);");
+                }
+                sb.AppendLine("        }");
+            }
         }
 
         // Close class and namespace

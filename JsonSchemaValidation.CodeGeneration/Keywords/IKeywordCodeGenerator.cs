@@ -90,6 +90,22 @@ public sealed class CodeGenerationContext
     public JsonElement? ResourceRoot { get; init; }
 
     /// <summary>
+    /// The depth of the resource containing the current subschema.
+    /// Used for $dynamicRef scope resolution.
+    /// </summary>
+    public int ResourceDepth { get; init; }
+
+    /// <summary>
+    /// Function to find the outermost $dynamicAnchor with the given name.
+    /// </summary>
+    public Func<string, JsonElement?>? FindOutermostDynamicAnchor { get; init; }
+
+    /// <summary>
+    /// Function to find an outer $dynamicAnchor (at lower depth than current resource).
+    /// </summary>
+    public Func<string, int, JsonElement?>? FindOuterDynamicAnchor { get; init; }
+
+    /// <summary>
     /// The variable name for the element being validated (usually "e").
     /// </summary>
     public string ElementVariable { get; init; } = "e";

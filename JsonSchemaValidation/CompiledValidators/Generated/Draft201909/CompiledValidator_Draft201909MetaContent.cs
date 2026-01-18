@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
@@ -31,17 +32,17 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("contentMediaType", out var _contentMediaType_))
+            if (e.TryGetProperty("contentMediaType", out var _prop0_))
             {
-                if (!Validate_00404e686415(_contentMediaType_)) return false;
+                if (!Validate_00404e686415(_prop0_)) return false;
             }
-            if (e.TryGetProperty("contentEncoding", out var _contentEncoding_))
+            if (e.TryGetProperty("contentEncoding", out var _prop1_))
             {
-                if (!Validate_00404e686415(_contentEncoding_)) return false;
+                if (!Validate_00404e686415(_prop1_)) return false;
             }
-            if (e.TryGetProperty("contentSchema", out var _contentSchema_))
+            if (e.TryGetProperty("contentSchema", out var _prop2_))
             {
-                if (!Validate_f408d0871962(_contentSchema_)) return false;
+                if (!Validate_f408d0871962(_prop2_)) return false;
             }
         }
 

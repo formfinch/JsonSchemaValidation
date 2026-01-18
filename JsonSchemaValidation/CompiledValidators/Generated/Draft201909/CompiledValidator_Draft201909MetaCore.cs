@@ -11,19 +11,20 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
     public sealed class CompiledValidator_Draft201909MetaCore : ICompiledValidator
     {
-        private static readonly Regex Pattern_edcdb22c519d = new Regex(@"^[^#]*#?$", RegexOptions.Compiled);
-        private static readonly Regex Pattern_4657485aab9e = new Regex(@"^[A-Za-z][-A-Za-z0-9.:_]*$", RegexOptions.Compiled);
+        private static readonly Regex Pattern_edcdb22c519d = new Regex(@"^[^#]*#?$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        private static readonly Regex Pattern_4657485aab9e = new Regex(@"^[A-Za-z][-A-Za-z0-9.:_]*$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
 
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/core");
 
-        public bool IsValid(JsonElement instance) => Validate_08271e55a5a9(instance);
+        public bool IsValid(JsonElement instance) => Validate_87ee9c7fa7cf(instance);
 
-    private static bool Validate_08271e55a5a9(JsonElement e)
+    private static bool Validate_87ee9c7fa7cf(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -34,41 +35,41 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("$id", out var __id_))
+            if (e.TryGetProperty("$id", out var _prop0_))
             {
-                if (!Validate_edcdb22c519d(__id_)) return false;
+                if (!Validate_edcdb22c519d(_prop0_)) return false;
             }
-            if (e.TryGetProperty("$schema", out var __schema_))
+            if (e.TryGetProperty("$schema", out var _prop1_))
             {
-                if (!Validate_f9757109fae3(__schema_)) return false;
+                if (!Validate_f9757109fae3(_prop1_)) return false;
             }
-            if (e.TryGetProperty("$anchor", out var __anchor_))
+            if (e.TryGetProperty("$anchor", out var _prop2_))
             {
-                if (!Validate_4657485aab9e(__anchor_)) return false;
+                if (!Validate_4657485aab9e(_prop2_)) return false;
             }
-            if (e.TryGetProperty("$ref", out var __ref_))
+            if (e.TryGetProperty("$ref", out var _prop3_))
             {
-                if (!Validate_5dc527ab08dc(__ref_)) return false;
+                if (!Validate_5dc527ab08dc(_prop3_)) return false;
             }
-            if (e.TryGetProperty("$recursiveRef", out var __recursiveRef_))
+            if (e.TryGetProperty("$recursiveRef", out var _prop4_))
             {
-                if (!Validate_5dc527ab08dc(__recursiveRef_)) return false;
+                if (!Validate_5dc527ab08dc(_prop4_)) return false;
             }
-            if (e.TryGetProperty("$recursiveAnchor", out var __recursiveAnchor_))
+            if (e.TryGetProperty("$recursiveAnchor", out var _prop5_))
             {
-                if (!Validate_7cb541e84f22(__recursiveAnchor_)) return false;
+                if (!Validate_7cb541e84f22(_prop5_)) return false;
             }
-            if (e.TryGetProperty("$vocabulary", out var __vocabulary_))
+            if (e.TryGetProperty("$vocabulary", out var _prop6_))
             {
-                if (!Validate_f46f77c6529f(__vocabulary_)) return false;
+                if (!Validate_f46f77c6529f(_prop6_)) return false;
             }
-            if (e.TryGetProperty("$comment", out var __comment_))
+            if (e.TryGetProperty("$comment", out var _prop7_))
             {
-                if (!Validate_00404e686415(__comment_)) return false;
+                if (!Validate_00404e686415(_prop7_)) return false;
             }
-            if (e.TryGetProperty("$defs", out var __defs_))
+            if (e.TryGetProperty("$defs", out var _prop8_))
             {
-                if (!Validate_b3a76762e1d8(__defs_)) return false;
+                if (!Validate_b3a76762e1d8(_prop8_)) return false;
             }
         }
 
@@ -84,6 +85,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
             var _str_ = e.GetString();
             if (_str_ != null && !Pattern_edcdb22c519d.IsMatch(_str_)) return false;
         }
+        if (!FormatValidators.IsValidUriReference(e)) return false;
         return true;
     }
 
@@ -91,6 +93,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_f9757109fae3(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        if (!FormatValidators.IsValidUri(e)) return false;
         return true;
     }
 
@@ -110,6 +113,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_5dc527ab08dc(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        if (!FormatValidators.IsValidUriReference(e)) return false;
         return true;
     }
 

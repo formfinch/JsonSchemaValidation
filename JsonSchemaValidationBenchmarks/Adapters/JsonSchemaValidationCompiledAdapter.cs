@@ -23,8 +23,10 @@ public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValida
     {
         var registry = new CompiledValidatorRegistry();
 
-        // Pre-register all metaschemas so they can be resolved by external $ref
-        foreach (var metaschema in CompiledMetaschemas.GetAll())
+        var metaschemas = CompiledMetaschemas.GetAll();
+
+        // First pass: register all metaschemas so they can be resolved by external $ref
+        foreach (var metaschema in metaschemas)
         {
             try
             {
@@ -39,7 +41,61 @@ public sealed class JsonSchemaValidationCompiledAdapter : IPreparsedSchemaValida
         // Load remote schemas for test suite compatibility
         LoadRemoteSchemas(registry);
 
+        // Register fragment schemas that are referenced from metaschemas
+        // Need to create a temporary factory for this
+        using var fragmentFactory = new RuntimeValidatorFactory(registry);
+        RegisterVocabularyFragments(registry, fragmentFactory);
+
+        // Second pass: initialize registry-aware validators after all registrations
+        foreach (var metaschema in metaschemas)
+        {
+            try
+            {
+                if (metaschema is IRegistryAwareCompiledValidator registryAware)
+                {
+                    registryAware.Initialize(registry);
+                }
+            }
+            catch
+            {
+                // Ignore initialization errors - some refs may not be resolvable
+            }
+        }
+
         return registry;
+    }
+
+    private static void RegisterVocabularyFragments(CompiledValidatorRegistry registry, RuntimeValidatorFactory factory)
+    {
+        // Register specific $defs fragments from vocabulary schemas that are referenced by the metaschema
+        // These are simple schemas that we can compile separately
+        var fragmentSchemas = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            // meta/validation#/$defs/stringArray - referenced by dependencies compatibility
+            ["https://json-schema.org/draft/2020-12/meta/validation#/$defs/stringArray"] =
+                """{ "type": "array", "items": { "type": "string" }, "default": [] }""",
+
+            // meta/core#/$defs/anchorString - referenced by $recursiveAnchor compatibility
+            ["https://json-schema.org/draft/2020-12/meta/core#/$defs/anchorString"] =
+                """{ "type": "string", "pattern": "^[A-Za-z_][-A-Za-z0-9._]*$" }""",
+
+            // meta/core#/$defs/uriReferenceString - referenced by $recursiveRef compatibility
+            ["https://json-schema.org/draft/2020-12/meta/core#/$defs/uriReferenceString"] =
+                """{ "type": "string", "format": "uri-reference" }""",
+        };
+
+        foreach (var (uri, schemaJson) in fragmentSchemas)
+        {
+            try
+            {
+                var validator = factory.Compile(schemaJson);
+                registry.RegisterForUri(new Uri(uri), validator);
+            }
+            catch
+            {
+                // Ignore errors compiling fragment schemas
+            }
+        }
     }
 
     private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)

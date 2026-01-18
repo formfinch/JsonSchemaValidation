@@ -11,6 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using JsonSchemaValidation.Abstractions;
+using JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace JsonSchemaValidation.CompiledValidators.Generated
 {
@@ -20,9 +21,9 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema");
 
-        public bool IsValid(JsonElement instance) => Validate_72a462cd20e9(instance);
+        public bool IsValid(JsonElement instance) => Validate_cc3a8e9e1dce(instance);
 
-    private static bool Validate_72a462cd20e9(JsonElement e)
+    private static bool Validate_cc3a8e9e1dce(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -33,189 +34,189 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Object)
         {
-            if (e.TryGetProperty("$id", out var __id_))
+            if (e.TryGetProperty("$id", out var _prop0_))
             {
-                if (!Validate_5dc527ab08dc(__id_)) return false;
+                if (!Validate_5dc527ab08dc(_prop0_)) return false;
             }
-            if (e.TryGetProperty("$schema", out var __schema_))
+            if (e.TryGetProperty("$schema", out var _prop1_))
             {
-                if (!Validate_f9757109fae3(__schema_)) return false;
+                if (!Validate_f9757109fae3(_prop1_)) return false;
             }
-            if (e.TryGetProperty("$ref", out var __ref_))
+            if (e.TryGetProperty("$ref", out var _prop2_))
             {
-                if (!Validate_5dc527ab08dc(__ref_)) return false;
+                if (!Validate_5dc527ab08dc(_prop2_)) return false;
             }
-            if (e.TryGetProperty("$comment", out var __comment_))
+            if (e.TryGetProperty("$comment", out var _prop3_))
             {
-                if (!Validate_00404e686415(__comment_)) return false;
+                if (!Validate_00404e686415(_prop3_)) return false;
             }
-            if (e.TryGetProperty("title", out var _title_))
+            if (e.TryGetProperty("title", out var _prop4_))
             {
-                if (!Validate_00404e686415(_title_)) return false;
+                if (!Validate_00404e686415(_prop4_)) return false;
             }
-            if (e.TryGetProperty("description", out var _description_))
+            if (e.TryGetProperty("description", out var _prop5_))
             {
-                if (!Validate_00404e686415(_description_)) return false;
+                if (!Validate_00404e686415(_prop5_)) return false;
             }
-            if (e.TryGetProperty("default", out var _default_))
+            if (e.TryGetProperty("default", out var _prop6_))
             {
-                if (!Validate_b5bea41b6c62(_default_)) return false;
+                if (!Validate_b5bea41b6c62(_prop6_)) return false;
             }
-            if (e.TryGetProperty("readOnly", out var _readOnly_))
+            if (e.TryGetProperty("readOnly", out var _prop7_))
             {
-                if (!Validate_7cb541e84f22(_readOnly_)) return false;
+                if (!Validate_7cb541e84f22(_prop7_)) return false;
             }
-            if (e.TryGetProperty("writeOnly", out var _writeOnly_))
+            if (e.TryGetProperty("writeOnly", out var _prop8_))
             {
-                if (!Validate_7cb541e84f22(_writeOnly_)) return false;
+                if (!Validate_7cb541e84f22(_prop8_)) return false;
             }
-            if (e.TryGetProperty("examples", out var _examples_))
+            if (e.TryGetProperty("examples", out var _prop9_))
             {
-                if (!Validate_11d4ea710c08(_examples_)) return false;
+                if (!Validate_11d4ea710c08(_prop9_)) return false;
             }
-            if (e.TryGetProperty("multipleOf", out var _multipleOf_))
+            if (e.TryGetProperty("multipleOf", out var _prop10_))
             {
-                if (!Validate_f8eb23dcc068(_multipleOf_)) return false;
+                if (!Validate_f8eb23dcc068(_prop10_)) return false;
             }
-            if (e.TryGetProperty("maximum", out var _maximum_))
+            if (e.TryGetProperty("maximum", out var _prop11_))
             {
-                if (!Validate_cddf8275afa1(_maximum_)) return false;
+                if (!Validate_cddf8275afa1(_prop11_)) return false;
             }
-            if (e.TryGetProperty("exclusiveMaximum", out var _exclusiveMaximum_))
+            if (e.TryGetProperty("exclusiveMaximum", out var _prop12_))
             {
-                if (!Validate_cddf8275afa1(_exclusiveMaximum_)) return false;
+                if (!Validate_cddf8275afa1(_prop12_)) return false;
             }
-            if (e.TryGetProperty("minimum", out var _minimum_))
+            if (e.TryGetProperty("minimum", out var _prop13_))
             {
-                if (!Validate_cddf8275afa1(_minimum_)) return false;
+                if (!Validate_cddf8275afa1(_prop13_)) return false;
             }
-            if (e.TryGetProperty("exclusiveMinimum", out var _exclusiveMinimum_))
+            if (e.TryGetProperty("exclusiveMinimum", out var _prop14_))
             {
-                if (!Validate_cddf8275afa1(_exclusiveMinimum_)) return false;
+                if (!Validate_cddf8275afa1(_prop14_)) return false;
             }
-            if (e.TryGetProperty("maxLength", out var _maxLength_))
+            if (e.TryGetProperty("maxLength", out var _prop15_))
             {
-                if (!Validate_9d77184891dc(_maxLength_)) return false;
+                if (!Validate_9d77184891dc(_prop15_)) return false;
             }
-            if (e.TryGetProperty("minLength", out var _minLength_))
+            if (e.TryGetProperty("minLength", out var _prop16_))
             {
-                if (!Validate_2df20126dd52(_minLength_)) return false;
+                if (!Validate_2df20126dd52(_prop16_)) return false;
             }
-            if (e.TryGetProperty("pattern", out var _pattern_))
+            if (e.TryGetProperty("pattern", out var _prop17_))
             {
-                if (!Validate_2028a8659daf(_pattern_)) return false;
+                if (!Validate_2028a8659daf(_prop17_)) return false;
             }
-            if (e.TryGetProperty("additionalItems", out var _additionalItems_))
+            if (e.TryGetProperty("additionalItems", out var _prop18_))
             {
-                if (!Validate_b17aa97428d3(_additionalItems_)) return false;
+                if (!Validate_b17aa97428d3(_prop18_)) return false;
             }
-            if (e.TryGetProperty("items", out var _items_))
+            if (e.TryGetProperty("items", out var _prop19_))
             {
-                if (!Validate_254ffe3c61cb(_items_)) return false;
+                if (!Validate_254ffe3c61cb(_prop19_)) return false;
             }
-            if (e.TryGetProperty("maxItems", out var _maxItems_))
+            if (e.TryGetProperty("maxItems", out var _prop20_))
             {
-                if (!Validate_9d77184891dc(_maxItems_)) return false;
+                if (!Validate_9d77184891dc(_prop20_)) return false;
             }
-            if (e.TryGetProperty("minItems", out var _minItems_))
+            if (e.TryGetProperty("minItems", out var _prop21_))
             {
-                if (!Validate_2df20126dd52(_minItems_)) return false;
+                if (!Validate_2df20126dd52(_prop21_)) return false;
             }
-            if (e.TryGetProperty("uniqueItems", out var _uniqueItems_))
+            if (e.TryGetProperty("uniqueItems", out var _prop22_))
             {
-                if (!Validate_7cb541e84f22(_uniqueItems_)) return false;
+                if (!Validate_7cb541e84f22(_prop22_)) return false;
             }
-            if (e.TryGetProperty("contains", out var _contains_))
+            if (e.TryGetProperty("contains", out var _prop23_))
             {
-                if (!Validate_b17aa97428d3(_contains_)) return false;
+                if (!Validate_b17aa97428d3(_prop23_)) return false;
             }
-            if (e.TryGetProperty("maxProperties", out var _maxProperties_))
+            if (e.TryGetProperty("maxProperties", out var _prop24_))
             {
-                if (!Validate_9d77184891dc(_maxProperties_)) return false;
+                if (!Validate_9d77184891dc(_prop24_)) return false;
             }
-            if (e.TryGetProperty("minProperties", out var _minProperties_))
+            if (e.TryGetProperty("minProperties", out var _prop25_))
             {
-                if (!Validate_2df20126dd52(_minProperties_)) return false;
+                if (!Validate_2df20126dd52(_prop25_)) return false;
             }
-            if (e.TryGetProperty("required", out var _required_))
+            if (e.TryGetProperty("required", out var _prop26_))
             {
-                if (!Validate_8831a4f86008(_required_)) return false;
+                if (!Validate_8831a4f86008(_prop26_)) return false;
             }
-            if (e.TryGetProperty("additionalProperties", out var _additionalProperties_))
+            if (e.TryGetProperty("additionalProperties", out var _prop27_))
             {
-                if (!Validate_b17aa97428d3(_additionalProperties_)) return false;
+                if (!Validate_b17aa97428d3(_prop27_)) return false;
             }
-            if (e.TryGetProperty("definitions", out var _definitions_))
+            if (e.TryGetProperty("definitions", out var _prop28_))
             {
-                if (!Validate_d1a2c4af4125(_definitions_)) return false;
+                if (!Validate_d1a2c4af4125(_prop28_)) return false;
             }
-            if (e.TryGetProperty("properties", out var _properties_))
+            if (e.TryGetProperty("properties", out var _prop29_))
             {
-                if (!Validate_d1a2c4af4125(_properties_)) return false;
+                if (!Validate_d1a2c4af4125(_prop29_)) return false;
             }
-            if (e.TryGetProperty("patternProperties", out var _patternProperties_))
+            if (e.TryGetProperty("patternProperties", out var _prop30_))
             {
-                if (!Validate_99ea2ac99713(_patternProperties_)) return false;
+                if (!Validate_99ea2ac99713(_prop30_)) return false;
             }
-            if (e.TryGetProperty("dependencies", out var _dependencies_))
+            if (e.TryGetProperty("dependencies", out var _prop31_))
             {
-                if (!Validate_9b72fb30cfca(_dependencies_)) return false;
+                if (!Validate_9b72fb30cfca(_prop31_)) return false;
             }
-            if (e.TryGetProperty("propertyNames", out var _propertyNames_))
+            if (e.TryGetProperty("propertyNames", out var _prop32_))
             {
-                if (!Validate_b17aa97428d3(_propertyNames_)) return false;
+                if (!Validate_b17aa97428d3(_prop32_)) return false;
             }
-            if (e.TryGetProperty("const", out var _const_))
+            if (e.TryGetProperty("const", out var _prop33_))
             {
-                if (!Validate_b5bea41b6c62(_const_)) return false;
+                if (!Validate_b5bea41b6c62(_prop33_)) return false;
             }
-            if (e.TryGetProperty("enum", out var _enum_))
+            if (e.TryGetProperty("enum", out var _prop34_))
             {
-                if (!Validate_6760e7c71c97(_enum_)) return false;
+                if (!Validate_6760e7c71c97(_prop34_)) return false;
             }
-            if (e.TryGetProperty("type", out var _type_))
+            if (e.TryGetProperty("type", out var _prop35_))
             {
-                if (!Validate_bb5981042649(_type_)) return false;
+                if (!Validate_bb5981042649(_prop35_)) return false;
             }
-            if (e.TryGetProperty("format", out var _format_))
+            if (e.TryGetProperty("format", out var _prop36_))
             {
-                if (!Validate_00404e686415(_format_)) return false;
+                if (!Validate_00404e686415(_prop36_)) return false;
             }
-            if (e.TryGetProperty("contentMediaType", out var _contentMediaType_))
+            if (e.TryGetProperty("contentMediaType", out var _prop37_))
             {
-                if (!Validate_00404e686415(_contentMediaType_)) return false;
+                if (!Validate_00404e686415(_prop37_)) return false;
             }
-            if (e.TryGetProperty("contentEncoding", out var _contentEncoding_))
+            if (e.TryGetProperty("contentEncoding", out var _prop38_))
             {
-                if (!Validate_00404e686415(_contentEncoding_)) return false;
+                if (!Validate_00404e686415(_prop38_)) return false;
             }
-            if (e.TryGetProperty("if", out var _if_))
+            if (e.TryGetProperty("if", out var _prop39_))
             {
-                if (!Validate_b17aa97428d3(_if_)) return false;
+                if (!Validate_b17aa97428d3(_prop39_)) return false;
             }
-            if (e.TryGetProperty("then", out var _then_))
+            if (e.TryGetProperty("then", out var _prop40_))
             {
-                if (!Validate_b17aa97428d3(_then_)) return false;
+                if (!Validate_b17aa97428d3(_prop40_)) return false;
             }
-            if (e.TryGetProperty("else", out var _else_))
+            if (e.TryGetProperty("else", out var _prop41_))
             {
-                if (!Validate_b17aa97428d3(_else_)) return false;
+                if (!Validate_b17aa97428d3(_prop41_)) return false;
             }
-            if (e.TryGetProperty("allOf", out var _allOf_))
+            if (e.TryGetProperty("allOf", out var _prop42_))
             {
-                if (!Validate_70ad97a912ba(_allOf_)) return false;
+                if (!Validate_70ad97a912ba(_prop42_)) return false;
             }
-            if (e.TryGetProperty("anyOf", out var _anyOf_))
+            if (e.TryGetProperty("anyOf", out var _prop43_))
             {
-                if (!Validate_70ad97a912ba(_anyOf_)) return false;
+                if (!Validate_70ad97a912ba(_prop43_)) return false;
             }
-            if (e.TryGetProperty("oneOf", out var _oneOf_))
+            if (e.TryGetProperty("oneOf", out var _prop44_))
             {
-                if (!Validate_70ad97a912ba(_oneOf_)) return false;
+                if (!Validate_70ad97a912ba(_prop44_)) return false;
             }
-            if (e.TryGetProperty("not", out var _not_))
+            if (e.TryGetProperty("not", out var _prop45_))
             {
-                if (!Validate_b17aa97428d3(_not_)) return false;
+                if (!Validate_b17aa97428d3(_prop45_)) return false;
             }
         }
 
@@ -234,9 +235,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_b17aa97428d3(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 
@@ -247,7 +250,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_b17aa97428d3(JsonElement e)
     {
         // $ref: #
-        if (!Validate_72a462cd20e9(e)) return false;
+        if (!Validate_cc3a8e9e1dce(e)) return false;
         return true;
     }
 
@@ -255,11 +258,19 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_0d3ac1e9e006(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Number) return false;
-        if (!e.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intVal_)) return false;
+        {
+            var _isInt_ = false;
+            if (e.TryGetDecimal(out var _intVal_) && _intVal_ == decimal.Truncate(_intVal_)) _isInt_ = true;
+            else if (System.Numerics.BigInteger.TryParse(e.ToString(), System.Globalization.CultureInfo.InvariantCulture, out _)) _isInt_ = true;
+            else if (e.TryGetDouble(out var _dblVal_) && !double.IsInfinity(_dblVal_) && !double.IsNaN(_dblVal_) && Math.Abs(_dblVal_ - Math.Floor(_dblVal_)) < double.Epsilon) _isInt_ = true;
+            if (!_isInt_) return false;
+        }
         if (e.ValueKind == JsonValueKind.Number)
         {
-            var _num_ = e.GetDecimal();
-            if (_num_ < 0m) return false;
+            if (e.TryGetDecimal(out var _num_))
+            {
+                if (_num_ < 0m) return false;
+            }
         }
 
         return true;
@@ -330,9 +341,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_00404e686415(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 
@@ -350,6 +363,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_5dc527ab08dc(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        if (!FormatValidators.IsValidUriReference(e)) return false;
         return true;
     }
 
@@ -357,6 +371,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_f9757109fae3(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        if (!FormatValidators.IsValidUri(e)) return false;
         return true;
     }
 
@@ -379,9 +394,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_b5bea41b6c62(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 
@@ -394,8 +411,10 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
         if (e.ValueKind != JsonValueKind.Number) return false;
         if (e.ValueKind == JsonValueKind.Number)
         {
-            var _num_ = e.GetDecimal();
-            if (_num_ <= 0m) return false;
+            if (e.TryGetDecimal(out var _num_))
+            {
+                if (_num_ <= 0m) return false;
+            }
         }
 
         return true;
@@ -420,6 +439,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_2028a8659daf(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
+        if (!FormatValidators.IsValidRegex(e)) return false;
         return true;
     }
 
@@ -495,6 +515,7 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_a0c839cc99e3(JsonElement e)
     {
+        if (!FormatValidators.IsValidRegex(e)) return false;
         return true;
     }
 
@@ -549,9 +570,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_b5bea41b6c62(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 
@@ -602,9 +625,11 @@ namespace JsonSchemaValidation.CompiledValidators.Generated
 
         if (e.ValueKind == JsonValueKind.Array)
         {
+            var _itemIdx_ = 0;
             foreach (var _arrItem_ in e.EnumerateArray())
             {
                 if (!Validate_ef13d5113a2b(_arrItem_)) return false;
+                _itemIdx_++;
             }
         }
 
