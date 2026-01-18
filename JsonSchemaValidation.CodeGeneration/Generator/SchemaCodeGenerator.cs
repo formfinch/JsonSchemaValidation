@@ -37,6 +37,7 @@ public sealed class SchemaCodeGenerator
             new PatternPropertiesCodeGenerator(),
             new AdditionalPropertiesCodeGenerator(),
             new PropertyNamesCodeGenerator(),
+            new DependenciesCodeGenerator(),
             new DependentRequiredCodeGenerator(),
             new DependentSchemasCodeGenerator(),
             new AllOfCodeGenerator(),
@@ -45,6 +46,7 @@ public sealed class SchemaCodeGenerator
             new NotCodeGenerator(),
             new IfThenElseCodeGenerator(),
             new PatternCodeGenerator(),
+            new FormatCodeGenerator(),
             new UnevaluatedPropertiesCodeGenerator(),
             new UnevaluatedItemsCodeGenerator()
         ];
@@ -266,6 +268,7 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.RegularExpressions;");
         sb.AppendLine("using JsonSchemaValidation.Abstractions;");
+        sb.AppendLine("using JsonSchemaValidation.Draft202012.Keywords.Format;");
         if (hasExternalRefs)
         {
             sb.AppendLine("using JsonSchemaValidation.CompiledValidators;");

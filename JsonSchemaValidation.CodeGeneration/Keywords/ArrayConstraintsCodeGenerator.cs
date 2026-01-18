@@ -42,12 +42,12 @@ public sealed class ArrayConstraintsCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine("{");
         sb.AppendLine($"    var _arrLen_ = {e}.GetArrayLength();");
 
-        if (hasMinItems && minItemsElement.TryGetInt32(out var minItems))
+        if (hasMinItems && TryGetIntegerValue(minItemsElement, out var minItems))
         {
             sb.AppendLine($"    if (_arrLen_ < {minItems}) return false;");
         }
 
-        if (hasMaxItems && maxItemsElement.TryGetInt32(out var maxItems))
+        if (hasMaxItems && TryGetIntegerValue(maxItemsElement, out var maxItems))
         {
             sb.AppendLine($"    if (_arrLen_ > {maxItems}) return false;");
         }
@@ -74,5 +74,34 @@ public sealed class ArrayConstraintsCodeGenerator : IKeywordCodeGenerator
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
     {
         return [];
+    }
+
+    /// <summary>
+    /// Tries to get an integer value from a JSON element, handling both integer and decimal representations.
+    /// JSON Schema allows integer constraints to be specified as decimals (e.g., 2.0).
+    /// Matches the logic in MaxItemsValidatorFactory.
+    /// </summary>
+    private static bool TryGetIntegerValue(JsonElement element, out long value)
+    {
+        value = 0;
+
+        if (element.ValueKind != JsonValueKind.Number)
+        {
+            return false;
+        }
+
+        if (!element.TryGetDouble(out var doubleValue))
+        {
+            return false;
+        }
+
+        // Check if it's a non-negative integer value
+        if (doubleValue < 0 || Math.Abs(doubleValue - Math.Floor(doubleValue)) > double.Epsilon)
+        {
+            return false;
+        }
+
+        value = (long)doubleValue;
+        return true;
     }
 }

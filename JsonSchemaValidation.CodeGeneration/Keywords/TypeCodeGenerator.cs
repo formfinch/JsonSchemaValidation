@@ -61,9 +61,16 @@ public sealed class TypeCodeGenerator : IKeywordCodeGenerator
 
     private static string GenerateIntegerCheck(string e)
     {
+        // Match dynamic validator logic: try decimal first, then BigInteger, then double for overflow cases
         return $$"""
 if ({{e}}.ValueKind != JsonValueKind.Number) return false;
-if (!{{e}}.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intVal_)) return false;
+{
+    var _isInt_ = false;
+    if ({{e}}.TryGetDecimal(out var _intVal_) && _intVal_ == decimal.Truncate(_intVal_)) _isInt_ = true;
+    else if (System.Numerics.BigInteger.TryParse({{e}}.ToString(), System.Globalization.CultureInfo.InvariantCulture, out _)) _isInt_ = true;
+    else if ({{e}}.TryGetDouble(out var _dblVal_) && !double.IsInfinity(_dblVal_) && !double.IsNaN(_dblVal_) && Math.Abs(_dblVal_ - Math.Floor(_dblVal_)) < double.Epsilon) _isInt_ = true;
+    if (!_isInt_) return false;
+}
 """;
     }
 
@@ -93,7 +100,7 @@ if (!{{e}}.TryGetDecimal(out var _intVal_) || _intVal_ != decimal.Truncate(_intV
             {
                 "string" => $"{e}.ValueKind == JsonValueKind.String",
                 "number" => $"{e}.ValueKind == JsonValueKind.Number",
-                "integer" => $"({e}.ValueKind == JsonValueKind.Number && {e}.TryGetDecimal(out var _iv_) && _iv_ == decimal.Truncate(_iv_))",
+                "integer" => $"({e}.ValueKind == JsonValueKind.Number && (({e}.TryGetDecimal(out var _iv_) && _iv_ == decimal.Truncate(_iv_)) || System.Numerics.BigInteger.TryParse({e}.ToString(), System.Globalization.CultureInfo.InvariantCulture, out _) || ({e}.TryGetDouble(out var _dv_) && !double.IsInfinity(_dv_) && !double.IsNaN(_dv_) && Math.Abs(_dv_ - Math.Floor(_dv_)) < double.Epsilon)))",
                 "boolean" => $"({e}.ValueKind == JsonValueKind.True || {e}.ValueKind == JsonValueKind.False)",
                 "null" => $"{e}.ValueKind == JsonValueKind.Null",
                 "array" => $"{e}.ValueKind == JsonValueKind.Array",

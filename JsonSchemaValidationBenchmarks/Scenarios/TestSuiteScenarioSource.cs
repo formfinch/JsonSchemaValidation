@@ -84,7 +84,8 @@ public sealed class TestSuiteScenarioSource : IScenarioSource
     private static readonly HashSet<string> ExcludedFiles = new(StringComparer.OrdinalIgnoreCase)
     {
         "vocabulary", // Tests custom metaschemas with non-standard $vocabulary - optional feature
-        "refRemote"   // Tests remote schema resolution - requires localhost:1234 server or pre-loaded schemas
+        "refRemote",  // Tests remote schema resolution - requires localhost:1234 server or pre-loaded schemas
+        "format"      // Tests annotation-only behavior - compiled validators always validate format
     };
 
     private List<BenchmarkScenario> LoadScenarios()

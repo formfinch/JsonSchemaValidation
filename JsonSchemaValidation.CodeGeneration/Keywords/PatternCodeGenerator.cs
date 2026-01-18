@@ -1,9 +1,11 @@
 using System.Text.Json;
+using JsonSchemaValidation.Draft202012.Keywords;
 
 namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "pattern" keyword.
+/// Uses ECMAScript-compatible regex transformation matching the dynamic validator.
 /// </summary>
 public sealed class PatternCodeGenerator : IKeywordCodeGenerator
 {
@@ -49,11 +51,16 @@ if ({{e}}.ValueKind == JsonValueKind.String)
             yield break;
         }
 
+        // Use ECMAScript regex transformation for compatibility with JSON Schema spec
+        // This transforms \d, \w, \s etc. to ECMAScript-compatible equivalents
+        var ecmaRegex = EcmaScriptRegexHelper.CreateEcmaScriptRegex(pattern);
+        var transformedPattern = ecmaRegex.ToString();
+
         yield return new StaticFieldInfo
         {
             Type = "Regex",
             Name = $"Pattern_{context.CurrentHash}",
-            Initializer = $"new Regex({EscapeStringLiteral(pattern)}, RegexOptions.Compiled)"
+            Initializer = $"new Regex({EscapeStringLiteral(transformedPattern)}, RegexOptions.Compiled, TimeSpan.FromSeconds(5))"
         };
     }
 

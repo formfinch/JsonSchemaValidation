@@ -19,6 +19,7 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
+    <ProjectReference Include="..\JsonSchemaValidation.Compiler\JsonSchemaValidation.Compiler.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ProductionSchemas\**\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="ProductionSchemas" />
