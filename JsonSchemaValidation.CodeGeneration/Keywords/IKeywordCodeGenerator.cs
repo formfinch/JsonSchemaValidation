@@ -73,14 +73,37 @@ public sealed class CodeGenerationContext
     public required Func<string, JsonElement?> ResolveLocalRef { get; init; }
 
     /// <summary>
+    /// Function to resolve a URI to an internal schema that has a matching $id.
+    /// Returns null if no internal schema has the given $id.
+    /// </summary>
+    public required Func<string, JsonElement?> ResolveInternalId { get; init; }
+
+    /// <summary>
+    /// Function to resolve a local $ref within a specific schema resource.
+    /// </summary>
+    public required Func<string, JsonElement, JsonElement?> ResolveLocalRefInResource { get; init; }
+
+    /// <summary>
+    /// The schema resource root for the current subschema (nearest ancestor with $id, or root schema).
+    /// Used for resolving local JSON Pointer refs (#/$defs/...).
+    /// </summary>
+    public JsonElement? ResourceRoot { get; init; }
+
+    /// <summary>
     /// The variable name for the element being validated (usually "e").
     /// </summary>
     public string ElementVariable { get; init; } = "e";
 
     /// <summary>
-    /// The base URI of the schema being compiled (used to resolve relative $ref).
+    /// The effective base URI for this subschema (used to resolve relative $ref).
+    /// This may differ from RootBaseUri when the subschema has its own $id.
     /// </summary>
     public Uri? BaseUri { get; init; }
+
+    /// <summary>
+    /// The root schema's base URI (used for self-reference detection).
+    /// </summary>
+    public Uri? RootBaseUri { get; init; }
 
     /// <summary>
     /// Collection of external $ref URIs that need to be resolved from the registry.

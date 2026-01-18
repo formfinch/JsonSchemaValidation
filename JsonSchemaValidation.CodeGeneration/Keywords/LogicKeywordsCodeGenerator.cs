@@ -5,6 +5,7 @@ namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "allOf" keyword.
+/// Each branch has isolated annotation state to prevent "cousin" annotations from leaking.
 /// </summary>
 public sealed class AllOfCodeGenerator : IKeywordCodeGenerator
 {
@@ -26,9 +27,38 @@ public sealed class AllOfCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
         var sb = new StringBuilder();
-        sb.AppendLine("// allOf: all subschemas must match");
 
+        // If annotation tracking is enabled, isolate each branch's state
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var branches = allOfElement.EnumerateArray().ToArray();
+            sb.AppendLine("// allOf: all subschemas must match (with isolated annotation scopes)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    var _allOfBase_ = {eval}.Clone();");
+
+            for (int i = 0; i < branches.Length; i++)
+            {
+                var hash = context.GetSubschemaHash(branches[i]);
+                sb.AppendLine($"    // Branch {i}");
+                sb.AppendLine($"    {eval}.RestoreFrom(_allOfBase_);");
+                sb.AppendLine($"    if (!Validate_{hash}({e})) return false;");
+                sb.AppendLine($"    var _allOfBranch{i}_ = {eval}.Clone();");
+            }
+
+            // Merge all branches' annotations into the base state
+            sb.AppendLine("    // Merge all branches' annotations");
+            sb.AppendLine($"    {eval}.RestoreFrom(_allOfBase_);");
+            for (int i = 0; i < branches.Length; i++)
+            {
+                sb.AppendLine($"    {eval}.MergeFrom(_allOfBranch{i}_);");
+            }
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
+        sb.AppendLine("// allOf: all subschemas must match");
         foreach (var subschema in allOfElement.EnumerateArray())
         {
             var hash = context.GetSubschemaHash(subschema);
@@ -46,6 +76,7 @@ public sealed class AllOfCodeGenerator : IKeywordCodeGenerator
 
 /// <summary>
 /// Generates code for the "anyOf" keyword.
+/// Each branch has isolated annotation state; only successful branches' annotations are merged.
 /// </summary>
 public sealed class AnyOfCodeGenerator : IKeywordCodeGenerator
 {
@@ -67,7 +98,36 @@ public sealed class AnyOfCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
         var sb = new StringBuilder();
+
+        // If annotation tracking is enabled, isolate each branch's state
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var branches = anyOfElement.EnumerateArray().ToArray();
+            sb.AppendLine("// anyOf: at least one subschema must match (with isolated annotation scopes)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    var _anyOfBase_ = {eval}.Clone();");
+            sb.AppendLine("    var _anyOfMatches_ = new List<EvaluatedState>();");
+
+            for (int i = 0; i < branches.Length; i++)
+            {
+                var hash = context.GetSubschemaHash(branches[i]);
+                sb.AppendLine($"    // Branch {i}");
+                sb.AppendLine($"    {eval}.RestoreFrom(_anyOfBase_);");
+                sb.AppendLine($"    if (Validate_{hash}({e}))");
+                sb.AppendLine($"        _anyOfMatches_.Add({eval}.Clone());");
+            }
+
+            sb.AppendLine("    if (_anyOfMatches_.Count == 0) return false;");
+            sb.AppendLine("    // Merge successful branches' annotations");
+            sb.AppendLine($"    {eval}.RestoreFrom(_anyOfBase_);");
+            sb.AppendLine("    foreach (var _m_ in _anyOfMatches_)");
+            sb.AppendLine($"        {eval}.MergeFrom(_m_);");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
         sb.AppendLine("// anyOf: at least one subschema must match");
         sb.AppendLine("{");
         sb.AppendLine("    var _anyValid_ = false;");
@@ -92,6 +152,7 @@ public sealed class AnyOfCodeGenerator : IKeywordCodeGenerator
 
 /// <summary>
 /// Generates code for the "oneOf" keyword.
+/// Each branch has isolated annotation state; only the exactly one matching branch's annotations are merged.
 /// </summary>
 public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
 {
@@ -113,7 +174,40 @@ public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
         var sb = new StringBuilder();
+
+        // If annotation tracking is enabled, isolate each branch's state
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var branches = oneOfElement.EnumerateArray().ToArray();
+            sb.AppendLine("// oneOf: exactly one subschema must match (with isolated annotation scopes)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    var _oneOfBase_ = {eval}.Clone();");
+            sb.AppendLine("    EvaluatedState? _oneOfMatch_ = null;");
+            sb.AppendLine("    var _matchCount_ = 0;");
+
+            for (int i = 0; i < branches.Length; i++)
+            {
+                var hash = context.GetSubschemaHash(branches[i]);
+                sb.AppendLine($"    // Branch {i}");
+                sb.AppendLine($"    {eval}.RestoreFrom(_oneOfBase_);");
+                sb.AppendLine($"    if (Validate_{hash}({e}))");
+                sb.AppendLine("    {");
+                sb.AppendLine("        _matchCount_++;");
+                sb.AppendLine("        if (_matchCount_ > 1) return false;");
+                sb.AppendLine($"        _oneOfMatch_ = {eval}.Clone();");
+                sb.AppendLine("    }");
+            }
+
+            sb.AppendLine("    if (_matchCount_ != 1) return false;");
+            sb.AppendLine("    // Merge the one matching branch's annotations");
+            sb.AppendLine($"    {eval}.RestoreFrom(_oneOfBase_);");
+            sb.AppendLine($"    {eval}.MergeFrom(_oneOfMatch_!);");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
         sb.AppendLine("// oneOf: exactly one subschema must match");
         sb.AppendLine("{");
         sb.AppendLine("    var _matchCount_ = 0;");
@@ -139,6 +233,7 @@ public sealed class OneOfCodeGenerator : IKeywordCodeGenerator
 
 /// <summary>
 /// Generates code for the "not" keyword.
+/// Annotations from the "not" subschema are never collected (per JSON Schema spec).
 /// </summary>
 public sealed class NotCodeGenerator : IKeywordCodeGenerator
 {
@@ -162,7 +257,22 @@ public sealed class NotCodeGenerator : IKeywordCodeGenerator
         }
 
         var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
         var hash = context.GetSubschemaHash(notElement);
+
+        // If annotation tracking is enabled, save/restore state to discard annotations from "not"
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("// not: subschema must NOT match (annotations discarded)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    {eval}.SaveTo(out var _notSnapshot_);");
+            sb.AppendLine($"    var _notResult_ = Validate_{hash}({e});");
+            sb.AppendLine($"    {eval}.RestoreFrom(_notSnapshot_);");
+            sb.AppendLine("    if (_notResult_) return false;");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
 
         return $"// not: subschema must NOT match\nif (Validate_{hash}({e})) return false;";
     }
