@@ -344,6 +344,9 @@ public sealed class RuntimeValidatorFactory : IDisposable
         // System.Text.RegularExpressions
         references.Add(MetadataReference.CreateFromFile(typeof(System.Text.RegularExpressions.Regex).Assembly.Location));
 
+        // System.Runtime.Numerics (for BigInteger used in integer type validation)
+        references.Add(MetadataReference.CreateFromFile(typeof(System.Numerics.BigInteger).Assembly.Location));
+
         // Our abstractions (ICompiledValidator)
         references.Add(MetadataReference.CreateFromFile(typeof(ICompiledValidator).Assembly.Location));
 

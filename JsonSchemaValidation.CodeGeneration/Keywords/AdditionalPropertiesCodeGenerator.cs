@@ -1,5 +1,6 @@
 using System.Text;
 using System.Text.Json;
+using JsonSchemaValidation.Draft202012.Keywords;
 
 namespace JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -153,11 +154,15 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
 
         foreach (var pattern in patternPropsElement.EnumerateObject())
         {
+            // Use ECMAScript regex transformation for compatibility with JSON Schema spec
+            var ecmaRegex = EcmaScriptRegexHelper.CreateEcmaScriptRegex(pattern.Name);
+            var transformedPattern = ecmaRegex.ToString();
+
             yield return new StaticFieldInfo
             {
                 Type = "Regex",
                 Name = $"PatternProp_{context.CurrentHash}_{SanitizeName(pattern.Name)}",
-                Initializer = $"new Regex({EscapeStringLiteral(pattern.Name)}, RegexOptions.Compiled)"
+                Initializer = $"new Regex({EscapeStringLiteral(transformedPattern)}, RegexOptions.Compiled)"
             };
         }
     }

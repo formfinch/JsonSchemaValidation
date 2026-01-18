@@ -11,7 +11,7 @@ namespace JsonSchemaValidation.Draft202012.Keywords
     /// - \s, \S match ECMAScript whitespace (Unicode whitespace characters)
     /// - \p{...} Unicode property escapes are supported (ES2018+)
     /// </summary>
-    internal static class EcmaScriptRegexHelper
+    public static class EcmaScriptRegexHelper
     {
         private static readonly TimeSpan DefaultTimeout = TimeSpan.FromSeconds(5);
 

@@ -319,6 +319,20 @@ public sealed class SubschemaExtractor
                 // Walk into local $ref targets to ensure they're registered
                 WalkRefTarget(property.Value.GetString(), effectiveBaseUri, effectiveResourceRoot);
             }
+            else if (property.Name == "dependencies" && property.Value.ValueKind == JsonValueKind.Object)
+            {
+                // Legacy dependencies keyword - values can be arrays or schemas
+                foreach (var dep in property.Value.EnumerateObject())
+                {
+                    // Only walk schema values (objects, true, false), not array values
+                    if (dep.Value.ValueKind == JsonValueKind.Object ||
+                        dep.Value.ValueKind == JsonValueKind.True ||
+                        dep.Value.ValueKind == JsonValueKind.False)
+                    {
+                        WalkSubschema(dep.Value, effectiveBaseUri, effectiveResourceRoot);
+                    }
+                }
+            }
         }
     }
 

@@ -30,17 +30,17 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
         var containsHash = context.GetSubschemaHash(containsElement);
 
         // Get minContains/maxContains (defaults: minContains=1, maxContains=unlimited)
-        var minContains = 1;
-        var maxContains = int.MaxValue;
+        var minContains = 1L;
+        var maxContains = (long)int.MaxValue;
 
         if (context.CurrentSchema.TryGetProperty("minContains", out var minElement) &&
-            minElement.TryGetInt32(out var min))
+            TryGetIntegerValue(minElement, out var min))
         {
             minContains = min;
         }
 
         if (context.CurrentSchema.TryGetProperty("maxContains", out var maxElement) &&
-            maxElement.TryGetInt32(out var max))
+            TryGetIntegerValue(maxElement, out var max))
         {
             maxContains = max;
         }
@@ -63,7 +63,7 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine($"            {eval}.EvaluatedItemIndices.Add(_containsIdx_);");
         }
 
-        if (maxContains != int.MaxValue)
+        if (maxContains != (long)int.MaxValue)
         {
             sb.AppendLine($"            if (_containsCount_ > {maxContains}) return false;");
         }
@@ -83,5 +83,15 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
     {
         return [];
+    }
+
+    private static bool TryGetIntegerValue(JsonElement element, out long value)
+    {
+        value = 0;
+        if (element.ValueKind != JsonValueKind.Number) return false;
+        if (!element.TryGetDouble(out var doubleValue)) return false;
+        if (doubleValue < 0 || Math.Abs(doubleValue - Math.Floor(doubleValue)) > double.Epsilon) return false;
+        value = (long)doubleValue;
+        return true;
     }
 }

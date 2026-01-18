@@ -41,12 +41,12 @@ public sealed class ObjectConstraintsCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine($"    var _propCount_ = 0;");
         sb.AppendLine($"    foreach (var _ in {e}.EnumerateObject()) _propCount_++;");
 
-        if (hasMinProperties && minPropertiesElement.TryGetInt32(out var minProperties))
+        if (hasMinProperties && TryGetIntegerValue(minPropertiesElement, out var minProperties))
         {
             sb.AppendLine($"    if (_propCount_ < {minProperties}) return false;");
         }
 
-        if (hasMaxProperties && maxPropertiesElement.TryGetInt32(out var maxProperties))
+        if (hasMaxProperties && TryGetIntegerValue(maxPropertiesElement, out var maxProperties))
         {
             sb.AppendLine($"    if (_propCount_ > {maxProperties}) return false;");
         }
@@ -59,5 +59,15 @@ public sealed class ObjectConstraintsCodeGenerator : IKeywordCodeGenerator
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
     {
         return [];
+    }
+
+    private static bool TryGetIntegerValue(JsonElement element, out long value)
+    {
+        value = 0;
+        if (element.ValueKind != JsonValueKind.Number) return false;
+        if (!element.TryGetDouble(out var doubleValue)) return false;
+        if (doubleValue < 0 || Math.Abs(doubleValue - Math.Floor(doubleValue)) > double.Epsilon) return false;
+        value = (long)doubleValue;
+        return true;
     }
 }
