@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft behavior: Similar in Draft 2019-09 and Draft 2020-12 (allows sibling keywords)
 // Note: In Draft 4-7, $ref caused all sibling keywords to be ignored.
 // Validator for $ref that resolves the reference at validation time.

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft behavior: Different between Draft 3-7/2019-09 and Draft 2020-12
 // In Draft 3/2019-09: "items" can be a schema (all items) OR an array of schemas (tuple validation)
 // In Draft 2020-12: "items" is only a schema (applies after prefixItems), tuple validation uses "prefixItems"

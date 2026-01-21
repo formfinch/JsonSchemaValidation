@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 4 behavior: Validates uri format.
 // Note: uri-reference, uri-template, iri, iri-reference are not supported in Draft 4.
 

@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 7 behavior: Content keywords can optionally perform validation.
 // This validator performs actual validation (not just annotation).
 // It validates contentEncoding (base64) and contentMediaType (application/json).

@@ -65,4 +65,4 @@ Full documentation coming soon.
 
 ---
 
-Copyright 2024 FormFinch VOF
+Copyright 2026 FormFinch VOF

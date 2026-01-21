@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 3 behavior: disallow is the inverse of type.
 // Can be a string, array of strings, or array containing schemas.
 // Factory for disallow keyword validator.

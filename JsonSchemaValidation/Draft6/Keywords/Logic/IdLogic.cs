@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 7 behavior: Helper logic for $id property parsing.
 // Note: Draft 7 uses "definitions" instead of "$defs".
 // Note: Draft 7 allows $id with plain name fragments like "#foo" which act as anchors.
