@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft behavior: Specific to Draft 2019-09
 // Note: In Draft 2020-12, $recursiveRef was replaced by $dynamicRef with different semantics.
 // Validator for $recursiveRef that resolves the reference based on $recursiveAnchor.

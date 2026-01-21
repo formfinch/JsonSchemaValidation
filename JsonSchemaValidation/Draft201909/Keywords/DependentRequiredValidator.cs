@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft behavior: Identical in Draft 2019-09, Draft 2020-12
 // Note: In Draft 6 and Draft 7, this functionality was part of the "dependencies" keyword.
 // Validates that when a property is present, other properties are also required.

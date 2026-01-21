@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 3 behavior: Helper logic for id property parsing.
 // Note: Draft 3 uses "id" (without $) instead of "$id".
 // Note: Draft 3 allows id with fragments (e.g., "http://example.com/schema#foo").

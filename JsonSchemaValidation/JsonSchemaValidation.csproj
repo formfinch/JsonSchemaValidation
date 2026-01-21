@@ -17,7 +17,7 @@
     <PackageTags>json schema validation</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>FormFinch JsonSchemaValidation</Title>
-    <Copyright>2024 FormFinch VOF</Copyright>
+    <Copyright>2026 FormFinch VOF</Copyright>
     <PackageProjectUrl>https://www.formfinch.com</PackageProjectUrl>
   </PropertyGroup>
   <PropertyGroup>

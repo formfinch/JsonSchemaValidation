@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 3 behavior: The "dependencies" keyword supports:
 // - String: single property dependency (e.g., "bar": "foo" means if "bar" exists, "foo" must exist)
 // - Array: multiple property dependencies (e.g., "bar": ["foo", "baz"])

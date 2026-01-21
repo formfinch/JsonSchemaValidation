@@ -1,3 +1,6 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
 // Draft 3 behavior: Validates that data matches one of multiple type specifications or schemas.
 // In Draft 3, the type array can contain both type strings AND schemas.
 
