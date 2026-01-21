@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     internal static class JsonElementExtensions
     {

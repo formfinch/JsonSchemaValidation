@@ -4,11 +4,11 @@
 // this factory creates the assertion validator for contentMediaType only.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft7.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
 {
     /// <summary>
     /// Factory for the contentMediaType keyword.

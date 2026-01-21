@@ -3,12 +3,12 @@
 // Starting with Draft 2019-09, it's a standalone numeric value.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class ExclusiveMinimumValidator : IKeywordValidator
     {

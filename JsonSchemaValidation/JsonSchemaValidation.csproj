@@ -3,6 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <RootNamespace>FormFinch.JsonSchemaValidation</RootNamespace>
+    <AssemblyName>FormFinch.JsonSchemaValidation</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
     <PackageId>FormFinch.JsonSchemaValidation</PackageId>

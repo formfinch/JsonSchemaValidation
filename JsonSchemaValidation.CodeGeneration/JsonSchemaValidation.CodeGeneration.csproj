@@ -3,7 +3,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>JsonSchemaValidation.CodeGeneration</RootNamespace>
+    <RootNamespace>FormFinch.JsonSchemaValidation.CodeGeneration</RootNamespace>
+    <AssemblyName>FormFinch.JsonSchemaValidation.CodeGeneration</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>

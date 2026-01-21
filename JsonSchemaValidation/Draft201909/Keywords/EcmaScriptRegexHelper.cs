@@ -4,7 +4,7 @@
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     /// <summary>
     /// Helper for creating ECMAScript-compatible regular expressions.

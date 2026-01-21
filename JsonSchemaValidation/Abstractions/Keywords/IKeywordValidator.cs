@@ -1,7 +1,7 @@
-﻿using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Abstractions.Keywords
+namespace FormFinch.JsonSchemaValidation.Abstractions.Keywords
 {
     public interface IKeywordValidator
     {

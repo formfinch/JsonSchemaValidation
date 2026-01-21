@@ -1,16 +1,16 @@
-﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.CompiledValidators;
-using JsonSchemaValidation.Draft3;
-using JsonSchemaValidation.Draft4;
-using JsonSchemaValidation.Draft6;
-using JsonSchemaValidation.Draft7;
-using JsonSchemaValidation.Draft201909;
-using JsonSchemaValidation.Draft202012;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.Draft3;
+using FormFinch.JsonSchemaValidation.Draft4;
+using FormFinch.JsonSchemaValidation.Draft6;
+using FormFinch.JsonSchemaValidation.Draft7;
+using FormFinch.JsonSchemaValidation.Draft201909;
+using FormFinch.JsonSchemaValidation.Draft202012;
+using FormFinch.JsonSchemaValidation.Repositories;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidation.DependencyInjection
+namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
     public static class SchemaValidationSetup
     {

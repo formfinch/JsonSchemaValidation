@@ -2,12 +2,12 @@
 // Factory for oneOf keyword validator.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft4.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
     internal class OneOfValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

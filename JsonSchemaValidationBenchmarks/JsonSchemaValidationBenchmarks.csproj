@@ -5,6 +5,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <RootNamespace>FormFinch.JsonSchemaValidation.Benchmarks</RootNamespace>
+    <AssemblyName>FormFinch.JsonSchemaValidation.Benchmarks</AssemblyName>
   </PropertyGroup>
 
   <!-- Main library and runtime compiler -->

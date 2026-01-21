@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
-namespace JsonSchemaValidation.Repositories
+namespace FormFinch.JsonSchemaValidation.Repositories
 {
     public static class SchemaRepositoryHelpers
     {

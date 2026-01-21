@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Common;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Common;
 
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     public interface IJsonValidationContext
     {

@@ -3,13 +3,13 @@
 // Factory for creating format validators based on format assertion settings.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft201909.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal class FormatValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Exceptions;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft202012.Keywords.Logic
+namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Logic
 {
     internal static class ValueLogic
     {

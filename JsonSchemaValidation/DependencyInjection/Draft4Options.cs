@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.DependencyInjection
+namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
     /// <summary>
     /// Options specific to JSON Schema Draft 4 validation.

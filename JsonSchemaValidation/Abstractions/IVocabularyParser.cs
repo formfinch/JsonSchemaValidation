@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     /// <summary>
     /// Interface for parsing $vocabulary from meta-schemas.

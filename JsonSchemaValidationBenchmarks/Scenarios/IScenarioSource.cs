@@ -1,4 +1,4 @@
-namespace JsonSchemaValidationBenchmarks.Scenarios;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Scenarios;
 
 public interface IScenarioSource
 {

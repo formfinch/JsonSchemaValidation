@@ -1,8 +1,8 @@
 using System.Text.Json;
-using JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using Xunit;
 
-namespace JsonSchemaValidation.CodeGenerator.Tests;
+namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 
 public class SubschemaExtractorTests
 {

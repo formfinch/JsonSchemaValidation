@@ -1,7 +1,7 @@
 // Draft 4 behavior: URI validation logic for uri format validator.
 // Note: uri-template, uri-reference are not supported in Draft 4.
 
-namespace JsonSchemaValidation.Draft4.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords.Format
 {
     internal class UriValidationLogic
     {

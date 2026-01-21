@@ -1,9 +1,9 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
 
-namespace JsonSchemaValidation.Validation
+namespace FormFinch.JsonSchemaValidation.Validation
 {
     public sealed class SchemaValidator : ISchemaValidator
     {

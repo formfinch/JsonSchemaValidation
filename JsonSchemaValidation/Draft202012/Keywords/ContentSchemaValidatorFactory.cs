@@ -1,8 +1,8 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft202012.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 {
     /// <summary>
     /// Factory for the contentSchema keyword.

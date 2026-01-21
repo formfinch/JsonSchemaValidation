@@ -1,11 +1,11 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidationTests.TestCases;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidationTests.TestCases;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidationTests.Draft202012
+namespace FormFinch.JsonSchemaValidationTests.Draft202012
 {
     [Trait("Draft", "2020-12")]
     public class SchemaValidationTests

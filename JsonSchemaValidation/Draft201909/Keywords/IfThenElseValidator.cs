@@ -2,12 +2,12 @@
 // Note: if/then/else was introduced in Draft 7.
 // Validates conditional logic: if 'if' matches, 'then' is applied; otherwise 'else' is applied.
 
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class IfThenElseValidator : IKeywordValidator
     {

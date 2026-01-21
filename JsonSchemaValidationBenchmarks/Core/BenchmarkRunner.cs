@@ -1,8 +1,8 @@
 using System.Diagnostics;
 using System.Text.Json;
-using JsonSchemaValidationBenchmarks.Adapters;
+using FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
-namespace JsonSchemaValidationBenchmarks.Core;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Core;
 
 public sealed class BenchmarkRunner
 {

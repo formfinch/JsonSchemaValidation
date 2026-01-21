@@ -1,7 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.CompiledValidators;
+namespace FormFinch.JsonSchemaValidation.CompiledValidators;
 
 /// <summary>
 /// Thread-safe registry for compiled validators indexed by schema URI or content hash.

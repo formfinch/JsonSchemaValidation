@@ -1,7 +1,7 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     /// <summary>
     /// Lightweight validation context for arrays in the IsValid() fast path.

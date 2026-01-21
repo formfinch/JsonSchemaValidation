@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Repositories;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     public class SchemaFactory : ISchemaFactory
     {

@@ -2,10 +2,10 @@
 // Note: In Draft 4-7, exclusiveMinimum was a boolean modifier for minimum.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal class ExclusiveMinimumValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

@@ -1,11 +1,11 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Validation.Output;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Validation.Output;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidationTests.Draft202012.OutputFormat;
+namespace FormFinch.JsonSchemaValidationTests.Draft202012.OutputFormat;
 
 /// <summary>
 /// Example tests demonstrating how to use JSON Schema 2020-12 output formats.

@@ -1,6 +1,6 @@
-using JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
-namespace JsonSchemaValidation.Abstractions;
+namespace FormFinch.JsonSchemaValidation.Abstractions;
 
 /// <summary>
 /// A compiled validator that can resolve external $ref dependencies from a registry.

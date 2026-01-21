@@ -1,7 +1,7 @@
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.CompiledValidators.Generated;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.CompiledValidators.Generated;
 
-namespace JsonSchemaValidation.CompiledValidators;
+namespace FormFinch.JsonSchemaValidation.CompiledValidators;
 
 /// <summary>
 /// Provides access to all pre-compiled metaschema validators.

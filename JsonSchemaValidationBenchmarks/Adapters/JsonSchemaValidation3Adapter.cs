@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 /// <summary>
 /// Adapter that forces Draft 3 for all schemas, enabling fair comparison with other draft versions.

@@ -1,12 +1,12 @@
 // Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
 // Validates that data matches all of the given schemas.
 
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft6.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
 {
     internal sealed class AllOfValidator : IKeywordValidator
     {

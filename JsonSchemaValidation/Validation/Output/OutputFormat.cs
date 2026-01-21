@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.Validation.Output
+namespace FormFinch.JsonSchemaValidation.Validation.Output
 {
     /// <summary>
     /// Output formats per JSON Schema 2020-12 Section 12.

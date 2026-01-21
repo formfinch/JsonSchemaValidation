@@ -1,4 +1,4 @@
-﻿namespace JsonSchemaValidation.Draft202012.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
 {
     internal class UriValidationLogic
     {

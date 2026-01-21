@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
-namespace JsonSchemaValidationTests.TestCases
+namespace FormFinch.JsonSchemaValidationTests.TestCases
 {
     internal class TestCaseLoader
     {

@@ -2,11 +2,11 @@
 // In Draft 3, the type array can contain both type strings AND schemas.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft3.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal class TypeMultipleTypesValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

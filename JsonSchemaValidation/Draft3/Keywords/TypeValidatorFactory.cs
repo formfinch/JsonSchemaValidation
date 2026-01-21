@@ -2,10 +2,10 @@
 // Supports "any" type which matches any JSON value.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft3.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal class TypeValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

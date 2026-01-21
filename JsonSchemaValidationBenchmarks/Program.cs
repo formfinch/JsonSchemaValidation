@@ -1,8 +1,8 @@
 using System.CommandLine;
 using System.Text.Json;
-using JsonSchemaValidationBenchmarks.Adapters;
-using JsonSchemaValidationBenchmarks.Core;
-using JsonSchemaValidationBenchmarks.Scenarios;
+using FormFinch.JsonSchemaValidationBenchmarks.Adapters;
+using FormFinch.JsonSchemaValidationBenchmarks.Core;
+using FormFinch.JsonSchemaValidationBenchmarks.Scenarios;
 
 var rootCommand = new RootCommand("JSON Schema Validation Benchmark Suite");
 

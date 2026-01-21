@@ -1,6 +1,6 @@
 using System.Text;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     /// <summary>
     /// Represents a JSON Pointer per RFC 6901.

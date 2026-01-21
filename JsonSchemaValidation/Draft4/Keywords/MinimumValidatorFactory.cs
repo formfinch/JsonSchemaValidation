@@ -2,10 +2,10 @@
 // Factory for minimum keyword validator with boolean exclusiveMinimum support.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft4.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
     internal class MinimumValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

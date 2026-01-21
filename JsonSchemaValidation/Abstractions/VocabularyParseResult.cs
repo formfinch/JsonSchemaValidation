@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     /// <summary>
     /// Result of parsing $vocabulary from a schema.

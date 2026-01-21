@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.Validation.Output
+namespace FormFinch.JsonSchemaValidation.Validation.Output
 {
     /// <summary>
     /// Represents a single output unit per JSON Schema 2020-12 Section 12.

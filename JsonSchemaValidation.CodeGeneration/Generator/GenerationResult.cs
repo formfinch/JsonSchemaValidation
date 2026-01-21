@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.CodeGeneration.Generator;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 /// <summary>
 /// Result of code generation.

@@ -4,12 +4,12 @@
 
 using System.Text;
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft7.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
 {
     /// <summary>
     /// Validator that performs actual validation for content keywords.

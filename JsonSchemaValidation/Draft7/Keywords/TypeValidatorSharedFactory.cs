@@ -1,10 +1,10 @@
 // Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
 // Factory for creating type validators based on type specification string.
 
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft7.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
 {
     internal static class TypeValidatorSharedFactory
     {

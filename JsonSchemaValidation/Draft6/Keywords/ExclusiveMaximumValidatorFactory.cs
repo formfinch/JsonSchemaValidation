@@ -2,10 +2,10 @@
 // Note: In Draft 4-7, exclusiveMaximum was a boolean modifier for maximum.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft6.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
 {
     internal class ExclusiveMaximumValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

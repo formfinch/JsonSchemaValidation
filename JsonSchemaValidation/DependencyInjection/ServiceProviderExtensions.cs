@@ -1,9 +1,9 @@
-﻿using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidation.DependencyInjection
+namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
     public static class ServiceProviderExtensions
     {

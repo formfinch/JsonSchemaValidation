@@ -1,8 +1,8 @@
 using System.Text.Json;
-using JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using Xunit;
 
-namespace JsonSchemaValidation.CodeGenerator.Tests;
+namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 
 public class SchemaCodeGeneratorTests
 {
@@ -88,7 +88,7 @@ public class SchemaCodeGeneratorTests
 
         // Assert
         Assert.Contains(": ICompiledValidator", result.GeneratedCode);
-        Assert.Contains("using JsonSchemaValidation.Abstractions;", result.GeneratedCode);
+        Assert.Contains("using FormFinch.JsonSchemaValidation.Abstractions;", result.GeneratedCode);
     }
 
     [Fact]

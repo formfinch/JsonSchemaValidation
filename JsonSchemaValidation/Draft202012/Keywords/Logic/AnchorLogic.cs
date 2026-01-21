@@ -1,8 +1,8 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.RegularExpressions;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft202012.Keywords.Logic
+namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Logic
 {
     internal static class AnchorLogic
     {

@@ -1,9 +1,9 @@
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.CompiledValidators;
+namespace FormFinch.JsonSchemaValidation.CompiledValidators;
 
 /// <summary>
 /// Adapter that wraps an ICompiledValidator to implement ISchemaValidator.

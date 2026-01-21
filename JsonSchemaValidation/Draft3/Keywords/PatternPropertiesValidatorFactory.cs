@@ -3,12 +3,12 @@
 
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft3.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal class PatternPropertiesValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

@@ -2,7 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Json.Schema;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 public sealed class JsonSchemaNetAdapter : ISchemaValidatorAdapter
 {

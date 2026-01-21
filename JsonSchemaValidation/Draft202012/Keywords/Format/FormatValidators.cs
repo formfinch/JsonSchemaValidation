@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.Draft202012.Keywords.Format;
+namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 
 /// <summary>
 /// Provides static format validation methods for use in compiled validators.

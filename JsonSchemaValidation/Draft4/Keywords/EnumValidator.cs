@@ -2,12 +2,12 @@
 // The enum keyword validates that data equals one of the specified values.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft4.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
     internal sealed class EnumValidator : IKeywordValidator
     {

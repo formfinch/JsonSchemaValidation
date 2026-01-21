@@ -1,12 +1,12 @@
 using System.Collections.Concurrent;
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft202012.Keywords.Logic;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Logic;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Repositories
+namespace FormFinch.JsonSchemaValidation.Repositories
 {
     public class SchemaRepository : ISchemaRepository
     {

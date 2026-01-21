@@ -1,9 +1,9 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Compiler;
-using JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Compiler;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 /// <summary>
 /// Adapter that compiles schemas at runtime using Roslyn.

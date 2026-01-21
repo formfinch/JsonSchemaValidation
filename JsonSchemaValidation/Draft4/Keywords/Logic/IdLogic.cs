@@ -3,10 +3,10 @@
 // Note: Draft 4 allows id with fragments (e.g., "http://example.com/schema#foo").
 
 using System.Text.Json;
-using JsonSchemaValidation.Draft4.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Draft4.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft4.Keywords.Logic
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords.Logic
 {
     internal static class IdLogic
     {

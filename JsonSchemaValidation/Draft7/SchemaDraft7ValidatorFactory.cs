@@ -1,11 +1,11 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Validation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidation.Draft7
+namespace FormFinch.JsonSchemaValidation.Draft7
 {
     public class SchemaDraft7ValidatorFactory : ISchemaDraftValidatorFactory
     {

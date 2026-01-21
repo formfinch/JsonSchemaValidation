@@ -3,11 +3,11 @@
 // Factory for creating RefValidator instances.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft4.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
     internal class RefValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

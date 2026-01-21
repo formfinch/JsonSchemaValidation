@@ -1,6 +1,6 @@
-﻿using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Abstractions.Keywords
+namespace FormFinch.JsonSchemaValidation.Abstractions.Keywords
 {
     public interface IKeywordValidatorFactory
     {

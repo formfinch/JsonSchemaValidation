@@ -1,8 +1,8 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Text.Json;
-using JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Common;
 
-namespace JsonSchemaValidation.Repositories
+namespace FormFinch.JsonSchemaValidation.Repositories
 {
     public class SchemaMetadata
     {

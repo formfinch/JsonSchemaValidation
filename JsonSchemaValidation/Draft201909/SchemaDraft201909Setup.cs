@@ -1,9 +1,9 @@
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Draft201909.Keywords;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidation.Draft201909
+namespace FormFinch.JsonSchemaValidation.Draft201909
 {
     public static class SchemaDraft201909Setup
     {

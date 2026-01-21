@@ -1,9 +1,9 @@
 using System.Text;
 using System.Text.Json;
-using JsonSchemaValidation.CodeGeneration.Generator;
-using JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.Common;
 
-namespace JsonSchemaValidation.CodeGenerator;
+namespace FormFinch.JsonSchemaValidation.CodeGenerator;
 
 internal static class Program
 {
@@ -464,8 +464,8 @@ internal static class Program
         sb.AppendLine();
         sb.AppendLine("#nullable enable");
         sb.AppendLine();
-        sb.AppendLine("using JsonSchemaValidation.Abstractions;");
-        sb.AppendLine("using JsonSchemaValidation.CompiledValidators;");
+        sb.AppendLine("using FormFinch.JsonSchemaValidation.Abstractions;");
+        sb.AppendLine("using FormFinch.JsonSchemaValidation.CompiledValidators;");
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName};");
         sb.AppendLine();

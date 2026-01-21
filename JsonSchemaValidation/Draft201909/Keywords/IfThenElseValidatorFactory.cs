@@ -3,14 +3,14 @@
 // Factory for if/then/else keyword validators.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Draft201909.Keywords.Logic;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords.Logic;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal class IfThenElseValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

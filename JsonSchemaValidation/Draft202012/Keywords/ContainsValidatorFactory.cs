@@ -1,11 +1,11 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Draft202012.Keywords.Logic;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Logic;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft202012.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 {
     internal class ContainsValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

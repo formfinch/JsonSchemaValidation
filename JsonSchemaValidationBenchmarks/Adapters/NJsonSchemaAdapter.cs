@@ -1,6 +1,6 @@
 using NJsonSchema;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 public sealed class NJsonSchemaAdapter : ISchemaValidatorAdapter
 {

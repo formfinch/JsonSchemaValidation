@@ -1,6 +1,6 @@
 using LateApexEarlySpeed.Json.Schema;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 public sealed class LateApexAdapter : ISchemaValidatorAdapter
 {
