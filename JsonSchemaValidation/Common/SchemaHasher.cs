@@ -3,7 +3,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
-namespace JsonSchemaValidation.Common;
+namespace FormFinch.JsonSchemaValidation.Common;
 
 /// <summary>
 /// Computes content-based hashes for JSON schemas to identify unique schemas.

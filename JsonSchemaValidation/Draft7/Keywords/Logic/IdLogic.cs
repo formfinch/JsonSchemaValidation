@@ -4,10 +4,10 @@
 
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using JsonSchemaValidation.Draft7.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Draft7.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft7.Keywords.Logic
+namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Logic
 {
     internal static class IdLogic
     {

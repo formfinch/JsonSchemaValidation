@@ -1,4 +1,4 @@
-namespace JsonSchemaValidationBenchmarks.Core;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Core;
 
 public static class BenchmarkStatistics
 {

@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace JsonSchemaValidationBenchmarks.Core;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Core;
 
 public sealed class BenchmarkResult
 {

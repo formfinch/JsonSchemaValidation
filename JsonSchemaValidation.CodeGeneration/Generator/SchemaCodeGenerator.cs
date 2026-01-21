@@ -1,10 +1,10 @@
 using System.Text;
 using System.Text.Json;
-using JsonSchemaValidation.CodeGeneration.Keywords;
-using JsonSchemaValidation.Common;
-using static JsonSchemaValidation.CodeGeneration.Keywords.BooleanSchemaCodeGenerator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using static FormFinch.JsonSchemaValidation.CodeGeneration.Keywords.BooleanSchemaCodeGenerator;
 
-namespace JsonSchemaValidation.CodeGeneration.Generator;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 /// <summary>
 /// Main code generator that orchestrates the generation of compiled validators.
@@ -309,11 +309,11 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("using System.Globalization;");
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.RegularExpressions;");
-        sb.AppendLine("using JsonSchemaValidation.Abstractions;");
-        sb.AppendLine("using JsonSchemaValidation.Draft202012.Keywords.Format;");
+        sb.AppendLine("using FormFinch.JsonSchemaValidation.Abstractions;");
+        sb.AppendLine("using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;");
         if (needsRegistryAware)
         {
-            sb.AppendLine("using JsonSchemaValidation.CompiledValidators;");
+            sb.AppendLine("using FormFinch.JsonSchemaValidation.CompiledValidators;");
         }
         sb.AppendLine();
         sb.AppendLine($"namespace {namespaceName}");

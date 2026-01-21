@@ -1,8 +1,8 @@
 using System.Text.Json;
-using JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Common;
 using Xunit;
 
-namespace JsonSchemaValidation.CodeGenerator.Tests;
+namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 
 public class SchemaHasherTests
 {

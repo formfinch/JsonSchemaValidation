@@ -1,7 +1,7 @@
 using System.Text;
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGeneration.Keywords;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for array constraint keywords: minItems, maxItems, uniqueItems.

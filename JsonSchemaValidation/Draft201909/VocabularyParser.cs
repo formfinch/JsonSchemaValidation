@@ -1,8 +1,8 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft201909
+namespace FormFinch.JsonSchemaValidation.Draft201909
 {
     /// <summary>
     /// Parses $vocabulary declarations from meta-schemas.

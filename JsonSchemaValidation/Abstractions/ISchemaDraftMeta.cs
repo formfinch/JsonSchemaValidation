@@ -1,6 +1,6 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     public interface ISchemaDraftMeta
     {

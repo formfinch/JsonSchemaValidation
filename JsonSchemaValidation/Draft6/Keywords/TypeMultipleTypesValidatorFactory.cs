@@ -2,11 +2,11 @@
 // Handles array type specification (e.g., "type": ["string", "null"]).
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft6.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
 {
     internal class TypeMultipleTypesValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

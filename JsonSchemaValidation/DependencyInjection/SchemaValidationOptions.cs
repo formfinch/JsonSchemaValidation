@@ -1,4 +1,4 @@
-﻿namespace JsonSchemaValidation.DependencyInjection
+namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
     public class SchemaValidationOptions
     {

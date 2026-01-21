@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.CodeGenerator;
+namespace FormFinch.JsonSchemaValidation.CodeGenerator;
 
 /// <summary>
 /// Defines all metaschemas that should be compiled.

@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
 
-namespace JsonSchemaValidationBenchmarks.NodeHost;
+namespace FormFinch.JsonSchemaValidationBenchmarks.NodeHost;
 
 public sealed class NodeProcessHost : IDisposable
 {

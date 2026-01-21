@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.Exceptions
+namespace FormFinch.JsonSchemaValidation.Exceptions
 {
     public class InvalidSchemaException : Exception
     {

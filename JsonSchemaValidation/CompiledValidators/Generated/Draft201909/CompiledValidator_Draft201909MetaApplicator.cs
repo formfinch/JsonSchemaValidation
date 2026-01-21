@@ -10,11 +10,11 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Draft202012.Keywords.Format;
-using JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
-namespace JsonSchemaValidation.CompiledValidators.Generated
+namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
     public sealed class CompiledValidator_Draft201909MetaApplicator : IRegistryAwareCompiledValidator
     {

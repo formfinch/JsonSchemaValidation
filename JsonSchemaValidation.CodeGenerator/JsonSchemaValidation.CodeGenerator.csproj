@@ -4,7 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>JsonSchemaValidation.CodeGenerator</RootNamespace>
+    <RootNamespace>FormFinch.JsonSchemaValidation.CodeGenerator</RootNamespace>
     <AssemblyName>jsv-codegen</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>

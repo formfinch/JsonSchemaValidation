@@ -2,12 +2,12 @@
 // Annotation-only format validator - always returns valid.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft6.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft6.Keywords.Format
 {
     /// <summary>
     /// Annotation-only format validator.

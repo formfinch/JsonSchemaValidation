@@ -19,7 +19,10 @@ This dual-license model supports open source adoption while sustaining developme
 
 ## Project Overview
 
-JsonSchemaValidation is a .NET class library implementing JSON Schema validation using pure `System.Text.Json` (no external JSON dependencies). The library uses a plugin-based architecture with dependency injection for extensibility.
+FormFinch.JsonSchemaValidation is a .NET class library implementing JSON Schema validation using pure `System.Text.Json` (no external JSON dependencies). The library uses a plugin-based architecture with dependency injection for extensibility.
+
+**Root Namespace:** `FormFinch.JsonSchemaValidation`
+**Package ID:** `FormFinch.JsonSchemaValidation`
 
 ## Build Commands
 

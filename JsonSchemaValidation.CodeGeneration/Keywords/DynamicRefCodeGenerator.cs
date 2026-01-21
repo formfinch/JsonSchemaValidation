@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.CodeGeneration.Keywords;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for "$dynamicRef" references when they can be resolved statically.

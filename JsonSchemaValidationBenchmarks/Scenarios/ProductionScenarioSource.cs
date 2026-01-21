@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidationBenchmarks.Scenarios;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Scenarios;
 
 /// <summary>
 /// Loads benchmark scenarios from real-world production schemas.

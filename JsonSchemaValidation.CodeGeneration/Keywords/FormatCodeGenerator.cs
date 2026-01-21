@@ -1,7 +1,7 @@
 using System.Text.Json;
-using JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 
-namespace JsonSchemaValidation.CodeGeneration.Keywords;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "format" keyword.

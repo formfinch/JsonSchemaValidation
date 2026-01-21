@@ -4,13 +4,13 @@
 // Draft 4 only defines: date-time, email, hostname, ipv4, ipv6, uri.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft4.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Draft4.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft4.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
     internal class FormatValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

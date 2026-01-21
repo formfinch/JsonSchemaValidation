@@ -2,13 +2,13 @@
 // Note: In Draft 2020-12, $recursiveRef was replaced by $dynamicRef with different semantics.
 // Validator for $recursiveRef that resolves the reference based on $recursiveAnchor.
 
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Repositories;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft201909.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class RecursiveRefValidator : IKeywordValidator
     {

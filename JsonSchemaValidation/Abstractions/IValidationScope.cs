@@ -1,6 +1,6 @@
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     /// <summary>
     /// Tracks the schema resources traversed during validation.

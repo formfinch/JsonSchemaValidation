@@ -1,10 +1,10 @@
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Repositories;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Validation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidation.Draft201909
+namespace FormFinch.JsonSchemaValidation.Draft201909
 {
     public class SchemaDraft201909ValidatorFactory : ISchemaDraftValidatorFactory
     {

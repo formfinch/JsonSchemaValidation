@@ -1,4 +1,4 @@
-﻿namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     public interface ILazySchemaValidatorFactory
     {

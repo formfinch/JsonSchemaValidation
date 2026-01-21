@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 public interface ISchemaValidatorAdapter : IDisposable
 {

@@ -1,9 +1,9 @@
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Draft7.Keywords;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Draft7.Keywords;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidation.Draft7
+namespace FormFinch.JsonSchemaValidation.Draft7
 {
     public static class SchemaDraft7Setup
     {

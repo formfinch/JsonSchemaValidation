@@ -1,7 +1,7 @@
-﻿using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation.Output;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation.Output;
 
-namespace JsonSchemaValidation.Validation
+namespace FormFinch.JsonSchemaValidation.Validation
 {
     /// <summary>
     /// Structured validation result per JSON Schema 2020-12 Section 12.

@@ -1,6 +1,6 @@
-using JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.Draft202012
+namespace FormFinch.JsonSchemaValidation.Draft202012
 {
     /// <summary>
     /// Registry mapping Draft 2020-12 vocabulary URIs to their associated keywords.

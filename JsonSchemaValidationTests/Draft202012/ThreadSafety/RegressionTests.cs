@@ -1,12 +1,12 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Repositories;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Validation;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace JsonSchemaValidationTests.Draft202012.ThreadSafety;
+namespace FormFinch.JsonSchemaValidationTests.Draft202012.ThreadSafety;
 
 /// <summary>
 /// Thread safety regression tests to verify the library handles concurrent access correctly.

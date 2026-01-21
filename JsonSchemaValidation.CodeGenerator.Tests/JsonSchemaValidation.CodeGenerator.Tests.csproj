@@ -4,6 +4,8 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
+    <RootNamespace>FormFinch.JsonSchemaValidation.CodeGenerator.Tests</RootNamespace>
+    <AssemblyName>FormFinch.JsonSchemaValidation.CodeGenerator.Tests</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />

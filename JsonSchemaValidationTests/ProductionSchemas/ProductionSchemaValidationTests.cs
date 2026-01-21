@@ -1,11 +1,11 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
-namespace JsonSchemaValidationTests.ProductionSchemas;
+namespace FormFinch.JsonSchemaValidationTests.ProductionSchemas;
 
 /// <summary>
 /// Tests validation of real-world production schemas against valid and invalid test data.

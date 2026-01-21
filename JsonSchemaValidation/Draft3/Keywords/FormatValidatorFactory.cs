@@ -5,13 +5,13 @@
 // Note: Draft 3 uses "ip-address" (not "ipv4") and "host-name" (not "hostname").
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.DependencyInjection;
-using JsonSchemaValidation.Draft3.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+using FormFinch.JsonSchemaValidation.Draft3.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft3.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal class FormatValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

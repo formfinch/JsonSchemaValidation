@@ -2,9 +2,9 @@
 // Helper logic for parsing schema values.
 
 using System.Text.Json;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft4.Keywords.Logic
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords.Logic
 {
     internal static class ValueLogic
     {

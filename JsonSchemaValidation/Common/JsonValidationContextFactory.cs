@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     public class JsonValidationContextFactory : IJsonValidationContextFactory
     {

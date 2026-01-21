@@ -1,6 +1,6 @@
-using JsonSchemaValidationBenchmarks.NodeHost;
+using FormFinch.JsonSchemaValidationBenchmarks.NodeHost;
 
-namespace JsonSchemaValidationBenchmarks.Adapters;
+namespace FormFinch.JsonSchemaValidationBenchmarks.Adapters;
 
 public sealed class CfworkerAdapter : IAsyncSchemaValidatorAdapter
 {

@@ -1,11 +1,11 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Compiler;
-using JsonSchemaValidation.CompiledValidators;
-using JsonSchemaValidationTests.TestCases;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Compiler;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidationTests.TestCases;
 
-namespace JsonSchemaValidationTests.Draft202012
+namespace FormFinch.JsonSchemaValidationTests.Draft202012
 {
     /// <summary>
     /// Shared fixture for compiled schema validation tests.

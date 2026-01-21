@@ -1,6 +1,6 @@
 using System.Text.Json;
 
-namespace JsonSchemaValidation.Abstractions;
+namespace FormFinch.JsonSchemaValidation.Abstractions;
 
 /// <summary>
 /// Interface for pre-compiled schema validators that provide fast-path validation.

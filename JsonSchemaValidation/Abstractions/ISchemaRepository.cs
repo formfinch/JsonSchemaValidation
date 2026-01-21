@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
-using JsonSchemaValidation.Repositories;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     public interface ISchemaRepository
     {

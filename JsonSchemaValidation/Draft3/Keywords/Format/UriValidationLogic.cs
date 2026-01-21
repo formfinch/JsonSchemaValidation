@@ -1,6 +1,6 @@
 // Draft 3 behavior: URI validation logic for uri format validator.
 
-namespace JsonSchemaValidation.Draft3.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft3.Keywords.Format
 {
     internal class UriValidationLogic
     {

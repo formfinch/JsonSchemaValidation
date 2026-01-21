@@ -2,12 +2,12 @@
 // Factory for propertyNames keyword validator.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Exceptions;
-using JsonSchemaValidation.Repositories;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Repositories;
 
-namespace JsonSchemaValidation.Draft6.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
 {
     internal class PropertyNamesValidatorFactory : ISchemaDraftKeywordValidatorFactory
     {

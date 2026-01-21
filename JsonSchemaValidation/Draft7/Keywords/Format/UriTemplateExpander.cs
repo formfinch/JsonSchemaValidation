@@ -4,7 +4,7 @@
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace JsonSchemaValidation.Draft7.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
 {
     internal class UriTemplateExpander
     {

@@ -1,4 +1,4 @@
-﻿namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     public class UriWithFragmentComparer : IEqualityComparer<Uri>
     {

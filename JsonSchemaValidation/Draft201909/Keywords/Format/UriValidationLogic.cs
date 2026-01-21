@@ -1,7 +1,7 @@
 // Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
 // URI validation logic shared by uri, uri-reference, iri, iri-reference, and uri-template validators.
 
-namespace JsonSchemaValidation.Draft201909.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format
 {
     internal class UriValidationLogic
     {

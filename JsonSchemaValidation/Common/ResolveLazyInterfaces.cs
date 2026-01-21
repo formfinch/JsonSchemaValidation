@@ -1,6 +1,6 @@
-﻿using JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     internal class ResolveLazyInterfaces
     {

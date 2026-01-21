@@ -1,7 +1,7 @@
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions;
 
-namespace JsonSchemaValidation.Draft4
+namespace FormFinch.JsonSchemaValidation.Draft4
 {
     public class SchemaDraft4Meta : ISchemaDraftMeta
     {

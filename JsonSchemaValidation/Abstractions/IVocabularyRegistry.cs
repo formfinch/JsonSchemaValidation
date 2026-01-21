@@ -1,4 +1,4 @@
-namespace JsonSchemaValidation.Abstractions
+namespace FormFinch.JsonSchemaValidation.Abstractions
 {
     /// <summary>
     /// Registry that maps vocabulary URIs to their associated keywords.

@@ -1,7 +1,7 @@
 using System.Text.Json;
-using JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Common;
 
-namespace JsonSchemaValidation.CodeGeneration.Generator;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 /// <summary>
 /// Extracts and deduplicates subschemas from a JSON Schema.

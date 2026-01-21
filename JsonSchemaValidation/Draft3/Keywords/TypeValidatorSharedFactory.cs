@@ -1,9 +1,9 @@
 // Draft 3 behavior: Creates type validators from type specifications.
 // Supports "any" type in addition to standard types.
 
-using JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 
-namespace JsonSchemaValidation.Draft3.Keywords
+namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal static class TypeValidatorSharedFactory
     {

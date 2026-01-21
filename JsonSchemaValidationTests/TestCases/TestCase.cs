@@ -1,7 +1,7 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace JsonSchemaValidationTests.TestCases
+namespace FormFinch.JsonSchemaValidationTests.TestCases
 {
     public class TestCase
     {

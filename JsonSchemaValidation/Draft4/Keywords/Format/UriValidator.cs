@@ -2,12 +2,12 @@
 // Note: uri-reference, uri-template, iri, iri-reference are not supported in Draft 4.
 
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Abstractions.Keywords;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Validation;
 
-namespace JsonSchemaValidation.Draft4.Keywords.Format
+namespace FormFinch.JsonSchemaValidation.Draft4.Keywords.Format
 {
     internal sealed class UriValidator : IKeywordValidator
     {

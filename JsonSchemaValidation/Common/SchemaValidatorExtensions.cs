@@ -1,8 +1,8 @@
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.Validation;
-using JsonSchemaValidation.Validation.Output;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Validation;
+using FormFinch.JsonSchemaValidation.Validation.Output;
 
-namespace JsonSchemaValidation.Common
+namespace FormFinch.JsonSchemaValidation.Common
 {
     /// <summary>
     /// Extension methods for ISchemaValidator providing convenience APIs.

@@ -1,14 +1,14 @@
 using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
-using JsonSchemaValidation.Abstractions;
-using JsonSchemaValidation.CodeGeneration.Generator;
-using JsonSchemaValidation.Common;
-using JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
-namespace JsonSchemaValidation.Compiler;
+namespace FormFinch.JsonSchemaValidation.Compiler;
 
 /// <summary>
 /// Factory for compiling JSON schemas to validators at runtime using Roslyn.

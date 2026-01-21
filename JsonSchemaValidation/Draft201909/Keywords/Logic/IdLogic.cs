@@ -3,10 +3,10 @@
 
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using JsonSchemaValidation.Draft201909.Keywords.Format;
-using JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Exceptions;
 
-namespace JsonSchemaValidation.Draft201909.Keywords.Logic
+namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords.Logic
 {
     internal static class IdLogic
     {
