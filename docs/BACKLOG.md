@@ -676,53 +676,115 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 - **Priority:** High
 - **Depends on:** TASK-001
 - **Description:**
-  Create documentation explaining commercial license.
+  Create `COMMERCIAL.md` explaining commercial license terms.
 
   **Content:**
-  - What requires commercial license
-  - Pricing tiers (if applicable)
-  - How to purchase
-  - What's included (support, etc.)
+  - What requires commercial license (any commercial/business use)
+  - Pricing structure (per-developer, per-company, etc.)
+  - What's included (updates, support level)
+  - Link to purchase page
 
   **Acceptance criteria:**
-  - [ ] Commercial terms documented
-  - [ ] Linked from LICENSE/README
+  - [ ] COMMERCIAL.md created
+  - [ ] Linked from LICENSE and README
+  - [ ] Clear definition of commercial vs non-commercial use
 
 ---
 
-### TASK-032: Set up commercial license purchasing
-- **Labels:** `commercial`, `infrastructure`
+### TASK-031a: Explore LemonSqueezy for license sales
+- **Labels:** `commercial`, `research`
 - **Priority:** High
 - **Depends on:** TASK-031
 - **Description:**
-  Set up mechanism for purchasing commercial licenses.
+  Evaluate LemonSqueezy as the platform for selling commercial licenses.
 
-  **Options:**
-  - Website with payment processing
-  - Email-based manual process
-  - Third-party service (e.g., Gumroad, Paddle)
+  **Research areas:**
+  - Account setup and verification requirements
+  - Pricing/fees (percentage per sale, monthly fees)
+  - Product configuration for software licenses
+  - License key generation and management features
+  - Customer portal capabilities
+  - Tax handling (VAT, sales tax) for international sales
+  - Payout schedule and methods
+  - Integration options (API, webhooks)
+  - Refund and dispute handling
+
+  **Deliverables:**
+  - Summary of LemonSqueezy capabilities
+  - Pricing model recommendation (one-time, subscription, tiers)
+  - Decision: proceed with LemonSqueezy or evaluate alternatives
 
   **Acceptance criteria:**
-  - [ ] Purchase mechanism in place
-  - [ ] License delivery process defined
+  - [ ] LemonSqueezy account created (test/sandbox if available)
+  - [ ] Capabilities documented
+  - [ ] Pricing model decided
+  - [ ] Go/no-go decision made
 
 ---
 
-### TASK-033: Create license verification system
+### TASK-032: Set up LemonSqueezy storefront
 - **Labels:** `commercial`, `infrastructure`
+- **Priority:** High
+- **Depends on:** TASK-031a
+- **Description:**
+  Implement commercial license purchasing via LemonSqueezy.
+
+  **Setup tasks:**
+  - Create LemonSqueezy account and complete verification
+  - Configure store branding (FormFinch)
+  - Create product(s) for commercial license
+  - Set up pricing tiers (if applicable)
+  - Configure license key delivery
+  - Set up email templates for purchase confirmation
+  - Test purchase flow end-to-end
+
+  **Acceptance criteria:**
+  - [ ] LemonSqueezy store live
+  - [ ] Product(s) configured with correct pricing
+  - [ ] License keys generated on purchase
+  - [ ] Purchase confirmation emails working
+  - [ ] Test purchase completed successfully
+
+---
+
+### TASK-032a: Integrate LemonSqueezy links into repository
+- **Labels:** `commercial`, `documentation`
+- **Priority:** High
+- **Depends on:** TASK-032
+- **Description:**
+  Add purchase links throughout the repository and package.
+
+  **Locations to update:**
+  - COMMERCIAL.md - Primary purchase link
+  - README.md - Licensing section with purchase link
+  - LICENSE file - Reference to commercial option
+  - NuGet package description (optional)
+  - GitHub repository "Sponsor" or custom link
+
+  **Acceptance criteria:**
+  - [ ] All locations updated with correct purchase URL
+  - [ ] Links tested and working
+
+---
+
+### TASK-033: Define license verification approach
+- **Labels:** `commercial`, `policy`, `decision`
 - **Priority:** Medium
 - **Depends on:** TASK-032
 - **Description:**
-  Define how commercial users prove they're licensed.
+  Decide how commercial users prove they're licensed.
 
   **Options:**
-  - Honor system (common for dev tools)
-  - License key system
-  - Organization-based licensing
+  - **Honor system** - Common for dev tools, no technical enforcement
+  - **License key in code** - User adds key to configuration (LemonSqueezy can generate)
+  - **Organization registry** - Maintain list of licensed organizations
+  - **NuGet package variant** - Separate "Pro" package for commercial users
+
+  **Recommendation:** Start with honor system (like most dev tool libraries), consider adding license key validation later if needed.
 
   **Acceptance criteria:**
-  - [ ] Verification approach decided
-  - [ ] If technical, system implemented
+  - [ ] Verification approach decided and documented
+  - [ ] If technical enforcement chosen, implementation planned
 
 ---
 
