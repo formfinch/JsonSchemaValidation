@@ -2,9 +2,24 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Project Mission
+
+FormFinch.JsonSchemaValidation is a JSON Schema validation library for .NET with:
+- **Full draft support:** Draft 3, Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
+- **High performance:** Designed for speed
+- **Pure System.Text.Json:** No external JSON dependencies
+- **Public release goal:** NuGet package with source on GitHub
+
+### Licensing Model
+
+- **Non-commercial use:** Free
+- **Commercial use:** Paid license required
+
+This dual-license model supports open source adoption while sustaining development.
+
 ## Project Overview
 
-JsonSchemaValidation is a .NET class library implementing JSON Schema Draft 2020-12 validation using pure `System.Text.Json` (no external JSON dependencies). The library uses a plugin-based architecture with dependency injection for extensibility.
+JsonSchemaValidation is a .NET class library implementing JSON Schema validation using pure `System.Text.Json` (no external JSON dependencies). The library uses a plugin-based architecture with dependency injection for extensibility.
 
 ## Build Commands
 
@@ -116,10 +131,46 @@ JsonSchemaValidationTests/Draft202012/
     └── RegressionTests.cs      # Comprehensive coverage (53 tests)
 ```
 
-## Known Gaps (from DRAFT_2020_12_COMPLIANCE.md)
+## Known Gaps
 
-1. **Cross-Draft Compatibility**: Not supported (low priority/optional)
+None currently identified. Cross-draft compatibility is fully supported.
 
-## Target Frameworks
+## Project Standards & Decisions
 
-net10.0 (LTS)
+### Target Frameworks
+
+**Current:** `net10.0`
+
+**Policy:**
+- Target the latest .NET LTS version
+- Evaluate adding previous LTS (net8.0) based on user demand
+- No netstandard2.0 support (allows use of modern APIs)
+
+**Rationale:** Targeting only latest LTS keeps the codebase simple, allows use of modern C# features and APIs, and reduces testing matrix. Trade-off is excluding users on older frameworks.
+
+### Versioning
+
+**Strategy:** Semantic Versioning (SemVer)
+- **Major:** Breaking API changes
+- **Minor:** New features, backward compatible
+- **Patch:** Bug fixes, performance improvements
+
+### API Stability
+
+- Public API surface is intentional and should remain stable
+- Internal implementation details use `internal` access modifier
+- Breaking changes require major version bump and migration guide
+
+### Code Quality
+
+**Required analyzers:** (all enforced at build time)
+- Microsoft.CodeAnalysis.NetAnalyzers
+- Roslynator.Analyzers
+- SonarAnalyzer.CSharp
+- Meziantou.Analyzer
+- ClrHeapAllocationAnalyzer
+
+**Build settings:**
+- `TreatWarningsAsErrors: true`
+- `EnforceCodeStyleInBuild: true`
+- `Nullable: enable`
