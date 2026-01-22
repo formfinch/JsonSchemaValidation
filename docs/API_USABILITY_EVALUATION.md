@@ -1,6 +1,6 @@
 # TASK-004a: API Usability Evaluation
 
-**Date:** 2026-01-22
+**Date:** 2026-01-23
 **Status:** Complete
 
 This document evaluates the usability of the FormFinch.JsonSchemaValidation public API before its 1.0.0 release.
@@ -9,124 +9,191 @@ This document evaluates the usability of the FormFinch.JsonSchemaValidation publ
 
 ## Executive Summary
 
-The library now provides **two complementary APIs**:
+The library provides a **three-tier API** designed for different user needs:
 
-1. **Static API** (`JsonSchemaValidator`) - Simple, zero-setup validation for common use cases
-2. **DI-based API** - Full control and customization for enterprise/advanced scenarios
+| Tier | Entry Point | Use Case |
+|------|-------------|----------|
+| **Simple** | `JsonSchemaValidator.Validate()` | One-off validation, scripts, quick checks |
+| **Efficient** | `JsonSchemaValidator.Parse()` → `IJsonSchema` | Repeated validation against same schema |
+| **Advanced** | `AddJsonSchemaValidation()` + DI | Enterprise apps, ASP.NET Core, full control |
 
-This dual approach offers the best of both worlds: easy adoption for new users while maintaining flexibility for advanced scenarios.
+All evaluation criteria pass. The API is **ready for 1.0.0 release**.
 
 ---
 
-## Evaluation Criteria Results
+## Evaluation Criteria
 
 ### 1. Discoverability ✅ Excellent
 
-**Finding:** The static `JsonSchemaValidator` class provides an immediately discoverable entry point.
+**Question:** Can a new user find the entry point easily?
 
-**Simple path to first validation:**
+**Finding:** The static `JsonSchemaValidator` class is the obvious starting point.
+
 ```csharp
-var result = JsonSchemaValidator.Validate(schemaJson, instanceJson);
+using FormFinch.JsonSchemaValidation;
+
+// IntelliSense immediately shows: Validate, IsValid, Parse
+var result = JsonSchemaValidator.Validate(schema, instance);
 ```
 
-Users can discover the API through:
-- IntelliSense on the `JsonSchemaValidator` class
-- Namespace exploration (`FormFinch.JsonSchemaValidation`)
-- The single entry point guides users naturally to validation methods
+**Strengths:**
+- Single namespace import for basic usage
+- Static class with clear method names
+- No setup required for simple cases
+- Method overloads guide users to the right signature
 
 ### 2. Simplicity ✅ Excellent
 
-**Minimum code to validate:**
+**Question:** Is the common case simple?
+
+**Minimum code for validation:**
 
 ```csharp
-// 1 line - one-shot validation
+// 1 line - validate and get result
 var result = JsonSchemaValidator.Validate("""{"type": "string"}""", "\"hello\"");
 
-// 2 lines - reusable compiled schema
-var schema = JsonSchemaValidator.Parse("""{"type": "string"}""");
-var result = schema.Validate("\"hello\"");
+// 1 line - boolean check
+bool valid = JsonSchemaValidator.IsValid("""{"type": "string"}""", "\"hello\"");
 ```
 
 **Comparison with competing libraries:**
 
-| Library | Lines for Simple Validation |
-|---------|----------------------------|
-| **FormFinch** | 1 line |
-| JsonSchema.Net | 2 lines |
-| NJsonSchema | 2-3 lines |
-| Newtonsoft.Json.Schema | 2-3 lines |
+| Library | Lines for First Validation |
+|---------|---------------------------|
+| **FormFinch** | 1 |
+| JsonSchema.Net | 2 |
+| NJsonSchema | 2-3 |
+| Newtonsoft.Json.Schema | 2-3 |
+
+**Progressive complexity:** Users can start simple and adopt more advanced patterns as needed:
+
+```csharp
+// Level 1: One-liner
+var result = JsonSchemaValidator.Validate(schema, instance);
+
+// Level 2: Reusable schema (better performance)
+var schema = JsonSchemaValidator.Parse(schemaJson);
+var result1 = schema.Validate(instance1);
+var result2 = schema.Validate(instance2);
+
+// Level 3: Custom options
+var options = new SchemaValidationOptions {
+    Draft202012 = { FormatAssertionEnabled = true }
+};
+var result = JsonSchemaValidator.Validate(schema, instance, options);
+
+// Level 4: Full DI integration
+services.AddJsonSchemaValidation(opt => { ... });
+```
 
 ### 3. Consistency ✅ Good
 
+**Question:** Are naming conventions consistent throughout?
+
 **Findings:**
-- Naming conventions are consistent (`Validate`, `IsValid`, `Parse`)
-- Both APIs use the same types (`OutputUnit`, `OutputFormat`, `SchemaValidationOptions`)
-- Method naming follows .NET conventions
-- Overloads are intuitive (string vs JsonElement, with/without options)
+
+| Pattern | Examples |
+|---------|----------|
+| Validation methods | `Validate()`, `IsValid()` |
+| Factory methods | `Parse()`, `CreateContextForRoot()` |
+| Options classes | `SchemaValidationOptions`, `Draft202012Options` |
+| Interfaces | `IJsonSchema`, `ISchemaValidator`, `ICompiledValidator` |
+
+**Consistent behaviors:**
+- All `Validate()` methods return `OutputUnit`
+- All `IsValid()` methods return `bool`
+- All `Parse()` methods return `IJsonSchema`
+- String overloads always have `JsonElement` counterparts
 
 ### 4. Documentation ✅ Good
 
-**Findings:**
-- All public APIs have comprehensive XML documentation
-- Code examples in XML docs
-- Self-documenting method names (`ValidateFlag`, `ValidateBasic`, `ValidateDetailed`)
-- Interface `IJsonSchema` clearly documents reusable schema pattern
+**Question:** Are public APIs self-documenting with good names?
+
+**Method names are intuitive:**
+- `Validate` → validates and returns detailed result
+- `IsValid` → validates and returns boolean
+- `Parse` → parses schema for reuse
+
+**Output properties are clear:**
+- `Valid` → whether validation passed
+- `InstanceLocation` → where in the JSON the error occurred
+- `KeywordLocation` → which schema keyword failed
+- `Error` → human-readable error message
+
+**XML documentation is comprehensive:**
+- All public methods have `<summary>` tags
+- Parameters documented with `<param>` tags
+- Examples provided with `<example>` tags
 
 ### 5. Flexibility ✅ Excellent
 
-**Two API tiers for different needs:**
+**Question:** Can advanced users customize behavior without fighting the API?
 
-**Simple API** (for most users):
-- `JsonSchemaValidator.Validate()` - one-shot validation
-- `JsonSchemaValidator.IsValid()` - boolean check
-- `JsonSchemaValidator.Parse()` - reusable schema
+**Customization options:**
 
-**Advanced API** (for enterprise/custom needs):
-- Full DI integration with `AddJsonSchemaValidation()`
-- Per-draft configuration options
-- Format assertion control
-- Pre-compiled validators for maximum performance
-- Custom schema registration
+| Need | Solution |
+|------|----------|
+| Different output detail level | `OutputFormat.Flag`, `Basic`, `Detailed` |
+| Enable format validation | `Draft202012Options.FormatAssertionEnabled = true` |
+| Disable specific drafts | `EnableDraft7 = false` |
+| DI integration | `AddJsonSchemaValidation()` |
+| Custom compiled validators | Implement `ICompiledValidator` |
+| Pre-register schemas | Use DI API with `ISchemaRepository` |
+
+**No dead ends:** Users can always escalate from simple API to DI-based API without rewriting code.
 
 ### 6. Error Handling ✅ Good
 
-**Findings:**
-- Three output formats (Flag, Basic, Detailed) per JSON Schema 2020-12 spec
-- Validation errors include:
-  - `InstanceLocation` - JSON Pointer to the failing value
-  - `KeywordLocation` - JSON Pointer to the schema keyword
-  - `AbsoluteKeywordLocation` - Full URI for schema debugging
-  - `Error` - Human-readable error message
-- Invalid JSON throws standard `JsonException`
+**Question:** Are errors clear and actionable?
+
+**Validation errors include:**
+- `InstanceLocation` - JSON Pointer to the invalid value (e.g., `/users/0/email`)
+- `KeywordLocation` - JSON Pointer to the schema keyword (e.g., `/properties/email/format`)
+- `AbsoluteKeywordLocation` - Full URI for debugging complex schemas
+- `Error` - Human-readable message (e.g., "Value does not match format 'email'")
+
+**Output formats for different needs:**
+
+| Format | Use Case |
+|--------|----------|
+| `Flag` | High-performance, just need pass/fail |
+| `Basic` | API responses, flat error list |
+| `Detailed` | Debugging, hierarchical structure matching schema |
+
+**Invalid input handling:**
+- Invalid JSON throws `JsonException` (standard .NET behavior)
+- Invalid schema returns `Valid = false` with error message
 
 ---
 
-## Public API Surface
+## Public API Summary
 
-### Static API (Primary Entry Point)
+### Static API (Primary)
 
 ```csharp
-namespace FormFinch.JsonSchemaValidation;
-
 public static class JsonSchemaValidator
 {
     // One-shot validation
-    OutputUnit Validate(string schema, string instance, OutputFormat format = Basic);
-    OutputUnit Validate(JsonElement schema, JsonElement instance, OutputFormat format = Basic);
-    OutputUnit Validate(string schema, string instance, SchemaValidationOptions options, OutputFormat format = Basic);
-    OutputUnit Validate(JsonElement schema, JsonElement instance, SchemaValidationOptions options, OutputFormat format = Basic);
+    static OutputUnit Validate(string schema, string instance, OutputFormat format = Basic);
+    static OutputUnit Validate(JsonElement schema, JsonElement instance, OutputFormat format = Basic);
+    static OutputUnit Validate(string schema, string instance, SchemaValidationOptions options, OutputFormat format = Basic);
+    static OutputUnit Validate(JsonElement schema, JsonElement instance, SchemaValidationOptions options, OutputFormat format = Basic);
 
-    // Boolean validation
-    bool IsValid(string schema, string instance);
-    bool IsValid(JsonElement schema, JsonElement instance);
+    // Boolean validation (fast path)
+    static bool IsValid(string schema, string instance);
+    static bool IsValid(JsonElement schema, JsonElement instance);
 
-    // Parse schema for repeated validation
-    IJsonSchema Parse(string schema);
-    IJsonSchema Parse(JsonElement schema);
-    IJsonSchema Parse(string schema, SchemaValidationOptions options);
-    IJsonSchema Parse(JsonElement schema, SchemaValidationOptions options);
+    // Parse for reuse
+    static IJsonSchema Parse(string schema);
+    static IJsonSchema Parse(JsonElement schema);
+    static IJsonSchema Parse(string schema, SchemaValidationOptions options);
+    static IJsonSchema Parse(JsonElement schema, SchemaValidationOptions options);
 }
+```
 
+### Parsed Schema Interface
+
+```csharp
 public interface IJsonSchema
 {
     Uri SchemaUri { get; }
@@ -137,52 +204,67 @@ public interface IJsonSchema
 }
 ```
 
-### DI-based API (Advanced)
-
-```csharp
-namespace FormFinch.JsonSchemaValidation.DependencyInjection;
-
-public static class SchemaValidationSetup
-{
-    IServiceCollection AddJsonSchemaValidation(this IServiceCollection services, Action<SchemaValidationOptions>? options = null);
-}
-
-public static class ServiceProviderExtensions
-{
-    void InitializeSingletonServices(this IServiceProvider provider);
-}
-
-public class SchemaValidationOptions
-{
-    string DefaultDraftVersion { get; set; }
-    bool EnableDraft202012 { get; set; }  // default: true
-    bool EnableDraft201909 { get; set; }  // default: true
-    bool EnableDraft7 { get; set; }       // default: true
-    bool EnableDraft6 { get; set; }       // default: true
-    bool EnableDraft4 { get; set; }       // default: true
-    bool EnableDraft3 { get; set; }       // default: true
-    Draft202012Options Draft202012 { get; set; }
-    // ... other draft options
-}
-```
-
 ### Output Types
 
 ```csharp
-namespace FormFinch.JsonSchemaValidation.Validation.Output;
-
 public enum OutputFormat { Flag, Basic, Detailed }
 
 public class OutputUnit
 {
     bool Valid { get; }
-    string InstanceLocation { get; }
-    string KeywordLocation { get; }
+    string InstanceLocation { get; }   // JSON Pointer
+    string KeywordLocation { get; }    // JSON Pointer
     string? AbsoluteKeywordLocation { get; }
     string? Error { get; }
     object? Annotation { get; }
-    IList<OutputUnit>? Errors { get; }
-    IList<OutputUnit>? Annotations { get; }
+    IList<OutputUnit>? Errors { get; }      // For Detailed format
+    IList<OutputUnit>? Annotations { get; } // For Detailed format
+}
+```
+
+### Configuration
+
+```csharp
+public class SchemaValidationOptions
+{
+    string DefaultDraftVersion { get; set; }
+    bool EnableDraft202012 { get; set; } = true;
+    bool EnableDraft201909 { get; set; } = true;
+    bool EnableDraft7 { get; set; } = true;
+    bool EnableDraft6 { get; set; } = true;
+    bool EnableDraft4 { get; set; } = true;
+    bool EnableDraft3 { get; set; } = true;
+
+    Draft202012Options Draft202012 { get; set; }
+    // ... other draft options
+}
+
+public class Draft202012Options
+{
+    bool FormatAssertionEnabled { get; set; } = false;
+}
+```
+
+### DI Integration
+
+```csharp
+// Setup
+services.AddJsonSchemaValidation(options => {
+    options.Draft202012.FormatAssertionEnabled = true;
+});
+
+// After building service provider
+serviceProvider.InitializeSingletonServices();
+
+// Inject and use
+public class MyService(ISchemaRepository repo, ISchemaValidatorFactory factory, IJsonValidationContextFactory contextFactory)
+{
+    public bool ValidateUser(JsonElement userData)
+    {
+        var validator = factory.GetValidator(userSchemaUri);
+        var context = contextFactory.CreateContextForRoot(userData);
+        return validator.IsValid(context);
+    }
 }
 ```
 
@@ -193,45 +275,31 @@ public class OutputUnit
 ### Quick Validation
 
 ```csharp
-// Simplest possible validation
 var result = JsonSchemaValidator.Validate(
-    """{"type": "string", "minLength": 1}""",
-    "\"hello\""
+    """{"type": "object", "required": ["name"]}""",
+    """{"name": "Alice"}"""
 );
 
-if (!result.Valid)
-{
-    foreach (var error in result.Errors!)
-        Console.WriteLine($"{error.InstanceLocation}: {error.Error}");
-}
+Console.WriteLine(result.Valid ? "Valid!" : result.Errors![0].Error);
 ```
 
-### Boolean Check
-
-```csharp
-if (JsonSchemaValidator.IsValid("""{"type": "integer"}""", "42"))
-    Console.WriteLine("Valid!");
-```
-
-### Parsed Schema (Multiple Validations)
+### Repeated Validation
 
 ```csharp
 var schema = JsonSchemaValidator.Parse("""
 {
     "type": "object",
     "properties": {
-        "name": {"type": "string"},
-        "age": {"type": "integer", "minimum": 0}
+        "email": {"type": "string", "format": "email"}
     },
-    "required": ["name"]
+    "required": ["email"]
 }
 """);
 
-// Validate many instances efficiently
-foreach (var json in jsonDocuments)
+foreach (var user in users)
 {
-    if (!schema.IsValid(json))
-        Console.WriteLine($"Invalid: {json}");
+    if (!schema.IsValid(user))
+        Console.WriteLine($"Invalid user: {user}");
 }
 ```
 
@@ -243,80 +311,88 @@ var options = new SchemaValidationOptions
     Draft202012 = new Draft202012Options { FormatAssertionEnabled = true }
 };
 
+// Now "format" keyword will validate, not just annotate
 var result = JsonSchemaValidator.Validate(
     """{"format": "email"}""",
     "\"not-an-email\"",
     options
 );
-// result.Valid == false (format is asserted, not just annotated)
+// result.Valid == false
 ```
 
-### DI Integration (ASP.NET Core)
+### Detailed Error Reporting
 
 ```csharp
-// Program.cs
-services.AddJsonSchemaValidation(opt =>
-{
-    opt.Draft202012.FormatAssertionEnabled = true;
-});
+var result = JsonSchemaValidator.Validate(
+    schema,
+    instance,
+    OutputFormat.Detailed
+);
 
-var app = builder.Build();
-app.Services.InitializeSingletonServices();
-
-// In a controller or service
-public class ValidationController(
-    ISchemaRepository schemaRepository,
-    ISchemaValidatorFactory validatorFactory,
-    IJsonValidationContextFactory contextFactory)
+void PrintErrors(OutputUnit unit, int indent = 0)
 {
-    public IActionResult Validate([FromBody] JsonElement data)
-    {
-        var validator = validatorFactory.GetValidator(schemaUri);
-        var context = contextFactory.CreateContextForRoot(data);
-        var result = validator.ValidateBasic(context);
-        return result.Valid ? Ok() : BadRequest(result);
-    }
+    var prefix = new string(' ', indent * 2);
+    if (!unit.Valid && unit.Error != null)
+        Console.WriteLine($"{prefix}{unit.InstanceLocation}: {unit.Error}");
+
+    if (unit.Errors != null)
+        foreach (var child in unit.Errors)
+            PrintErrors(child, indent + 1);
 }
+
+PrintErrors(result);
 ```
 
 ---
 
-## Feature Summary
+## Performance Characteristics
+
+| Pattern | Overhead | Use When |
+|---------|----------|----------|
+| `Validate(string, string)` | Schema parsed + registered each call* | Single validation |
+| `Parse()` + `Validate()` | Schema parsed once, validation is fast | Repeated validation |
+| DI + `ISchemaValidator` | Minimal, validators cached | High-throughput apps |
+
+*Schema caching by content hash prevents unbounded memory growth.
+
+---
+
+## Feature Matrix
 
 | Feature | Support |
 |---------|---------|
-| JSON Schema Draft 2020-12 | ✅ Full |
-| JSON Schema Draft 2019-09 | ✅ Full |
-| JSON Schema Draft 7 | ✅ Full |
-| JSON Schema Draft 6 | ✅ Full |
-| JSON Schema Draft 4 | ✅ Full |
-| JSON Schema Draft 3 | ✅ Full |
-| Output Formats (Flag/Basic/Detailed) | ✅ Spec-compliant |
-| Format Validation | ✅ 19 formats |
-| $ref / $dynamicRef | ✅ Full |
-| unevaluatedProperties/Items | ✅ Full |
-| System.Text.Json native | ✅ No external JSON deps |
+| Draft 2020-12 | ✅ Full |
+| Draft 2019-09 | ✅ Full |
+| Draft 7 | ✅ Full |
+| Draft 6 | ✅ Full |
+| Draft 4 | ✅ Full |
+| Draft 3 | ✅ Full |
+| `$ref` / `$dynamicRef` | ✅ Full |
+| `unevaluatedProperties` / `unevaluatedItems` | ✅ Full |
+| Format validation (19 formats) | ✅ Optional |
+| Output formats (Flag/Basic/Detailed) | ✅ Spec-compliant |
+| System.Text.Json (no external deps) | ✅ |
 | Thread-safe | ✅ |
-| Compiled validators | ✅ |
+| Schema caching | ✅ Content-hash based |
 
 ---
 
-## Acceptance Criteria Status
+## Acceptance Criteria
 
-- [x] Usability evaluation documented
-- [x] List of identified issues/improvements created
-- [x] Decision made: **API is ready for release**
+- [x] **Usability evaluation documented** - This document
+- [x] **List of identified issues/improvements** - None blocking; API is ready
+- [x] **Decision made** - API is ready for 1.0.0 release
 
 ---
 
 ## Conclusion
 
-The FormFinch.JsonSchemaValidation library now provides an excellent developer experience with:
+The FormFinch.JsonSchemaValidation API provides:
 
-1. **Low barrier to entry** - Single-line validation with `JsonSchemaValidator.Validate()`
-2. **Competitive simplicity** - Matches or exceeds competing libraries in ease of use
-3. **Full power when needed** - DI-based API for advanced scenarios
-4. **Comprehensive draft support** - All JSON Schema drafts from 3 to 2020-12
-5. **Spec-compliant output** - Three output formats per JSON Schema 2020-12 Section 12
+1. **Zero-friction entry** - One-line validation without any setup
+2. **Progressive complexity** - Simple → Efficient → Advanced paths
+3. **Competitive simplicity** - Matches or exceeds alternatives
+4. **Full spec compliance** - All drafts, all output formats
+5. **Performance-conscious design** - Caching, fast paths, DI integration
 
-The API is ready for 1.0.0 release.
+**Recommendation:** Proceed with 1.0.0 release. No API changes required.
