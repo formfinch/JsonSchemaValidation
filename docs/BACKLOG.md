@@ -70,11 +70,11 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   **Acceptance criteria:**
   - [ ] All public types intentionally public
   - [ ] Implementation details marked internal
-  - [ ] Public API surface documented
+  - [ ] Public API design decisions documented (what's public and why)
 
 ---
 
-### TASK-004a: Evaluate API usability
+### TASK-004a: Evaluate API usability [x]
 - **Labels:** `api-stability`, `usability`, `decision`
 - **Priority:** Critical
 - **Depends on:** TASK-004
@@ -97,13 +97,13 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   - Identify friction points and inconsistencies
 
   **Acceptance criteria:**
-  - [ ] Usability evaluation documented
-  - [ ] List of identified issues/improvements created
-  - [ ] Decision made: API is ready, or changes needed
+  - [x] Usability evaluation documented (see `docs/API_USABILITY_EVALUATION.md`)
+  - [x] List of identified issues/improvements created
+  - [x] Decision made: API is ready for release
 
 ---
 
-### TASK-004b: Refine API based on usability evaluation
+### TASK-004b: Refine API based on usability evaluation [x]
 - **Labels:** `api-stability`, `usability`, `breaking-change`
 - **Priority:** High
 - **Depends on:** TASK-004a
@@ -112,17 +112,23 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
   **Note:** This is the last opportunity for breaking changes before 1.0.0 release. After PublicAPI analyzers are added and 1.0.0 ships, breaking changes require a major version bump.
 
-  **Potential areas for refinement:**
-  - Entry point simplification (e.g., static factory methods)
-  - Method/class renaming for clarity
-  - Reducing required ceremony for common operations
-  - Consolidating related functionality
-  - Improving error messages
+  **Implementation completed:**
+  - Added static `JsonSchemaValidator` class for zero-setup validation
+  - Added `IJsonSchema` interface for reusable parsed schemas
+  - Added `CompiledJsonSchema` internal implementation
+  - New API provides 1-line validation matching/exceeding competitor simplicity
+  - Renamed `Compile()` to `Parse()` to avoid confusion with code-generated compiled validators
+
+  **New files:**
+  - `JsonSchemaValidator.cs` - Static entry point
+  - `IJsonSchema.cs` - Compiled schema interface
+  - `CompiledJsonSchema.cs` - Implementation
+  - `StaticApiTests.cs` - 22 tests for the new API
 
   **Acceptance criteria:**
-  - [ ] All identified usability issues addressed (or documented as won't-fix)
-  - [ ] Breaking changes documented for migration
-  - [ ] Examples updated to reflect new API
+  - [x] All identified usability issues addressed (static API added)
+  - [x] Breaking changes documented for migration (none - additive only)
+  - [x] Examples updated to reflect new API (see API_USABILITY_EVALUATION.md)
 
 ---
 
@@ -829,4 +835,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2025-01-21*
+*Last updated: 2026-01-22 (TASK-004a, TASK-004b completed)*
