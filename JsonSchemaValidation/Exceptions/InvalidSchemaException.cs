@@ -3,6 +3,12 @@
 // See LICENSE file in the project root for full license information.
 namespace FormFinch.JsonSchemaValidation.Exceptions
 {
+    /// <summary>
+    /// Exception thrown when a JSON Schema is invalid or cannot be processed.
+    /// </summary>
+    /// <remarks>
+    /// <b>Thread safety:</b> Exception instances are immutable after construction and safe to share.
+    /// </remarks>
     public class InvalidSchemaException : Exception
     {
         public InvalidSchemaException()

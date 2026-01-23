@@ -10,6 +10,7 @@ using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Repositories;
 using FormFinch.JsonSchemaValidation.Validation;
+using System.Threading;
 
 namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
@@ -22,9 +23,7 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
         private readonly IJsonValidationContextFactory _contextFactory;
 
         // Local cache for the resolved schema and validator
-        private SchemaMetadata? _cachedResolvedSchema;
-        private ISchemaValidator? _cachedValidator;
-        private bool _cacheInitialized;
+        private readonly Lazy<(SchemaMetadata? schema, ISchemaValidator? validator)> _cachedValidator;
 
         public RefValidator(
             string refValue,
@@ -38,6 +37,9 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
             _schemaRepository = schemaRepository;
             _schemaValidatorFactory = schemaValidatorFactory;
             _contextFactory = contextFactory;
+            _cachedValidator = new Lazy<(SchemaMetadata? schema, ISchemaValidator? validator)>(
+                CreateCachedValidator,
+                LazyThreadSafetyMode.ExecutionAndPublication);
         }
 
         // Maximum recursion depth to prevent stack overflow from infinite loops
@@ -145,17 +147,15 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 
         private (SchemaMetadata? schema, ISchemaValidator? validator) GetOrCreateValidator()
         {
-            // Return cached result if available
-            if (_cacheInitialized)
-            {
-                return (_cachedResolvedSchema, _cachedValidator);
-            }
+            return _cachedValidator.Value;
+        }
 
+        private (SchemaMetadata? schema, ISchemaValidator? validator) CreateCachedValidator()
+        {
             // Resolve the $ref
             var resolvedSchema = ResolveRef();
             if (resolvedSchema == null)
             {
-                _cacheInitialized = true;
                 return (null, null);
             }
 
@@ -166,12 +166,6 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
             }
 
             var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
-
-            // Cache for subsequent calls
-            _cachedResolvedSchema = resolvedSchema;
-            _cachedValidator = validator;
-            _cacheInitialized = true;
-
             return (resolvedSchema, validator);
         }
 

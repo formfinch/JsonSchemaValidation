@@ -13,6 +13,10 @@ namespace FormFinch.JsonSchemaValidation.Abstractions;
 /// Compiled validators are generated from JSON Schema files and registered by schema URI.
 /// When validation is requested for a schema with a registered compiled validator,
 /// the compiled validator is used instead of dynamically building validators.
+/// <para>
+/// <b>Thread safety:</b> Implementations must be safe for concurrent calls to
+/// <see cref="IsValid(JsonElement)"/>.
+/// </para>
 /// </remarks>
 public interface ICompiledValidator
 {

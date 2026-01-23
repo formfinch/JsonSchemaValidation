@@ -19,6 +19,9 @@ namespace FormFinch.JsonSchemaValidation
     /// multiple instances against the same schema, as the schema is parsed and
     /// registered only once.
     /// </para>
+    /// <para>
+    /// <b>Thread safety:</b> Parsed schema instances are safe for concurrent validation.
+    /// </para>
     /// </remarks>
     /// <example>
     /// <code>

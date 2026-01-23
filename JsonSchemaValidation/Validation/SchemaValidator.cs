@@ -2,6 +2,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
+using System.Threading;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
@@ -14,7 +15,8 @@ namespace FormFinch.JsonSchemaValidation.Validation
         // Cached arrays for fast path to avoid LINQ overhead
         private IKeywordValidator[]? _directValidators;
         private IKeywordValidator[]? _contextValidators;
-        private bool _cacheBuilt;
+        private readonly Lock _cacheLock = new();
+        private volatile bool _cacheBuilt;
         private bool _requiresAnnotationTracking;
 
         /// <summary>
@@ -86,22 +88,37 @@ namespace FormFinch.JsonSchemaValidation.Validation
         private void EnsureCacheBuilt()
         {
             if (_cacheBuilt)
-                return;
-
-            var directList = new List<IKeywordValidator>();
-            var contextList = new List<IKeywordValidator>();
-
-            foreach (var validator in _keywordValidators)
             {
-                if (validator.SupportsDirectValidation)
-                    directList.Add(validator);
-                else
-                    contextList.Add(validator);
+                return;
             }
 
-            _directValidators = directList.Count > 0 ? directList.ToArray() : null;
-            _contextValidators = contextList.Count > 0 ? contextList.ToArray() : null;
-            _cacheBuilt = true;
+            _cacheLock.Enter();
+            try
+            {
+                if (_cacheBuilt)
+                {
+                    return;
+                }
+
+                var directList = new List<IKeywordValidator>();
+                var contextList = new List<IKeywordValidator>();
+
+                foreach (var validator in _keywordValidators)
+                {
+                    if (validator.SupportsDirectValidation)
+                        directList.Add(validator);
+                    else
+                        contextList.Add(validator);
+                }
+
+                _directValidators = directList.Count > 0 ? directList.ToArray() : null;
+                _contextValidators = contextList.Count > 0 ? contextList.ToArray() : null;
+                _cacheBuilt = true;
+            }
+            finally
+            {
+                _cacheLock.Exit();
+            }
         }
     }
 }

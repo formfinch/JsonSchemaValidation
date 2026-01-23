@@ -7,6 +7,10 @@ namespace FormFinch.JsonSchemaValidation.Validation.Output
     /// Represents a single output unit per JSON Schema 2020-12 Section 12.
     /// Used for spec-compliant output formatting.
     /// </summary>
+    /// <remarks>
+    /// <b>Thread safety:</b> Instances are mutable and not thread-safe. Treat output
+    /// units as immutable once created if they are shared across threads.
+    /// </remarks>
     public class OutputUnit
     {
         /// <summary>

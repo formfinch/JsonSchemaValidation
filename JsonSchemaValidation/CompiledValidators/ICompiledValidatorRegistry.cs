@@ -8,6 +8,9 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators;
 /// <summary>
 /// Registry for compiled validators indexed by schema URI or content hash.
 /// </summary>
+/// <remarks>
+/// <b>Thread safety:</b> Implementations should be safe for concurrent registration and lookup.
+/// </remarks>
 public interface ICompiledValidatorRegistry
 {
     /// <summary>
