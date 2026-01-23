@@ -46,68 +46,69 @@ public sealed class NumericConstraintsCodeGenerator : IKeywordCodeGenerator
             return string.Empty;
         }
 
-        // Check if we need decimal for min/max constraints
-        var needsDecimal = hasMin || hasMax || hasExMin || hasExMax;
+        // Check if we need min/max constraints
+        var needsMinMax = hasMin || hasMax || hasExMin || hasExMax;
 
         sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Number)");
         sb.AppendLine("{");
 
-        if (needsDecimal)
+        if (needsMinMax)
         {
-            // Use TryGetDecimal to handle values that overflow decimal range
-            sb.AppendLine($"    if ({e}.TryGetDecimal(out var _num_))");
-            sb.AppendLine("    {");
+            // Use GetDouble() to match dynamic validator behavior and handle large values
+            sb.AppendLine($"    var _num_ = {e}.GetDouble();");
 
-            if (hasMin && minElement.TryGetDecimal(out var min))
+            if (hasMin && minElement.TryGetDouble(out var min))
             {
-                sb.AppendLine($"        if (_num_ < {FormatDecimal(min)}m) return false;");
+                sb.AppendLine($"    if (_num_ < {FormatDouble(min)}) return false;");
             }
 
-            if (hasMax && maxElement.TryGetDecimal(out var max))
+            if (hasMax && maxElement.TryGetDouble(out var max))
             {
-                sb.AppendLine($"        if (_num_ > {FormatDecimal(max)}m) return false;");
+                sb.AppendLine($"    if (_num_ > {FormatDouble(max)}) return false;");
             }
 
             // Handle exclusiveMinimum - can be number (2020-12) or boolean (draft 4)
             if (hasExMin)
             {
-                if (exMinElement.ValueKind == JsonValueKind.Number && exMinElement.TryGetDecimal(out var exMin))
+                if (exMinElement.ValueKind == JsonValueKind.Number && exMinElement.TryGetDouble(out var exMin))
                 {
-                    sb.AppendLine($"        if (_num_ <= {FormatDecimal(exMin)}m) return false;");
+                    sb.AppendLine($"    if (_num_ <= {FormatDouble(exMin)}) return false;");
                 }
-                else if (exMinElement.ValueKind == JsonValueKind.True && hasMin && minElement.TryGetDecimal(out var minVal))
+                else if (exMinElement.ValueKind == JsonValueKind.True && hasMin && minElement.TryGetDouble(out var minVal))
                 {
-                    sb.AppendLine($"        if (_num_ <= {FormatDecimal(minVal)}m) return false;");
+                    sb.AppendLine($"    if (_num_ <= {FormatDouble(minVal)}) return false;");
                 }
             }
 
             // Handle exclusiveMaximum - can be number (2020-12) or boolean (draft 4)
             if (hasExMax)
             {
-                if (exMaxElement.ValueKind == JsonValueKind.Number && exMaxElement.TryGetDecimal(out var exMax))
+                if (exMaxElement.ValueKind == JsonValueKind.Number && exMaxElement.TryGetDouble(out var exMax))
                 {
-                    sb.AppendLine($"        if (_num_ >= {FormatDecimal(exMax)}m) return false;");
+                    sb.AppendLine($"    if (_num_ >= {FormatDouble(exMax)}) return false;");
                 }
-                else if (exMaxElement.ValueKind == JsonValueKind.True && hasMax && maxElement.TryGetDecimal(out var maxVal))
+                else if (exMaxElement.ValueKind == JsonValueKind.True && hasMax && maxElement.TryGetDouble(out var maxVal))
                 {
-                    sb.AppendLine($"        if (_num_ >= {FormatDecimal(maxVal)}m) return false;");
+                    sb.AppendLine($"    if (_num_ >= {FormatDouble(maxVal)}) return false;");
                 }
             }
-
-            sb.AppendLine("    }");
         }
 
         if (hasMultipleOf && multipleOfElement.TryGetDouble(out var multipleOf) && multipleOf != 0)
         {
             // Use double for multipleOf to handle overflow cases (matching dynamic validator logic)
             var divisor = multipleOf.ToString(CultureInfo.InvariantCulture);
-            sb.AppendLine($"    var _numD_ = {e}.GetDouble();");
+            // Reuse _num_ if already declared, otherwise get it
+            if (!needsMinMax)
+            {
+                sb.AppendLine($"    var _num_ = {e}.GetDouble();");
+            }
             sb.AppendLine($"    var _divisor_ = {divisor};");
-            sb.AppendLine($"    if (Math.Abs(_numD_ % _divisor_) >= double.Epsilon)");
+            sb.AppendLine($"    if (Math.Abs(_num_ % _divisor_) >= double.Epsilon)");
             sb.AppendLine("    {");
-            sb.AppendLine($"        var _quotient_ = _numD_ / _divisor_;");
+            sb.AppendLine($"        var _quotient_ = _num_ / _divisor_;");
             sb.AppendLine($"        // Handle overflow: if quotient is infinity and value is integer and 1 is multiple of divisor");
-            sb.AppendLine($"        if (!(double.IsInfinity(_quotient_) && Math.Abs(_numD_ % 1) < double.Epsilon && Math.Abs(1.0 % _divisor_) < double.Epsilon))");
+            sb.AppendLine($"        if (!(double.IsInfinity(_quotient_) && Math.Abs(_num_ % 1) < double.Epsilon && Math.Abs(1.0 % _divisor_) < double.Epsilon))");
             sb.AppendLine("        {");
             sb.AppendLine($"            _quotient_ = Math.Round((_quotient_ + 0.000001) * 100) / 100.0;");
             sb.AppendLine($"            if (!(Math.Abs(_quotient_ - Math.Round(_quotient_)) < double.Epsilon)) return false;");
@@ -125,8 +126,9 @@ public sealed class NumericConstraintsCodeGenerator : IKeywordCodeGenerator
         return [];
     }
 
-    private static string FormatDecimal(decimal value)
+    private static string FormatDouble(double value)
     {
-        return value.ToString(CultureInfo.InvariantCulture);
+        // Use G17 to preserve full precision for round-trip
+        return value.ToString("G17", CultureInfo.InvariantCulture);
     }
 }

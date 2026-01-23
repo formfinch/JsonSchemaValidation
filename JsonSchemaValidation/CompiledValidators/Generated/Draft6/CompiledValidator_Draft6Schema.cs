@@ -235,10 +235,8 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         }
         if (e.ValueKind == JsonValueKind.Number)
         {
-            if (e.TryGetDecimal(out var _num_))
-            {
-                if (_num_ < 0m) return false;
-            }
+            var _num_ = e.GetDouble();
+            if (_num_ < 0) return false;
         }
 
         return true;
@@ -366,10 +364,8 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         if (e.ValueKind != JsonValueKind.Number) return false;
         if (e.ValueKind == JsonValueKind.Number)
         {
-            if (e.TryGetDecimal(out var _num_))
-            {
-                if (_num_ <= 0m) return false;
-            }
+            var _num_ = e.GetDouble();
+            if (_num_ <= 0) return false;
         }
 
         return true;
