@@ -19,13 +19,20 @@ public sealed class SchemaHasher
     /// </summary>
     public static SchemaHasher Instance { get; } = new();
 
-    // Keywords that don't affect validation behavior and should be ignored for hashing
-    // Note: $defs and definitions ARE included in hashing because their contents
-    // affect validation when referenced via $ref
+    // Keywords that don't affect validation behavior and should be ignored for hashing.
+    //
+    // $id is intentionally excluded: it affects base-URI resolution for output locations
+    // and external references TO this schema, but not the validation results themselves.
+    // Trade-off: schemas differing only by $id will share a cached validator.
+    //
+    // $schema is NOT excluded: it determines which draft's semantics apply, which directly
+    // affects validation behavior.
+    //
+    // Note: $defs and definitions ARE included because their contents affect validation
+    // when referenced via $ref.
     private static readonly HashSet<string> MetadataKeywords = new(StringComparer.Ordinal)
     {
         "$id",
-        "$schema",
         "$comment",
         "title",
         "description",
