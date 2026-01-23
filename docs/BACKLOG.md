@@ -197,6 +197,37 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
+### TASK-007a: Thread-safety audit
+- **Labels:** `reliability`, `concurrency`, `code-quality`
+- **Priority:** High
+- **Description:**
+  Comprehensive review of all concurrent code paths to ensure thread-safety guarantees are correctly implemented and documented.
+
+  **Recent fix context:**
+  `CompiledValidatorRegistry` was found to use plain `Dictionary`/`HashSet` despite claiming thread-safety. This was fixed by switching to `ConcurrentDictionary`. A systematic audit is needed to find similar issues.
+
+  **Areas to audit:**
+  - All classes using concurrent collections - verify correct usage patterns
+  - Singleton services - ensure no mutable shared state without synchronization
+  - Schema repository and related caches
+  - Validator factories and lazy initialization
+  - Context factories and validation contexts
+  - Static API caches (`JsonSchemaValidator.SchemaCache`)
+
+  **Deliverables:**
+  - Document thread-safety guarantees for each public type
+  - Fix any identified race conditions or unsafe patterns
+  - Add XML documentation noting thread-safety where relevant
+  - Consider adding stress tests for concurrent usage
+
+  **Acceptance criteria:**
+  - [ ] All concurrent code paths reviewed
+  - [ ] No plain collections used where concurrent access is possible
+  - [ ] Thread-safety documented for public types
+  - [ ] Any fixes verified with concurrent tests
+
+---
+
 ## Phase 2: Package Quality
 
 ### TASK-008: Enable XML documentation generation
@@ -909,7 +940,6 @@ These items are out of scope for initial release but should be tracked:
 - **Annotation keyword support** - Collect and propagate schema annotations (`title`, `description`, `default`, `examples`, `deprecated`, `readOnly`, `writeOnly`) in validation output for richer tooling integration
 - **DI validation** - Runtime validation that required services are registered correctly, with clear error messages when misconfigured
 - **Diagnostics hooks** - Logging, tracing, and metrics integration points for observability in production environments
-- **Thread-safety audit** - Comprehensive review of all concurrent code paths beyond the registry (validators, context factories, etc.)
 - **Schema registration error details** - `TryRegisterSchema` currently returns bool; consider richer error information for debugging registration failures
 
 ---
