@@ -248,6 +248,40 @@ public class StaticApiTests
         Assert.True(result.Valid);
     }
 
+    [Fact]
+    public void Validate_WithDraftDisabled_DoesNotUseThatDraft()
+    {
+        // Schema explicitly declaring Draft 7
+        var schema = """{"$schema": "http://json-schema.org/draft-07/schema#", "type": "string"}""";
+        var instance = "\"hello\"";
+
+        // With all drafts enabled (default) - should validate successfully
+        var resultEnabled = JsonSchemaValidator.Validate(schema, instance);
+        Assert.True(resultEnabled.Valid);
+
+        // With Draft 7 disabled - the draft's validator factory won't be registered,
+        // so validation should fail (no validator found for this draft)
+        var optionsDisabled = new SchemaValidationOptions { EnableDraft7 = false };
+        var ex = Assert.Throws<NotSupportedException>(() =>
+            JsonSchemaValidator.Validate(schema, instance, optionsDisabled));
+        Assert.Contains("draft-07", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Parse_WithDraftDisabled_DoesNotUseThatDraft()
+    {
+        // Schema explicitly declaring Draft 2019-09
+        var schema = """{"$schema": "https://json-schema.org/draft/2019-09/schema", "type": "integer"}""";
+
+        // With Draft 2019-09 disabled
+        var options = new SchemaValidationOptions { EnableDraft201909 = false };
+
+        // Parsing should fail since the draft's services aren't registered
+        var ex = Assert.Throws<NotSupportedException>(() =>
+            JsonSchemaValidator.Parse(schema, options));
+        Assert.Contains("2019-09", ex.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
     #endregion
 
     #region Schema Caching Tests
