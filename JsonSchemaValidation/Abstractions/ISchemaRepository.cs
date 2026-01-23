@@ -6,7 +6,7 @@ using FormFinch.JsonSchemaValidation.Repositories;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface ISchemaRepository
+    internal interface ISchemaRepository
     {
         bool TryRegisterSchema(JsonElement? schemaToRegister, out SchemaMetadata? schemaData);
         bool TryRegisterSchema(JsonElement? schemaToRegister, Uri schemaUri, out SchemaMetadata? schemaData);

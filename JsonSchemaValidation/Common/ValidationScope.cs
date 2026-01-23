@@ -10,7 +10,7 @@ namespace FormFinch.JsonSchemaValidation.Common
     /// Tracks the schema resources traversed during validation.
     /// Thread-safe implementation using a stack structure.
     /// </summary>
-    public class ValidationScope : IValidationScope
+    internal class ValidationScope : IValidationScope
     {
         private readonly Stack<SchemaMetadata> _schemaStack = new();
 

@@ -12,7 +12,7 @@ namespace FormFinch.JsonSchemaValidation.Common
     /// A validator wrapper that manages the validation scope by pushing/popping
     /// schema resources. Used to track the dynamic scope for $dynamicRef resolution.
     /// </summary>
-    public class ScopeAwareSchemaValidator : ISchemaValidator
+    internal class ScopeAwareSchemaValidator : ISchemaValidator
     {
         private readonly ISchemaValidator _innerValidator;
         private readonly SchemaMetadata _schemaResource;

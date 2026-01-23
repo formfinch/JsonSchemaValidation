@@ -8,7 +8,7 @@ namespace FormFinch.JsonSchemaValidation.Abstractions
     /// <summary>
     /// Interface for parsing $vocabulary from meta-schemas.
     /// </summary>
-    public interface IVocabularyParser
+    internal interface IVocabularyParser
     {
         /// <summary>
         /// The draft version this parser supports (e.g., "https://json-schema.org/draft/2019-09/schema").

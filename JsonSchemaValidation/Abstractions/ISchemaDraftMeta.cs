@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface ISchemaDraftMeta
+    internal interface ISchemaDraftMeta
     {
         string DraftVersion { get; }
         IEnumerable<JsonElement> Schemas { get; }

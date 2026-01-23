@@ -7,7 +7,7 @@ using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.Repositories
 {
-    public class SchemaMetadata
+    internal class SchemaMetadata
     {
         public JsonElement Schema { get; set; }
         public string? DraftVersion { get; set; }

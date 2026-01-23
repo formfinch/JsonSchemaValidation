@@ -6,7 +6,7 @@ using FormFinch.JsonSchemaValidation.Abstractions;
 
 namespace FormFinch.JsonSchemaValidation.Common
 {
-    public class JsonValidationContext : IJsonValidationContext
+    internal class JsonValidationContext : IJsonValidationContext
     {
         private readonly JsonElement _data;
         private readonly IValidationScope _scope;

@@ -5,7 +5,7 @@ using System.Text.Json;
 
 namespace FormFinch.JsonSchemaValidation.Repositories
 {
-    public static class SchemaRepositoryHelpers
+    internal static class SchemaRepositoryHelpers
     {
         public static Uri GenerateRandomSchemaId()
         {

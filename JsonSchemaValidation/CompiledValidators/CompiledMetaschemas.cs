@@ -9,7 +9,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators;
 /// <summary>
 /// Provides access to all pre-compiled metaschema validators.
 /// </summary>
-public static class CompiledMetaschemas
+internal static class CompiledMetaschemas
 {
     /// <summary>
     /// Gets all compiled metaschema validators for registration.

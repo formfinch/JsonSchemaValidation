@@ -6,7 +6,7 @@ namespace FormFinch.JsonSchemaValidation.Abstractions
     /// <summary>
     /// Result of parsing $vocabulary from a schema.
     /// </summary>
-    public class VocabularyParseResult
+    internal class VocabularyParseResult
     {
         /// <summary>
         /// Map of vocabulary URIs to their required status (true = required, false = optional).

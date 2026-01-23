@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidation.Draft201909
 {
-    public static class SchemaDraft201909Setup
+    internal static class SchemaDraft201909Setup
     {
         /// <summary>
         /// The draft version key used for keyed service registration.

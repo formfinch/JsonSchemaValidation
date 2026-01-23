@@ -6,7 +6,7 @@ using FormFinch.JsonSchemaValidation.Abstractions;
 
 namespace FormFinch.JsonSchemaValidation.Draft7
 {
-    public class SchemaDraft7Meta : ISchemaDraftMeta
+    internal class SchemaDraft7Meta : ISchemaDraftMeta
     {
         private static readonly Lazy<IReadOnlyList<JsonElement>> _schemas =
             new Lazy<IReadOnlyList<JsonElement>>(LoadSchemas);

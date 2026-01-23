@@ -7,7 +7,7 @@ namespace FormFinch.JsonSchemaValidation.Abstractions
     /// Registry that maps vocabulary URIs to their associated keywords.
     /// Used for $vocabulary keyword support in Draft 2020-12.
     /// </summary>
-    public interface IVocabularyRegistry
+    internal interface IVocabularyRegistry
     {
         /// <summary>
         /// Gets all keywords associated with a vocabulary URI.

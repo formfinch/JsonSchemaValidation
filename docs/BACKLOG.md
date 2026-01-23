@@ -55,7 +55,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-004: Audit public API surface
+### TASK-004: Audit public API surface [x]
 - **Labels:** `api-stability`, `breaking-change-risk`
 - **Priority:** Critical
 - **Description:**
@@ -67,10 +67,16 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   - `Common/` - Shared types
   - All validator factories and validators
 
+  **Implementation completed:**
+  - ~30 implementation details changed from `public` to `internal`
+  - Added `InternalsVisibleTo` for test, compiler, codegen, and benchmark projects
+  - Discovered 3 types must remain public for runtime code generation
+  - Full details in `docs/PUBLIC_API_AUDIT.md`
+
   **Acceptance criteria:**
-  - [ ] All public types intentionally public
-  - [ ] Implementation details marked internal
-  - [ ] Public API design decisions documented (what's public and why)
+  - [x] All public types intentionally public
+  - [x] Implementation details marked internal
+  - [x] Public API design decisions documented (see docs/PUBLIC_API_AUDIT.md)
 
 ---
 
@@ -835,4 +841,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-23 (TASK-004a, TASK-004b completed)*
+*Last updated: 2026-01-23 (TASK-004, TASK-004a, TASK-004b completed)*

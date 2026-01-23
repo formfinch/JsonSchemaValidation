@@ -3,8 +3,8 @@
 // See LICENSE file in the project root for full license information.
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface ILazySchemaValidatorFactory
+    internal interface ILazySchemaValidatorFactory
     {
-        public ISchemaValidatorFactory? Value { get; set; }
+        ISchemaValidatorFactory? Value { get; set; }
     }
 }

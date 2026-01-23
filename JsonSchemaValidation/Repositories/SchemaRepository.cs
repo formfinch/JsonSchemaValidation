@@ -11,7 +11,7 @@ using FormFinch.JsonSchemaValidation.Exceptions;
 
 namespace FormFinch.JsonSchemaValidation.Repositories
 {
-    public class SchemaRepository : ISchemaRepository
+    internal class SchemaRepository : ISchemaRepository
     {
         private readonly ConcurrentDictionary<Uri, SchemaMetadata> _schemas = new();
         private volatile IReadOnlyList<SchemaMetadata>? _sortedSchemas;

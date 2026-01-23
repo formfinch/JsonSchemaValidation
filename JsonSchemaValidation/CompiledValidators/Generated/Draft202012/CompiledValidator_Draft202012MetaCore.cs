@@ -16,7 +16,7 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012MetaCore : IRegistryAwareCompiledValidator
+    internal sealed class CompiledValidator_Draft202012MetaCore : IRegistryAwareCompiledValidator
     {
         private static readonly Regex Pattern_683e0a045989 = new Regex(@"^[^#]*#?$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex Pattern_97b3610c8717 = new Regex(@"^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));

@@ -8,7 +8,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012
     /// <summary>
     /// Registry mapping Draft 2020-12 vocabulary URIs to their associated keywords.
     /// </summary>
-    public class VocabularyRegistry : IVocabularyRegistry
+    internal class VocabularyRegistry : IVocabularyRegistry
     {
         private readonly Dictionary<string, HashSet<string>> _vocabularyToKeywords;
 

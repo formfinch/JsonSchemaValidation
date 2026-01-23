@@ -16,7 +16,7 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909Schema : IRegistryAwareCompiledValidator
+    internal sealed class CompiledValidator_Draft201909Schema : IRegistryAwareCompiledValidator
     {
         private ICompiledValidator _extRef_009379da = null!;
         private ICompiledValidator _extRef_eb6bc996 = null!;

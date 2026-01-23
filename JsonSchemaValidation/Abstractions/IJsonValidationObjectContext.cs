@@ -6,7 +6,7 @@ using static FormFinch.JsonSchemaValidation.Common.JsonValidationObjectContext;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface IJsonValidationObjectContext
+    internal interface IJsonValidationObjectContext
     {
         Annotations GetAnnotations();
         IEnumerable<JsonProperty> GetUnevaluatedProperties();
