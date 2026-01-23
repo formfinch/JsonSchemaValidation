@@ -16,7 +16,7 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    internal sealed class CompiledValidator_Draft202012MetaContent : IRegistryAwareCompiledValidator
+    public sealed class CompiledValidator_Draft202012MetaContent : IRegistryAwareCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/content");
 
@@ -35,9 +35,9 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             _dynamicScopeRoot = root;
         }
 
-        public bool IsValid(JsonElement instance) => Validate_ded15a53cee8(instance);
+        public bool IsValid(JsonElement instance) => Validate_d29520865c6f(instance);
 
-    private bool Validate_ded15a53cee8(JsonElement e)
+    private bool Validate_d29520865c6f(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -82,55 +82,11 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         }
         else
         {
-            if (!Validate_ded15a53cee8(e)) return false;
+            if (!Validate_d29520865c6f(e)) return false;
         }
         return true;
     }
 
 
-        private static bool JsonElementDeepEquals(JsonElement a, JsonElement b)
-        {
-            if (a.ValueKind != b.ValueKind) return false;
-            return a.ValueKind switch
-            {
-                JsonValueKind.Object => ObjectEquals(a, b),
-                JsonValueKind.Array => ArrayEquals(a, b),
-                JsonValueKind.String => a.GetString() == b.GetString(),
-                JsonValueKind.Number => a.GetDecimal() == b.GetDecimal(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => true,
-                JsonValueKind.Null => true,
-                _ => false
-            };
-        }
-
-        private static bool ObjectEquals(JsonElement a, JsonElement b)
-        {
-            var propsA = new Dictionary<string, JsonElement>();
-            foreach (var p in a.EnumerateObject()) propsA[p.Name] = p.Value;
-            var propsB = new Dictionary<string, JsonElement>();
-            foreach (var p in b.EnumerateObject()) propsB[p.Name] = p.Value;
-            if (propsA.Count != propsB.Count) return false;
-            foreach (var (key, val) in propsA)
-            {
-                if (!propsB.TryGetValue(key, out var bVal)) return false;
-                if (!JsonElementDeepEquals(val, bVal)) return false;
-            }
-            return true;
-        }
-
-        private static bool ArrayEquals(JsonElement a, JsonElement b)
-        {
-            var lenA = a.GetArrayLength();
-            var lenB = b.GetArrayLength();
-            if (lenA != lenB) return false;
-            using var enumA = a.EnumerateArray().GetEnumerator();
-            using var enumB = b.EnumerateArray().GetEnumerator();
-            while (enumA.MoveNext() && enumB.MoveNext())
-            {
-                if (!JsonElementDeepEquals(enumA.Current, enumB.Current)) return false;
-            }
-            return true;
-        }
     }
 }

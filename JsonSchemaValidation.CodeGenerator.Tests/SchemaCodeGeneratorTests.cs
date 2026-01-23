@@ -154,7 +154,7 @@ public class SchemaCodeGeneratorTests
         var result = _generator.Generate(schema, "Test", "TestValidator");
 
         // Assert
-        Assert.Contains("JsonElementDeepEquals", result.GeneratedCode);
+        Assert.Contains("JsonElement.DeepEquals", result.GeneratedCode);
     }
 
     [Fact]

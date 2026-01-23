@@ -15,15 +15,15 @@ using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    internal sealed class CompiledValidator_Draft7Schema : ICompiledValidator
+    public sealed class CompiledValidator_Draft7Schema : ICompiledValidator
     {
         private static readonly JsonElement[] Enum_4b8c15195535 = new JsonElement[] { JsonDocument.Parse("\"array\"").RootElement, JsonDocument.Parse("\"boolean\"").RootElement, JsonDocument.Parse("\"integer\"").RootElement, JsonDocument.Parse("\"null\"").RootElement, JsonDocument.Parse("\"number\"").RootElement, JsonDocument.Parse("\"object\"").RootElement, JsonDocument.Parse("\"string\"").RootElement };
 
         public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema");
 
-        public bool IsValid(JsonElement instance) => Validate_cc3a8e9e1dce(instance);
+        public bool IsValid(JsonElement instance) => Validate_2de1c7d56d90(instance);
 
-    private static bool Validate_cc3a8e9e1dce(JsonElement e)
+    private static bool Validate_2de1c7d56d90(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -250,7 +250,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_b17aa97428d3(JsonElement e)
     {
         // $ref: #
-        if (!Validate_cc3a8e9e1dce(e)) return false;
+        if (!Validate_2de1c7d56d90(e)) return false;
         return true;
     }
 
@@ -308,7 +308,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             var _enumValid_ = false;
             foreach (var _enumVal_ in Enum_4b8c15195535)
             {
-                if (JsonElementDeepEquals(e, _enumVal_))
+                if (JsonElement.DeepEquals(e, _enumVal_))
                 {
                     _enumValid_ = true;
                     break;
@@ -333,7 +333,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             {
                 foreach (var _existing_ in _items_)
                 {
-                    if (JsonElementDeepEquals(_item_, _existing_)) return false;
+                    if (JsonElement.DeepEquals(_item_, _existing_)) return false;
                 }
                 _items_.Add(_item_);
             }
@@ -562,7 +562,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             {
                 foreach (var _existing_ in _items_)
                 {
-                    if (JsonElementDeepEquals(_item_, _existing_)) return false;
+                    if (JsonElement.DeepEquals(_item_, _existing_)) return false;
                 }
                 _items_.Add(_item_);
             }
@@ -617,7 +617,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             {
                 foreach (var _existing_ in _items_)
                 {
-                    if (JsonElementDeepEquals(_item_, _existing_)) return false;
+                    if (JsonElement.DeepEquals(_item_, _existing_)) return false;
                 }
                 _items_.Add(_item_);
             }
@@ -637,49 +637,5 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-        private static bool JsonElementDeepEquals(JsonElement a, JsonElement b)
-        {
-            if (a.ValueKind != b.ValueKind) return false;
-            return a.ValueKind switch
-            {
-                JsonValueKind.Object => ObjectEquals(a, b),
-                JsonValueKind.Array => ArrayEquals(a, b),
-                JsonValueKind.String => a.GetString() == b.GetString(),
-                JsonValueKind.Number => a.GetDecimal() == b.GetDecimal(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => true,
-                JsonValueKind.Null => true,
-                _ => false
-            };
-        }
-
-        private static bool ObjectEquals(JsonElement a, JsonElement b)
-        {
-            var propsA = new Dictionary<string, JsonElement>();
-            foreach (var p in a.EnumerateObject()) propsA[p.Name] = p.Value;
-            var propsB = new Dictionary<string, JsonElement>();
-            foreach (var p in b.EnumerateObject()) propsB[p.Name] = p.Value;
-            if (propsA.Count != propsB.Count) return false;
-            foreach (var (key, val) in propsA)
-            {
-                if (!propsB.TryGetValue(key, out var bVal)) return false;
-                if (!JsonElementDeepEquals(val, bVal)) return false;
-            }
-            return true;
-        }
-
-        private static bool ArrayEquals(JsonElement a, JsonElement b)
-        {
-            var lenA = a.GetArrayLength();
-            var lenB = b.GetArrayLength();
-            if (lenA != lenB) return false;
-            using var enumA = a.EnumerateArray().GetEnumerator();
-            using var enumB = b.EnumerateArray().GetEnumerator();
-            while (enumA.MoveNext() && enumB.MoveNext())
-            {
-                if (!JsonElementDeepEquals(enumA.Current, enumB.Current)) return false;
-            }
-            return true;
-        }
     }
 }
