@@ -8,7 +8,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ## Phase 1: Foundation
 
-### TASK-001: Decide on licensing model
+### TASK-001: Decide on licensing model [x]
 - **Labels:** `licensing`, `decision`, `blocking`
 - **Priority:** Critical
 - **Description:**
@@ -21,13 +21,13 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   - Custom license - More control, but needs legal review
 
   **Acceptance criteria:**
-  - [ ] License model chosen
-  - [ ] Legal implications understood
-  - [ ] Decision documented
+  - [x] License model chosen
+  - [x] Legal implications understood
+  - [x] Decision documented
 
 ---
 
-### TASK-002: Create LICENSE file
+### TASK-002: Create LICENSE file [x]
 - **Labels:** `licensing`, `documentation`
 - **Priority:** Critical
 - **Depends on:** TASK-001
@@ -35,13 +35,13 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   Add LICENSE file to repository root with chosen license text. Currently no LICENSE file exists (only declaration in .csproj).
 
   **Acceptance criteria:**
-  - [ ] LICENSE file exists at repository root
-  - [ ] License text matches chosen model
-  - [ ] .csproj updated if using custom license file (`PackageLicenseFile` instead of `PackageLicenseExpression`)
+  - [x] LICENSE file exists at repository root
+  - [x] License text matches chosen model
+  - [x] .csproj updated if using custom license file (`PackageLicenseFile` instead of `PackageLicenseExpression`)
 
 ---
 
-### TASK-003: Add license headers to source files
+### TASK-003: Add license headers to source files [x]
 - **Labels:** `licensing`, `code-quality`
 - **Priority:** High
 - **Depends on:** TASK-001
@@ -49,9 +49,9 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   Update `.editorconfig` file_header_template (currently uses .NET Foundation template) and apply FormFinch license header to all `.cs` files.
 
   **Acceptance criteria:**
-  - [ ] .editorconfig file_header_template updated
-  - [ ] All .cs files have correct license header
-  - [ ] Analyzer enforces header on new files
+  - [x] .editorconfig file_header_template updated
+  - [x] All .cs files have correct license header
+  - [x] Analyzer enforces header on new files
 
 ---
 
@@ -841,4 +841,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-23 (TASK-004, TASK-004a, TASK-004b completed)*
+*Last updated: 2026-01-23 (TASK-001, TASK-002, TASK-003, TASK-004, TASK-004a, TASK-004b completed)*
