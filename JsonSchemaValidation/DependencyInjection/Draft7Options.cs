@@ -6,6 +6,10 @@ namespace FormFinch.JsonSchemaValidation.DependencyInjection
     /// <summary>
     /// Options specific to JSON Schema Draft 7 validation.
     /// </summary>
+    /// <remarks>
+    /// <b>Thread safety:</b> This type is mutable and not thread-safe. Configure it during
+    /// startup and treat it as immutable once passed to validation services.
+    /// </remarks>
     public class Draft7Options
     {
         /// <summary>

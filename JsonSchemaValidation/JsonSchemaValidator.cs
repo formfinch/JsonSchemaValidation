@@ -41,6 +41,11 @@ namespace FormFinch.JsonSchemaValidation
     /// <b>Note:</b> Schemas are cached by content hash to avoid unbounded memory growth
     /// when using one-shot validation repeatedly with the same schema.
     /// </para>
+    /// <para>
+    /// <b>Thread safety:</b> This static API is safe for concurrent use. All shared caches
+    /// use thread-safe primitives. Custom <see cref="SchemaValidationOptions"/> should be
+    /// treated as immutable after passing them to this API.
+    /// </para>
     /// </remarks>
     public static class JsonSchemaValidator
     {

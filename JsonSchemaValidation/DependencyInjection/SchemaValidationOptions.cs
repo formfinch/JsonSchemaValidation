@@ -3,6 +3,13 @@
 // See LICENSE file in the project root for full license information.
 namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
+    /// <summary>
+    /// Options that control JSON Schema validation behavior and supported drafts.
+    /// </summary>
+    /// <remarks>
+    /// <b>Thread safety:</b> This type is mutable and not thread-safe. Configure it during
+    /// startup and treat it as immutable once passed to validation services.
+    /// </remarks>
     public class SchemaValidationOptions
     {
         public string DefaultDraftVersion { get; set; } = "https://json-schema.org/draft/2020-12/schema";

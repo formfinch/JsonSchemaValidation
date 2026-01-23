@@ -2,6 +2,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text;
+using System.Threading;
 
 namespace FormFinch.JsonSchemaValidation.Common
 {
@@ -9,6 +10,10 @@ namespace FormFinch.JsonSchemaValidation.Common
     /// Represents a JSON Pointer per RFC 6901.
     /// Immutable - all operations return new instances.
     /// </summary>
+    /// <remarks>
+    /// <b>Thread safety:</b> Instances are immutable and safe for concurrent use.
+    /// The string representation is cached lazily in a thread-safe manner.
+    /// </remarks>
     public sealed class JsonPointer
     {
         private readonly string[] _segments;
@@ -62,15 +67,16 @@ namespace FormFinch.JsonSchemaValidation.Common
         /// </summary>
         public override string ToString()
         {
-            if (_cachedString != null)
+            var cached = _cachedString;
+            if (cached != null)
             {
-                return _cachedString;
+                return cached;
             }
 
             if (_segments.Length == 0)
             {
-                _cachedString = "";
-                return _cachedString;
+                Interlocked.CompareExchange(ref _cachedString, "", null);
+                return _cachedString!;
             }
 
             var sb = new StringBuilder();
@@ -79,8 +85,9 @@ namespace FormFinch.JsonSchemaValidation.Common
                 sb.Append('/');
                 AppendEscaped(sb, segment);
             }
-            _cachedString = sb.ToString();
-            return _cachedString;
+            var value = sb.ToString();
+            Interlocked.CompareExchange(ref _cachedString, value, null);
+            return _cachedString!;
         }
 
         /// <summary>

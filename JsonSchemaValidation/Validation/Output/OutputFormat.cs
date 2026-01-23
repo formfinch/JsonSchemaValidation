@@ -6,6 +6,9 @@ namespace FormFinch.JsonSchemaValidation.Validation.Output
     /// <summary>
     /// Output formats per JSON Schema 2020-12 Section 12.
     /// </summary>
+    /// <remarks>
+    /// <b>Thread safety:</b> This enum is immutable and safe for concurrent use.
+    /// </remarks>
     public enum OutputFormat
     {
         /// <summary>

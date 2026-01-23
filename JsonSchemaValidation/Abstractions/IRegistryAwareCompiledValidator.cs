@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions;
@@ -14,6 +15,10 @@ namespace FormFinch.JsonSchemaValidation.Abstractions;
 /// 1. <see cref="RegisterSubschemas"/> - registers any subschemas (e.g., $defs) this validator provides
 /// 2. <see cref="Initialize"/> - resolves external $ref dependencies from the registry
 /// This two-phase initialization allows validators to depend on subschemas from other validators.
+/// <para>
+/// <b>Thread safety:</b> Initialization must be performed once, before any concurrent validation.
+/// After initialization, implementations must be safe for concurrent calls to <see cref="ICompiledValidator.IsValid(JsonElement)"/>.
+/// </para>
 /// </remarks>
 public interface IRegistryAwareCompiledValidator : ICompiledValidator
 {
