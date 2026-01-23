@@ -10,7 +10,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidation.Draft6
 {
-    public class SchemaDraft6ValidatorFactory : ISchemaDraftValidatorFactory
+    internal class SchemaDraft6ValidatorFactory : ISchemaDraftValidatorFactory
     {
         private readonly ISchemaDraftKeywordValidatorFactory[] _keywordFactories;
 

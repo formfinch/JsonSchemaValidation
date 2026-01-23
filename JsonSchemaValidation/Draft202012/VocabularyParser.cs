@@ -10,7 +10,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012
     /// <summary>
     /// Parses $vocabulary declarations from meta-schemas.
     /// </summary>
-    public class VocabularyParser : IVocabularyParser
+    internal class VocabularyParser : IVocabularyParser
     {
         private readonly VocabularyRegistry _registry;
 

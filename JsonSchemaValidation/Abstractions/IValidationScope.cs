@@ -10,7 +10,7 @@ namespace FormFinch.JsonSchemaValidation.Abstractions
     /// Used for dynamic scope resolution ($dynamicRef), error reporting,
     /// and unevaluated property/item tracking.
     /// </summary>
-    public interface IValidationScope
+    internal interface IValidationScope
     {
         /// <summary>
         /// Pushes a schema resource onto the scope stack when entering it.

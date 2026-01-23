@@ -15,7 +15,7 @@ using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft202012MetaFormatAnnotation : ICompiledValidator
+    internal sealed class CompiledValidator_Draft202012MetaFormatAnnotation : ICompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/format-annotation");
 

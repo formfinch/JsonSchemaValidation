@@ -8,7 +8,7 @@ using FormFinch.JsonSchemaValidation.Repositories;
 
 namespace FormFinch.JsonSchemaValidation.Common
 {
-    public class SchemaValidatorFactory : ISchemaValidatorFactory
+    internal class SchemaValidatorFactory : ISchemaValidatorFactory
     {
         private readonly ISchemaFactory _schemaFactory;
         private readonly ISchemaRepository _schemaRepository;

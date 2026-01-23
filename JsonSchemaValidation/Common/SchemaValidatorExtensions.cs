@@ -10,7 +10,7 @@ namespace FormFinch.JsonSchemaValidation.Common
     /// <summary>
     /// Extension methods for ISchemaValidator providing convenience APIs.
     /// </summary>
-    public static class SchemaValidatorExtensions
+    internal static class SchemaValidatorExtensions
     {
         /// <summary>
         /// Validates the context data against the schema at the root level.

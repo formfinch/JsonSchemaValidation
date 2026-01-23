@@ -17,8 +17,8 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
     /// </summary>
     public class CompiledSchemaValidationFixture : IDisposable
     {
-        public CompiledValidatorRegistry Registry { get; }
-        public RuntimeValidatorFactory Factory { get; }
+        internal CompiledValidatorRegistry Registry { get; }
+        internal RuntimeValidatorFactory Factory { get; }
 
         public CompiledSchemaValidationFixture()
         {

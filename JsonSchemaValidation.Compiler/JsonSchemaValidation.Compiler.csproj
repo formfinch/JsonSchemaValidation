@@ -17,4 +17,8 @@
     <!-- Roslyn for runtime C# compilation -->
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.*" />
   </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests" />
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Benchmarks" />
+  </ItemGroup>
 </Project>

@@ -5,7 +5,7 @@ using FormFinch.JsonSchemaValidation.Repositories;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface ISchemaValidatorFactory
+    internal interface ISchemaValidatorFactory
     {
         ISchemaValidator GetValidator(Uri schemaUri);
         ISchemaValidator CreateValidator(SchemaMetadata schemaMetaData);

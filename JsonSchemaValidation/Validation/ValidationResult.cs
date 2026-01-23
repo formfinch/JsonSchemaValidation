@@ -10,7 +10,7 @@ namespace FormFinch.JsonSchemaValidation.Validation
     /// Structured validation result per JSON Schema 2020-12 Section 12.
     /// Immutable - use factory methods to create instances.
     /// </summary>
-    public record ValidationResult
+    internal record ValidationResult
     {
         /// <summary>
         /// Whether this validation passed.

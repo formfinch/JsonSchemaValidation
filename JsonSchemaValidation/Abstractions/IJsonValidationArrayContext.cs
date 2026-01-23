@@ -6,7 +6,7 @@ using static FormFinch.JsonSchemaValidation.Common.JsonValidationArrayContext;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface IJsonValidationArrayContext
+    internal interface IJsonValidationArrayContext
     {
         IEnumerable<JsonElement> GetUnevaluatedItems();
         void SetAdditonalItemsEvaluated();

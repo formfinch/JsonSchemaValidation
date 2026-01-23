@@ -3,7 +3,7 @@
 // See LICENSE file in the project root for full license information.
 namespace FormFinch.JsonSchemaValidation.Common
 {
-    public class UriWithFragmentComparer : IEqualityComparer<Uri>
+    internal class UriWithFragmentComparer : IEqualityComparer<Uri>
     {
         public bool Equals(Uri? x, Uri? y)
         {

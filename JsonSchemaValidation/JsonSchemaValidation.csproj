@@ -53,6 +53,12 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests" />
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.CodeGeneration" />
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Compiler" />
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Benchmarks" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Update="Properties\Resources.Designer.cs">
       <DesignTime>True</DesignTime>
       <AutoGen>True</AutoGen>

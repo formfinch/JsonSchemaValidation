@@ -16,7 +16,7 @@ namespace FormFinch.JsonSchemaValidation.Compiler;
 /// <summary>
 /// Factory for compiling JSON schemas to validators at runtime using Roslyn.
 /// </summary>
-public sealed class RuntimeValidatorFactory : IDisposable
+internal sealed class RuntimeValidatorFactory : IDisposable
 {
     private readonly SchemaCodeGenerator _codeGenerator = new();
     private readonly Dictionary<string, ICompiledValidator> _cache = new(StringComparer.Ordinal);

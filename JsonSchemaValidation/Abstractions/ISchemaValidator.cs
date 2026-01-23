@@ -7,7 +7,7 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface ISchemaValidator
+    internal interface ISchemaValidator
     {
         void AddKeywordValidator(IKeywordValidator keywordValidator);
 

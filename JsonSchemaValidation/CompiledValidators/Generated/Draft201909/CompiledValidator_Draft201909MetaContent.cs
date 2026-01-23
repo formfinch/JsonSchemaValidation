@@ -15,7 +15,7 @@ using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909MetaContent : ICompiledValidator
+    internal sealed class CompiledValidator_Draft201909MetaContent : ICompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/content");
 

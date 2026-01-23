@@ -8,7 +8,7 @@ using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.Validation
 {
-    public sealed class SchemaValidator : ISchemaValidator
+    internal sealed class SchemaValidator : ISchemaValidator
     {
         private readonly List<IKeywordValidator> _keywordValidators = new();
         // Cached arrays for fast path to avoid LINQ overhead

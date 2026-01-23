@@ -7,7 +7,7 @@ using FormFinch.JsonSchemaValidation.Repositories;
 
 namespace FormFinch.JsonSchemaValidation.Common
 {
-    public class SchemaFactory : ISchemaFactory
+    internal class SchemaFactory : ISchemaFactory
     {
         public SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData)
         {

@@ -9,7 +9,7 @@ namespace FormFinch.JsonSchemaValidation.Abstractions.Keywords
     /// Factory interface for draft-specific keyword validators.
     /// Implementations should be registered with keyed services using the draft version as key.
     /// </summary>
-    public interface ISchemaDraftKeywordValidatorFactory
+    internal interface ISchemaDraftKeywordValidatorFactory
     {
         /// <summary>
         /// The keyword name this factory handles (e.g., "minimum", "properties").

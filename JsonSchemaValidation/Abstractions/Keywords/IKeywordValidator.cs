@@ -6,7 +6,7 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions.Keywords
 {
-    public interface IKeywordValidator
+    internal interface IKeywordValidator
     {
         /// <summary>
         /// The keyword name this validator handles (e.g., "minimum", "properties").

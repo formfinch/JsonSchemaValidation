@@ -5,7 +5,7 @@ using FormFinch.JsonSchemaValidation.Repositories;
 
 namespace FormFinch.JsonSchemaValidation.Abstractions
 {
-    public interface ISchemaFactory
+    internal interface ISchemaFactory
     {
         SchemaMetadata CreateDereferencedSchema(SchemaMetadata schemaData);
     }
