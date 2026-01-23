@@ -146,14 +146,15 @@ namespace FormFinch.JsonSchemaValidation.Repositories
         {
             if (!_schemas.TryAdd(schemaData.SchemaUri!, schemaData))
             {
-                throw new InvalidOperationException($"Failed to register schema.");
+                // Schema with this URI already registered - this is idempotent.
+                // This can happen during concurrent registration or repeat calls.
+                // Since the URI is already present, we treat this as success.
+                return;
             }
-            else
-            {
-                schemaData.Order = _schemas.Count;
-                // Create immutable snapshot for thread-safe iteration
-                _sortedSchemas = _schemas.Values.OrderBy(s => s.Order).ToArray();
-            }
+
+            schemaData.Order = _schemas.Count;
+            // Create immutable snapshot for thread-safe iteration
+            _sortedSchemas = _schemas.Values.OrderBy(s => s.Order).ToArray();
         }
 
 #pragma warning disable MA0051 // Method is too long

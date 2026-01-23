@@ -819,6 +819,51 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
+### TASK-035: Implement LRU cache for static API schema cache
+- **Labels:** `performance`, `server-scenarios`
+- **Priority:** Medium
+- **Description:**
+  The static `JsonSchemaValidator` API currently uses a simple bounded cache that clears entirely when the size limit is reached. This is inadequate for server scenarios where:
+  - Frequently-used schemas should be retained
+  - Cache thrashing occurs if many unique schemas are validated in bursts
+  - Memory should be bounded but useful entries preserved
+
+  **Recommended approach:**
+  - Implement LRU (Least Recently Used) eviction
+  - Consider using `System.Runtime.Caching.MemoryCache` or a lightweight LRU implementation
+  - Evict oldest entries when limit reached instead of clearing all
+  - Optionally make cache size configurable
+
+  **Alternative considerations:**
+  - Time-based expiration for rarely reused schemas
+  - Weak references for GC-friendly caching
+  - Document that DI-based API should be preferred for server scenarios
+
+  **Acceptance criteria:**
+  - [ ] LRU or equivalent eviction strategy implemented
+  - [ ] Cache preserves frequently-used schemas across evictions
+  - [ ] Performance benchmarked vs current approach
+  - [ ] Server scenario guidance documented
+
+---
+
+### TASK-036: Create KNOWN_LIMITATIONS.md
+- **Labels:** `documentation`, `user-facing`
+- **Priority:** Medium
+- **Description:**
+  Create a document listing known limitations and edge cases that users should be aware of.
+
+  **Initial limitations to document:**
+  - Schema hashing for numbers beyond double precision (~15-17 significant digits) may collide. Two schemas differing only in very large numbers could hash identically. Practical impact is minimal since schemas rarely contain such numbers.
+  - Static API schema cache uses simple clear-on-overflow strategy (see TASK-035 for improvement)
+
+  **Acceptance criteria:**
+  - [ ] KNOWN_LIMITATIONS.md created
+  - [ ] Linked from README
+  - [ ] Each limitation explains impact and workarounds if any
+
+---
+
 ## Parking Lot (Future Considerations)
 
 These items are out of scope for initial release but should be tracked:

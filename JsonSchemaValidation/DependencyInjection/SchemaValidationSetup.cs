@@ -21,6 +21,11 @@ namespace FormFinch.JsonSchemaValidation.DependencyInjection
         {
             var options = new SchemaValidationOptions();
             setupAction?.Invoke(options);
+            return services.AddJsonSchemaValidation(options);
+        }
+
+        public static IServiceCollection AddJsonSchemaValidation(this IServiceCollection services, SchemaValidationOptions options)
+        {
             services.AddSingleton(options);
 
             services.AddSingleton<ISchemaRepository, SchemaRepository>();
