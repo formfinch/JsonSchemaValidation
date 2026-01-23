@@ -48,9 +48,11 @@ namespace FormFinch.JsonSchemaValidation
             static () => CreateDefaultServices(),
             LazyThreadSafetyMode.ExecutionAndPublication);
 
-        // Cache schema content hash -> schema URI to avoid unbounded growth
-        // when the same schema is validated multiple times via one-shot Validate()
+        // Cache schema content hash -> schema URI to avoid re-registering
+        // when the same schema is validated multiple times via one-shot Validate().
+        // Limited to prevent unbounded memory growth in long-running processes.
         private static readonly ConcurrentDictionary<string, Uri> SchemaCache = new(StringComparer.Ordinal);
+        private const int MaxCacheSize = 1000;
 
         #region Validate Methods
 
@@ -251,16 +253,7 @@ namespace FormFinch.JsonSchemaValidation
         private static ValidatorServices CreateServicesFromOptions(SchemaValidationOptions options)
         {
             var serviceCollection = new ServiceCollection();
-            serviceCollection.AddJsonSchemaValidation();
-
-            // Replace the default options with the provided ones
-            var descriptor = serviceCollection.FirstOrDefault(d => d.ServiceType == typeof(SchemaValidationOptions));
-            if (descriptor != null)
-            {
-                serviceCollection.Remove(descriptor);
-            }
-
-            serviceCollection.AddSingleton(options);
+            serviceCollection.AddJsonSchemaValidation(options);
 
             var serviceProvider = serviceCollection.BuildServiceProvider();
             serviceProvider.InitializeSingletonServices();
@@ -348,6 +341,13 @@ namespace FormFinch.JsonSchemaValidation
             // Cache the URI for future lookups (only for default services)
             if (useCache && hash != null)
             {
+                // Clear cache if it exceeds the size limit to prevent unbounded memory growth.
+                // Simple clear-on-overflow strategy; more sophisticated LRU could be added if needed.
+                if (SchemaCache.Count >= MaxCacheSize)
+                {
+                    SchemaCache.Clear();
+                }
+
                 SchemaCache.TryAdd(hash, schemaUri);
             }
 
