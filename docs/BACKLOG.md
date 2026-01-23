@@ -856,11 +856,44 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   **Initial limitations to document:**
   - Schema hashing for numbers beyond double precision (~15-17 significant digits) may collide. Two schemas differing only in very large numbers could hash identically. Practical impact is minimal since schemas rarely contain such numbers.
   - Static API schema cache uses simple clear-on-overflow strategy (see TASK-035 for improvement)
+  - Static API schema cache excludes `$id` from hash for performance. Schemas differing only by `$id` will share a cached validator. This means: (1) internal `$ref: "#"` resolves to the first schema's base URI, (2) output locations show the first schema's URI, (3) the second schema's `$id` is never registered. The boolean valid/invalid result is unaffected in most cases. Use the DI-based API if `$id` correctness matters.
 
   **Acceptance criteria:**
   - [ ] KNOWN_LIMITATIONS.md created
   - [ ] Linked from README
   - [ ] Each limitation explains impact and workarounds if any
+
+---
+
+### TASK-037: Enforce draft scope in code generator
+- **Labels:** `code-generator`, `correctness`, `benchmarking`
+- **Priority:** High
+- **Description:**
+  The code generator (`jsv-codegen`) currently has ambiguous draft support:
+  - Hardcodes `using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;` for format validators
+  - Has some cross-draft handling (`$id` vs `id`) but doesn't validate `$schema`
+  - No enforcement or warning when generating validators for non-2020-12 schemas
+
+  This is problematic because:
+  1. **Benchmarking accuracy**: Benchmarks compare against validators like ajv using specific draft versions. If compiled validators don't properly implement those drafts, benchmarks are invalid.
+  2. **Semantic correctness**: Different drafts have different keyword semantics (e.g., `items` in Draft 4 vs 2020-12).
+  3. **User expectations**: Users may assume their Draft 7 schema will work correctly when compiled.
+
+  **Required changes:**
+  - Add `$schema` detection in code generator
+  - Either:
+    - (a) Restrict to Draft 2020-12 and 2019-09 only, with clear error for other drafts
+    - (b) Implement proper draft-specific code generation for all supported drafts
+  - Document supported drafts in code generator help/docs
+  - Update format validator imports to be draft-aware (if supporting multiple drafts)
+
+  **Note:** Internal metaschema validators (used to validate that user schemas conform to their draft) already exist for all drafts and are separate from user-facing code generation.
+
+  **Acceptance criteria:**
+  - [ ] Code generator validates `$schema` and enforces supported drafts
+  - [ ] Clear error message when unsupported draft is detected
+  - [ ] Documentation updated with supported draft list
+  - [ ] Benchmarks only use schemas with supported drafts
 
 ---
 
@@ -873,6 +906,11 @@ These items are out of scope for initial release but should be tracked:
 - **Localization** - Error messages in multiple languages
 - **VS Code extension** - Schema validation in editor
 - **Unify dynamic validators and code generators** - Currently validation logic is implemented twice: once in dynamic validators (e.g., `MinimumValidator.cs`) and again in code generators (e.g., `NumericConstraintsCodeGenerator.cs`). This duplication leads to behavioral divergence bugs when implementations drift apart. Consider refactoring to share core validation logic between both paths, either through shared constants, expression trees, or generating both from a single source of truth.
+- **Annotation keyword support** - Collect and propagate schema annotations (`title`, `description`, `default`, `examples`, `deprecated`, `readOnly`, `writeOnly`) in validation output for richer tooling integration
+- **DI validation** - Runtime validation that required services are registered correctly, with clear error messages when misconfigured
+- **Diagnostics hooks** - Logging, tracing, and metrics integration points for observability in production environments
+- **Thread-safety audit** - Comprehensive review of all concurrent code paths beyond the registry (validators, context factories, etc.)
+- **Schema registration error details** - `TryRegisterSchema` currently returns bool; consider richer error information for debugging registration failures
 
 ---
 
