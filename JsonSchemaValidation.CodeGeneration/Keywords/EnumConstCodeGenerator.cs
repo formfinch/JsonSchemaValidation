@@ -37,7 +37,7 @@ public sealed class EnumCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine("    var _enumValid_ = false;");
         sb.AppendLine($"    foreach (var _enumVal_ in {fieldName})");
         sb.AppendLine("    {");
-        sb.AppendLine($"        if (JsonElementDeepEquals({e}, _enumVal_))");
+        sb.AppendLine($"        if (JsonElement.DeepEquals({e}, _enumVal_))");
         sb.AppendLine("        {");
         sb.AppendLine("            _enumValid_ = true;");
         sb.AppendLine("            break;");
@@ -121,7 +121,7 @@ public sealed class ConstCodeGenerator : IKeywordCodeGenerator
         var fieldName = $"Const_{context.CurrentHash}";
         var e = context.ElementVariable;
 
-        return $"// const check\nif (!JsonElementDeepEquals({e}, {fieldName})) return false;";
+        return $"// const check\nif (!JsonElement.DeepEquals({e}, {fieldName})) return false;";
     }
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)

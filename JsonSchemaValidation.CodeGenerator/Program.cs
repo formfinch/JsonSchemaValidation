@@ -228,7 +228,7 @@ internal static class Program
 
             var result = generator.Generate(
                 schemaPath,
-                "JsonSchemaValidation.CompiledValidators.Generated",
+                "FormFinch.JsonSchemaValidation.CompiledValidators.Generated",
                 $"CompiledValidator_{schema.ClassName}");
 
             if (result.Success)

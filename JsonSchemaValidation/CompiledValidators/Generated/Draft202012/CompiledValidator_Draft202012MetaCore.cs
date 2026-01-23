@@ -16,7 +16,7 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    internal sealed class CompiledValidator_Draft202012MetaCore : IRegistryAwareCompiledValidator
+    public sealed class CompiledValidator_Draft202012MetaCore : IRegistryAwareCompiledValidator
     {
         private static readonly Regex Pattern_683e0a045989 = new Regex(@"^[^#]*#?$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
         private static readonly Regex Pattern_97b3610c8717 = new Regex(@"^[A-Za-z_][-A-Za-z0-9._]*$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
@@ -42,9 +42,9 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             _dynamicScopeRoot = root;
         }
 
-        public bool IsValid(JsonElement instance) => Validate_e30cfdc6bc3f(instance);
+        public bool IsValid(JsonElement instance) => Validate_973c9cf0d7bf(instance);
 
-    private bool Validate_e30cfdc6bc3f(JsonElement e)
+    private bool Validate_973c9cf0d7bf(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -224,56 +224,12 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         }
         else
         {
-            if (!Validate_e30cfdc6bc3f(e)) return false;
+            if (!Validate_973c9cf0d7bf(e)) return false;
         }
         return true;
     }
 
 
-        private static bool JsonElementDeepEquals(JsonElement a, JsonElement b)
-        {
-            if (a.ValueKind != b.ValueKind) return false;
-            return a.ValueKind switch
-            {
-                JsonValueKind.Object => ObjectEquals(a, b),
-                JsonValueKind.Array => ArrayEquals(a, b),
-                JsonValueKind.String => a.GetString() == b.GetString(),
-                JsonValueKind.Number => a.GetDecimal() == b.GetDecimal(),
-                JsonValueKind.True => true,
-                JsonValueKind.False => true,
-                JsonValueKind.Null => true,
-                _ => false
-            };
-        }
-
-        private static bool ObjectEquals(JsonElement a, JsonElement b)
-        {
-            var propsA = new Dictionary<string, JsonElement>();
-            foreach (var p in a.EnumerateObject()) propsA[p.Name] = p.Value;
-            var propsB = new Dictionary<string, JsonElement>();
-            foreach (var p in b.EnumerateObject()) propsB[p.Name] = p.Value;
-            if (propsA.Count != propsB.Count) return false;
-            foreach (var (key, val) in propsA)
-            {
-                if (!propsB.TryGetValue(key, out var bVal)) return false;
-                if (!JsonElementDeepEquals(val, bVal)) return false;
-            }
-            return true;
-        }
-
-        private static bool ArrayEquals(JsonElement a, JsonElement b)
-        {
-            var lenA = a.GetArrayLength();
-            var lenB = b.GetArrayLength();
-            if (lenA != lenB) return false;
-            using var enumA = a.EnumerateArray().GetEnumerator();
-            using var enumB = b.EnumerateArray().GetEnumerator();
-            while (enumA.MoveNext() && enumB.MoveNext())
-            {
-                if (!JsonElementDeepEquals(enumA.Current, enumB.Current)) return false;
-            }
-            return true;
-        }
 
         private sealed class SubschemaValidator_5dc527ab08dc : ICompiledValidator
         {

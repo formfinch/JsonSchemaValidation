@@ -63,7 +63,7 @@ public sealed class ArrayConstraintsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    {");
             sb.AppendLine("        foreach (var _existing_ in _items_)");
             sb.AppendLine("        {");
-            sb.AppendLine("            if (JsonElementDeepEquals(_item_, _existing_)) return false;");
+            sb.AppendLine("            if (JsonElement.DeepEquals(_item_, _existing_)) return false;");
             sb.AppendLine("        }");
             sb.AppendLine("        _items_.Add(_item_);");
             sb.AppendLine("    }");

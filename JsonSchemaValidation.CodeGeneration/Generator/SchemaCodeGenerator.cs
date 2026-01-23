@@ -442,52 +442,6 @@ public sealed class SchemaCodeGenerator
         // Validation methods
         sb.Append(methods);
 
-        // Helper method for deep equality
-        sb.AppendLine("        private static bool JsonElementDeepEquals(JsonElement a, JsonElement b)");
-        sb.AppendLine("        {");
-        sb.AppendLine("            if (a.ValueKind != b.ValueKind) return false;");
-        sb.AppendLine("            return a.ValueKind switch");
-        sb.AppendLine("            {");
-        sb.AppendLine("                JsonValueKind.Object => ObjectEquals(a, b),");
-        sb.AppendLine("                JsonValueKind.Array => ArrayEquals(a, b),");
-        sb.AppendLine("                JsonValueKind.String => a.GetString() == b.GetString(),");
-        sb.AppendLine("                JsonValueKind.Number => a.GetDecimal() == b.GetDecimal(),");
-        sb.AppendLine("                JsonValueKind.True => true,");
-        sb.AppendLine("                JsonValueKind.False => true,");
-        sb.AppendLine("                JsonValueKind.Null => true,");
-        sb.AppendLine("                _ => false");
-        sb.AppendLine("            };");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-        sb.AppendLine("        private static bool ObjectEquals(JsonElement a, JsonElement b)");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var propsA = new Dictionary<string, JsonElement>();");
-        sb.AppendLine("            foreach (var p in a.EnumerateObject()) propsA[p.Name] = p.Value;");
-        sb.AppendLine("            var propsB = new Dictionary<string, JsonElement>();");
-        sb.AppendLine("            foreach (var p in b.EnumerateObject()) propsB[p.Name] = p.Value;");
-        sb.AppendLine("            if (propsA.Count != propsB.Count) return false;");
-        sb.AppendLine("            foreach (var (key, val) in propsA)");
-        sb.AppendLine("            {");
-        sb.AppendLine("                if (!propsB.TryGetValue(key, out var bVal)) return false;");
-        sb.AppendLine("                if (!JsonElementDeepEquals(val, bVal)) return false;");
-        sb.AppendLine("            }");
-        sb.AppendLine("            return true;");
-        sb.AppendLine("        }");
-        sb.AppendLine();
-        sb.AppendLine("        private static bool ArrayEquals(JsonElement a, JsonElement b)");
-        sb.AppendLine("        {");
-        sb.AppendLine("            var lenA = a.GetArrayLength();");
-        sb.AppendLine("            var lenB = b.GetArrayLength();");
-        sb.AppendLine("            if (lenA != lenB) return false;");
-        sb.AppendLine("            using var enumA = a.EnumerateArray().GetEnumerator();");
-        sb.AppendLine("            using var enumB = b.EnumerateArray().GetEnumerator();");
-        sb.AppendLine("            while (enumA.MoveNext() && enumB.MoveNext())");
-        sb.AppendLine("            {");
-        sb.AppendLine("                if (!JsonElementDeepEquals(enumA.Current, enumB.Current)) return false;");
-        sb.AppendLine("            }");
-        sb.AppendLine("            return true;");
-        sb.AppendLine("        }");
-
         // Generate JSON Pointer escape helper if annotation tracking is enabled
         if (hasAnnotationTracking)
         {
