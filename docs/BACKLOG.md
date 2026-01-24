@@ -138,7 +138,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-005: Add PublicAPI analyzers
+### TASK-005: Add PublicAPI analyzers [x]
 - **Labels:** `api-stability`, `tooling`
 - **Priority:** High
 - **Depends on:** TASK-004b
@@ -149,10 +149,17 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
   **Important:** Only add this after API usability refinement is complete. This locks down the API.
 
+  **Implementation completed:**
+  - Added `Microsoft.CodeAnalysis.PublicApiAnalyzers` v3.3.4 package
+  - Created `PublicAPI.Shipped.txt` (empty, with `#nullable enable`)
+  - Created `PublicAPI.Unshipped.txt` with full public API surface (~200 entries)
+  - Suppressed RS0026/RS0027 backcompat warnings (not applicable to 1.0.0 initial release)
+  - All 2341 tests pass
+
   **Acceptance criteria:**
-  - [ ] PublicApiAnalyzers package added
-  - [ ] PublicAPI.Shipped.txt baseline created
-  - [ ] Build fails on undocumented public API changes
+  - [x] PublicApiAnalyzers package added
+  - [x] PublicAPI.Shipped.txt baseline created
+  - [x] Build fails on undocumented public API changes
 
 ---
 
@@ -964,4 +971,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-24 (TASK-001, TASK-002, TASK-003, TASK-004, TASK-004a, TASK-004b, TASK-007a completed)*
+*Last updated: 2026-01-24 (TASK-001, TASK-002, TASK-003, TASK-004, TASK-004a, TASK-004b, TASK-005, TASK-007a completed)*
