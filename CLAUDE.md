@@ -177,3 +177,8 @@ None currently identified. Cross-draft compatibility is fully supported.
 - `TreatWarningsAsErrors: true`
 - `EnforceCodeStyleInBuild: true`
 - `Nullable: enable`
+
+## Workflow Rules
+
+1. **Plan before implementing:** Always present a plan before starting any implementation work. Wait for approval before coding.
+2. **No commits without permission:** Do not commit changes without explicit permission from the user.

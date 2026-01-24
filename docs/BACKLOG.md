@@ -4,9 +4,214 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 **Format:** Each task is structured for easy conversion to GitHub Issues.
 
+**Phase priorities:**
+1. Architecture & Core Correctness - Ensure the foundation is solid
+2. Code Quality & Testing - Verify the code works correctly
+3. API Stability - Lock down the public contract
+4. Package Configuration - Technical package setup
+5. Documentation & Samples - User-facing deliverables
+6. Release Infrastructure - CI/CD and publishing
+7. Community - Contribution and support infrastructure
+8. Commercial - Monetization
+
 ---
 
-## Phase 1: Foundation
+## Phase 1: Architecture & Core Correctness
+
+### TASK-007a: Thread-safety audit [x]
+- **Labels:** `reliability`, `concurrency`, `code-quality`
+- **Priority:** High
+- **Description:**
+  Comprehensive review of all concurrent code paths to ensure thread-safety guarantees are correctly implemented and documented.
+
+  **Recent fix context:**
+  `CompiledValidatorRegistry` was found to use plain `Dictionary`/`HashSet` despite claiming thread-safety. This was fixed by switching to `ConcurrentDictionary`. A systematic audit is needed to find similar issues.
+
+  **Areas to audit:**
+  - All classes using concurrent collections - verify correct usage patterns
+  - Singleton services - ensure no mutable shared state without synchronization
+  - Schema repository and related caches
+  - Validator factories and lazy initialization
+  - Context factories and validation contexts
+  - Static API caches (`JsonSchemaValidator.SchemaCache`)
+
+  **Implementation completed (commit 47514b4):**
+  - `SchemaValidator.cs` - Added `Lock` + `volatile` for cache initialization
+  - `RefValidator.cs` (all 6 drafts) - Replaced manual cache with thread-safe `Lazy<T>` using `LazyThreadSafetyMode.ExecutionAndPublication`
+  - `JsonPointer.cs` - Made lazy string caching thread-safe with `Interlocked.CompareExchange`
+  - `SchemaRepository.cs` - Uses `ConcurrentDictionary` + volatile snapshot pattern for `_sortedSchemas`
+  - `CompiledValidatorRegistry.cs` - Uses `ConcurrentDictionary` for all three collections
+  - `JsonSchemaValidator.cs` - Uses `Lazy<T>` with `ExecutionAndPublication` + `ConcurrentDictionary` for schema cache
+  - Thread-safety XML documentation added to all public types
+
+  **Deliverables:**
+  - Document thread-safety guarantees for each public type
+  - Fix any identified race conditions or unsafe patterns
+  - Add XML documentation noting thread-safety where relevant
+  - Consider adding stress tests for concurrent usage
+
+  **Acceptance criteria:**
+  - [x] All concurrent code paths reviewed
+  - [x] No plain collections used where concurrent access is possible
+  - [x] Thread-safety documented for public types
+  - [x] Any fixes verified with concurrent tests
+
+---
+
+### TASK-035: Implement LRU cache for static API schema cache
+- **Labels:** `performance`, `architecture`, `server-scenarios`
+- **Priority:** Medium
+- **Description:**
+  The static `JsonSchemaValidator` API currently uses a simple bounded cache that clears entirely when the size limit is reached. This is inadequate for server scenarios where:
+  - Frequently-used schemas should be retained
+  - Cache thrashing occurs if many unique schemas are validated in bursts
+  - Memory should be bounded but useful entries preserved
+
+  **Recommended approach:**
+  - Implement LRU (Least Recently Used) eviction
+  - Consider using `System.Runtime.Caching.MemoryCache` or a lightweight LRU implementation
+  - Evict oldest entries when limit reached instead of clearing all
+  - Optionally make cache size configurable
+
+  **Alternative considerations:**
+  - Time-based expiration for rarely reused schemas
+  - Weak references for GC-friendly caching
+  - Document that DI-based API should be preferred for server scenarios
+
+  **Acceptance criteria:**
+  - [ ] LRU or equivalent eviction strategy implemented
+  - [ ] Cache preserves frequently-used schemas across evictions
+  - [ ] Performance benchmarked vs current approach
+  - [ ] Server scenario guidance documented
+
+---
+
+### TASK-037: Enforce draft scope in code generator
+- **Labels:** `code-generator`, `correctness`, `architecture`
+- **Priority:** High
+- **Description:**
+  The code generator (`jsv-codegen`) currently has ambiguous draft support:
+  - Hardcodes `using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;` for format validators
+  - Has some cross-draft handling (`$id` vs `id`) but doesn't validate `$schema`
+  - No enforcement or warning when generating validators for non-2020-12 schemas
+
+  This is problematic because:
+  1. **Benchmarking accuracy**: Benchmarks compare against validators like ajv using specific draft versions. If compiled validators don't properly implement those drafts, benchmarks are invalid.
+  2. **Semantic correctness**: Different drafts have different keyword semantics (e.g., `items` in Draft 4 vs 2020-12).
+  3. **User expectations**: Users may assume their Draft 7 schema will work correctly when compiled.
+
+  **Required changes:**
+  - Add `$schema` detection in code generator
+  - Either:
+    - (a) Restrict to Draft 2020-12 and 2019-09 only, with clear error for other drafts
+    - (b) Implement proper draft-specific code generation for all supported drafts
+  - Document supported drafts in code generator help/docs
+  - Update format validator imports to be draft-aware (if supporting multiple drafts)
+
+  **Note:** Internal metaschema validators (used to validate that user schemas conform to their draft) already exist for all drafts and are separate from user-facing code generation.
+
+  **Acceptance criteria:**
+  - [ ] Code generator validates `$schema` and enforces supported drafts
+  - [ ] Clear error message when unsupported draft is detected
+  - [ ] Documentation updated with supported draft list
+  - [ ] Benchmarks only use schemas with supported drafts
+
+---
+
+### TASK-012: Review target framework strategy
+- **Labels:** `architecture`, `compatibility`, `decision`
+- **Priority:** High
+- **Description:**
+  Currently targeting `net10.0` only. Consider broader compatibility.
+
+  **Options:**
+  - `net10.0` only - Smallest surface, latest features (current)
+  - Add `net8.0` - LTS version, many users still on this
+  - Add `netstandard2.0` - Maximum compatibility (.NET Framework, older .NET Core)
+
+  **Trade-offs:**
+  - More targets = more testing, potential API differences
+  - Fewer targets = excludes users on older frameworks
+
+  **Acceptance criteria:**
+  - [ ] Target framework strategy decided
+  - [ ] If multi-targeting, conditional compilation handled
+  - [ ] All targets tested
+
+---
+
+## Phase 2: Code Quality & Testing
+
+### TASK-038: Test suite audit and enhancement
+- **Labels:** `testing`, `code-quality`, `security`
+- **Priority:** High
+- **Description:**
+  Comprehensive audit of the current test suite to identify coverage gaps and implement improvements.
+
+  **Current state:**
+  - 2341 tests (JSON-Schema-Test-Suite + output format tests)
+  - Focuses primarily on spec compliance
+  - No systematic coverage analysis
+
+  **Audit areas:**
+  1. **Coverage analysis** - Measure line/branch coverage, identify untested code paths
+  2. **Negative testing** - Malformed schemas, invalid JSON, boundary conditions
+  3. **Concurrency testing** - Validate thread-safety claims under concurrent load
+  4. **Error path testing** - Exception handling, error message quality
+  5. **Fuzzing** - Random/mutated inputs to discover edge cases and potential DoS vectors (deeply nested schemas, regex catastrophic backtracking, large documents)
+
+  **Deliverables:**
+  - Test coverage report with identified gaps
+  - Fuzzing infrastructure (using a library like SharpFuzz or similar)
+  - Additional tests addressing identified gaps
+  - Documentation of test strategy
+
+  **Acceptance criteria:**
+  - [ ] Coverage report generated and gaps documented
+  - [ ] Fuzzing tests implemented and integrated into CI
+  - [ ] Concurrency stress tests added
+  - [ ] Critical gaps addressed with new tests
+  - [ ] Test strategy documented
+
+---
+
+### TASK-016a: Recreate benchmark project
+- **Labels:** `performance`, `testing`, `user-facing`
+- **Priority:** High
+- **Description:**
+  The current benchmark project has inconsistent timing and no standardized benchmarking approach. Performance is a key selling point of the library, so benchmarks must be reliable and communicable to users.
+
+  **Requirements:**
+  - Use [BenchmarkDotNet](https://benchmarkdotnet.org/) for standardized, reliable measurements
+  - Design benchmarks that demonstrate real-world performance scenarios
+  - Results should be reproducible and comparable across runs
+  - Output should be suitable for inclusion in README/documentation
+
+  **Benchmark scenarios to include:**
+  - Simple schema validation (type, required, properties)
+  - Complex schema validation (nested, refs, allOf/anyOf/oneOf)
+  - Large document validation
+  - Schema compilation time vs validation time
+  - Comparison across draft versions (if meaningful)
+  - Memory allocation tracking
+
+  **Deliverables:**
+  - New benchmark project using BenchmarkDotNet
+  - Documented benchmark methodology
+  - Baseline results for 1.0.0 release
+  - Instructions for running benchmarks
+
+  **Acceptance criteria:**
+  - [ ] Old benchmark project replaced or removed
+  - [ ] BenchmarkDotNet-based project created
+  - [ ] All key scenarios covered
+  - [ ] Results are consistent across runs
+  - [ ] Performance summary ready for README
+  - [ ] Benchmark methodology documented
+
+---
+
+## Phase 3: API Stability
 
 ### TASK-001: Decide on licensing model [x]
 - **Labels:** `licensing`, `decision`, `blocking`
@@ -180,71 +385,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-007: Complete README.md
-- **Labels:** `documentation`, `user-facing`
-- **Priority:** Critical
-- **Description:**
-  Current README.md is incomplete (placeholder template). Needs full documentation.
-
-  **Required sections:**
-  - Project description and value proposition
-  - Features list (all supported drafts, performance claims, etc.)
-  - Installation instructions (`dotnet add package`)
-  - Quick start / basic usage example
-  - Configuration options
-  - Links to full documentation
-  - License information
-  - Support/contributing links
-
-  **Acceptance criteria:**
-  - [ ] All placeholder text removed
-  - [ ] Installation instructions complete
-  - [ ] At least one working code example
-  - [ ] Badge placeholders ready for CI
-
----
-
-### TASK-007a: Thread-safety audit [x]
-- **Labels:** `reliability`, `concurrency`, `code-quality`
-- **Priority:** High
-- **Description:**
-  Comprehensive review of all concurrent code paths to ensure thread-safety guarantees are correctly implemented and documented.
-
-  **Recent fix context:**
-  `CompiledValidatorRegistry` was found to use plain `Dictionary`/`HashSet` despite claiming thread-safety. This was fixed by switching to `ConcurrentDictionary`. A systematic audit is needed to find similar issues.
-
-  **Areas to audit:**
-  - All classes using concurrent collections - verify correct usage patterns
-  - Singleton services - ensure no mutable shared state without synchronization
-  - Schema repository and related caches
-  - Validator factories and lazy initialization
-  - Context factories and validation contexts
-  - Static API caches (`JsonSchemaValidator.SchemaCache`)
-
-  **Implementation completed (commit 47514b4):**
-  - `SchemaValidator.cs` - Added `Lock` + `volatile` for cache initialization
-  - `RefValidator.cs` (all 6 drafts) - Replaced manual cache with thread-safe `Lazy<T>` using `LazyThreadSafetyMode.ExecutionAndPublication`
-  - `JsonPointer.cs` - Made lazy string caching thread-safe with `Interlocked.CompareExchange`
-  - `SchemaRepository.cs` - Uses `ConcurrentDictionary` + volatile snapshot pattern for `_sortedSchemas`
-  - `CompiledValidatorRegistry.cs` - Uses `ConcurrentDictionary` for all three collections
-  - `JsonSchemaValidator.cs` - Uses `Lazy<T>` with `ExecutionAndPublication` + `ConcurrentDictionary` for schema cache
-  - Thread-safety XML documentation added to all public types
-
-  **Deliverables:**
-  - Document thread-safety guarantees for each public type
-  - Fix any identified race conditions or unsafe patterns
-  - Add XML documentation noting thread-safety where relevant
-  - Consider adding stress tests for concurrent usage
-
-  **Acceptance criteria:**
-  - [x] All concurrent code paths reviewed
-  - [x] No plain collections used where concurrent access is possible
-  - [x] Thread-safety documented for public types
-  - [x] Any fixes verified with concurrent tests
-
----
-
-## Phase 2: Package Quality
+## Phase 4: Package Configuration
 
 ### TASK-008: Enable XML documentation generation
 - **Labels:** `documentation`, `nuget-package`
@@ -317,72 +458,6 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-012: Review target framework strategy
-- **Labels:** `nuget-package`, `compatibility`, `decision`
-- **Priority:** High
-- **Description:**
-  Currently targeting `net10.0` only. Consider broader compatibility.
-
-  **Options:**
-  - `net10.0` only - Smallest surface, latest features (current)
-  - Add `net8.0` - LTS version, many users still on this
-  - Add `netstandard2.0` - Maximum compatibility (.NET Framework, older .NET Core)
-
-  **Trade-offs:**
-  - More targets = more testing, potential API differences
-  - Fewer targets = excludes users on older frameworks
-
-  **Acceptance criteria:**
-  - [ ] Target framework strategy decided
-  - [ ] If multi-targeting, conditional compilation handled
-  - [ ] All targets tested
-
----
-
-### TASK-013: Create CHANGELOG.md
-- **Labels:** `documentation`, `user-facing`
-- **Priority:** High
-- **Description:**
-  Create CHANGELOG.md following [Keep a Changelog](https://keepachangelog.com/) format.
-
-  **Sections per version:**
-  - Added - New features
-  - Changed - Changes in existing functionality
-  - Deprecated - Soon-to-be removed features
-  - Removed - Removed features
-  - Fixed - Bug fixes
-  - Security - Vulnerability fixes
-
-  **Acceptance criteria:**
-  - [ ] CHANGELOG.md created
-  - [ ] 1.0.0 release documented
-  - [ ] Format follows Keep a Changelog
-
----
-
-### TASK-014: Add package icon
-- **Labels:** `nuget-package`, `branding`
-- **Priority:** Medium
-- **Description:**
-  Create and add package icon for NuGet.org display.
-
-  **Requirements:**
-  - 128x128 PNG (or larger, will be scaled)
-  - Transparent or solid background
-  - Recognizable at small sizes
-
-  ```xml
-  <PackageIcon>icon.png</PackageIcon>
-  ```
-
-  **Acceptance criteria:**
-  - [ ] Icon designed/created
-  - [ ] Icon added to project
-  - [ ] PackageIcon property set in .csproj
-  - [ ] Icon displays correctly on NuGet.org (test with local feed)
-
----
-
 ### TASK-015: Configure deterministic builds
 - **Labels:** `nuget-package`, `reproducibility`
 - **Priority:** Medium
@@ -417,43 +492,135 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-016a: Recreate benchmark project
-- **Labels:** `performance`, `documentation`, `user-facing`
-- **Priority:** High
+## Phase 5: Documentation & Samples
+
+### TASK-007: Complete README.md
+- **Labels:** `documentation`, `user-facing`
+- **Priority:** Critical
 - **Description:**
-  The current benchmark project has inconsistent timing and no standardized benchmarking approach. Performance is a key selling point of the library, so benchmarks must be reliable and communicable to users.
+  Current README.md is incomplete (placeholder template). Needs full documentation.
 
-  **Requirements:**
-  - Use [BenchmarkDotNet](https://benchmarkdotnet.org/) for standardized, reliable measurements
-  - Design benchmarks that demonstrate real-world performance scenarios
-  - Results should be reproducible and comparable across runs
-  - Output should be suitable for inclusion in README/documentation
-
-  **Benchmark scenarios to include:**
-  - Simple schema validation (type, required, properties)
-  - Complex schema validation (nested, refs, allOf/anyOf/oneOf)
-  - Large document validation
-  - Schema compilation time vs validation time
-  - Comparison across draft versions (if meaningful)
-  - Memory allocation tracking
-
-  **Deliverables:**
-  - New benchmark project using BenchmarkDotNet
-  - Documented benchmark methodology
-  - Baseline results for 1.0.0 release
-  - Instructions for running benchmarks
+  **Required sections:**
+  - Project description and value proposition
+  - Features list (all supported drafts, performance claims, etc.)
+  - Installation instructions (`dotnet add package`)
+  - Quick start / basic usage example
+  - Configuration options
+  - Links to full documentation
+  - License information
+  - Support/contributing links
 
   **Acceptance criteria:**
-  - [ ] Old benchmark project replaced or removed
-  - [ ] BenchmarkDotNet-based project created
-  - [ ] All key scenarios covered
-  - [ ] Results are consistent across runs
-  - [ ] Performance summary ready for README
-  - [ ] Benchmark methodology documented
+  - [ ] All placeholder text removed
+  - [ ] Installation instructions complete
+  - [ ] At least one working code example
+  - [ ] Badge placeholders ready for CI
 
 ---
 
-## Phase 3: Release Infrastructure
+### TASK-013: Create CHANGELOG.md
+- **Labels:** `documentation`, `user-facing`
+- **Priority:** High
+- **Description:**
+  Create CHANGELOG.md following [Keep a Changelog](https://keepachangelog.com/) format.
+
+  **Sections per version:**
+  - Added - New features
+  - Changed - Changes in existing functionality
+  - Deprecated - Soon-to-be removed features
+  - Removed - Removed features
+  - Fixed - Bug fixes
+  - Security - Vulnerability fixes
+
+  **Acceptance criteria:**
+  - [ ] CHANGELOG.md created
+  - [ ] 1.0.0 release documented
+  - [ ] Format follows Keep a Changelog
+
+---
+
+### TASK-024: Create code samples project
+- **Labels:** `documentation`, `user-facing`
+- **Priority:** Medium
+- **Description:**
+  Create a samples/examples project demonstrating common use cases.
+
+  **Sample scenarios:**
+  - Basic schema validation
+  - Custom format validators
+  - Error handling and output formats
+  - Dependency injection setup
+  - Schema registration and references
+
+  **Acceptance criteria:**
+  - [ ] Samples project created
+  - [ ] All samples compile and run
+  - [ ] README explains each sample
+
+---
+
+### TASK-025: Create Getting Started guide
+- **Labels:** `documentation`, `user-facing`
+- **Priority:** Medium
+- **Description:**
+  Create comprehensive getting started documentation.
+
+  **Content:**
+  - Installation
+  - First validation
+  - Understanding results
+  - Common patterns
+  - Troubleshooting
+
+  **Acceptance criteria:**
+  - [ ] Guide created (docs/GETTING_STARTED.md or wiki)
+  - [ ] All code examples tested
+  - [ ] Links from README
+
+---
+
+### TASK-036: Create KNOWN_LIMITATIONS.md
+- **Labels:** `documentation`, `user-facing`
+- **Priority:** Medium
+- **Description:**
+  Create a document listing known limitations and edge cases that users should be aware of.
+
+  **Initial limitations to document:**
+  - Schema hashing for numbers beyond double precision (~15-17 significant digits) may collide. Two schemas differing only in very large numbers could hash identically. Practical impact is minimal since schemas rarely contain such numbers.
+  - Static API schema cache uses simple clear-on-overflow strategy (see TASK-035 for improvement)
+  - Static API schema cache excludes `$id` from hash for performance. Schemas differing only by `$id` will share a cached validator. This means: (1) internal `$ref: "#"` resolves to the first schema's base URI, (2) output locations show the first schema's URI, (3) the second schema's `$id` is never registered. The boolean valid/invalid result is unaffected in most cases. Use the DI-based API if `$id` correctness matters.
+
+  **Acceptance criteria:**
+  - [ ] KNOWN_LIMITATIONS.md created
+  - [ ] Linked from README
+  - [ ] Each limitation explains impact and workarounds if any
+
+---
+
+### TASK-014: Add package icon
+- **Labels:** `nuget-package`, `branding`
+- **Priority:** Medium
+- **Description:**
+  Create and add package icon for NuGet.org display.
+
+  **Requirements:**
+  - 128x128 PNG (or larger, will be scaled)
+  - Transparent or solid background
+  - Recognizable at small sizes
+
+  ```xml
+  <PackageIcon>icon.png</PackageIcon>
+  ```
+
+  **Acceptance criteria:**
+  - [ ] Icon designed/created
+  - [ ] Icon added to project
+  - [ ] PackageIcon property set in .csproj
+  - [ ] Icon displays correctly on NuGet.org (test with local feed)
+
+---
+
+## Phase 6: Release Infrastructure
 
 ### TASK-017: Create GitHub repository
 - **Labels:** `infrastructure`, `github`
@@ -595,47 +762,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-## Phase 4: Polish & Community
-
-### TASK-024: Create code samples project
-- **Labels:** `documentation`, `user-facing`
-- **Priority:** Medium
-- **Description:**
-  Create a samples/examples project demonstrating common use cases.
-
-  **Sample scenarios:**
-  - Basic schema validation
-  - Custom format validators
-  - Error handling and output formats
-  - Dependency injection setup
-  - Schema registration and references
-
-  **Acceptance criteria:**
-  - [ ] Samples project created
-  - [ ] All samples compile and run
-  - [ ] README explains each sample
-
----
-
-### TASK-025: Create Getting Started guide
-- **Labels:** `documentation`, `user-facing`
-- **Priority:** Medium
-- **Description:**
-  Create comprehensive getting started documentation.
-
-  **Content:**
-  - Installation
-  - First validation
-  - Understanding results
-  - Common patterns
-  - Troubleshooting
-
-  **Acceptance criteria:**
-  - [ ] Guide created (docs/GETTING_STARTED.md or wiki)
-  - [ ] All code examples tested
-  - [ ] Links from README
-
----
+## Phase 7: Community
 
 ### TASK-026: Create CONTRIBUTING.md
 - **Labels:** `community`, `documentation`
@@ -728,7 +855,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-## Phase 5: Commercial
+## Phase 8: Commercial
 
 ### TASK-031: Document commercial licensing terms
 - **Labels:** `licensing`, `commercial`
@@ -866,117 +993,6 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-035: Implement LRU cache for static API schema cache
-- **Labels:** `performance`, `server-scenarios`
-- **Priority:** Medium
-- **Description:**
-  The static `JsonSchemaValidator` API currently uses a simple bounded cache that clears entirely when the size limit is reached. This is inadequate for server scenarios where:
-  - Frequently-used schemas should be retained
-  - Cache thrashing occurs if many unique schemas are validated in bursts
-  - Memory should be bounded but useful entries preserved
-
-  **Recommended approach:**
-  - Implement LRU (Least Recently Used) eviction
-  - Consider using `System.Runtime.Caching.MemoryCache` or a lightweight LRU implementation
-  - Evict oldest entries when limit reached instead of clearing all
-  - Optionally make cache size configurable
-
-  **Alternative considerations:**
-  - Time-based expiration for rarely reused schemas
-  - Weak references for GC-friendly caching
-  - Document that DI-based API should be preferred for server scenarios
-
-  **Acceptance criteria:**
-  - [ ] LRU or equivalent eviction strategy implemented
-  - [ ] Cache preserves frequently-used schemas across evictions
-  - [ ] Performance benchmarked vs current approach
-  - [ ] Server scenario guidance documented
-
----
-
-### TASK-036: Create KNOWN_LIMITATIONS.md
-- **Labels:** `documentation`, `user-facing`
-- **Priority:** Medium
-- **Description:**
-  Create a document listing known limitations and edge cases that users should be aware of.
-
-  **Initial limitations to document:**
-  - Schema hashing for numbers beyond double precision (~15-17 significant digits) may collide. Two schemas differing only in very large numbers could hash identically. Practical impact is minimal since schemas rarely contain such numbers.
-  - Static API schema cache uses simple clear-on-overflow strategy (see TASK-035 for improvement)
-  - Static API schema cache excludes `$id` from hash for performance. Schemas differing only by `$id` will share a cached validator. This means: (1) internal `$ref: "#"` resolves to the first schema's base URI, (2) output locations show the first schema's URI, (3) the second schema's `$id` is never registered. The boolean valid/invalid result is unaffected in most cases. Use the DI-based API if `$id` correctness matters.
-
-  **Acceptance criteria:**
-  - [ ] KNOWN_LIMITATIONS.md created
-  - [ ] Linked from README
-  - [ ] Each limitation explains impact and workarounds if any
-
----
-
-### TASK-037: Enforce draft scope in code generator
-- **Labels:** `code-generator`, `correctness`, `benchmarking`
-- **Priority:** High
-- **Description:**
-  The code generator (`jsv-codegen`) currently has ambiguous draft support:
-  - Hardcodes `using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;` for format validators
-  - Has some cross-draft handling (`$id` vs `id`) but doesn't validate `$schema`
-  - No enforcement or warning when generating validators for non-2020-12 schemas
-
-  This is problematic because:
-  1. **Benchmarking accuracy**: Benchmarks compare against validators like ajv using specific draft versions. If compiled validators don't properly implement those drafts, benchmarks are invalid.
-  2. **Semantic correctness**: Different drafts have different keyword semantics (e.g., `items` in Draft 4 vs 2020-12).
-  3. **User expectations**: Users may assume their Draft 7 schema will work correctly when compiled.
-
-  **Required changes:**
-  - Add `$schema` detection in code generator
-  - Either:
-    - (a) Restrict to Draft 2020-12 and 2019-09 only, with clear error for other drafts
-    - (b) Implement proper draft-specific code generation for all supported drafts
-  - Document supported drafts in code generator help/docs
-  - Update format validator imports to be draft-aware (if supporting multiple drafts)
-
-  **Note:** Internal metaschema validators (used to validate that user schemas conform to their draft) already exist for all drafts and are separate from user-facing code generation.
-
-  **Acceptance criteria:**
-  - [ ] Code generator validates `$schema` and enforces supported drafts
-  - [ ] Clear error message when unsupported draft is detected
-  - [ ] Documentation updated with supported draft list
-  - [ ] Benchmarks only use schemas with supported drafts
-
----
-
-### TASK-038: Test suite audit and enhancement
-- **Labels:** `testing`, `code-quality`, `security`
-- **Priority:** High
-- **Description:**
-  Comprehensive audit of the current test suite to identify coverage gaps and implement improvements.
-
-  **Current state:**
-  - 2341 tests (JSON-Schema-Test-Suite + output format tests)
-  - Focuses primarily on spec compliance
-  - No systematic coverage analysis
-
-  **Audit areas:**
-  1. **Coverage analysis** - Measure line/branch coverage, identify untested code paths
-  2. **Negative testing** - Malformed schemas, invalid JSON, boundary conditions
-  3. **Concurrency testing** - Validate thread-safety claims under concurrent load
-  4. **Error path testing** - Exception handling, error message quality
-  5. **Fuzzing** - Random/mutated inputs to discover edge cases and potential DoS vectors (deeply nested schemas, regex catastrophic backtracking, large documents)
-
-  **Deliverables:**
-  - Test coverage report with identified gaps
-  - Fuzzing infrastructure (using a library like SharpFuzz or similar)
-  - Additional tests addressing identified gaps
-  - Documentation of test strategy
-
-  **Acceptance criteria:**
-  - [ ] Coverage report generated and gaps documented
-  - [ ] Fuzzing tests implemented and integrated into CI
-  - [ ] Concurrency stress tests added
-  - [ ] Critical gaps addressed with new tests
-  - [ ] Test strategy documented
-
----
-
 ## Parking Lot (Future Considerations)
 
 These items are out of scope for initial release but should be tracked:
@@ -1004,4 +1020,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-24 (TASK-001, TASK-002, TASK-003, TASK-004, TASK-004a, TASK-004b, TASK-005, TASK-007a completed)*
+*Last updated: 2026-01-24 (Backlog reorganized by priority: architecture → testing → API → packaging → docs → infrastructure → community → commercial)*
