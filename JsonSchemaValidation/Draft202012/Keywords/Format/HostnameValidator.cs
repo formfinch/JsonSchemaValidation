@@ -11,15 +11,13 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal sealed class HostnameValidator : IKeywordValidator
+    internal sealed partial class HostnameValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
         private static readonly IdnMapping idn = new IdnMapping();
 
-        // Simplified regex pattern for ASCII hostname validation (case-insensitive and compiled)
-        private static readonly Regex hostnameRegex = new Regex(
-            @"^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$",
-            RegexOptions.IgnoreCase | RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        // Simplified regex pattern for ASCII hostname validation (case-insensitive)
+        [GeneratedRegex(@"^(([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])\.)*([a-z0-9]|[a-z0-9][a-z0-9\-]*[a-z0-9])$", RegexOptions.IgnoreCase | RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex HostnameRegex();
 
         private readonly bool performIDNConversion;
         private readonly string _formatName;
@@ -98,7 +96,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
                 return false;
             }
 
-            return hostnameRegex.IsMatch(hostname);
+            return HostnameRegex().IsMatch(hostname);
         }
 
         /// <summary>

@@ -13,10 +13,8 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft3.Keywords.Format
 {
-    internal sealed class ColorValidator : IKeywordValidator
+    internal sealed partial class ColorValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
         // CSS 2.1 basic color keywords (case-insensitive)
         private static readonly HashSet<string> CssColorNames = new(StringComparer.OrdinalIgnoreCase)
         {
@@ -40,9 +38,8 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords.Format
         };
 
         // Regex for hex color validation: #RGB or #RRGGBB (case-insensitive)
-        private static readonly Regex hexColorRegex = new Regex(
-            @"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+        [GeneratedRegex(@"^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$", RegexOptions.None, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex HexColorRegex();
 
         public string Keyword => "format";
 
@@ -84,7 +81,7 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords.Format
                 return true;
 
             // Check if it's a valid hex color
-            if (hexColorRegex.IsMatch(color))
+            if (HexColorRegex().IsMatch(color))
                 return true;
 
             return false;

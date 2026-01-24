@@ -13,14 +13,11 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft6.Keywords.Format
 {
-    internal sealed class DateTimeValidator : IKeywordValidator
+    internal sealed partial class DateTimeValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
         // RFC 3339 date-time: YYYY-MM-DDThh:mm:ss[.frac](Z|±hh:mm) - ASCII digits only
-        private static readonly Regex dateTimeRegex = new Regex(
-            @"^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})[tT](?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-5][0-9]|60)(?:\.[0-9]+)?(?:[zZ]|(?<sign>[+-])(?<offsetHour>[0-9]{2}):(?<offsetMinute>[0-9]{2}))$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        [GeneratedRegex(@"^(?<year>[0-9]{4})-(?<month>[0-9]{2})-(?<day>[0-9]{2})[tT](?<hour>[0-9]{2}):(?<minute>[0-9]{2}):(?<second>[0-5][0-9]|60)(?:\.[0-9]+)?(?:[zZ]|(?<sign>[+-])(?<offsetHour>[0-9]{2}):(?<offsetMinute>[0-9]{2}))$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex DateTimeRegex();
 
         public string Keyword => "format";
 
@@ -40,7 +37,7 @@ namespace FormFinch.JsonSchemaValidation.Draft6.Keywords.Format
 
         private static bool IsValidDateTime(string dt)
         {
-            var match = dateTimeRegex.Match(dt);
+            var match = DateTimeRegex().Match(dt);
             if (!match.Success)
                 return false;
 

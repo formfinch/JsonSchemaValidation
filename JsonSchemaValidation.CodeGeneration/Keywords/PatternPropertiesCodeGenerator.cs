@@ -50,8 +50,10 @@ public sealed class PatternPropertiesCodeGenerator : IKeywordCodeGenerator
         {
             var fieldName = $"PatternProps_{context.CurrentHash}_{idx}";
             var schemaHash = context.GetSubschemaHash(pattern.Value);
+            // Use () for GeneratedRegex partial methods, no () for regular Regex fields
+            var regexAccess = context.UseGeneratedRegex ? $"{fieldName}()" : fieldName;
 
-            sb.AppendLine($"        if ({fieldName}.IsMatch(_ppProp_.Name))");
+            sb.AppendLine($"        if ({regexAccess}.IsMatch(_ppProp_.Name))");
             sb.AppendLine("        {");
             sb.AppendLine($"            if (!{context.GenerateValidateCallForProperty(schemaHash, "_ppProp_.Value", "_ppProp_.Name")}) return false;");
             if (trackAnnotations)
@@ -91,7 +93,10 @@ public sealed class PatternPropertiesCodeGenerator : IKeywordCodeGenerator
             {
                 Type = "Regex",
                 Name = $"PatternProps_{context.CurrentHash}_{idx}",
-                Initializer = $"new Regex({EscapeStringLiteral(transformedPattern)}, RegexOptions.Compiled, TimeSpan.FromSeconds(5))"
+                Initializer = EscapeStringLiteral(transformedPattern),
+                IsGeneratedRegex = true,
+                RegexOptions = "RegexOptions.None",
+                TimeoutMs = 5000
             };
             idx++;
         }

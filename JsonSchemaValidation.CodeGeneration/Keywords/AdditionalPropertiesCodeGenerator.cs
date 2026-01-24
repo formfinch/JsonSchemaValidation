@@ -69,7 +69,9 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
                 foreach (var pattern in patternPropsElement.EnumerateObject())
                 {
                     var patternFieldName = $"PatternProp_{context.CurrentHash}_{SanitizeName(pattern.Name)}";
-                    sb.AppendLine($"        if ({patternFieldName}.IsMatch(_prop_.Name)) _matchesPattern_ = true;");
+                    // Use () for GeneratedRegex partial methods, no () for regular Regex fields
+                    var regexAccess = context.UseGeneratedRegex ? $"{patternFieldName}()" : patternFieldName;
+                    sb.AppendLine($"        if ({regexAccess}.IsMatch(_prop_.Name)) _matchesPattern_ = true;");
                 }
                 sb.AppendLine("        if (_matchesPattern_) continue;");
             }
@@ -120,7 +122,9 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
                 foreach (var pattern in patternPropsElement.EnumerateObject())
                 {
                     var patternFieldName = $"PatternProp_{context.CurrentHash}_{SanitizeName(pattern.Name)}";
-                    sb.AppendLine($"        if ({patternFieldName}.IsMatch(_prop_.Name)) _matchesPattern_ = true;");
+                    // Use () for GeneratedRegex partial methods, no () for regular Regex fields
+                    var regexAccess = context.UseGeneratedRegex ? $"{patternFieldName}()" : patternFieldName;
+                    sb.AppendLine($"        if ({regexAccess}.IsMatch(_prop_.Name)) _matchesPattern_ = true;");
                 }
                 sb.AppendLine("        if (_matchesPattern_) continue;");
             }
@@ -166,7 +170,10 @@ public sealed class AdditionalPropertiesCodeGenerator : IKeywordCodeGenerator
             {
                 Type = "Regex",
                 Name = $"PatternProp_{context.CurrentHash}_{SanitizeName(pattern.Name)}",
-                Initializer = $"new Regex({EscapeStringLiteral(transformedPattern)}, RegexOptions.Compiled)"
+                Initializer = EscapeStringLiteral(transformedPattern),
+                IsGeneratedRegex = true,
+                RegexOptions = "RegexOptions.None",
+                TimeoutMs = 5000
             };
         }
     }

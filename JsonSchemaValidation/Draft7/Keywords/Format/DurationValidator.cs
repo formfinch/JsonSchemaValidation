@@ -14,15 +14,11 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
 {
-    internal sealed class DurationValidator : IKeywordValidator
+    internal sealed partial class DurationValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
         // Capturing Regex for ISO 8601 duration format validation with named groups
-        private static readonly Regex durationRegex = new Regex(
-            @"^P(?:(?<years>[0-9]+Y)?(?<weeks>[0-9]+W)?(?<months>[0-9]+M)?(?<days>[0-9]+D)?)"
-            + @"(?:T(?<hours>[0-9]+H)?(?<minutes>[0-9]+M)?(?<seconds>[0-9]+S)?)?$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        [GeneratedRegex(@"^P(?:(?<years>[0-9]+Y)?(?<weeks>[0-9]+W)?(?<months>[0-9]+M)?(?<days>[0-9]+D)?)(?:T(?<hours>[0-9]+H)?(?<minutes>[0-9]+M)?(?<seconds>[0-9]+S)?)?$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex DurationRegex();
 
         public string Keyword => "format";
 
@@ -57,7 +53,7 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
 
         private static bool IsValidDuration(string duration)
         {
-            var match = durationRegex.Match(duration);
+            var match = DurationRegex().Match(duration);
             if (!match.Success)
             {
                 return false; // Basic pattern not matched

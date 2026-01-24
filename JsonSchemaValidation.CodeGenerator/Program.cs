@@ -137,7 +137,8 @@ internal static class Program
         Console.WriteLine($"Output directory: {outputPath}");
         Console.WriteLine($"Namespace: {namespaceName}");
 
-        var generator = new SchemaCodeGenerator();
+        // Use GeneratedRegex for AOT compilation - source generator will provide implementations
+        var generator = new SchemaCodeGenerator { UseGeneratedRegex = true };
         var result = generator.Generate(schemaPath, namespaceName, className);
 
         if (result.Success)
@@ -205,7 +206,8 @@ internal static class Program
         Console.WriteLine($"Output directory: {outputPath}");
         Console.WriteLine();
 
-        var generator = new SchemaCodeGenerator();
+        // Use GeneratedRegex for AOT compilation - source generator will provide implementations
+        var generator = new SchemaCodeGenerator { UseGeneratedRegex = true };
         var successCount = 0;
         var failCount = 0;
 
@@ -348,7 +350,8 @@ internal static class Program
             draftDirs.Add(dir);
         }
 
-        var generator = new SchemaCodeGenerator();
+        // Use GeneratedRegex for AOT compilation - source generator will provide implementations
+        var generator = new SchemaCodeGenerator { UseGeneratedRegex = true };
         var uniqueSchemas = new Dictionary<string, (JsonElement Schema, string DraftName)>(StringComparer.Ordinal);
         var successCount = 0;
         var failCount = 0;

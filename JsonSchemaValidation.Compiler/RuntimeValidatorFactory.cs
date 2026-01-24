@@ -18,7 +18,7 @@ namespace FormFinch.JsonSchemaValidation.Compiler;
 /// </summary>
 internal sealed class RuntimeValidatorFactory : IDisposable
 {
-    private readonly SchemaCodeGenerator _codeGenerator = new();
+    private readonly SchemaCodeGenerator _codeGenerator = new() { UseGeneratedRegex = false };
     private readonly Dictionary<string, ICompiledValidator> _cache = new(StringComparer.Ordinal);
     private readonly List<AssemblyLoadContext> _loadContexts = [];
     private readonly object _lock = new();

@@ -13,14 +13,11 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
 {
-    internal sealed class DateValidator : IKeywordValidator
+    internal sealed partial class DateValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
         // Regex for date only ISO 8601 structure validation
-        private static readonly Regex dateRegex = new Regex(
-            @"^\d{4}-\d{2}-\d{2}$",
-            RegexOptions.Compiled, defaultMatchTimeout);
+        [GeneratedRegex(@"^\d{4}-\d{2}-\d{2}$", RegexOptions.None, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex DateRegex();
 
         public string Keyword => "format";
 
@@ -57,7 +54,7 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
         {
             try
             {
-                if (!dateRegex.IsMatch(date))
+                if (!DateRegex().IsMatch(date))
                 {
                     return false;
                 }

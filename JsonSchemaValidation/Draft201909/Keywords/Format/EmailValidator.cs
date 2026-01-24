@@ -14,23 +14,20 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format
 {
-    internal sealed class EmailValidator : IKeywordValidator
+    internal sealed partial class EmailValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
+        // Regex for email parts recognition
+        [GeneratedRegex(@"^.+@.+$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex BasicStructureRegex();
 
-        // Regex for email parts recognition (compiled for performance)
-        private static readonly Regex basicStructureRegex = new Regex(
-            @"^.+@.+$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
-        private static readonly Regex localPartRegex = new Regex(
-            @"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
-        private static readonly Regex quotedLocalPartRegex = new Regex(
-            @"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
-        private static readonly Regex domainPartRegex = new Regex(
-            @"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        [GeneratedRegex(@"^(?:(?:[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+(?:\.[\p{L}\p{N}!#$%&'*+\-/=?^_`{|}~]+)*)|(?:\"".+\""))$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex LocalPartRegex();
+
+        [GeneratedRegex(@"^""([\s\p{L}\p{N}!#$%&'*+\-\/=?^_`{|}~.,:;<>[\]\\\@]+)""$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex QuotedLocalPartRegex();
+
+        [GeneratedRegex(@"^(?:[\p{L}\p{N}-\.]+\.[\p{L}]{2,}|(?:\[(?:\d{1,3}\.){3}\d{1,3}\]|\[IPv6:[0-9a-fA-F:.]+\]))$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex DomainPartRegex();
 
         public string Keyword => "format";
 
@@ -69,7 +66,7 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format
             if (email.Length > 254) return false;
 
             // Basic structure check
-            if (!basicStructureRegex.IsMatch(email)) return false;
+            if (!BasicStructureRegex().IsMatch(email)) return false;
 
             // Custom split to handle quoted local parts
             var parts = SplitEmail(email);
@@ -100,17 +97,17 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format
         {
             if (localPart.StartsWith('"') && localPart.EndsWith('"'))
             {
-                return quotedLocalPartRegex.IsMatch(localPart);
+                return QuotedLocalPartRegex().IsMatch(localPart);
             }
             else
             {
-                return localPartRegex.IsMatch(localPart);
+                return LocalPartRegex().IsMatch(localPart);
             }
         }
 
         private static bool ValidateDomainPart(string domain)
         {
-            if (domainPartRegex.IsMatch(domain))
+            if (DomainPartRegex().IsMatch(domain))
             {
                 // Additional check for valid IPv4 address literals
                 if (domain.StartsWith('[') && domain.EndsWith(']'))

@@ -118,25 +118,46 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-012: Review target framework strategy
+### TASK-012: Review target framework strategy [x]
 - **Labels:** `architecture`, `compatibility`, `decision`
 - **Priority:** High
 - **Description:**
   Currently targeting `net10.0` only. Consider broader compatibility.
 
-  **Options:**
+  **Options evaluated:**
   - `net10.0` only - Smallest surface, latest features (current)
-  - Add `net8.0` - LTS version, many users still on this
+  - Add `net8.0` - LTS version, supported until Nov 2026
   - Add `netstandard2.0` - Maximum compatibility (.NET Framework, older .NET Core)
 
-  **Trade-offs:**
-  - More targets = more testing, potential API differences
-  - Fewer targets = excludes users on older frameworks
+  **Decision: Stay with `net10.0` only**
+
+  **Rationale:**
+  Experimental .NET 8 multi-targeting revealed significant blockers:
+  - `System.Threading.Lock` class (.NET 9+) - 1 file, requires conditional compilation
+  - C# 12 collection expressions - 2 files, trivial syntax changes
+  - `JsonElement.DeepEquals` (.NET 9+) - **28 files, 42 usages** - requires custom polyfill
+
+  The `JsonElement.DeepEquals` API is used pervasively for `enum`, `const`, and `uniqueItems` validation. Supporting .NET 8 would require:
+  - Writing ~100 lines of polyfill code
+  - Updating 22 source files
+  - Regenerating 6 compiled validators
+  - Ongoing maintenance burden
+
+  Additionally:
+  - .NET 8 support ends November 2026 (~10 months away)
+  - .NET 6 is already out of support (ended November 2024)
+  - Users adopting a new library should be on current LTS (.NET 10)
+  - Staying on .NET 10 allows use of modern features: `Lock`, `FrozenDictionary`, `JsonElement.DeepEquals`, collection expressions, `.slnx` solution format
+
+  Multi-targeting will be reconsidered if user demand materializes.
+
+  **Modernization completed:**
+  - Converted `JsonSchemaValidationSolution.sln` (124 lines) to `.slnx` format (11 lines)
 
   **Acceptance criteria:**
-  - [ ] Target framework strategy decided
-  - [ ] If multi-targeting, conditional compilation handled
-  - [ ] All targets tested
+  - [x] Target framework strategy decided: `net10.0` only
+  - [x] Decision documented with rationale
+  - [x] Modern .NET 10 features adopted (`.slnx` solution format)
 
 ---
 
@@ -998,7 +1019,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 These items are out of scope for initial release but should be tracked:
 
 - **API documentation site** - DocFX or similar generated API reference
-- **Additional target frameworks** - Based on user feedback
+- **Additional target frameworks** - Based on user feedback (see TASK-012 for analysis of .NET 8 effort)
 - **Localization** - Error messages in multiple languages
 - **VS Code extension** - Schema validation in editor
 - **Unify dynamic validators and code generators** - Currently validation logic is implemented twice: once in dynamic validators (e.g., `MinimumValidator.cs`) and again in code generators (e.g., `NumericConstraintsCodeGenerator.cs`). This duplication leads to behavioral divergence bugs when implementations drift apart. Consider refactoring to share core validation logic between both paths, either through shared constants, expression trees, or generating both from a single source of truth.
@@ -1020,4 +1041,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-24 (Backlog reorganized by priority: architecture → testing → API → packaging → docs → infrastructure → community → commercial)*
+*Last updated: 2026-01-24 (TASK-012 completed: net10.0 only, converted to .slnx)*
