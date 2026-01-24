@@ -47,6 +47,22 @@ public sealed class StaticFieldInfo
     public required string Type { get; init; }
     public required string Name { get; init; }
     public required string Initializer { get; init; }
+
+    /// <summary>
+    /// If true, this is a GeneratedRegex partial method instead of a regular field.
+    /// When true, Initializer contains the regex pattern, and RegexOptions/TimeoutMs are used.
+    /// </summary>
+    public bool IsGeneratedRegex { get; init; }
+
+    /// <summary>
+    /// RegexOptions for GeneratedRegex (e.g., "RegexOptions.None").
+    /// </summary>
+    public string? RegexOptions { get; init; }
+
+    /// <summary>
+    /// Timeout in milliseconds for GeneratedRegex.
+    /// </summary>
+    public int TimeoutMs { get; init; } = 5000;
 }
 
 /// <summary>
@@ -153,6 +169,12 @@ public sealed class CodeGenerationContext
     /// Only used when RequiresPropertyAnnotations or RequiresItemAnnotations is true.
     /// </summary>
     public string LocationVariable { get; init; } = "_loc_";
+
+    /// <summary>
+    /// Whether to use [GeneratedRegex] partial methods (true) or regular Regex fields (false).
+    /// Set to false for runtime compilation where source generators don't run.
+    /// </summary>
+    public bool UseGeneratedRegex { get; init; } = true;
 
     /// <summary>
     /// Whether annotation tracking requires passing location through method calls.

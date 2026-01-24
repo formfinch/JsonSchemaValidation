@@ -13,15 +13,12 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft3.Keywords.Format
 {
-    internal sealed class TimeValidator : IKeywordValidator
+    internal sealed partial class TimeValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
         // Regex for Draft 3 time format (HH:MM:SS, optional timezone)
         // Draft 3 spec does not require timezone, just HH:MM:SS format
-        private static readonly Regex timeRegex = new Regex(
-            @"^(?<hour>[01][0-9]|2[0-3]):(?<minute>[0-5][0-9]):(?<second>[0-5][0-9])$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        [GeneratedRegex(@"^(?<hour>[01][0-9]|2[0-3]):(?<minute>[0-5][0-9]):(?<second>[0-5][0-9])$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex TimeRegex();
 
         public string Keyword => "format";
 
@@ -42,7 +39,7 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords.Format
         private static bool IsValidTime(string time)
         {
             // Draft 3 time format: HH:MM:SS (no timezone required)
-            return timeRegex.IsMatch(time);
+            return TimeRegex().IsMatch(time);
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)

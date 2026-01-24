@@ -15,10 +15,12 @@ using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909MetaCore : ICompiledValidator
+    public sealed partial class CompiledValidator_Draft201909MetaCore : ICompiledValidator
     {
-        private static readonly Regex Pattern_edcdb22c519d = new Regex(@"^[^#]*#?$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
-        private static readonly Regex Pattern_4657485aab9e = new Regex(@"^[A-Za-z][-A-Za-z0-9.:_]*$", RegexOptions.Compiled, TimeSpan.FromSeconds(5));
+        [GeneratedRegex(@"^[^#]*#?$", RegexOptions.None, matchTimeoutMilliseconds: 5000)]
+        private static partial Regex Pattern_edcdb22c519d();
+        [GeneratedRegex(@"^[A-Za-z][-A-Za-z0-9.:_]*$", RegexOptions.None, matchTimeoutMilliseconds: 5000)]
+        private static partial Regex Pattern_4657485aab9e();
 
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/core");
 
@@ -83,7 +85,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         if (e.ValueKind == JsonValueKind.String)
         {
             var _str_ = e.GetString();
-            if (_str_ != null && !Pattern_edcdb22c519d.IsMatch(_str_)) return false;
+            if (_str_ != null && !Pattern_edcdb22c519d().IsMatch(_str_)) return false;
         }
         if (!FormatValidators.IsValidUriReference(e)) return false;
         return true;
@@ -104,7 +106,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         if (e.ValueKind == JsonValueKind.String)
         {
             var _str_ = e.GetString();
-            if (_str_ != null && !Pattern_4657485aab9e.IsMatch(_str_)) return false;
+            if (_str_ != null && !Pattern_4657485aab9e().IsMatch(_str_)) return false;
         }
         return true;
     }

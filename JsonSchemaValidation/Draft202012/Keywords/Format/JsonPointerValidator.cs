@@ -10,14 +10,11 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
 {
-    internal sealed class JsonPointerValidator : IKeywordValidator
+    internal sealed partial class JsonPointerValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
-        // Regex pattern for JSON Pointer validation (compiled for performance)
-        private static readonly Regex jsonPointerRegex = new Regex(
-            @"^(\/([^/~]|(~[01]))*)*$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        // Regex pattern for JSON Pointer validation
+        [GeneratedRegex(@"^(\/([^/~]|(~[01]))*)*$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex JsonPointerRegex();
 
         public string Keyword => "format";
 
@@ -52,7 +49,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
 
         private static bool IsValidJsonPointer(string jsonPointer)
         {
-            return jsonPointerRegex.IsMatch(jsonPointer);
+            return JsonPointerRegex().IsMatch(jsonPointer);
         }
     }
 }

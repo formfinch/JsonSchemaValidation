@@ -31,12 +31,14 @@ public sealed class PatternCodeGenerator : IKeywordCodeGenerator
 
         var fieldName = $"Pattern_{context.CurrentHash}";
         var e = context.ElementVariable;
+        // Use () for GeneratedRegex partial methods, no () for regular Regex fields
+        var regexAccess = context.UseGeneratedRegex ? $"{fieldName}()" : fieldName;
 
         return $$"""
 if ({{e}}.ValueKind == JsonValueKind.String)
 {
     var _str_ = {{e}}.GetString();
-    if (_str_ != null && !{{fieldName}}.IsMatch(_str_)) return false;
+    if (_str_ != null && !{{regexAccess}}.IsMatch(_str_)) return false;
 }
 """;
     }
@@ -63,7 +65,10 @@ if ({{e}}.ValueKind == JsonValueKind.String)
         {
             Type = "Regex",
             Name = $"Pattern_{context.CurrentHash}",
-            Initializer = $"new Regex({EscapeStringLiteral(transformedPattern)}, RegexOptions.Compiled, TimeSpan.FromSeconds(5))"
+            Initializer = EscapeStringLiteral(transformedPattern),
+            IsGeneratedRegex = true,
+            RegexOptions = "RegexOptions.None",
+            TimeoutMs = 5000
         };
     }
 

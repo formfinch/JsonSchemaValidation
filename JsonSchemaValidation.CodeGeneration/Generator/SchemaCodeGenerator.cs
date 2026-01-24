@@ -17,6 +17,13 @@ public sealed class SchemaCodeGenerator
     private readonly List<IKeywordCodeGenerator> _keywordGenerators;
     private readonly SubschemaExtractor _extractor = new();
 
+    /// <summary>
+    /// Whether to use [GeneratedRegex] partial methods (true) or regular Regex fields (false).
+    /// Set to true only for ahead-of-time compilation scenarios where source generators run.
+    /// Defaults to false for compatibility with runtime compilation (Roslyn) and older TFMs.
+    /// </summary>
+    public bool UseGeneratedRegex { get; set; }
+
     public SchemaCodeGenerator()
     {
         // Register all keyword generators, ordered by priority (highest first)
@@ -191,7 +198,8 @@ public sealed class SchemaCodeGenerator
                 needsRegistryAware,
                 methods.ToString(),
                 requiresPropertyAnnotations,
-                requiresItemAnnotations);
+                requiresItemAnnotations,
+                UseGeneratedRegex);
 
             var fileName = $"{resolvedClassName}.cs";
             return GenerationResult.Succeeded(code, fileName);
@@ -277,7 +285,8 @@ public sealed class SchemaCodeGenerator
             RootBaseUri = baseUri,
             ExternalRefs = externalRefs,
             RequiresPropertyAnnotations = requiresPropertyAnnotations,
-            RequiresItemAnnotations = requiresItemAnnotations
+            RequiresItemAnnotations = requiresItemAnnotations,
+            UseGeneratedRegex = UseGeneratedRegex
         };
     }
 
@@ -292,7 +301,8 @@ public sealed class SchemaCodeGenerator
         bool needsRegistryAware,
         string methods,
         bool requiresPropertyAnnotations,
-        bool requiresItemAnnotations)
+        bool requiresItemAnnotations,
+        bool useGeneratedRegex)
     {
         var hasExternalRefs = externalRefs.Count > 0;
         var hasFragmentSubschemas = fragmentSubschemas.Count > 0;
@@ -323,16 +333,39 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("{");
 
         // Class declaration - use IRegistryAwareCompiledValidator if needed for external refs, fragments, or dynamic scope
+        // Make class partial if we have GeneratedRegex fields and GeneratedRegex is enabled
+        var hasGeneratedRegexFields = useGeneratedRegex && staticFields.Any(f => f.IsGeneratedRegex);
+        var partialModifier = hasGeneratedRegexFields ? "partial " : "";
         var interfaceName = needsRegistryAware ? "IRegistryAwareCompiledValidator" : "ICompiledValidator";
-        sb.AppendLine($"    public sealed class {className} : {interfaceName}");
+        sb.AppendLine($"    public sealed {partialModifier}class {className} : {interfaceName}");
         sb.AppendLine("    {");
 
-        // Static fields
+        // Static fields and GeneratedRegex methods
         if (staticFields.Count > 0)
         {
             foreach (var field in staticFields)
             {
-                sb.AppendLine($"        private static readonly {field.Type} {field.Name} = {field.Initializer};");
+                if (field.IsGeneratedRegex && useGeneratedRegex)
+                {
+                    // Generate [GeneratedRegex] attribute and partial method
+                    var regexOptions = field.RegexOptions ?? "RegexOptions.None";
+                    sb.AppendLine($"        [GeneratedRegex({field.Initializer}, {regexOptions}, matchTimeoutMilliseconds: {field.TimeoutMs})]");
+                    sb.AppendLine($"        private static partial {field.Type} {field.Name}();");
+                }
+                else if (field.IsGeneratedRegex)
+                {
+                    // Generate regular Regex field for runtime compilation
+                    // Add RegexOptions.Compiled for performance (GeneratedRegex already compiles at build time)
+                    var baseOptions = field.RegexOptions ?? "RegexOptions.None";
+                    var regexOptions = baseOptions == "RegexOptions.None"
+                        ? "RegexOptions.Compiled"
+                        : $"{baseOptions} | RegexOptions.Compiled";
+                    sb.AppendLine($"        private static readonly {field.Type} {field.Name} = new {field.Type}({field.Initializer}, {regexOptions}, TimeSpan.FromMilliseconds({field.TimeoutMs}));");
+                }
+                else
+                {
+                    sb.AppendLine($"        private static readonly {field.Type} {field.Name} = {field.Initializer};");
+                }
             }
             sb.AppendLine();
         }

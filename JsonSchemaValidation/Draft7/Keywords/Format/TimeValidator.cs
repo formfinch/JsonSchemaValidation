@@ -14,14 +14,11 @@ using FormFinch.JsonSchemaValidation.Validation;
 
 namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
 {
-    internal sealed class TimeValidator : IKeywordValidator
+    internal sealed partial class TimeValidator : IKeywordValidator
     {
-        private static readonly TimeSpan defaultMatchTimeout = TimeSpan.FromSeconds(3);
-
         // Regex for time RFC 3339 structure validation (ASCII digits only)
-        private static readonly Regex timeRegex = new Regex(
-            @"^(?<hour>[01][0-9]|2[0-3]):(?<minute>[0-5][0-9]):(?<second>[0-5][0-9]|60)(?:\.[0-9]+)?(?:[zZ]|(?<sign>[+-])(?<offsetHour>[0-9]{2}):(?<offsetMinute>[0-9]{2}))$",
-            RegexOptions.Compiled | RegexOptions.ExplicitCapture, defaultMatchTimeout);
+        [GeneratedRegex(@"^(?<hour>[01][0-9]|2[0-3]):(?<minute>[0-5][0-9]):(?<second>[0-5][0-9]|60)(?:\.[0-9]+)?(?:[zZ]|(?<sign>[+-])(?<offsetHour>[0-9]{2}):(?<offsetMinute>[0-9]{2}))$", RegexOptions.ExplicitCapture, matchTimeoutMilliseconds: 3000)]
+        private static partial Regex TimeRegex();
 
         public string Keyword => "format";
 
@@ -41,7 +38,7 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format
 
         private static bool IsValidTime(string time)
         {
-            var match = timeRegex.Match(time);
+            var match = TimeRegex().Match(time);
             if (!match.Success)
                 return false;
 
