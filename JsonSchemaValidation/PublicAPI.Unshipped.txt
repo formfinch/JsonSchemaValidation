@@ -1,0 +1,264 @@
+#nullable enable
+FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator
+FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.Abstractions.IRegistryAwareCompiledValidator
+FormFinch.JsonSchemaValidation.Abstractions.IRegistryAwareCompiledValidator.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.Abstractions.IRegistryAwareCompiledValidator.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.Abstractions.IRegistryAwareCompiledValidator.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.Common.JsonPointer
+FormFinch.JsonSchemaValidation.Common.JsonPointer.Append(int index) -> FormFinch.JsonSchemaValidation.Common.JsonPointer!
+FormFinch.JsonSchemaValidation.Common.JsonPointer.Append(string! segment) -> FormFinch.JsonSchemaValidation.Common.JsonPointer!
+FormFinch.JsonSchemaValidation.Common.JsonPointer.Parent() -> FormFinch.JsonSchemaValidation.Common.JsonPointer!
+FormFinch.JsonSchemaValidation.Common.SchemaHasher
+FormFinch.JsonSchemaValidation.Common.SchemaHasher.SchemaHasher() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.CompiledValidatorRegistry() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.HasValidator(System.Uri! schemaUri) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.HasValidatorByHash(string! contentHash) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.Register(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator! validator) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.RegisterByHash(string! contentHash, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator! validator) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.RegisterForUri(System.Uri! schemaUri, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator! validator) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.TryGetValidator(System.Uri! schemaUri, out FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? validator) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorRegistry.TryGetValidatorByHash(string! contentHash, out FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? validator) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.HasValidator(System.Uri! schemaUri) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.HasValidatorByHash(string! contentHash) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.Register(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator! validator) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.RegisterByHash(string! contentHash, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator! validator) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.RegisterForUri(System.Uri! schemaUri, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator! validator) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.TryGetValidator(System.Uri! schemaUri, out FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? validator) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry.TryGetValidatorByHash(string! contentHash, out FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? validator) -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options.Draft201909Options() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options.FormatAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options.FormatAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options.Draft202012Options() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options.FormatAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options.FormatAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options.Draft3Options() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options.FormatAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options.FormatAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options.Draft4Options() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options.FormatAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options.FormatAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options.Draft6Options() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options.FormatAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options.FormatAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.ContentAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.ContentAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.Draft7Options() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.FormatAssertionEnabled.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.FormatAssertionEnabled.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.DefaultDraftVersion.get -> string!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.DefaultDraftVersion.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft201909.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft201909.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft202012.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft202012.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft3.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft3.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft4.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft4.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft6.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft6.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft7.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options!
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft7.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft201909.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft201909.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft202012.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft202012.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft3.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft3.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft4.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft4.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft6.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft6.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft7.get -> bool
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft7.set -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.SchemaValidationOptions() -> void
+FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup
+FormFinch.JsonSchemaValidation.DependencyInjection.ServiceProviderExtensions
+FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators
+FormFinch.JsonSchemaValidation.Exceptions.InvalidSchemaException
+FormFinch.JsonSchemaValidation.Exceptions.InvalidSchemaException.InvalidSchemaException() -> void
+FormFinch.JsonSchemaValidation.Exceptions.InvalidSchemaException.InvalidSchemaException(string? message) -> void
+FormFinch.JsonSchemaValidation.Exceptions.InvalidSchemaException.InvalidSchemaException(string? message, System.Exception? innerException) -> void
+FormFinch.JsonSchemaValidation.IJsonSchema
+FormFinch.JsonSchemaValidation.IJsonSchema.IsValid(string! instanceJson) -> bool
+FormFinch.JsonSchemaValidation.IJsonSchema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.IJsonSchema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.IJsonSchema.Validate(string! instanceJson, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+FormFinch.JsonSchemaValidation.IJsonSchema.Validate(System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+FormFinch.JsonSchemaValidation.JsonSchemaValidator
+FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
+FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic = 1 -> FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
+FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Detailed = 2 -> FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
+FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Flag = 0 -> FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.AbsoluteKeywordLocation.get -> string?
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.AbsoluteKeywordLocation.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotation.get -> object?
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotation.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotations.get -> System.Collections.Generic.IList<FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!>?
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotations.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Error.get -> string?
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Error.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Errors.get -> System.Collections.Generic.IList<FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!>?
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Errors.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.InstanceLocation.get -> string!
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.InstanceLocation.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.KeywordLocation.get -> string!
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.KeywordLocation.set -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.OutputUnit() -> void
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Valid.get -> bool
+FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Valid.set -> void
+override FormFinch.JsonSchemaValidation.Common.JsonPointer.Equals(object? obj) -> bool
+override FormFinch.JsonSchemaValidation.Common.JsonPointer.GetHashCode() -> int
+override FormFinch.JsonSchemaValidation.Common.JsonPointer.ToString() -> string!
+static FormFinch.JsonSchemaValidation.Common.JsonPointer.Empty.get -> FormFinch.JsonSchemaValidation.Common.JsonPointer!
+static FormFinch.JsonSchemaValidation.Common.JsonPointer.Parse(string! pointer) -> FormFinch.JsonSchemaValidation.Common.JsonPointer!
+static FormFinch.JsonSchemaValidation.Common.SchemaHasher.ComputeHash(System.Text.Json.JsonElement schema) -> string!
+static FormFinch.JsonSchemaValidation.Common.SchemaHasher.Instance.get -> FormFinch.JsonSchemaValidation.Common.SchemaHasher!
+static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddCompiledValidators(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, params FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator![]! validators) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddCompiledValidators(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Collections.Generic.IEnumerable<FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator!>! validators) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddJsonSchemaValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddJsonSchemaValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions!>? setupAction = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static FormFinch.JsonSchemaValidation.DependencyInjection.ServiceProviderExtensions.InitializeSingletonServices(this System.IServiceProvider! serviceProvider) -> void
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidDuration(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidIdnHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidIpv4(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidIpv6(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidIri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidIriReference(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidRegex(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidRelativeJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidUriReference(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidUriTemplate(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidUuid(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.IsValid(string! schemaJson, string! instanceJson) -> bool
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.IsValid(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance) -> bool
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(string! schemaJson) -> FormFinch.JsonSchemaValidation.IJsonSchema!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(string! schemaJson, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options) -> FormFinch.JsonSchemaValidation.IJsonSchema!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(System.Text.Json.JsonElement schema) -> FormFinch.JsonSchemaValidation.IJsonSchema!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(System.Text.Json.JsonElement schema, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options) -> FormFinch.JsonSchemaValidation.IJsonSchema!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(string! schemaJson, string! instanceJson, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(string! schemaJson, string! instanceJson, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.CompiledValidator_Draft201909MetaApplicator() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.CompiledValidator_Draft201909MetaContent() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.CompiledValidator_Draft201909MetaCore() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat.CompiledValidator_Draft201909MetaFormat() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaMetaData
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaMetaData.CompiledValidator_Draft201909MetaMetaData() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaMetaData.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaMetaData.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation.CompiledValidator_Draft201909MetaValidation() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaValidation.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema.CompiledValidator_Draft201909Schema() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909Schema.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator.CompiledValidator_Draft202012MetaApplicator() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaApplicator.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent.CompiledValidator_Draft202012MetaContent() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaContent.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore.CompiledValidator_Draft202012MetaCore() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaCore.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaFormatAnnotation
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaFormatAnnotation.CompiledValidator_Draft202012MetaFormatAnnotation() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaFormatAnnotation.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaFormatAnnotation.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaMetaData
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaMetaData.CompiledValidator_Draft202012MetaMetaData() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaMetaData.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaMetaData.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated.CompiledValidator_Draft202012MetaUnevaluated() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaUnevaluated.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation.CompiledValidator_Draft202012MetaValidation() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012MetaValidation.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema.CompiledValidator_Draft202012Schema() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft202012Schema.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft3Schema
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft3Schema.CompiledValidator_Draft3Schema() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft3Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft3Schema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft4Schema
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft4Schema.CompiledValidator_Draft4Schema() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft4Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft4Schema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft6Schema
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft6Schema.CompiledValidator_Draft6Schema() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft6Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft6Schema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema.CompiledValidator_Draft7Schema() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema.SchemaUri.get -> System.Uri!
