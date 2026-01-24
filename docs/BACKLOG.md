@@ -197,7 +197,7 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-007a: Thread-safety audit
+### TASK-007a: Thread-safety audit [x]
 - **Labels:** `reliability`, `concurrency`, `code-quality`
 - **Priority:** High
 - **Description:**
@@ -214,6 +214,15 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   - Context factories and validation contexts
   - Static API caches (`JsonSchemaValidator.SchemaCache`)
 
+  **Implementation completed (commit 47514b4):**
+  - `SchemaValidator.cs` - Added `Lock` + `volatile` for cache initialization
+  - `RefValidator.cs` (all 6 drafts) - Replaced manual cache with thread-safe `Lazy<T>` using `LazyThreadSafetyMode.ExecutionAndPublication`
+  - `JsonPointer.cs` - Made lazy string caching thread-safe with `Interlocked.CompareExchange`
+  - `SchemaRepository.cs` - Uses `ConcurrentDictionary` + volatile snapshot pattern for `_sortedSchemas`
+  - `CompiledValidatorRegistry.cs` - Uses `ConcurrentDictionary` for all three collections
+  - `JsonSchemaValidator.cs` - Uses `Lazy<T>` with `ExecutionAndPublication` + `ConcurrentDictionary` for schema cache
+  - Thread-safety XML documentation added to all public types
+
   **Deliverables:**
   - Document thread-safety guarantees for each public type
   - Fix any identified race conditions or unsafe patterns
@@ -221,10 +230,10 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   - Consider adding stress tests for concurrent usage
 
   **Acceptance criteria:**
-  - [ ] All concurrent code paths reviewed
-  - [ ] No plain collections used where concurrent access is possible
-  - [ ] Thread-safety documented for public types
-  - [ ] Any fixes verified with concurrent tests
+  - [x] All concurrent code paths reviewed
+  - [x] No plain collections used where concurrent access is possible
+  - [x] Thread-safety documented for public types
+  - [x] Any fixes verified with concurrent tests
 
 ---
 
@@ -955,4 +964,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-23 (TASK-001, TASK-002, TASK-003, TASK-004, TASK-004a, TASK-004b completed)*
+*Last updated: 2026-01-24 (TASK-001, TASK-002, TASK-003, TASK-004, TASK-004a, TASK-004b, TASK-007a completed)*
