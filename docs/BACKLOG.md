@@ -86,35 +86,29 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-037: Enforce draft scope in code generator
+### TASK-037: Enforce draft scope in code generator [x]
 - **Labels:** `code-generator`, `correctness`, `architecture`
 - **Priority:** High
+- **Status:** Complete
 - **Description:**
-  The code generator (`jsv-codegen`) currently has ambiguous draft support:
-  - Hardcodes `using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;` for format validators
-  - Has some cross-draft handling (`$id` vs `id`) but doesn't validate `$schema`
-  - No enforcement or warning when generating validators for non-2020-12 schemas
+  The code generator (`jsv-codegen`) now has full draft-aware support:
+  - Detects `$schema` and generates draft-specific code
+  - Draft-specific format validators (FormatValidators.cs per draft namespace)
+  - Draft-specific keyword semantics (items/prefixItems, dependencies, etc.)
+  - Supports all drafts: Draft 3, 4, 6, 7, 2019-09, 2020-12
 
-  This is problematic because:
-  1. **Benchmarking accuracy**: Benchmarks compare against validators like ajv using specific draft versions. If compiled validators don't properly implement those drafts, benchmarks are invalid.
-  2. **Semantic correctness**: Different drafts have different keyword semantics (e.g., `items` in Draft 4 vs 2020-12).
-  3. **User expectations**: Users may assume their Draft 7 schema will work correctly when compiled.
-
-  **Required changes:**
-  - Add `$schema` detection in code generator
-  - Either:
-    - (a) Restrict to Draft 2020-12 and 2019-09 only, with clear error for other drafts
-    - (b) Implement proper draft-specific code generation for all supported drafts
-  - Document supported drafts in code generator help/docs
-  - Update format validator imports to be draft-aware (if supporting multiple drafts)
-
-  **Note:** Internal metaschema validators (used to validate that user schemas conform to their draft) already exist for all drafts and are separate from user-facing code generation.
+  **Implementation:**
+  - `SchemaDraft` enum and `SchemaDraftDetector` for $schema detection
+  - All keyword code generators check `DetectedDraft` for draft-appropriate behavior
+  - `RecursiveRefCodeGenerator` for Draft 2019-09 `$recursiveRef` support
+  - `DynamicRefCodeGenerator` for Draft 2020-12 `$dynamicRef` support
+  - Backwards-compat: `dependencies` supported in 2019-09+ when alone (test policy)
 
   **Acceptance criteria:**
-  - [ ] Code generator validates `$schema` and enforces supported drafts
-  - [ ] Clear error message when unsupported draft is detected
-  - [ ] Documentation updated with supported draft list
-  - [ ] Benchmarks only use schemas with supported drafts
+  - [x] Code generator validates `$schema` and enforces supported drafts
+  - [x] Clear error message when unsupported draft is detected
+  - [x] Draft-specific keyword code generation for all drafts
+  - [x] Format validator imports are draft-aware
 
 ---
 
