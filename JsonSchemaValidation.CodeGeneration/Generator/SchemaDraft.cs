@@ -92,7 +92,8 @@ public static class SchemaDraftDetector
 
     /// <summary>
     /// Detects the JSON Schema draft version from a schema document.
-    /// Returns an error if $schema is missing or unrecognized.
+    /// If $schema is missing or empty, defaults to Draft 2020-12 (common practice for simple schemas).
+    /// Returns an error only for invalid $schema values (wrong type or unrecognized URI).
     /// </summary>
     /// <param name="schema">The root schema element.</param>
     /// <returns>Detection result with draft or error message.</returns>

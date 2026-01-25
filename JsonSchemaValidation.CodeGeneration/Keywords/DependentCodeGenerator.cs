@@ -31,8 +31,11 @@ public sealed class DependenciesCodeGenerator : IKeywordCodeGenerator
             return string.Empty;
         }
 
-        // In Draft 2019-09+, skip dependencies if dependentRequired or dependentSchemas are present
-        // to avoid duplicate assertions (those keywords supersede dependencies)
+        // In Draft 2019-09+, dependencies was replaced by dependentRequired/dependentSchemas.
+        // Per strict spec, dependencies should be ignored entirely for 2019-09+.
+        // However, we support it for backwards compatibility (optional dependencies-compatibility tests).
+        // Policy: We do not disable tests, so we accept dependencies in 2019-09+ when used alone.
+        // When the new keywords are also present, skip dependencies to avoid duplicate assertions.
         if (context.DetectedDraft >= SchemaDraft.Draft201909)
         {
             if (context.CurrentSchema.TryGetProperty("dependentRequired", out _) ||
