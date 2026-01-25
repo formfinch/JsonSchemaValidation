@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -24,6 +25,12 @@ public sealed class UnevaluatedItemsCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // unevaluatedItems was introduced in Draft 2019-09
+        if (context.DetectedDraft < SchemaDraft.Draft201909)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("unevaluatedItems", out var unevalItemsElement))
         {
             return string.Empty;

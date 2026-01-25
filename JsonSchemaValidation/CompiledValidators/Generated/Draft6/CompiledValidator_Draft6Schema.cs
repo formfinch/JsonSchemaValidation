@@ -11,7 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Draft6.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
@@ -390,7 +390,6 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     private static bool Validate_2028a8659daf(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
-        if (!FormatValidators.IsValidRegex(e)) return false;
         return true;
     }
 
@@ -473,7 +472,6 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 
     private static bool Validate_a0c839cc99e3(JsonElement e)
     {
-        if (!FormatValidators.IsValidRegex(e)) return false;
         return true;
     }
 

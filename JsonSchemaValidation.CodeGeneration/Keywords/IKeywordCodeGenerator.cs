@@ -2,6 +2,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -175,6 +176,12 @@ public sealed class CodeGenerationContext
     /// Set to false for runtime compilation where source generators don't run.
     /// </summary>
     public bool UseGeneratedRegex { get; init; } = true;
+
+    /// <summary>
+    /// The detected JSON Schema draft version for this schema.
+    /// Used to determine which format validators are supported.
+    /// </summary>
+    public SchemaDraft DetectedDraft { get; init; } = SchemaDraft.Draft202012;
 
     /// <summary>
     /// Whether annotation tracking requires passing location through method calls.

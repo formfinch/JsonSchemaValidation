@@ -2,6 +2,7 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -46,6 +47,12 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // $dynamicRef is Draft 2020-12 only
+        if (context.DetectedDraft != SchemaDraft.Draft202012)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("$dynamicRef", out var refElement))
         {
             return string.Empty;
