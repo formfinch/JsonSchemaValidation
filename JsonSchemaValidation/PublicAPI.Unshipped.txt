@@ -317,7 +317,6 @@ static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.Is
 FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
-static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidDuration(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidIdnHostname(System.Text.Json.JsonElement data) -> bool
@@ -331,4 +330,3 @@ static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.Is
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidTime(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidUriReference(System.Text.Json.JsonElement data) -> bool
-static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidUuid(System.Text.Json.JsonElement data) -> bool

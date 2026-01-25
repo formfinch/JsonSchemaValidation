@@ -8,15 +8,15 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords.Format;
 /// <summary>
 /// Provides static format validation methods for use in compiled validators.
 /// Wraps the internal format validators with a public static API.
-/// Draft 7 supports: date-time, date, time, duration, email, idn-email, hostname, idn-hostname,
-/// ipv4, ipv6, uri, uri-reference, iri, iri-reference, json-pointer, relative-json-pointer, regex, uuid.
+/// Draft 7 supports: date-time, date, time, email, idn-email, hostname, idn-hostname,
+/// ipv4, ipv6, uri, uri-reference, iri, iri-reference, json-pointer, relative-json-pointer, regex.
+/// Note: duration and uuid were added in Draft 2019-09.
 /// </summary>
 public static class FormatValidators
 {
     private static readonly DateTimeValidator DateTimeInner = new();
     private static readonly DateValidator DateInner = new();
     private static readonly TimeValidator TimeInner = new();
-    private static readonly DurationValidator DurationInner = new();
     private static readonly EmailValidator EmailInner = new();
     private static readonly HostnameValidator HostnameInner = new(isIDNFormat: false);
     private static readonly HostnameValidator IdnHostnameInner = new(isIDNFormat: true);
@@ -29,12 +29,10 @@ public static class FormatValidators
     private static readonly JsonPointerValidator JsonPointerInner = new();
     private static readonly RelativeJsonPointerValidator RelativeJsonPointerInner = new();
     private static readonly RegexValidator RegexInner = new();
-    private static readonly UuidValidator UuidInner = new();
 
     public static bool IsValidDateTime(JsonElement data) => DateTimeInner.IsValid(data);
     public static bool IsValidDate(JsonElement data) => DateInner.IsValid(data);
     public static bool IsValidTime(JsonElement data) => TimeInner.IsValid(data);
-    public static bool IsValidDuration(JsonElement data) => DurationInner.IsValid(data);
     public static bool IsValidEmail(JsonElement data) => EmailInner.IsValid(data);
     public static bool IsValidHostname(JsonElement data) => HostnameInner.IsValid(data);
     public static bool IsValidIdnHostname(JsonElement data) => IdnHostnameInner.IsValid(data);
@@ -47,5 +45,4 @@ public static class FormatValidators
     public static bool IsValidJsonPointer(JsonElement data) => JsonPointerInner.IsValid(data);
     public static bool IsValidRelativeJsonPointer(JsonElement data) => RelativeJsonPointerInner.IsValid(data);
     public static bool IsValidRegex(JsonElement data) => RegexInner.IsValid(data);
-    public static bool IsValidUuid(JsonElement data) => UuidInner.IsValid(data);
 }
