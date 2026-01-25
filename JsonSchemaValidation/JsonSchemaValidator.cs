@@ -1,7 +1,6 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
-using System.Collections.Concurrent;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Common;
@@ -55,9 +54,9 @@ namespace FormFinch.JsonSchemaValidation
 
         // Cache schema content hash -> schema URI to avoid re-registering
         // when the same schema is validated multiple times via one-shot Validate().
-        // Limited to prevent unbounded memory growth in long-running processes.
-        private static readonly ConcurrentDictionary<string, Uri> SchemaCache = new(StringComparer.Ordinal);
+        // Uses LRU eviction to preserve frequently-used schemas while bounding memory.
         private const int MaxCacheSize = 1000;
+        private static readonly LruCache<string, Uri> SchemaCache = new(MaxCacheSize, StringComparer.Ordinal);
 
         #region Validate Methods
 
@@ -346,14 +345,7 @@ namespace FormFinch.JsonSchemaValidation
             // Cache the URI for future lookups (only for default services)
             if (useCache && hash != null)
             {
-                // Clear cache if it exceeds the size limit to prevent unbounded memory growth.
-                // Simple clear-on-overflow strategy; more sophisticated LRU could be added if needed.
-                if (SchemaCache.Count >= MaxCacheSize)
-                {
-                    SchemaCache.Clear();
-                }
-
-                SchemaCache.TryAdd(hash, schemaUri);
+                SchemaCache.Set(hash, schemaUri);
             }
 
             return schemaUri;
