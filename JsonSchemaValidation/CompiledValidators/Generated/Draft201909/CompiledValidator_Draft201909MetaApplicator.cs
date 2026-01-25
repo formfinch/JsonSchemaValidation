@@ -11,7 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
@@ -127,6 +127,15 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 
     private bool Validate_f408d0871962(JsonElement e)
     {
+        // $recursiveRef: # (with runtime scope check)
+        if (_dynamicScopeRoot != null)
+        {
+            if (!_dynamicScopeRoot.IsValid(e)) return false;
+        }
+        else
+        {
+            if (!Validate_1ee25d1eb6cb(e)) return false;
+        }
         return true;
     }
 

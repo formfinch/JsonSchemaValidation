@@ -3,12 +3,14 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
-/// Generates code for the legacy "dependencies" keyword (compatibility with older drafts).
-/// The dependencies keyword combines both dependentRequired (array values) and dependentSchemas (schema values).
+/// Generates code for the legacy "dependencies" keyword.
+/// In Draft 2019-09+, this was split into dependentRequired and dependentSchemas.
+/// If those keywords are present, dependencies is skipped to avoid duplicate assertions.
 /// </summary>
 public sealed class DependenciesCodeGenerator : IKeywordCodeGenerator
 {
@@ -27,6 +29,17 @@ public sealed class DependenciesCodeGenerator : IKeywordCodeGenerator
         if (!context.CurrentSchema.TryGetProperty("dependencies", out var depsElement))
         {
             return string.Empty;
+        }
+
+        // In Draft 2019-09+, skip dependencies if dependentRequired or dependentSchemas are present
+        // to avoid duplicate assertions (those keywords supersede dependencies)
+        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        {
+            if (context.CurrentSchema.TryGetProperty("dependentRequired", out _) ||
+                context.CurrentSchema.TryGetProperty("dependentSchemas", out _))
+            {
+                return string.Empty;
+            }
         }
 
         var e = context.ElementVariable;
@@ -114,6 +127,12 @@ public sealed class DependentRequiredCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // dependentRequired was introduced in Draft 2019-09
+        if (context.DetectedDraft < SchemaDraft.Draft201909)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("dependentRequired", out var depReqElement))
         {
             return string.Empty;
@@ -195,6 +214,12 @@ public sealed class DependentSchemasCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // dependentSchemas was introduced in Draft 2019-09
+        if (context.DetectedDraft < SchemaDraft.Draft201909)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("dependentSchemas", out var depSchemasElement))
         {
             return string.Empty;

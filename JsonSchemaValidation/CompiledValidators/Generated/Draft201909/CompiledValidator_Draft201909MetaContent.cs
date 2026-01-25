@@ -11,17 +11,33 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909MetaContent : ICompiledValidator
+    public sealed class CompiledValidator_Draft201909MetaContent : IRegistryAwareCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/content");
 
+        private ICompiledValidator? _dynamicScopeRoot;
+
+        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void Initialize(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void SetDynamicScopeRoot(ICompiledValidator? root)
+        {
+            _dynamicScopeRoot = root;
+        }
+
         public bool IsValid(JsonElement instance) => Validate_3d3257f724a4(instance);
 
-    private static bool Validate_3d3257f724a4(JsonElement e)
+    private bool Validate_3d3257f724a4(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -50,15 +66,24 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_00404e686415(JsonElement e)
+    private bool Validate_00404e686415(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private static bool Validate_f408d0871962(JsonElement e)
+    private bool Validate_f408d0871962(JsonElement e)
     {
+        // $recursiveRef: # (with runtime scope check)
+        if (_dynamicScopeRoot != null)
+        {
+            if (!_dynamicScopeRoot.IsValid(e)) return false;
+        }
+        else
+        {
+            if (!Validate_3d3257f724a4(e)) return false;
+        }
         return true;
     }
 

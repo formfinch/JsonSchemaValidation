@@ -2,41 +2,56 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
-using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "format" keyword.
 /// Uses the same format validators as the dynamic validator via public singleton wrappers.
+/// Supports draft-specific formats - unsupported formats for a draft are treated as annotations (per spec).
 /// </summary>
 public sealed class FormatCodeGenerator : IKeywordCodeGenerator
 {
     public string Keyword => "format";
     public int Priority => 40;
 
-    // Known format validators that can be used in generated code
-    private static readonly HashSet<string> SupportedFormats = new(StringComparer.Ordinal)
+    /// <summary>
+    /// Formats supported by each draft version.
+    /// Unsupported formats are treated as annotations (no validation, per JSON Schema spec).
+    /// </summary>
+    private static readonly Dictionary<SchemaDraft, HashSet<string>> SupportedFormatsByDraft = new()
     {
-        "date-time",
-        "date",
-        "duration",
-        "email",
-        "hostname",
-        "idn-email",
-        "idn-hostname",
-        "ipv4",
-        "ipv6",
-        "iri",
-        "iri-reference",
-        "json-pointer",
-        "regex",
-        "relative-json-pointer",
-        "time",
-        "uri",
-        "uri-reference",
-        "uri-template",
-        "uuid",
+        [SchemaDraft.Draft3] = new(StringComparer.Ordinal)
+        {
+            "date-time", "date", "time", "email", "hostname", "ipv4", "ipv6", "uri", "regex", "color"
+        },
+        [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
+        {
+            "date-time", "email", "hostname", "ipv4", "ipv6", "uri"
+        },
+        [SchemaDraft.Draft6] = new(StringComparer.Ordinal)
+        {
+            "date-time", "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference", "json-pointer"
+        },
+        [SchemaDraft.Draft7] = new(StringComparer.Ordinal)
+        {
+            "date-time", "date", "time", "email", "idn-email", "hostname", "idn-hostname",
+            "ipv4", "ipv6", "uri", "uri-reference", "iri", "iri-reference",
+            "json-pointer", "relative-json-pointer", "regex"
+        },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "date-time", "date", "time", "duration", "email", "idn-email", "hostname", "idn-hostname",
+            "ipv4", "ipv6", "uri", "uri-reference", "uri-template", "iri", "iri-reference",
+            "json-pointer", "relative-json-pointer", "regex", "uuid"
+        },
+        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        {
+            "date-time", "date", "time", "duration", "email", "idn-email", "hostname", "idn-hostname",
+            "ipv4", "ipv6", "uri", "uri-reference", "uri-template", "iri", "iri-reference",
+            "json-pointer", "relative-json-pointer", "regex", "uuid"
+        }
     };
 
     public bool CanGenerate(JsonElement schema)
@@ -46,14 +61,10 @@ public sealed class FormatCodeGenerator : IKeywordCodeGenerator
             return false;
         }
 
-        if (!schema.TryGetProperty("format", out var formatElement) ||
-            formatElement.ValueKind != JsonValueKind.String)
-        {
-            return false;
-        }
-
-        var format = formatElement.GetString();
-        return !string.IsNullOrEmpty(format) && SupportedFormats.Contains(format);
+        // Return true for any schema with a format property - draft-specific filtering happens in GenerateCode
+        return schema.TryGetProperty("format", out var formatElement) &&
+               formatElement.ValueKind == JsonValueKind.String &&
+               !string.IsNullOrEmpty(formatElement.GetString());
     }
 
     public string GenerateCode(CodeGenerationContext context)
@@ -64,8 +75,16 @@ public sealed class FormatCodeGenerator : IKeywordCodeGenerator
         }
 
         var format = formatElement.GetString();
-        if (string.IsNullOrEmpty(format) || !SupportedFormats.Contains(format))
+        if (string.IsNullOrEmpty(format))
         {
+            return string.Empty;
+        }
+
+        // Check if format is supported for the detected draft
+        if (!SupportedFormatsByDraft.TryGetValue(context.DetectedDraft, out var supportedFormats) ||
+            !supportedFormats.Contains(format))
+        {
+            // Format not supported for this draft - treat as annotation only (no validation)
             return string.Empty;
         }
 
@@ -87,23 +106,24 @@ if (!{{validatorMethod}}({{e}})) return false;
     {
         "date-time" => "FormatValidators.IsValidDateTime",
         "date" => "FormatValidators.IsValidDate",
+        "time" => "FormatValidators.IsValidTime",
         "duration" => "FormatValidators.IsValidDuration",
         "email" => "FormatValidators.IsValidEmail",
-        "hostname" => "FormatValidators.IsValidHostname",
         "idn-email" => "FormatValidators.IsValidEmail",
+        "hostname" => "FormatValidators.IsValidHostname",
         "idn-hostname" => "FormatValidators.IsValidIdnHostname",
         "ipv4" => "FormatValidators.IsValidIpv4",
         "ipv6" => "FormatValidators.IsValidIpv6",
-        "iri" => "FormatValidators.IsValidIri",
-        "iri-reference" => "FormatValidators.IsValidIriReference",
-        "json-pointer" => "FormatValidators.IsValidJsonPointer",
-        "regex" => "FormatValidators.IsValidRegex",
-        "relative-json-pointer" => "FormatValidators.IsValidRelativeJsonPointer",
-        "time" => "FormatValidators.IsValidTime",
         "uri" => "FormatValidators.IsValidUri",
         "uri-reference" => "FormatValidators.IsValidUriReference",
         "uri-template" => "FormatValidators.IsValidUriTemplate",
+        "iri" => "FormatValidators.IsValidIri",
+        "iri-reference" => "FormatValidators.IsValidIriReference",
+        "json-pointer" => "FormatValidators.IsValidJsonPointer",
+        "relative-json-pointer" => "FormatValidators.IsValidRelativeJsonPointer",
+        "regex" => "FormatValidators.IsValidRegex",
         "uuid" => "FormatValidators.IsValidUuid",
+        "color" => "FormatValidators.IsValidColor",
         _ => throw new InvalidOperationException($"Unknown format: {format}")
     };
 }

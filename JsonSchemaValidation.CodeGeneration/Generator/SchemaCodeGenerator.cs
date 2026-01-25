@@ -32,6 +32,7 @@ public sealed class SchemaCodeGenerator
             new BooleanSchemaCodeGenerator(),
             new RefCodeGenerator(),
             new DynamicRefCodeGenerator(),
+            new RecursiveRefCodeGenerator(),
             new TypeCodeGenerator(),
             new RequiredCodeGenerator(),
             new EnumCodeGenerator(),
@@ -42,6 +43,7 @@ public sealed class SchemaCodeGenerator
             new ObjectConstraintsCodeGenerator(),
             new PrefixItemsCodeGenerator(),
             new ItemsCodeGenerator(),
+            new AdditionalItemsCodeGenerator(),
             new ContainsCodeGenerator(),
             new PropertiesCodeGenerator(),
             new PatternPropertiesCodeGenerator(),
@@ -88,6 +90,14 @@ public sealed class SchemaCodeGenerator
     {
         try
         {
+            // Detect JSON Schema draft version - must be done first to validate schema is supported
+            var draftResult = SchemaDraftDetector.DetectDraft(schema);
+            if (!draftResult.Success)
+            {
+                return GenerationResult.Failed(draftResult.ErrorMessage!);
+            }
+            var detectedDraft = draftResult.Draft;
+
             // Extract schema URI for class naming and ICompiledValidator.SchemaUri
             var schemaUri = ExtractSchemaUri(schema);
             var resolvedClassName = className ?? DeriveClassName(schemaUri, sourcePath);
@@ -137,7 +147,7 @@ public sealed class SchemaCodeGenerator
             var hasDynamicRefWithBookend = false;
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft);
                 foreach (var generator in _keywordGenerators)
                 {
                     if (generator.CanGenerate(subschemaInfo.Schema))
@@ -161,7 +171,7 @@ public sealed class SchemaCodeGenerator
             var methods = new StringBuilder();
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, needsRegistryAware, requiresPropertyAnnotations, requiresItemAnnotations);
+                var methodCode = GenerateValidationMethod(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, needsRegistryAware, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft);
                 methods.AppendLine(methodCode);
                 methods.AppendLine();
             }
@@ -169,7 +179,7 @@ public sealed class SchemaCodeGenerator
             // Collect static fields from all subschemas
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft);
                 foreach (var generator in _keywordGenerators)
                 {
                     if (generator.CanGenerate(subschemaInfo.Schema))
@@ -199,7 +209,8 @@ public sealed class SchemaCodeGenerator
                 methods.ToString(),
                 requiresPropertyAnnotations,
                 requiresItemAnnotations,
-                UseGeneratedRegex);
+                UseGeneratedRegex,
+                detectedDraft);
 
             var fileName = $"{resolvedClassName}.cs";
             return GenerationResult.Succeeded(code, fileName);
@@ -210,9 +221,9 @@ public sealed class SchemaCodeGenerator
         }
     }
 
-    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool needsRegistryAware, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
+    private string GenerateValidationMethod(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool needsRegistryAware, bool requiresPropertyAnnotations, bool requiresItemAnnotations, SchemaDraft detectedDraft)
     {
-        var context = CreateContext(subschemaInfo, allSchemas, baseUri, externalRefs, requiresPropertyAnnotations, requiresItemAnnotations);
+        var context = CreateContext(subschemaInfo, allSchemas, baseUri, externalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft);
         var sb = new StringBuilder();
 
         // Use instance methods if registry-aware or annotation tracking (need instance fields)
@@ -264,7 +275,7 @@ public sealed class SchemaCodeGenerator
         return sb.ToString();
     }
 
-    private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool requiresPropertyAnnotations, bool requiresItemAnnotations)
+    private CodeGenerationContext CreateContext(SubschemaInfo subschemaInfo, Dictionary<string, SubschemaInfo> allSchemas, Uri? baseUri, List<ExternalRefInfo> externalRefs, bool requiresPropertyAnnotations, bool requiresItemAnnotations, SchemaDraft detectedDraft)
     {
         // Use the subschema's effective base URI if available, otherwise fall back to root base URI
         var effectiveBaseUri = subschemaInfo.EffectiveBaseUri ?? baseUri;
@@ -286,7 +297,8 @@ public sealed class SchemaCodeGenerator
             ExternalRefs = externalRefs,
             RequiresPropertyAnnotations = requiresPropertyAnnotations,
             RequiresItemAnnotations = requiresItemAnnotations,
-            UseGeneratedRegex = UseGeneratedRegex
+            UseGeneratedRegex = UseGeneratedRegex,
+            DetectedDraft = detectedDraft
         };
     }
 
@@ -302,7 +314,8 @@ public sealed class SchemaCodeGenerator
         string methods,
         bool requiresPropertyAnnotations,
         bool requiresItemAnnotations,
-        bool useGeneratedRegex)
+        bool useGeneratedRegex,
+        SchemaDraft detectedDraft)
     {
         var hasExternalRefs = externalRefs.Count > 0;
         var hasFragmentSubschemas = fragmentSubschemas.Count > 0;
@@ -323,7 +336,7 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("using System.Text.Json;");
         sb.AppendLine("using System.Text.RegularExpressions;");
         sb.AppendLine("using FormFinch.JsonSchemaValidation.Abstractions;");
-        sb.AppendLine("using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;");
+        sb.AppendLine($"using FormFinch.JsonSchemaValidation.{SchemaDraftDetector.GetNamespace(detectedDraft)}.Keywords.Format;");
         if (needsRegistryAware)
         {
             sb.AppendLine("using FormFinch.JsonSchemaValidation.CompiledValidators;");

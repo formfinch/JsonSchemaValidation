@@ -11,11 +11,12 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed partial class CompiledValidator_Draft201909MetaCore : ICompiledValidator
+    public sealed partial class CompiledValidator_Draft201909MetaCore : IRegistryAwareCompiledValidator
     {
         [GeneratedRegex(@"^[^#]*#?$", RegexOptions.None, matchTimeoutMilliseconds: 5000)]
         private static partial Regex Pattern_edcdb22c519d();
@@ -24,9 +25,24 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/core");
 
+        private ICompiledValidator? _dynamicScopeRoot;
+
+        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void Initialize(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void SetDynamicScopeRoot(ICompiledValidator? root)
+        {
+            _dynamicScopeRoot = root;
+        }
+
         public bool IsValid(JsonElement instance) => Validate_97f4142fd422(instance);
 
-    private static bool Validate_97f4142fd422(JsonElement e)
+    private bool Validate_97f4142fd422(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -79,7 +95,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_edcdb22c519d(JsonElement e)
+    private bool Validate_edcdb22c519d(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (e.ValueKind == JsonValueKind.String)
@@ -92,7 +108,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_f9757109fae3(JsonElement e)
+    private bool Validate_f9757109fae3(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidUri(e)) return false;
@@ -100,7 +116,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_4657485aab9e(JsonElement e)
+    private bool Validate_4657485aab9e(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (e.ValueKind == JsonValueKind.String)
@@ -112,7 +128,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_5dc527ab08dc(JsonElement e)
+    private bool Validate_5dc527ab08dc(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidUriReference(e)) return false;
@@ -120,14 +136,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_7cb541e84f22(JsonElement e)
+    private bool Validate_7cb541e84f22(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
         return true;
     }
 
 
-    private static bool Validate_f46f77c6529f(JsonElement e)
+    private bool Validate_f46f77c6529f(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -151,14 +167,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_00404e686415(JsonElement e)
+    private bool Validate_00404e686415(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private static bool Validate_b3a76762e1d8(JsonElement e)
+    private bool Validate_b3a76762e1d8(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -173,8 +189,17 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_f408d0871962(JsonElement e)
+    private bool Validate_f408d0871962(JsonElement e)
     {
+        // $recursiveRef: # (with runtime scope check)
+        if (_dynamicScopeRoot != null)
+        {
+            if (!_dynamicScopeRoot.IsValid(e)) return false;
+        }
+        else
+        {
+            if (!Validate_97f4142fd422(e)) return false;
+        }
         return true;
     }
 

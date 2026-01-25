@@ -168,12 +168,18 @@ FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Dr
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaApplicator.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.CompiledValidator_Draft201909MetaContent() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaContent.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.CompiledValidator_Draft201909MetaCore() -> void
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.Initialize(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.IsValid(System.Text.Json.JsonElement instance) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.RegisterSubschemas(FormFinch.JsonSchemaValidation.CompiledValidators.ICompiledValidatorRegistry! registry) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaCore.SetDynamicScopeRoot(FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator? root) -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat.CompiledValidator_Draft201909MetaFormat() -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft201909MetaFormat.IsValid(System.Text.Json.JsonElement instance) -> bool
@@ -262,3 +268,67 @@ FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Dr
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema.CompiledValidator_Draft7Schema() -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema.IsValid(System.Text.Json.JsonElement instance) -> bool
 FormFinch.JsonSchemaValidation.CompiledValidators.Generated.CompiledValidator_Draft7Schema.SchemaUri.get -> System.Uri!
+FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidDuration(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidIdnHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidIpv4(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidIpv6(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidIri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidIriReference(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidRegex(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidRelativeJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidUriReference(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidUriTemplate(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidUuid(System.Text.Json.JsonElement data) -> bool
+FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidColor(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidIpv4(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidIpv6(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidRegex(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft3.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
+FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators
+static FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators.IsValidIpv4(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators.IsValidIpv6(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft4.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
+FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidIpv4(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidIpv6(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft6.Keywords.Format.FormatValidators.IsValidUriReference(System.Text.Json.JsonElement data) -> bool
+FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidDuration(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidEmail(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidIdnHostname(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidIpv4(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidIpv6(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidIri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidIriReference(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidRegex(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidRelativeJsonPointer(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidTime(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidUri(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidUriReference(System.Text.Json.JsonElement data) -> bool
+static FormFinch.JsonSchemaValidation.Draft7.Keywords.Format.FormatValidators.IsValidUuid(System.Text.Json.JsonElement data) -> bool

@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -113,6 +114,12 @@ public sealed class ConstCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // const was introduced in Draft 6
+        if (context.DetectedDraft < SchemaDraft.Draft6)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("const", out _))
         {
             return string.Empty;
@@ -126,6 +133,12 @@ public sealed class ConstCodeGenerator : IKeywordCodeGenerator
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
     {
+        // const was introduced in Draft 6
+        if (context.DetectedDraft < SchemaDraft.Draft6)
+        {
+            yield break;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("const", out var constElement))
         {
             yield break;

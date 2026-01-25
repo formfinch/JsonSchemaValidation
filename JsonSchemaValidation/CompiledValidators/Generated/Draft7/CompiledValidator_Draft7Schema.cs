@@ -11,7 +11,7 @@ using System.Globalization;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Draft7.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {

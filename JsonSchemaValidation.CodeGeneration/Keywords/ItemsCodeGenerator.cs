@@ -3,11 +3,14 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
-/// Generates code for the "items" keyword (2020-12 style - single schema).
+/// Generates code for the "items" keyword.
+/// Draft 2019-09+: items is a single schema that applies after prefixItems.
+/// Draft 3-7: items can be an array (tuple validation) or a single schema (all items).
 /// </summary>
 public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
 {
@@ -21,15 +24,7 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             return false;
         }
 
-        if (!schema.TryGetProperty("items", out var items))
-        {
-            return false;
-        }
-
-        // Handle 2020-12 style (single schema) or check if it's not array style
-        return items.ValueKind == JsonValueKind.Object ||
-               items.ValueKind == JsonValueKind.True ||
-               items.ValueKind == JsonValueKind.False;
+        return schema.TryGetProperty("items", out _);
     }
 
     public string GenerateCode(CodeGenerationContext context)
@@ -39,10 +34,26 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             return string.Empty;
         }
 
-        // Skip if this is array-style items (draft 4/6/7)
+        // Handle based on draft version
+        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        {
+            return GenerateDraft202012Items(context, itemsElement);
+        }
+        else
+        {
+            return GenerateLegacyItems(context, itemsElement);
+        }
+    }
+
+    /// <summary>
+    /// Draft 2019-09+: items is always a single schema that applies to items after prefixItems.
+    /// </summary>
+    private string GenerateDraft202012Items(CodeGenerationContext context, JsonElement itemsElement)
+    {
+        // In 2020-12, items must be a schema (object or boolean), not an array
         if (itemsElement.ValueKind == JsonValueKind.Array)
         {
-            return string.Empty;
+            return string.Empty; // Invalid for 2020-12
         }
 
         var e = context.ElementVariable;
@@ -51,7 +62,7 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
         var trackAnnotations = context.RequiresItemAnnotations;
         var hash = context.GetSubschemaHash(itemsElement);
 
-        // Check if prefixItems exists (2020-12) - if so, items only validates after prefixItems
+        // Check if prefixItems exists - if so, items only validates after prefixItems
         var hasPrefixItems = context.CurrentSchema.TryGetProperty("prefixItems", out var prefixItemsElement);
         var prefixCount = 0;
         if (hasPrefixItems && prefixItemsElement.ValueKind == JsonValueKind.Array)
@@ -76,7 +87,6 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    }");
             if (trackAnnotations)
             {
-                // items evaluates all items from prefixCount onwards
                 sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
             }
         }
@@ -90,11 +100,96 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("    }");
             if (trackAnnotations)
             {
-                // items evaluates all items
                 sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
             }
         }
 
+        sb.AppendLine("}");
+
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Draft 3-7: items can be an array (tuple validation) or a single schema (all items).
+    /// </summary>
+    private string GenerateLegacyItems(CodeGenerationContext context, JsonElement itemsElement)
+    {
+        var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
+        var trackAnnotations = context.RequiresItemAnnotations;
+
+        if (itemsElement.ValueKind == JsonValueKind.Array)
+        {
+            // Tuple validation: each schema in array validates corresponding item
+            return GenerateTupleItems(context, itemsElement);
+        }
+        else if (itemsElement.ValueKind == JsonValueKind.Object ||
+                 itemsElement.ValueKind == JsonValueKind.True ||
+                 itemsElement.ValueKind == JsonValueKind.False)
+        {
+            // Single schema: applies to all items
+            var hash = context.GetSubschemaHash(itemsElement);
+            var sb = new StringBuilder();
+
+            sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Array)");
+            sb.AppendLine("{");
+            sb.AppendLine("    var _itemIdx_ = 0;");
+            sb.AppendLine($"    foreach (var _arrItem_ in {e}.EnumerateArray())");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        if (!{context.GenerateValidateCallForItem(hash, "_arrItem_", "_itemIdx_")}) return false;");
+            sb.AppendLine("        _itemIdx_++;");
+            sb.AppendLine("    }");
+            if (trackAnnotations)
+            {
+                sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
+            }
+            sb.AppendLine("}");
+
+            return sb.ToString();
+        }
+
+        return string.Empty;
+    }
+
+    /// <summary>
+    /// Generate tuple validation for items array (Draft 3-7).
+    /// </summary>
+    private string GenerateTupleItems(CodeGenerationContext context, JsonElement itemsElement)
+    {
+        var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
+        var trackAnnotations = context.RequiresItemAnnotations;
+        var sb = new StringBuilder();
+
+        var itemCount = itemsElement.GetArrayLength();
+
+        sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Array)");
+        sb.AppendLine("{");
+        sb.AppendLine("    var _tupleIdx_ = 0;");
+        sb.AppendLine($"    foreach (var _tupleItem_ in {e}.EnumerateArray())");
+        sb.AppendLine("    {");
+
+        var idx = 0;
+        foreach (var subschema in itemsElement.EnumerateArray())
+        {
+            var hash = context.GetSubschemaHash(subschema);
+            sb.AppendLine($"        if (_tupleIdx_ == {idx})");
+            sb.AppendLine("        {");
+            sb.AppendLine($"            if (!{context.GenerateValidateCallForItem(hash, "_tupleItem_", "_tupleIdx_")}) return false;");
+            sb.AppendLine("        }");
+            idx++;
+        }
+
+        sb.AppendLine($"        if (_tupleIdx_ >= {idx}) break;");
+        sb.AppendLine("        _tupleIdx_++;");
+        sb.AppendLine("    }");
+        if (trackAnnotations)
+        {
+            sb.AppendLine($"    var _evalCount_ = Math.Min({itemCount}, {e}.GetArrayLength());");
+            sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, _evalCount_);");
+        }
         sb.AppendLine("}");
 
         return sb.ToString();
@@ -107,7 +202,7 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
 }
 
 /// <summary>
-/// Generates code for the "prefixItems" keyword (2020-12).
+/// Generates code for the "prefixItems" keyword (Draft 2019-09+).
 /// </summary>
 public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
 {
@@ -123,6 +218,12 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // prefixItems is Draft 2019-09+
+        if (context.DetectedDraft < SchemaDraft.Draft201909)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("prefixItems", out var prefixItemsElement))
         {
             return string.Empty;
@@ -158,9 +259,77 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine("    }");
         if (trackAnnotations)
         {
-            // prefixItems evaluates items up to the smaller of prefixItems.length and array.length
             sb.AppendLine($"    var _evalCount_ = Math.Min({prefixCount}, {e}.GetArrayLength());");
             sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, _evalCount_);");
+        }
+        sb.AppendLine("}");
+
+        return sb.ToString();
+    }
+
+    public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
+    {
+        return [];
+    }
+}
+
+/// <summary>
+/// Generates code for the "additionalItems" keyword (Draft 3-7 only).
+/// In these drafts, additionalItems applies to array items beyond those covered by items array.
+/// </summary>
+public sealed class AdditionalItemsCodeGenerator : IKeywordCodeGenerator
+{
+    public string Keyword => "additionalItems";
+    public int Priority => 42; // After items tuple
+
+    public bool CanGenerate(JsonElement schema)
+    {
+        return schema.ValueKind == JsonValueKind.Object &&
+               schema.TryGetProperty("additionalItems", out _);
+    }
+
+    public string GenerateCode(CodeGenerationContext context)
+    {
+        // additionalItems only applies in Draft 3-7 (removed in 2019-09+)
+        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        {
+            return string.Empty;
+        }
+
+        if (!context.CurrentSchema.TryGetProperty("additionalItems", out var additionalItemsElement))
+        {
+            return string.Empty;
+        }
+
+        // additionalItems only has effect when items is an array (tuple validation)
+        if (!context.CurrentSchema.TryGetProperty("items", out var itemsElement) ||
+            itemsElement.ValueKind != JsonValueKind.Array)
+        {
+            return string.Empty;
+        }
+
+        var tupleLength = itemsElement.GetArrayLength();
+        var e = context.ElementVariable;
+        var eval = context.EvaluatedStateVariable;
+        var loc = context.LocationVariable;
+        var trackAnnotations = context.RequiresItemAnnotations;
+        var hash = context.GetSubschemaHash(additionalItemsElement);
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"if ({e}.ValueKind == JsonValueKind.Array)");
+        sb.AppendLine("{");
+        sb.AppendLine($"    var _addItemIdx_ = 0;");
+        sb.AppendLine($"    foreach (var _addItem_ in {e}.EnumerateArray())");
+        sb.AppendLine("    {");
+        sb.AppendLine($"        if (_addItemIdx_ >= {tupleLength})");
+        sb.AppendLine("        {");
+        sb.AppendLine($"            if (!{context.GenerateValidateCallForItem(hash, "_addItem_", "_addItemIdx_")}) return false;");
+        sb.AppendLine("        }");
+        sb.AppendLine("        _addItemIdx_++;");
+        sb.AppendLine("    }");
+        if (trackAnnotations)
+        {
+            sb.AppendLine($"    {eval}.SetEvaluatedItemsUpTo({loc}, {e}.GetArrayLength());");
         }
         sb.AppendLine("}");
 

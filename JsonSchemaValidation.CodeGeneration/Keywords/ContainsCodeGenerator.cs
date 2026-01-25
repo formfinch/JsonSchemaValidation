@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -22,6 +23,12 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
+        // contains was introduced in Draft 6
+        if (context.DetectedDraft < SchemaDraft.Draft6)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("contains", out var containsElement))
         {
             return string.Empty;
@@ -34,19 +41,23 @@ public sealed class ContainsCodeGenerator : IKeywordCodeGenerator
         var containsHash = context.GetSubschemaHash(containsElement);
 
         // Get minContains/maxContains (defaults: minContains=1, maxContains=unlimited)
+        // minContains/maxContains were introduced in Draft 2019-09
         var minContains = 1L;
         var maxContains = (long)int.MaxValue;
 
-        if (context.CurrentSchema.TryGetProperty("minContains", out var minElement) &&
-            TryGetIntegerValue(minElement, out var min))
+        if (context.DetectedDraft >= SchemaDraft.Draft201909)
         {
-            minContains = min;
-        }
+            if (context.CurrentSchema.TryGetProperty("minContains", out var minElement) &&
+                TryGetIntegerValue(minElement, out var min))
+            {
+                minContains = min;
+            }
 
-        if (context.CurrentSchema.TryGetProperty("maxContains", out var maxElement) &&
-            TryGetIntegerValue(maxElement, out var max))
-        {
-            maxContains = max;
+            if (context.CurrentSchema.TryGetProperty("maxContains", out var maxElement) &&
+                TryGetIntegerValue(maxElement, out var max))
+            {
+                maxContains = max;
+            }
         }
 
         var sb = new StringBuilder();
