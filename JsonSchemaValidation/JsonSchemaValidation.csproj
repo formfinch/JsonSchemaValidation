@@ -60,6 +60,7 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests" />
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests.Stress" />
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.CodeGeneration" />
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Compiler" />
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Benchmarks" />
