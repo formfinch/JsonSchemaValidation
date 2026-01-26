@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RunSettings>
+  <DataCollectionRunSettings>
+    <DataCollectors>
+      <DataCollector friendlyName="XPlat Code Coverage">
+        <Configuration>
+          <Format>cobertura</Format>
+          <Exclude>
+            [*]*.Designer.cs,
+            [*]*.g.cs,
+            [*]*CompiledValidators.Generated*
+          </Exclude>
+          <ExcludeByFile>
+            **/CompiledValidators/Generated/**/*.cs,
+            **/Properties/Resources.Designer.cs,
+            **/obj/**/*.cs
+          </ExcludeByFile>
+          <ExcludeByAttribute>
+            GeneratedCodeAttribute,
+            CompilerGeneratedAttribute
+          </ExcludeByAttribute>
+        </Configuration>
+      </DataCollector>
+    </DataCollectors>
+  </DataCollectionRunSettings>
+</RunSettings>
