@@ -2,7 +2,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
-using System.Text.Json.Nodes;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
@@ -10,10 +9,10 @@ using FormFinch.JsonSchemaValidationTests.Common;
 using FormFinch.JsonSchemaValidationTests.TestCases;
 using Xunit.Sdk;
 
-namespace FormFinch.JsonSchemaValidationTests.Draft202012
+namespace FormFinch.JsonSchemaValidationTests.Draft7
 {
     /// <summary>
-    /// Shared fixture for compiled schema validation tests.
+    /// Shared fixture for Draft 7 compiled schema validation tests.
     /// This fixture is created once and shared across all tests, avoiding
     /// expensive re-initialization of the registry and remote schema loading.
     /// </summary>
@@ -53,7 +52,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
             }
 
             // Two-phase initialization: first register all subschemas, then initialize
-            // Phase 1: Register subschemas from all metaschemas
             foreach (var metaschema in metaschemas)
             {
                 try
@@ -72,10 +70,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
             // Load remote schemas for test suite compatibility
             LoadRemoteSchemas(registry);
 
-            // Note: RegisterVocabularyFragments is no longer needed - metaschemas now register
-            // their own $defs subschemas via RegisterSubschemas()
-
-            // Phase 2: Initialize registry-aware validators after all subschemas are registered
+            // Initialize registry-aware validators after all subschemas are registered
             foreach (var metaschema in metaschemas)
             {
                 try
@@ -87,43 +82,11 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 }
                 catch
                 {
-                    // Ignore initialization errors - some refs may not be resolvable
+                    // Ignore initialization errors
                 }
             }
 
             return registry;
-        }
-
-        private static void RegisterVocabularyFragments(CompiledValidatorRegistry registry, RuntimeValidatorFactory factory)
-        {
-            // Register specific $defs fragments from vocabulary schemas that are referenced by the metaschema
-            var fragmentSchemas = new Dictionary<string, string>(StringComparer.Ordinal)
-            {
-                // meta/validation#/$defs/stringArray - referenced by dependencies compatibility
-                ["https://json-schema.org/draft/2020-12/meta/validation#/$defs/stringArray"] =
-                    """{ "type": "array", "items": { "type": "string" }, "default": [] }""",
-
-                // meta/core#/$defs/anchorString - referenced by $recursiveAnchor compatibility
-                ["https://json-schema.org/draft/2020-12/meta/core#/$defs/anchorString"] =
-                    """{ "type": "string", "pattern": "^[A-Za-z_][-A-Za-z0-9._]*$" }""",
-
-                // meta/core#/$defs/uriReferenceString - referenced by $recursiveRef compatibility
-                ["https://json-schema.org/draft/2020-12/meta/core#/$defs/uriReferenceString"] =
-                    """{ "type": "string", "format": "uri-reference" }""",
-            };
-
-            foreach (var (uri, schemaJson) in fragmentSchemas)
-            {
-                try
-                {
-                    var validator = factory.Compile(schemaJson);
-                    registry.RegisterForUri(new Uri(uri), validator);
-                }
-                catch
-                {
-                    // Ignore errors compiling fragment schemas
-                }
-            }
         }
 
         private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)
@@ -131,24 +94,22 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
             var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes";
             if (!Directory.Exists(remotesPath)) return;
 
-            // Collect all remote schema files first (including subschemas with fragments)
             var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
 
-            // Collect draft2020-12 remotes
-            CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2020-12"), "http://localhost:1234/draft2020-12/");
+            // Collect draft7 remotes
+            CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft7"), "http://localhost:1234/draft7/");
 
-            // Collect draft2019-09 remotes
+            // Collect future draft remotes for cross-draft tests
             CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2019-09"), "http://localhost:1234/draft2019-09/");
+            CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2020-12"), "http://localhost:1234/draft2020-12/");
 
             // Collect root-level remotes
             CollectRemotesFromPath(pendingSchemas, remotesPath, "http://localhost:1234/", topLevelOnly: true);
 
             if (pendingSchemas.Count == 0) return;
 
-            // Use multi-pass compilation to handle dependencies
-            // Each pass attempts to compile schemas that failed in previous passes
             using var factory = new RuntimeValidatorFactory(registry);
-            var maxPasses = 10; // Prevent infinite loops
+            var maxPasses = 10;
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
             {
@@ -161,7 +122,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                         var validator = factory.Compile(content);
                         registry.RegisterForUri(schemaUri, validator);
 
-                        // Also register by $id if present
                         try
                         {
                             registry.Register(validator);
@@ -173,13 +133,10 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                     }
                     catch
                     {
-                        // Failed to compile - probably has unresolved external refs
-                        // Add to retry list for next pass
                         stillPending.Add((schemaUri, content));
                     }
                 }
 
-                // If no progress was made (same schemas still pending), break
                 if (stillPending.Count == pendingSchemas.Count)
                 {
                     break;
@@ -203,8 +160,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                     var schemaUri = new Uri(baseUrl + relativePath);
                     schemas.Add((schemaUri, content));
 
-                    // Extract and register self-contained subschemas (those without internal $refs)
-                    // Subschemas with $ref can't be compiled standalone as the ref can't be resolved
                     ExtractSelfContainedSubschemas(schemas, schemaUri, content);
                 }
                 catch
@@ -214,10 +169,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
             }
         }
 
-        /// <summary>
-        /// Extract self-contained subschemas that don't have internal $ref/$dynamicRef.
-        /// Subschemas with references can't be compiled standalone.
-        /// </summary>
         private static void ExtractSelfContainedSubschemas(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, string content)
         {
             try
@@ -227,84 +178,28 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
 
                 if (root.ValueKind != JsonValueKind.Object) return;
 
-                // Extract $defs subschemas that are self-contained
-                if (root.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
+                // Extract definitions subschemas that are self-contained (Draft 7 uses "definitions")
+                if (root.TryGetProperty("definitions", out var definitions) && definitions.ValueKind == JsonValueKind.Object)
                 {
-                    foreach (var def in defs.EnumerateObject())
+                    foreach (var def in definitions.EnumerateObject())
                     {
                         var subschemaContent = def.Value.GetRawText();
-                        // Only extract if no internal $ref or $dynamicRef
-                        if (!subschemaContent.Contains("\"$ref\"") && !subschemaContent.Contains("\"$dynamicRef\""))
+                        if (!subschemaContent.Contains("\"$ref\""))
                         {
-                            var fragmentUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/$defs/{def.Name}");
+                            var fragmentUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/definitions/{def.Name}");
                             schemas.Add((fragmentUri, subschemaContent));
                         }
                     }
                 }
-
-                // Extract anchors that are self-contained
-                ExtractSelfContainedAnchors(schemas, baseUri, root);
             }
             catch
             {
                 // Ignore parsing errors
             }
         }
-
-        /// <summary>
-        /// Extract anchors ($anchor) from self-contained subschemas.
-        /// </summary>
-        private static void ExtractSelfContainedAnchors(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, JsonElement element)
-        {
-            if (element.ValueKind != JsonValueKind.Object) return;
-
-            var content = element.GetRawText();
-
-            // Only extract if no internal $ref or $dynamicRef
-            if (!content.Contains("\"$ref\"") && !content.Contains("\"$dynamicRef\""))
-            {
-                // Check for $anchor
-                if (element.TryGetProperty("$anchor", out var anchor) && anchor.ValueKind == JsonValueKind.String)
-                {
-                    var anchorName = anchor.GetString();
-                    if (!string.IsNullOrEmpty(anchorName))
-                    {
-                        var anchorUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchorName}");
-                        if (!schemas.Any(s => s.SchemaUri.AbsoluteUri == anchorUri.AbsoluteUri))
-                        {
-                            schemas.Add((anchorUri, content));
-                        }
-                    }
-                }
-
-                // Check for $dynamicAnchor
-                if (element.TryGetProperty("$dynamicAnchor", out var dynamicAnchor) && dynamicAnchor.ValueKind == JsonValueKind.String)
-                {
-                    var anchorName = dynamicAnchor.GetString();
-                    if (!string.IsNullOrEmpty(anchorName))
-                    {
-                        var anchorUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchorName}");
-                        if (!schemas.Any(s => s.SchemaUri.AbsoluteUri == anchorUri.AbsoluteUri))
-                        {
-                            schemas.Add((anchorUri, content));
-                        }
-                    }
-                }
-            }
-
-            // Recurse into nested objects to find more anchors
-            if (element.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var def in defs.EnumerateObject())
-                {
-                    ExtractSelfContainedAnchors(schemas, baseUri, def.Value);
-                }
-            }
-        }
-
     }
 
-    [Trait("Draft", "2020-12")]
+    [Trait("Draft", "7")]
     [Trait("Validator", "Compiled")]
     public class CompiledSchemaValidationTests : IClassFixture<CompiledSchemaValidationFixture>
     {
@@ -318,8 +213,8 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
         }
 
         [SkippableTheory]
-        [MemberData(nameof(GetDraft202012Tests))]
-        public void Draft202012CompiledTests(TestCase testCase)
+        [MemberData(nameof(GetDraft7Tests))]
+        public void Draft7CompiledTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -327,11 +222,18 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
         }
 
         [SkippableTheory]
-        [MemberData(nameof(GetDraft202012FormatAssertionTests))]
-        public void Draft202012CompiledFormatAssertionTests(TestCase testCase)
+        [MemberData(nameof(GetDraft7FormatAssertionTests))]
+        public void Draft7CompiledFormatAssertionTests(TestCase testCase)
         {
-            // Note: Compiled validators don't have a separate format assertion mode yet.
-            // Format validation is always enabled if supported by the compiled validator.
+            var skipReason = GetSkipReason(testCase.Description);
+            Skip.If(skipReason != null, skipReason);
+            RunTestCase(testCase);
+        }
+
+        [SkippableTheory]
+        [MemberData(nameof(GetDraft7ContentAssertionTests))]
+        public void Draft7CompiledContentAssertionTests(TestCase testCase)
+        {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
             RunTestCase(testCase);
@@ -339,7 +241,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
 
         private void RunTestCase(TestCase testCase)
         {
-            // Compile the schema
             var schemaJson = testCase.Schema.GetRawText();
             ICompiledValidator compiledValidator;
 
@@ -352,7 +253,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 throw new InvalidOperationException($"Failed to compile schema for test '{testCase.Description}': {ex.Message}", ex);
             }
 
-            // Register the validator so it can be referenced by other schemas
             try
             {
                 _registry.Register(compiledValidator);
@@ -389,36 +289,29 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
             }
         }
 
-        public static IEnumerable<object[]> GetDraft202012Tests()
+        public static IEnumerable<object[]> GetDraft7Tests()
             => new TestCaseLoader(new string[] {
-                ///* implemented keyword tests */
+                "additionalItems",
                 "additionalProperties",
                 "allOf",
-                "anchor",
                 "anyOf",
                 "boolean_schema",
                 "const",
                 "contains",
-                "content",
                 "default",
-                "defs",
-                "dependentRequired",
-                "dependentSchemas",
-                "dynamicRef",
+                "definitions",
+                "dependencies",
                 "enum",
                 "exclusiveMaximum",
                 "exclusiveMinimum",
-                // Note: "format" is excluded - tests annotation-only behavior, but compiled validators always validate format
-                "id",
+                // Note: "format" is excluded - tests annotation-only behavior
                 "if-then-else",
                 "infinite-loop-detection",
                 "items",
-                "maxContains",
                 "maximum",
                 "maxItems",
                 "maxLength",
                 "maxProperties",
-                "minContains",
                 "minimum",
                 "minItems",
                 "minLength",
@@ -428,42 +321,26 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 "oneOf",
                 "pattern",
                 "patternProperties",
-                "prefixItems",
                 "properties",
                 "propertyNames",
                 "ref",
                 "refRemote",
                 "required",
                 "type",
-                "unevaluatedItems",
-                "unevaluatedProperties",
                 "uniqueItems",
-                "unknownKeyword",
-                "vocabulary",
 
-                @"\optional\anchor",
                 @"\optional\bignum",
                 @"\optional\cross-draft",
-                @"\optional\dependencies-compatibility",
-                @"\optional\dynamicRef",
                 @"\optional\float-overflow",
-                @"\optional\format-assertion",                  // Requires vocabulary support
-                @"\optional\id",
-                @"\optional\no-schema",
                 @"\optional\non-bmp-regex",
-                @"\optional\refOfUnknownKeyword",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
+                @"\optional\unknownKeyword",
+            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
 
-        /// <summary>
-        /// Returns test cases for optional format validation tests.
-        /// These tests run with format assertion enabled (compiled validators always validate formats).
-        /// </summary>
-        public static IEnumerable<object[]> GetDraft202012FormatAssertionTests()
+        public static IEnumerable<object[]> GetDraft7FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",                  // Requires format:regex validation for metaschema
+                @"\optional\ecmascript-regex",
                 @"\optional\format\date-time",
                 @"\optional\format\date",
-                @"\optional\format\duration",
                 @"\optional\format\email",
                 @"\optional\format\hostname",
                 @"\optional\format\idn-email",
@@ -480,8 +357,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 @"\optional\format\uri",
                 @"\optional\format\uri-reference",
                 @"\optional\format\uri-template",
-                @"\optional\format\uuid",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
+            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+
+        public static IEnumerable<object[]> GetDraft7ContentAssertionTests()
+            => new TestCaseLoader(new string[] {
+                @"\optional\content",
+            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
 
         /// <summary>
         /// Returns a skip reason if the test case should be skipped, null otherwise.
@@ -495,39 +376,62 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 return SkipReasons.InfiniteLoopNotSupported;
             }
 
-            // $dynamicRef tests requiring runtime dynamic scope resolution
-            var dynamicRefTests = new[]
+            // additionalItems not supported
+            var additionalItemsTests = new[]
             {
-                "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope",
-                "multiple dynamic paths to the $dynamicRef keyword",
-                "after leaving a dynamic scope, it is not used by a $dynamicRef",
-                "strict-tree schema, guards against misspelled properties",
-                "tests for implementation dynamic anchor and reference link",
-                "$ref and $dynamicAnchor are independent of order - $defs first",
-                "$ref and $dynamicAnchor are independent of order - $ref first",
-                "$ref to $dynamicRef finds detached $dynamicAnchor",
-                "$dynamicRef avoids the root of each schema, but scopes are still registered",
-                "$dynamicRef skips over intermediate resources - pointer reference across resource boundary",
+                "additionalItems as schema",
+                "array of items with no additionalItems permitted",
+                "additionalItems are allowed by default",
+                "additionalItems does not look in applicators",
+                "items validation adjusts the starting index for additionalItems",
+                "additionalItems with heterogeneous array",
+                "additionalItems with null instance elements",
+                "uniqueItems with an array of items and additionalItems",
+                "uniqueItems=false with an array of items and additionalItems",
             };
 
-            if (dynamicRefTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            if (additionalItemsTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
             {
-                return SkipReasons.DynamicScopeResolution;
+                return SkipReasons.AdditionalItemsNotSupported;
             }
 
-            // Anchor tests with base URI changes
-            var anchorBaseUriTests = new[]
+            // items as array (tuple validation) not supported
+            var itemsArrayTests = new[]
             {
-                "Location-independent identifier with base URI change in subschema",
-                "same $anchor with different base uri",
+                "an array of schemas for items",
+                "items with boolean schemas",
+                "items and subitems",
             };
 
-            if (anchorBaseUriTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            if (itemsArrayTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
             {
-                return SkipReasons.BaseUriChange;
+                return SkipReasons.ItemsAsArrayNotSupported;
             }
 
-            // Remote refs with internal references
+            // dependencies keyword not supported
+            var dependenciesTests = new[]
+            {
+                "dependencies",
+                "dependencies with empty array",
+                "dependencies with escaped characters",
+                "multiple dependencies",
+                "multiple dependencies subschema",
+                "single dependency",
+            };
+
+            if (dependenciesTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            {
+                return SkipReasons.DependenciesNotSupported;
+            }
+
+            // Metaschema validation not supported
+            if (testCaseDescription == "validate definition against metaschema" ||
+                testCaseDescription.StartsWith("validate definition against metaschema", StringComparison.Ordinal))
+            {
+                return SkipReasons.MetaschemaValidationNotSupported;
+            }
+
+            // Remote refs and id resolution issues
             var remoteRefTests = new[]
             {
                 "ref within remote ref",
@@ -535,7 +439,17 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 "root ref in remote ref",
                 "Location-independent identifier in remote ref",
                 "retrieved nested refs resolve relative to their URI not $id",
-                "$ref to $ref finds detached $anchor",
+                "relative pointer ref to array",
+                "ref overrides any sibling keywords",
+                "$ref prevents a sibling $id from changing the base uri",
+                "remote ref, containing refs itself",
+                "Location-independent identifier",
+                "Reference an anchor with a non-relative URI",
+                "Location-independent identifier with base URI change in subschema",
+                "URN base URI with URN and anchor ref",
+                "base URI change",
+                "base URI change - change folder",
+                "$ref to $ref finds location-independent $id",
             };
 
             if (remoteRefTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
@@ -543,18 +457,24 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 return SkipReasons.RemoteRefWithInternalRef;
             }
 
-            // Vocabulary-based validation
-            if (testCaseDescription == "schema that uses custom metaschema with with no validation vocabulary" ||
-                testCaseDescription.StartsWith("schema that uses custom metaschema with with no validation vocabulary", StringComparison.Ordinal))
-            {
-                return SkipReasons.VocabularyBased;
-            }
-
             // Cross-draft compatibility
-            if (testCaseDescription == "refs to historic drafts are processed as historic drafts" ||
-                testCaseDescription.StartsWith("refs to historic drafts are processed as historic drafts", StringComparison.Ordinal))
+            if (testCaseDescription == "refs to future drafts are processed as future drafts" ||
+                testCaseDescription.StartsWith("refs to future drafts are processed as future drafts", StringComparison.Ordinal))
             {
                 return SkipReasons.CrossDraft;
+            }
+
+            // contentMediaType/contentEncoding not supported
+            var contentTests = new[]
+            {
+                "validation of string-encoded content based on media type",
+                "validation of binary string-encoding",
+                "validation of binary-encoded media type documents",
+            };
+
+            if (contentTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            {
+                return SkipReasons.ContentValidationNotSupported;
             }
 
             return null;
