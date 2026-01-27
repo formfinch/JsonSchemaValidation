@@ -1006,6 +1006,124 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
+## Phase 9: Dynamic Validator Performance
+
+Performance analysis (benchmark date: 2026-01-27) revealed that FormFinch's dynamic validator underperforms competitors in medium-to-complex scenarios. While the compiled validator is consistently fastest (rank 1), the dynamic validator falls behind LateApex significantly as schema complexity increases.
+
+**Benchmark findings:**
+- Simple schemas: FormFinch dynamic is competitive (1.72x faster than LateApex)
+- Medium schemas: LateApex is 19% faster, FormFinch allocates more memory
+- Complex schemas: LateApex is **7.7x faster**, FormFinch allocates **3x more memory** (69KB vs 23KB)
+- Complex/Valid: FormFinch dynamic ranks **LAST** among all competitors
+
+**Root cause hypothesis:**
+The dynamic validator creates excessive intermediate objects during validation, particularly for property enumeration, $ref resolution, and annotation collection. This compounds with schema complexity.
+
+### TASK-039: Profile dynamic validator memory allocations
+- **Labels:** `performance`, `investigation`, `high-priority`
+- **Priority:** High
+- **Description:**
+  Use memory profiling tools to identify allocation hotspots in the dynamic validation path for complex schemas.
+
+  **Investigation areas:**
+  - Property enumeration in `PropertiesValidator`, `PatternPropertiesValidator`
+  - $ref resolution and schema lookup overhead
+  - Annotation collection in applicator keywords
+  - ValidationResult construction and error aggregation
+  - Context creation per subschema evaluation
+
+  **Deliverables:**
+  - Allocation profile showing top allocation sources
+  - Comparison between simple vs complex schemas
+  - Identified optimization opportunities ranked by impact
+
+  **Acceptance criteria:**
+  - [ ] Profile captured for simple, medium, and complex benchmark scenarios
+  - [ ] Top 5 allocation sources identified
+  - [ ] Findings documented with actionable recommendations
+
+---
+
+### TASK-040: Reduce allocations in property validation
+- **Labels:** `performance`, `optimization`
+- **Priority:** High
+- **Depends on:** TASK-039
+- **Description:**
+  Based on profiling results, reduce allocations in property-related validators which likely dominate complex schema validation.
+
+  **Potential optimizations:**
+  - Pool or reuse property name enumerators
+  - Use `Span<T>` or `ArraySegment<T>` where possible
+  - Avoid LINQ allocations in hot paths
+  - Consider struct-based iterators
+
+  **Acceptance criteria:**
+  - [ ] Property validation allocations reduced by 50%+
+  - [ ] No regression in validation correctness (all tests pass)
+  - [ ] Benchmarks show measurable improvement
+
+---
+
+### TASK-041: Optimize $ref resolution caching
+- **Labels:** `performance`, `optimization`
+- **Priority:** Medium
+- **Depends on:** TASK-039
+- **Description:**
+  Investigate whether $ref resolution contributes to performance overhead and optimize if significant.
+
+  **Investigation areas:**
+  - Schema lookup frequency per validation
+  - Cache hit rate for resolved schemas
+  - URI parsing/normalization overhead
+
+  **Acceptance criteria:**
+  - [ ] $ref resolution overhead quantified
+  - [ ] Caching strategy optimized if warranted
+  - [ ] Benchmarks show improvement or investigation documented
+
+---
+
+### TASK-042: Reduce ValidationResult allocations
+- **Labels:** `performance`, `optimization`
+- **Priority:** Medium
+- **Depends on:** TASK-039
+- **Description:**
+  Investigate and reduce allocations in ValidationResult construction, particularly for valid instances where no errors are collected.
+
+  **Potential optimizations:**
+  - Fast path for valid results (avoid error list allocation)
+  - Pool error/annotation lists
+  - Lazy initialization of collections
+  - Consider struct-based result for simple cases
+
+  **Acceptance criteria:**
+  - [ ] Valid instance validation allocates minimal memory
+  - [ ] Complex valid scenario allocation reduced by 50%+
+  - [ ] All output format tests still pass
+
+---
+
+### TASK-043: Benchmark parity target - match LateApex performance
+- **Labels:** `performance`, `milestone`
+- **Priority:** High
+- **Depends on:** TASK-040, TASK-041, TASK-042
+- **Description:**
+  After implementing optimizations, verify that FormFinch dynamic validator achieves competitive performance with LateApex in complex scenarios.
+
+  **Target metrics (Complex/Valid scenario):**
+  - Execution time: Within 1.5x of LateApex (currently 1.6x slower)
+  - Allocations: Within 2x of LateApex (currently 3x higher)
+
+  **Note:** LateApex lacks `unevaluatedProperties`/`unevaluatedItems` support, so some overhead is acceptable. The goal is competitive performance, not parity.
+
+  **Acceptance criteria:**
+  - [ ] Complex schema validation within 1.5x of LateApex time
+  - [ ] Allocations within 2x of LateApex
+  - [ ] Simple/Medium scenarios still faster than competitors
+  - [ ] Updated benchmark results documented
+
+---
+
 ## Parking Lot (Future Considerations)
 
 These items are out of scope for initial release but should be tracked:
@@ -1033,4 +1151,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-27 (TASK-016a completed: Recreate benchmark project with BenchmarkDotNet)*
+*Last updated: 2026-01-27 (Added Phase 9: Dynamic Validator Performance - TASK-039 through TASK-043)*
