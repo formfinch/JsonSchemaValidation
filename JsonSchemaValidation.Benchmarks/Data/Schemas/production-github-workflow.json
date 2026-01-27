@@ -1,0 +1,111 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://json.schemastore.org/github-workflow-simplified",
+  "title": "GitHub Workflow (Simplified)",
+  "description": "Simplified GitHub Actions workflow schema for benchmarking",
+  "type": "object",
+  "$defs": {
+    "expressionString": {
+      "type": "string"
+    },
+    "env": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/expressionString" }
+    },
+    "normalJob": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "runs-on": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "needs": {
+          "oneOf": [
+            { "type": "string" },
+            { "type": "array", "items": { "type": "string" } }
+          ]
+        },
+        "if": { "$ref": "#/$defs/expressionString" },
+        "env": { "$ref": "#/$defs/env" },
+        "timeout-minutes": { "type": "number", "minimum": 1 },
+        "continue-on-error": { "type": "boolean" },
+        "steps": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/step" },
+          "minItems": 1
+        }
+      },
+      "required": ["runs-on", "steps"]
+    },
+    "step": {
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "if": { "$ref": "#/$defs/expressionString" },
+        "uses": { "type": "string" },
+        "run": { "type": "string" },
+        "with": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "env": { "$ref": "#/$defs/env" },
+        "continue-on-error": { "type": "boolean" },
+        "timeout-minutes": { "type": "number", "minimum": 1 },
+        "working-directory": { "type": "string" }
+      },
+      "oneOf": [
+        { "required": ["uses"] },
+        { "required": ["run"] }
+      ]
+    },
+    "eventObject": {
+      "type": "object",
+      "properties": {
+        "branches": { "type": "array", "items": { "type": "string" } },
+        "branches-ignore": { "type": "array", "items": { "type": "string" } },
+        "paths": { "type": "array", "items": { "type": "string" } },
+        "paths-ignore": { "type": "array", "items": { "type": "string" } },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "tags-ignore": { "type": "array", "items": { "type": "string" } }
+      }
+    }
+  },
+  "properties": {
+    "name": { "type": "string" },
+    "on": {
+      "oneOf": [
+        { "type": "string" },
+        { "type": "array", "items": { "type": "string" } },
+        {
+          "type": "object",
+          "properties": {
+            "push": { "$ref": "#/$defs/eventObject" },
+            "pull_request": { "$ref": "#/$defs/eventObject" },
+            "workflow_dispatch": { "type": "object" },
+            "schedule": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "cron": { "type": "string" }
+                },
+                "required": ["cron"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "env": { "$ref": "#/$defs/env" },
+    "jobs": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/normalJob" },
+      "minProperties": 1
+    }
+  },
+  "required": ["on", "jobs"]
+}

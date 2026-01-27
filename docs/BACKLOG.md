@@ -187,39 +187,41 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-016a: Recreate benchmark project
+### TASK-016a: Recreate benchmark project [x]
 - **Labels:** `performance`, `testing`, `user-facing`
 - **Priority:** High
+- **Status:** Complete
 - **Description:**
-  The current benchmark project has inconsistent timing and no standardized benchmarking approach. Performance is a key selling point of the library, so benchmarks must be reliable and communicable to users.
+  Created a new BenchmarkDotNet-based benchmark project (`JsonSchemaValidation.Benchmarks`) replacing the old CLI benchmark tool.
 
-  **Requirements:**
-  - Use [BenchmarkDotNet](https://benchmarkdotnet.org/) for standardized, reliable measurements
-  - Design benchmarks that demonstrate real-world performance scenarios
-  - Results should be reproducible and comparable across runs
-  - Output should be suitable for inclusion in README/documentation
+  **Implementation:**
+  - BenchmarkDotNet 0.14.0 with pinned dependency versions for reproducibility
+  - Compares FormFinch (dynamic & compiled) against JsonSchema.Net 7.4.0 and LateApex 2.1.6
+  - Embedded test data with SHA-256 checksum verification
+  - Schema complexity levels: Simple, Medium, Complex, Production
 
-  **Benchmark scenarios to include:**
-  - Simple schema validation (type, required, properties)
-  - Complex schema validation (nested, refs, allOf/anyOf/oneOf)
-  - Large document validation
-  - Schema compilation time vs validation time
-  - Comparison across draft versions (if meaningful)
-  - Memory allocation tracking
+  **Benchmark categories implemented:**
+  1. **Parsing benchmarks** - Cold (first-run) and warm (cached)
+  2. **Validation benchmarks** - Simple, complex, and large document
+  3. **Throughput benchmarks** - Batch validation with OperationsPerInvoke
+  4. **Cross-draft benchmarks** - Draft 4, 6, 7, 2019-09, 2020-12
+  5. **Competitor benchmarks** - FormFinch dynamic, FormFinch compiled, JsonSchema.Net, LateApex
 
-  **Deliverables:**
-  - New benchmark project using BenchmarkDotNet
-  - Documented benchmark methodology
-  - Baseline results for 1.0.0 release
-  - Instructions for running benchmarks
+  **Note:** Ajv (Node.js) comparison was removed due to cross-platform module resolution issues. Benchmarks now focus exclusively on .NET packages.
 
   **Acceptance criteria:**
-  - [ ] Old benchmark project replaced or removed
-  - [ ] BenchmarkDotNet-based project created
-  - [ ] All key scenarios covered
-  - [ ] Results are consistent across runs
-  - [ ] Performance summary ready for README
-  - [ ] Benchmark methodology documented
+  - [x] Old benchmark project replaced or removed
+  - [x] BenchmarkDotNet-based project created
+  - [x] Schema parse/compile benchmarks separated from validation benchmarks
+  - [x] Cold and warm run results reported distinctly
+  - [x] Throughput benchmarks included alongside per-operation latency
+  - [x] Fixed inputs with checksums to prevent drift
+  - [x] GC stats and allocations captured and included in summary
+  - [x] Competitor comparison benchmarks for both dynamic and compiled validators
+  - [x] Hardware/software baseline documented
+  - [x] Results are consistent across runs
+  - [x] Performance summary ready for README
+  - [x] Benchmark methodology documented
 
 ---
 
@@ -1031,4 +1033,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-26 (TASK-038 completed: Test suite audit and enhancement)*
+*Last updated: 2026-01-27 (TASK-016a completed: Recreate benchmark project with BenchmarkDotNet)*

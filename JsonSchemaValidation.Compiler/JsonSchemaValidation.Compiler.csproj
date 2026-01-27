@@ -19,6 +19,6 @@
   </ItemGroup>
   <ItemGroup>
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests" />
-    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Benchmarks" />
+    <InternalsVisibleTo Include="JsonSchemaValidation.Benchmarks" />
   </ItemGroup>
 </Project>

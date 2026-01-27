@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <RootNamespace>FormFinch.JsonSchemaValidation.Benchmarks</RootNamespace>
+    <AssemblyName>JsonSchemaValidation.Benchmarks</AssemblyName>
+  </PropertyGroup>
+
+  <!-- Main library and runtime compiler -->
+  <ItemGroup>
+    <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
+    <ProjectReference Include="..\JsonSchemaValidation.Compiler\JsonSchemaValidation.Compiler.csproj" />
+  </ItemGroup>
+
+  <!-- BenchmarkDotNet -->
+  <ItemGroup>
+    <PackageReference Include="BenchmarkDotNet" Version="0.14.0" />
+  </ItemGroup>
+
+  <!-- Competing .NET libraries (pinned for reproducible benchmarks) -->
+  <ItemGroup>
+    <!-- JsonSchema.Net - System.Text.Json based (fairest comparison) -->
+    <PackageReference Include="JsonSchema.Net" Version="7.4.0" />
+    <!-- LateApexEarlySpeed.Json.Schema - .NET JSON Schema validator -->
+    <PackageReference Include="LateApexEarlySpeed.Json.Schema" Version="2.1.6" />
+  </ItemGroup>
+
+  <!-- Embedded benchmark data files -->
+  <ItemGroup>
+    <EmbeddedResource Include="Data\Schemas\*.json" />
+    <EmbeddedResource Include="Data\Instances\*.json" />
+    <EmbeddedResource Include="Data\checksums.json" />
+  </ItemGroup>
+</Project>

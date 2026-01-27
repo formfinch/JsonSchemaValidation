@@ -1,0 +1,32 @@
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "name": "Acme Corporation",
+  "addresses": [
+    {
+      "street": "123 Main Street",
+      "city": "New York",
+      "country": "USA",
+      "postalCode": "10001"
+    },
+    {
+      "street": "456 Oak Avenue",
+      "city": "Los Angeles",
+      "country": "USA",
+      "postalCode": "90001-1234"
+    }
+  ],
+  "contacts": [
+    {
+      "type": "email",
+      "value": "contact@acme.com"
+    },
+    {
+      "type": "phone",
+      "value": "+12025551234"
+    }
+  ],
+  "metadata": {
+    "founded": 1985,
+    "industry": "Technology"
+  }
+}
