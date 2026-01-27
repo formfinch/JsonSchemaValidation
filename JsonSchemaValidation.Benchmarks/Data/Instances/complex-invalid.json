@@ -1,0 +1,11 @@
+{
+  "id": "not-a-valid-uuid",
+  "name": "",
+  "addresses": [],
+  "contacts": [
+    {
+      "type": "fax",
+      "value": "invalid"
+    }
+  ]
+}

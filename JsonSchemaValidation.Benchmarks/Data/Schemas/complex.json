@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$defs": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string" },
+        "city": { "type": "string" },
+        "country": { "type": "string" },
+        "postalCode": { "type": "string", "pattern": "^[0-9]{5}(-[0-9]{4})?$" }
+      },
+      "required": ["street", "city", "country"]
+    },
+    "contactMethod": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "email" },
+            "value": { "type": "string", "format": "email" }
+          },
+          "required": ["type", "value"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "phone" },
+            "value": { "type": "string", "pattern": "^\\+?[0-9]{10,15}$" }
+          },
+          "required": ["type", "value"]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "format": "uuid" },
+    "name": {
+      "allOf": [
+        { "type": "string" },
+        { "minLength": 1 },
+        { "maxLength": 200 }
+      ]
+    },
+    "addresses": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/address" },
+      "minItems": 1
+    },
+    "contacts": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/contactMethod" }
+    },
+    "metadata": {
+      "anyOf": [
+        { "type": "object" },
+        { "type": "null" }
+      ]
+    }
+  },
+  "required": ["id", "name", "addresses"]
+}

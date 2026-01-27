@@ -4,7 +4,7 @@
   </Folder>
   <Project Path="JsonSchemaValidation/JsonSchemaValidation.csproj" />
   <Project Path="JsonSchemaValidationTests/JsonSchemaValidationTests.csproj" />
-  <Project Path="JsonSchemaValidationBenchmarks/JsonSchemaValidationBenchmarks.csproj" />
+  <Project Path="JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj" />
   <Project Path="JsonSchemaValidation.CodeGenerator/JsonSchemaValidation.CodeGenerator.csproj" />
   <Project Path="JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj" />
   <Project Path="JsonSchemaValidation.CodeGeneration/JsonSchemaValidation.CodeGeneration.csproj" />
