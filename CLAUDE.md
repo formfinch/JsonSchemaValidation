@@ -36,7 +36,7 @@ dotnet build -c Release
 
 ## Running Tests
 
-The project uses xUnit with 512+ tests (448 from JSON-Schema-Test-Suite submodule + 64 output format tests).
+The project uses xUnit with 2887 tests covering all 6 JSON Schema drafts, output formats, thread safety, error handling, and compiled validators.
 
 ```bash
 # Run all tests
@@ -44,6 +44,9 @@ dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj
 
 # Run specific test by name
 dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --filter "FullyQualifiedName~TestMethodName"
+
+# Run tests for a specific draft
+dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --filter "Trait=Draft&Trait=2020-12"
 
 # Run with verbosity
 dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj -v normal
@@ -124,15 +127,29 @@ var output = validator.ValidateDetailed(context); // Hierarchical
 
 ## Test Structure
 
-Tests are organized by feature using a feature-first folder structure:
+Tests are organized by draft version and feature category:
 
 ```
-JsonSchemaValidationTests/Draft202012/
-├── SchemaValidationTests.cs    # JSON-Schema-Test-Suite tests
-└── OutputFormat/
-    ├── Examples.cs             # Demonstration tests (11 tests)
-    └── RegressionTests.cs      # Comprehensive coverage (53 tests)
+JsonSchemaValidationTests/
+├── Draft3/SchemaValidationTests.cs           # Draft 3 JSON-Schema-Test-Suite
+├── Draft4/SchemaValidationTests.cs           # Draft 4 JSON-Schema-Test-Suite
+├── Draft6/SchemaValidationTests.cs           # Draft 6 JSON-Schema-Test-Suite
+├── Draft7/SchemaValidationTests.cs           # Draft 7 JSON-Schema-Test-Suite
+├── Draft201909/SchemaValidationTests.cs      # Draft 2019-09 JSON-Schema-Test-Suite
+├── Draft202012/
+│   ├── SchemaValidationTests.cs              # Draft 2020-12 JSON-Schema-Test-Suite
+│   ├── CompiledSchemaValidationTests.cs      # Compiled validator tests
+│   ├── OutputFormat/                         # Output format tests
+│   └── ThreadSafety/                         # Concurrency tests
+├── Common/                                   # Shared validator tests
+├── NegativeTests/                            # Malformed input & error message tests
+├── ErrorPaths/                               # Exception handling tests
+├── Compiler/                                 # Runtime compilation tests
+├── ProductionSchemas/                        # Real-world schema tests
+└── StaticApiTests.cs                         # Static API tests
 ```
+
+Each draft's `SchemaValidationTests.cs` runs tests from the JSON-Schema-Test-Suite submodule with multiple service provider configurations (default, format assertion, content assertion where applicable).
 
 ## Known Gaps
 
@@ -182,3 +199,70 @@ None currently identified. Cross-draft compatibility is fully supported.
 
 1. **Plan before implementing:** Always present a plan before starting any implementation work. Wait for approval before coding.
 2. **No commits without permission:** Do not commit changes without explicit permission from the user.
+
+
+Follow the Karpathy Guidelines for coding agents
+
+Behavioral guidelines to reduce common LLM coding mistakes. Merge with project-specific instructions as needed.
+
+**Tradeoff:** These guidelines bias toward caution over speed. For trivial tasks, use judgment.
+
+## 1. Think Before Coding
+
+**Don't assume. Don't hide confusion. Surface tradeoffs.**
+
+Before implementing:
+- State your assumptions explicitly. If uncertain, ask.
+- If multiple interpretations exist, present them - don't pick silently.
+- If a simpler approach exists, say so. Push back when warranted.
+- If something is unclear, stop. Name what's confusing. Ask.
+
+## 2. Simplicity First
+
+**Minimum code that solves the problem. Nothing speculative.**
+
+- No features beyond what was asked.
+- No abstractions for single-use code.
+- No "flexibility" or "configurability" that wasn't requested.
+- No error handling for impossible scenarios.
+- If you write 200 lines and it could be 50, rewrite it.
+
+Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
+
+## 3. Surgical Changes
+
+**Touch only what you must. Clean up only your own mess.**
+
+When editing existing code:
+- Don't "improve" adjacent code, comments, or formatting.
+- Don't refactor things that aren't broken.
+- Match existing style, even if you'd do it differently.
+- If you notice unrelated dead code, mention it - don't delete it.
+
+When your changes create orphans:
+- Remove imports/variables/functions that YOUR changes made unused.
+- Don't remove pre-existing dead code unless asked.
+
+The test: Every changed line should trace directly to the user's request.
+
+## 4. Goal-Driven Execution
+
+**Define success criteria. Loop until verified.**
+
+Transform tasks into verifiable goals:
+- "Add validation" → "Write tests for invalid inputs, then make them pass"
+- "Fix the bug" → "Write a test that reproduces it, then make it pass"
+- "Refactor X" → "Ensure tests pass before and after"
+
+For multi-step tasks, state a brief plan:
+```
+1. [Step] → verify: [check]
+2. [Step] → verify: [check]
+3. [Step] → verify: [check]
+```
+
+Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
+
+---
+
+**These guidelines are working if:** fewer unnecessary changes in diffs, fewer rewrites due to overcomplication, and clarifying questions come before implementation rather than after mistakes.
