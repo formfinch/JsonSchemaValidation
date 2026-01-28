@@ -96,14 +96,17 @@ public static class SchemaDraftDetector
     /// Returns an error only for invalid $schema values (wrong type or unrecognized URI).
     /// </summary>
     /// <param name="schema">The root schema element.</param>
+    /// <param name="defaultDraft">The draft to use when no $schema is present. If null, defaults to Draft202012.</param>
     /// <returns>Detection result with draft or error message.</returns>
-    public static DraftDetectionResult DetectDraft(JsonElement schema)
+    public static DraftDetectionResult DetectDraft(JsonElement schema, SchemaDraft? defaultDraft = null)
     {
+        var fallbackDraft = defaultDraft ?? SchemaDraft.Draft202012;
+
         // Boolean schemas are valid in 2019-09 and 2020-12
         if (schema.ValueKind == JsonValueKind.True || schema.ValueKind == JsonValueKind.False)
         {
-            // Boolean schemas without $schema - assume Draft 2020-12 (latest that supports them)
-            return DraftDetectionResult.Detected(SchemaDraft.Draft202012, "(boolean schema)");
+            // Boolean schemas without $schema - use fallback (defaults to Draft 2020-12)
+            return DraftDetectionResult.Detected(fallbackDraft, "(boolean schema)");
         }
 
         if (schema.ValueKind != JsonValueKind.Object)
@@ -113,9 +116,8 @@ public static class SchemaDraftDetector
 
         if (!schema.TryGetProperty("$schema", out var schemaProperty))
         {
-            // Missing $schema defaults to latest draft (2020-12)
-            // This is common practice and allows simple schemas to work
-            return DraftDetectionResult.Detected(SchemaDraft.Draft202012, "(default - no $schema)");
+            // Missing $schema uses fallback draft
+            return DraftDetectionResult.Detected(fallbackDraft, "(default - no $schema)");
         }
 
         if (schemaProperty.ValueKind != JsonValueKind.String)
@@ -127,8 +129,8 @@ public static class SchemaDraftDetector
         var schemaUri = schemaProperty.GetString();
         if (string.IsNullOrEmpty(schemaUri))
         {
-            // Empty $schema defaults to latest draft
-            return DraftDetectionResult.Detected(SchemaDraft.Draft202012, "(default - empty $schema)");
+            // Empty $schema uses fallback draft
+            return DraftDetectionResult.Detected(fallbackDraft, "(default - empty $schema)");
         }
 
         if (SchemaUriToVersion.TryGetValue(schemaUri, out var draft))

@@ -55,6 +55,11 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
 
             if (expander != null)
             {
+                // Validate template syntax: braces must be balanced
+                if (!HasBalancedBraces(uri))
+                {
+                    return false;
+                }
                 uri = expander.ExpandTemplate(uri);
             }
 
@@ -110,6 +115,38 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format
                    uri.StartsWith("tag:", StringComparison.OrdinalIgnoreCase) ||
                    uri.StartsWith("mailto:", StringComparison.OrdinalIgnoreCase) ||
                    uri.StartsWith("tel:", StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>
+        /// Checks if braces are balanced in a URI template (RFC 6570).
+        /// Each '{' must have a matching '}' and nesting is not allowed.
+        /// </summary>
+        private static bool HasBalancedBraces(string template)
+        {
+            int depth = 0;
+            foreach (char c in template)
+            {
+                if (c == '{')
+                {
+                    depth++;
+                    // RFC 6570 doesn't allow nested braces
+                    if (depth > 1)
+                    {
+                        return false;
+                    }
+                }
+                else if (c == '}')
+                {
+                    depth--;
+                    // More closing braces than opening
+                    if (depth < 0)
+                    {
+                        return false;
+                    }
+                }
+            }
+            // All braces must be closed
+            return depth == 0;
         }
     }
 }

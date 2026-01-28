@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -50,6 +51,12 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
             var propHash = context.GetSubschemaHash(prop.Value);
             var varName = $"prop{idx}";
 
+            // Check for Draft 3's "required: true" on the property schema (Draft 3 only)
+            var hasDraft3Required = context.DetectedDraft == SchemaDraft.Draft3 &&
+                                    prop.Value.ValueKind == JsonValueKind.Object &&
+                                    prop.Value.TryGetProperty("required", out var reqElement) &&
+                                    reqElement.ValueKind == JsonValueKind.True;
+
             sb.AppendLine($"    if ({e}.TryGetProperty(\"{escaped}\", out var _{varName}_))");
             sb.AppendLine("    {");
             sb.AppendLine($"        if (!{context.GenerateValidateCallForProperty(propHash, $"_{varName}_", $"\"{escaped}\"")}) return false;");
@@ -58,6 +65,16 @@ public sealed class PropertiesCodeGenerator : IKeywordCodeGenerator
                 sb.AppendLine($"        {eval}.MarkPropertyEvaluated({loc}, \"{escaped}\");");
             }
             sb.AppendLine("    }");
+
+            // Draft 3: if "required: true" on property schema, the property must exist
+            if (hasDraft3Required)
+            {
+                sb.AppendLine("    else");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        return false; // Draft 3: required property \"{escaped}\" is missing");
+                sb.AppendLine("    }");
+            }
+
             idx++;
         }
 

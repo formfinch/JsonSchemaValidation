@@ -29,6 +29,7 @@ public static class FormatValidators
     private static readonly JsonPointerValidator JsonPointerInner = new();
     private static readonly RelativeJsonPointerValidator RelativeJsonPointerInner = new();
     private static readonly RegexValidator RegexInner = new();
+    private static readonly UriValidator UriTemplateInner = new(isTemplate: true);
 
     public static bool IsValidDateTime(JsonElement data) => DateTimeInner.IsValid(data);
     public static bool IsValidDate(JsonElement data) => DateInner.IsValid(data);
@@ -45,4 +46,5 @@ public static class FormatValidators
     public static bool IsValidJsonPointer(JsonElement data) => JsonPointerInner.IsValid(data);
     public static bool IsValidRelativeJsonPointer(JsonElement data) => RelativeJsonPointerInner.IsValid(data);
     public static bool IsValidRegex(JsonElement data) => RegexInner.IsValid(data);
+    public static bool IsValidUriTemplate(JsonElement data) => UriTemplateInner.IsValid(data);
 }

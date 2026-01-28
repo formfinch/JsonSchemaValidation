@@ -39,6 +39,13 @@ public sealed class SchemaCodeGenerator
     /// </summary>
     public bool ForceAnnotationTracking { get; set; }
 
+    /// <summary>
+    /// The default draft version to use when a schema doesn't have an explicit $schema keyword.
+    /// If null, defaults to Draft 2020-12.
+    /// Set this when compiling schemas from a known draft version (e.g., from test suites).
+    /// </summary>
+    public SchemaDraft? DefaultDraft { get; set; }
+
     public SchemaCodeGenerator()
     {
         // Register all keyword generators, ordered by priority (highest first)
@@ -71,9 +78,12 @@ public sealed class SchemaCodeGenerator
             new AnyOfCodeGenerator(),
             new OneOfCodeGenerator(),
             new NotCodeGenerator(),
+            new ExtendsCodeGenerator(),    // Draft 3
+            new DisallowCodeGenerator(),   // Draft 3
             new IfThenElseCodeGenerator(),
             new PatternCodeGenerator(),
             new FormatCodeGenerator(),
+            new ContentCodeGenerator(),
             new UnevaluatedPropertiesCodeGenerator(),
             new UnevaluatedItemsCodeGenerator()
         ];
@@ -106,7 +116,7 @@ public sealed class SchemaCodeGenerator
         try
         {
             // Detect JSON Schema draft version - must be done first to validate schema is supported
-            var draftResult = SchemaDraftDetector.DetectDraft(schema);
+            var draftResult = SchemaDraftDetector.DetectDraft(schema, DefaultDraft);
             if (!draftResult.Success)
             {
                 return GenerationResult.Failed(draftResult.ErrorMessage!);

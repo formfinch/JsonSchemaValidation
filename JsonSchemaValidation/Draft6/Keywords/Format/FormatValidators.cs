@@ -19,6 +19,7 @@ public static class FormatValidators
     private static readonly IPAddressValidator Ipv6Inner = new(isIPV6Format: true);
     private static readonly UriValidator UriInner = new(iriSupport: false);
     private static readonly UriValidator UriReferenceInner = new(iriSupport: false, canBeRelative: true);
+    private static readonly UriValidator UriTemplateInner = new(isTemplate: true);
     private static readonly JsonPointerValidator JsonPointerInner = new();
 
     public static bool IsValidDateTime(JsonElement data) => DateTimeInner.IsValid(data);
@@ -28,5 +29,6 @@ public static class FormatValidators
     public static bool IsValidIpv6(JsonElement data) => Ipv6Inner.IsValid(data);
     public static bool IsValidUri(JsonElement data) => UriInner.IsValid(data);
     public static bool IsValidUriReference(JsonElement data) => UriReferenceInner.IsValid(data);
+    public static bool IsValidUriTemplate(JsonElement data) => UriTemplateInner.IsValid(data);
     public static bool IsValidJsonPointer(JsonElement data) => JsonPointerInner.IsValid(data);
 }

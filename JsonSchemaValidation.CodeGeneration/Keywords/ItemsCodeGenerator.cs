@@ -9,8 +9,8 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for the "items" keyword.
-/// Draft 2019-09+: items is a single schema that applies after prefixItems.
-/// Draft 3-7: items can be an array (tuple validation) or a single schema (all items).
+/// Draft 2020-12: items is a single schema that applies after prefixItems.
+/// Draft 3-7, 2019-09: items can be an array (tuple validation) or a single schema (all items).
 /// </summary>
 public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
 {
@@ -35,7 +35,9 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
         }
 
         // Handle based on draft version
-        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        // In Draft 2020-12, items is ONLY a single schema (prefixItems handles tuple validation)
+        // In Draft 3-7 and 2019-09, items can be an array (tuple) or single schema
+        if (context.DetectedDraft == SchemaDraft.Draft202012)
         {
             return GenerateDraft202012Items(context, itemsElement);
         }
@@ -202,7 +204,8 @@ public sealed class ItemsCodeGenerator : IKeywordCodeGenerator
 }
 
 /// <summary>
-/// Generates code for the "prefixItems" keyword (Draft 2019-09+).
+/// Generates code for the "prefixItems" keyword (Draft 2020-12 only).
+/// In Draft 2020-12, prefixItems replaces the array form of items for tuple validation.
 /// </summary>
 public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
 {
@@ -218,8 +221,8 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
-        // prefixItems is Draft 2019-09+
-        if (context.DetectedDraft < SchemaDraft.Draft201909)
+        // prefixItems is Draft 2020-12 only
+        if (context.DetectedDraft != SchemaDraft.Draft202012)
         {
             return string.Empty;
         }
@@ -274,8 +277,9 @@ public sealed class PrefixItemsCodeGenerator : IKeywordCodeGenerator
 }
 
 /// <summary>
-/// Generates code for the "additionalItems" keyword (Draft 3-7 only).
+/// Generates code for the "additionalItems" keyword (Draft 3-7 and 2019-09).
 /// In these drafts, additionalItems applies to array items beyond those covered by items array.
+/// Removed in Draft 2020-12 (replaced by items applying after prefixItems).
 /// </summary>
 public sealed class AdditionalItemsCodeGenerator : IKeywordCodeGenerator
 {
@@ -290,8 +294,8 @@ public sealed class AdditionalItemsCodeGenerator : IKeywordCodeGenerator
 
     public string GenerateCode(CodeGenerationContext context)
     {
-        // additionalItems only applies in Draft 3-7 (removed in 2019-09+)
-        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        // additionalItems only applies in Draft 3-7 and 2019-09 (removed in 2020-12)
+        if (context.DetectedDraft == SchemaDraft.Draft202012)
         {
             return string.Empty;
         }

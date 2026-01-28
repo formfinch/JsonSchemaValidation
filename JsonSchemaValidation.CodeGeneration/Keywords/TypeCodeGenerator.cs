@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -36,7 +37,7 @@ public sealed class TypeCodeGenerator : IKeywordCodeGenerator
 
         if (typeElement.ValueKind == JsonValueKind.Array)
         {
-            return GenerateMultiTypeCheck(typeElement, e);
+            return GenerateMultiTypeCheck(context, typeElement, e);
         }
 
         return string.Empty;
@@ -77,18 +78,29 @@ if ({{e}}.ValueKind != JsonValueKind.Number) return false;
 """;
     }
 
-    private static string GenerateMultiTypeCheck(JsonElement typeArray, string e)
+    private string GenerateMultiTypeCheck(CodeGenerationContext context, JsonElement typeArray, string e)
     {
         var types = new List<string>();
+        var schemaChecks = new List<string>();
+
         foreach (var item in typeArray.EnumerateArray())
         {
             if (item.ValueKind == JsonValueKind.String)
             {
                 types.Add(item.GetString()!);
             }
+            else if (context.DetectedDraft == SchemaDraft.Draft3 &&
+                     (item.ValueKind == JsonValueKind.Object ||
+                      item.ValueKind == JsonValueKind.True ||
+                      item.ValueKind == JsonValueKind.False))
+            {
+                // Draft 3 only: type array can contain schema objects
+                var hash = context.GetSubschemaHash(item);
+                schemaChecks.Add(context.GenerateValidateCall(hash));
+            }
         }
 
-        if (types.Count == 0)
+        if (types.Count == 0 && schemaChecks.Count == 0)
         {
             return string.Empty;
         }
@@ -108,6 +120,7 @@ if ({{e}}.ValueKind != JsonValueKind.Number) return false;
                 "null" => $"{e}.ValueKind == JsonValueKind.Null",
                 "array" => $"{e}.ValueKind == JsonValueKind.Array",
                 "object" => $"{e}.ValueKind == JsonValueKind.Object",
+                "any" when context.DetectedDraft == SchemaDraft.Draft3 => "true", // Draft 3 only: "any" matches all types
                 _ => null
             };
 
@@ -115,6 +128,12 @@ if ({{e}}.ValueKind != JsonValueKind.Number) return false;
             {
                 sb.AppendLine($"    if ({condition}) _typeValid_ = true;");
             }
+        }
+
+        // Draft 3: schema objects in type array - instance must match at least one
+        foreach (var schemaCheck in schemaChecks)
+        {
+            sb.AppendLine($"    if ({schemaCheck}) _typeValid_ = true;");
         }
 
         sb.AppendLine("    if (!_typeValid_) return false;");
