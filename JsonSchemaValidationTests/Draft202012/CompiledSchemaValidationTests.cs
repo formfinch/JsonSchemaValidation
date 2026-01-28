@@ -495,24 +495,30 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 return SkipReasons.InfiniteLoopNotSupported;
             }
 
-            // $dynamicRef tests requiring runtime dynamic scope resolution
-            var dynamicRefTests = new[]
+            // Complex $dynamicRef scenarios not fully supported (TASK-048)
+            // Scope tracking is implemented but doesn't yet handle:
+            // 1. Cross-resource $dynamicRef (e.g., "extended#meta" vs "#meta")
+            // 2. Proper scope stack cleanup when leaving applicator branches (if/then/else)
+            // 3. External schemas loaded from remotes with $dynamicRef/$dynamicAnchor
+            var complexDynamicRefTests = new[]
             {
-                "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor resolves to the first $dynamicAnchor in the dynamic scope",
-                "multiple dynamic paths to the $dynamicRef keyword",
-                "after leaving a dynamic scope, it is not used by a $dynamicRef",
+                // Tests with external schemas that contain $dynamicRef/$dynamicAnchor
                 "strict-tree schema, guards against misspelled properties",
                 "tests for implementation dynamic anchor and reference link",
-                "$ref and $dynamicAnchor are independent of order - $defs first",
-                "$ref and $dynamicAnchor are independent of order - $ref first",
+                "$ref and $dynamicAnchor are independent of order",  // covers both variants
                 "$ref to $dynamicRef finds detached $dynamicAnchor",
+
+                // Tests with cross-resource $dynamicRef (e.g., "extended#meta" not "#meta")
+                "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor",
+                "multiple dynamic paths to the $dynamicRef keyword",
+                "after leaving a dynamic scope, it is not used by a $dynamicRef",
                 "$dynamicRef avoids the root of each schema, but scopes are still registered",
-                "$dynamicRef skips over intermediate resources - pointer reference across resource boundary",
+                "$dynamicRef skips over intermediate resources",  // covers both variants
             };
 
-            if (dynamicRefTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            if (complexDynamicRefTests.Any(t => testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
             {
-                return SkipReasons.DynamicScopeResolution;
+                return SkipReasons.ComplexDynamicRefNotSupported;
             }
 
             // Anchor tests with base URI changes

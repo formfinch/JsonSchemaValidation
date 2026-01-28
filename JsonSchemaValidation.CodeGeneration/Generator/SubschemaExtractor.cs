@@ -62,8 +62,14 @@ public sealed class SubschemaExtractor
     // Track $dynamicAnchors separately with their resource scope depth
     // List is ordered from outer (root) to inner, so first match is the "outermost" one
     private readonly List<DynamicAnchorInfo> _dynamicAnchors = new();
+    // Track all $dynamicAnchors per resource root (keyed by resource root hash)
+    // Used to populate ResourceAnchors for resource root schemas
+    private readonly Dictionary<string, List<(string AnchorName, string SchemaHash)>> _resourceAnchors = new(StringComparer.Ordinal);
+    // Track resource root hashes (for marking IsResourceRoot)
+    private readonly HashSet<string> _resourceRootHashes = new(StringComparer.Ordinal);
     private int _totalCount;
     private JsonElement _rootSchema;
+    private string _rootSchemaHash = "";
     private Uri? _baseUri;
     private bool _hasUnevaluatedProperties;
     private bool _hasUnevaluatedItems;
@@ -82,16 +88,61 @@ public sealed class SubschemaExtractor
         _anchors.Clear();
         _schemasByResolvedId.Clear();
         _dynamicAnchors.Clear();
+        _resourceAnchors.Clear();
+        _resourceRootHashes.Clear();
         _totalCount = 0;
         _rootSchema = rootSchema;
+        _rootSchemaHash = SchemaHasher.ComputeHash(rootSchema);
         _baseUri = baseUri;
         _hasUnevaluatedProperties = false;
         _hasUnevaluatedItems = false;
         _currentResourceDepth = 0;
 
-        WalkSchema(rootSchema, baseUri, jsonPointerPath: "");
+        // Register root schema as a resource root
+        _resourceRootHashes.Add(_rootSchemaHash);
+        _resourceAnchors[_rootSchemaHash] = new List<(string, string)>();
+
+        WalkSchema(rootSchema, baseUri, currentResourceRootHash: _rootSchemaHash, jsonPointerPath: "");
+
+        // Post-process: update resource root SubschemaInfos with their ResourceAnchors
+        PopulateResourceAnchors();
 
         return new Dictionary<string, SubschemaInfo>(_uniqueSchemas, StringComparer.Ordinal);
+    }
+
+    /// <summary>
+    /// Updates resource root SubschemaInfos with all anchors found within their resource.
+    /// </summary>
+    private void PopulateResourceAnchors()
+    {
+        foreach (var resourceRootHash in _resourceRootHashes)
+        {
+            if (!_uniqueSchemas.TryGetValue(resourceRootHash, out var info))
+            {
+                continue;
+            }
+
+            var resourceAnchors = _resourceAnchors.TryGetValue(resourceRootHash, out var anchors)
+                ? anchors
+                : new List<(string, string)>();
+
+            // Create updated SubschemaInfo with ResourceAnchors populated
+            _uniqueSchemas[resourceRootHash] = new SubschemaInfo
+            {
+                Hash = info.Hash,
+                Schema = info.Schema,
+                RequiresFallback = info.RequiresFallback,
+                FallbackKeywords = info.FallbackKeywords,
+                EffectiveBaseUri = info.EffectiveBaseUri,
+                ResourceRoot = info.ResourceRoot,
+                ResourceDepth = info.ResourceDepth,
+                JsonPointerPath = info.JsonPointerPath,
+                DynamicAnchors = info.DynamicAnchors,
+                HasRecursiveAnchor = info.HasRecursiveAnchor,
+                IsResourceRoot = true,
+                ResourceAnchors = resourceAnchors
+            };
+        }
     }
 
     /// <summary>
@@ -340,6 +391,56 @@ public sealed class SubschemaExtractor
         return 0;
     }
 
+    /// <summary>
+    /// Gets all $dynamicAnchor declarations at the root resource level (depth 0).
+    /// Used for generating IScopedCompiledValidator.DynamicAnchors property.
+    /// </summary>
+    /// <returns>List of anchor names and their schema hashes at depth 0.</returns>
+    [Obsolete("Use GetRootResourceAnchors() instead for proper resource-level anchor collection")]
+    public IReadOnlyList<(string Name, string Hash)> GetRootDynamicAnchors()
+    {
+        var result = new List<(string, string)>();
+        foreach (var anchor in _dynamicAnchors)
+        {
+            if (anchor.ResourceDepth == 0)
+            {
+                var hash = SchemaHasher.ComputeHash(anchor.Schema);
+                result.Add((anchor.Name, hash));
+            }
+        }
+        return result;
+    }
+
+    /// <summary>
+    /// Gets all $dynamicAnchor declarations within the root schema resource.
+    /// This includes anchors in nested subschemas (e.g., $defs) that belong to the root resource.
+    /// Used for generating IScopedCompiledValidator.DynamicAnchors property.
+    /// </summary>
+    /// <returns>List of anchor names and their schema hashes within the root resource.</returns>
+    public IReadOnlyList<(string AnchorName, string SchemaHash)> GetRootResourceAnchors()
+    {
+        if (_resourceAnchors.TryGetValue(_rootSchemaHash, out var anchors))
+        {
+            return anchors;
+        }
+        return [];
+    }
+
+    /// <summary>
+    /// Checks if the root schema has $recursiveAnchor: true (Draft 2019-09).
+    /// Used for generating IScopedCompiledValidator.HasRecursiveAnchor property.
+    /// </summary>
+    public bool HasRootRecursiveAnchor()
+    {
+        if (_rootSchema.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        return _rootSchema.TryGetProperty("$recursiveAnchor", out var anchor) &&
+               anchor.ValueKind == JsonValueKind.True;
+    }
+
     private static JsonElement? ResolveJsonPointer(JsonElement root, string pointer)
     {
         if (string.IsNullOrEmpty(pointer) || pointer == "/")
@@ -390,7 +491,7 @@ public sealed class SubschemaExtractor
         return current;
     }
 
-    private void WalkSchema(JsonElement schema, Uri? currentBaseUri, JsonElement? currentResourceRoot = null, int? parentResourceDepth = null, string? jsonPointerPath = null)
+    private void WalkSchema(JsonElement schema, Uri? currentBaseUri, JsonElement? currentResourceRoot = null, int? parentResourceDepth = null, string? currentResourceRootHash = null, string? jsonPointerPath = null)
     {
         _totalCount++;
 
@@ -398,10 +499,13 @@ public sealed class SubschemaExtractor
         // Schemas without $id inherit their parent resource's depth
         var schemaResourceDepth = parentResourceDepth ?? _currentResourceDepth;
 
+        // Track which resource this schema belongs to
+        var effectiveResourceRootHash = currentResourceRootHash ?? _rootSchemaHash;
+
         // Handle boolean schemas
         if (schema.ValueKind == JsonValueKind.True || schema.ValueKind == JsonValueKind.False)
         {
-            RegisterSchema(schema, currentBaseUri, currentResourceRoot ?? _rootSchema, schemaResourceDepth, jsonPointerPath);
+            RegisterSchema(schema, currentBaseUri, currentResourceRoot ?? _rootSchema, schemaResourceDepth, effectiveResourceRootHash, jsonPointerPath);
             return;
         }
 
@@ -414,6 +518,7 @@ public sealed class SubschemaExtractor
         var effectiveBaseUri = currentBaseUri;
         var effectiveResourceRoot = currentResourceRoot ?? _rootSchema;
         var childResourceDepth = schemaResourceDepth; // Depth for children without $id
+        var childResourceRootHash = effectiveResourceRootHash; // Children inherit this resource root
         if (schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
         {
             var idValue = idElement.GetString();
@@ -444,11 +549,23 @@ public sealed class SubschemaExtractor
                     schemaResourceDepth = _currentResourceDepth;
                     _currentResourceDepth++;
                     childResourceDepth = schemaResourceDepth; // Children inherit this resource's depth
+
+                    // Register this schema as a resource root with its own anchor collection
+                    var schemaHash = SchemaHasher.ComputeHash(schema);
+                    _resourceRootHashes.Add(schemaHash);
+                    if (!_resourceAnchors.ContainsKey(schemaHash))
+                    {
+                        _resourceAnchors[schemaHash] = new List<(string, string)>();
+                    }
+                    // Children belong to this resource
+                    childResourceRootHash = schemaHash;
+                    // But this schema itself belongs to its own resource (for anchor tracking)
+                    effectiveResourceRootHash = schemaHash;
                 }
             }
         }
 
-        RegisterSchema(schema, effectiveBaseUri, effectiveResourceRoot, schemaResourceDepth, jsonPointerPath);
+        RegisterSchema(schema, effectiveBaseUri, effectiveResourceRoot, schemaResourceDepth, effectiveResourceRootHash, jsonPointerPath);
 
         // Walk all subschema-containing keywords
         foreach (var property in schema.EnumerateObject())
@@ -468,25 +585,25 @@ public sealed class SubschemaExtractor
 
             if (ObjectSubschemaKeywords.Contains(property.Name))
             {
-                WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childPath);
+                WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
             else if (ObjectOfSubschemasKeywords.Contains(property.Name))
             {
-                WalkObjectOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childPath);
+                WalkObjectOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
             else if (ArrayOfSubschemasKeywords.Contains(property.Name))
             {
-                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childPath);
+                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
             else if (property.Name == "items" && property.Value.ValueKind == JsonValueKind.Array)
             {
                 // Draft 4/6/7 items as array
-                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childPath);
+                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
             else if (property.Name == "$ref" && property.Value.ValueKind == JsonValueKind.String)
             {
                 // Walk into local $ref targets to ensure they're registered
-                WalkRefTarget(property.Value.GetString(), effectiveBaseUri, effectiveResourceRoot);
+                WalkRefTarget(property.Value.GetString(), effectiveBaseUri, effectiveResourceRoot, childResourceRootHash);
             }
             else if (property.Name == "dependencies" && property.Value.ValueKind == JsonValueKind.Object)
             {
@@ -499,7 +616,7 @@ public sealed class SubschemaExtractor
                         dep.Value.ValueKind == JsonValueKind.False)
                     {
                         var depPath = childPath != null ? $"{childPath}/{EscapeJsonPointer(dep.Name)}" : null;
-                        WalkSubschema(dep.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, depPath);
+                        WalkSubschema(dep.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, depPath);
                     }
                 }
             }
@@ -511,7 +628,7 @@ public sealed class SubschemaExtractor
         return segment.Replace("~", "~0").Replace("/", "~1");
     }
 
-    private void WalkRefTarget(string? refValue, Uri? currentBaseUri, JsonElement? currentResourceRoot)
+    private void WalkRefTarget(string? refValue, Uri? currentBaseUri, JsonElement? currentResourceRoot, string? currentResourceRootHash)
     {
         if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#'))
         {
@@ -527,21 +644,21 @@ public sealed class SubschemaExtractor
         var target = ResolveLocalRef(refValue);
         if (target.HasValue)
         {
-            WalkSchema(target.Value, currentBaseUri, currentResourceRoot);
+            WalkSchema(target.Value, currentBaseUri, currentResourceRoot, currentResourceRootHash: currentResourceRootHash);
         }
     }
 
-    private void WalkSubschema(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? jsonPointerPath)
+    private void WalkSubschema(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? currentResourceRootHash, string? jsonPointerPath)
     {
         if (element.ValueKind == JsonValueKind.Object ||
             element.ValueKind == JsonValueKind.True ||
             element.ValueKind == JsonValueKind.False)
         {
-            WalkSchema(element, currentBaseUri, currentResourceRoot, parentResourceDepth, jsonPointerPath);
+            WalkSchema(element, currentBaseUri, currentResourceRoot, parentResourceDepth, currentResourceRootHash, jsonPointerPath);
         }
     }
 
-    private void WalkObjectOfSubschemas(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? parentPath)
+    private void WalkObjectOfSubschemas(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? currentResourceRootHash, string? parentPath)
     {
         if (element.ValueKind != JsonValueKind.Object)
         {
@@ -551,11 +668,11 @@ public sealed class SubschemaExtractor
         foreach (var property in element.EnumerateObject())
         {
             var childPath = parentPath != null ? $"{parentPath}/{EscapeJsonPointer(property.Name)}" : null;
-            WalkSubschema(property.Value, currentBaseUri, currentResourceRoot, parentResourceDepth, childPath);
+            WalkSubschema(property.Value, currentBaseUri, currentResourceRoot, parentResourceDepth, currentResourceRootHash, childPath);
         }
     }
 
-    private void WalkArrayOfSubschemas(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? parentPath)
+    private void WalkArrayOfSubschemas(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? currentResourceRootHash, string? parentPath)
     {
         if (element.ValueKind != JsonValueKind.Array)
         {
@@ -566,12 +683,12 @@ public sealed class SubschemaExtractor
         foreach (var item in element.EnumerateArray())
         {
             var childPath = parentPath != null ? $"{parentPath}/{index}" : null;
-            WalkSubschema(item, currentBaseUri, currentResourceRoot, parentResourceDepth, childPath);
+            WalkSubschema(item, currentBaseUri, currentResourceRoot, parentResourceDepth, currentResourceRootHash, childPath);
             index++;
         }
     }
 
-    private void RegisterSchema(JsonElement schema, Uri? effectiveBaseUri, JsonElement? resourceRoot, int resourceDepth, string? jsonPointerPath)
+    private void RegisterSchema(JsonElement schema, Uri? effectiveBaseUri, JsonElement? resourceRoot, int resourceDepth, string resourceRootHash, string? jsonPointerPath)
     {
         var hash = SchemaHasher.ComputeHash(schema);
 
@@ -593,16 +710,22 @@ public sealed class SubschemaExtractor
                     EffectiveBaseUri = existingInfo.EffectiveBaseUri,
                     ResourceRoot = existingInfo.ResourceRoot,
                     ResourceDepth = existingInfo.ResourceDepth,
-                    JsonPointerPath = jsonPointerPath
+                    JsonPointerPath = jsonPointerPath,
+                    DynamicAnchors = existingInfo.DynamicAnchors,
+                    HasRecursiveAnchor = existingInfo.HasRecursiveAnchor,
+                    IsResourceRoot = existingInfo.IsResourceRoot,
+                    ResourceAnchors = existingInfo.ResourceAnchors
                 };
             }
 
             // Even if schema is already registered, we still need to register any anchor
-            RegisterAnchor(schema, resourceDepth);
+            RegisterAnchor(schema, hash, resourceDepth, resourceRootHash);
             return;
         }
 
         var fallbackKeywords = DetectFallbackKeywords(schema);
+        var dynamicAnchors = ExtractDynamicAnchors(schema);
+        var hasRecursiveAnchor = HasRecursiveAnchor(schema);
 
         _uniqueSchemas[hash] = new SubschemaInfo
         {
@@ -613,14 +736,19 @@ public sealed class SubschemaExtractor
             EffectiveBaseUri = effectiveBaseUri,
             ResourceRoot = resourceRoot,
             ResourceDepth = resourceDepth,
-            JsonPointerPath = jsonPointerPath
+            JsonPointerPath = jsonPointerPath,
+            DynamicAnchors = dynamicAnchors,
+            HasRecursiveAnchor = hasRecursiveAnchor,
+            // IsResourceRoot and ResourceAnchors will be populated in post-processing
+            IsResourceRoot = false,
+            ResourceAnchors = []
         };
 
         // Register anchor if present
-        RegisterAnchor(schema, resourceDepth);
+        RegisterAnchor(schema, hash, resourceDepth, resourceRootHash);
     }
 
-    private void RegisterAnchor(JsonElement schema, int resourceDepth)
+    private void RegisterAnchor(JsonElement schema, string schemaHash, int resourceDepth, string resourceRootHash)
     {
         if (schema.ValueKind != JsonValueKind.Object)
         {
@@ -657,6 +785,17 @@ public sealed class SubschemaExtractor
                     Schema = schema,
                     ResourceDepth = resourceDepth
                 });
+
+                // Track this anchor as belonging to its resource root
+                // This enables resource-level anchor collection for $dynamicRef
+                if (_resourceAnchors.TryGetValue(resourceRootHash, out var anchors))
+                {
+                    // Avoid duplicates (same anchor name in same resource)
+                    if (!anchors.Any(a => a.AnchorName == anchorName))
+                    {
+                        anchors.Add((anchorName, schemaHash));
+                    }
+                }
             }
         }
     }
@@ -696,5 +835,49 @@ public sealed class SubschemaExtractor
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Extracts $dynamicAnchor names from a schema.
+    /// </summary>
+    private static List<string> ExtractDynamicAnchors(JsonElement schema)
+    {
+        var result = new List<string>();
+
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return result;
+        }
+
+        if (schema.TryGetProperty("$dynamicAnchor", out var dynamicAnchor) &&
+            dynamicAnchor.ValueKind == JsonValueKind.String)
+        {
+            var name = dynamicAnchor.GetString();
+            if (!string.IsNullOrEmpty(name))
+            {
+                result.Add(name);
+            }
+        }
+
+        return result;
+    }
+
+    /// <summary>
+    /// Checks if a schema has $recursiveAnchor: true.
+    /// </summary>
+    private static bool HasRecursiveAnchor(JsonElement schema)
+    {
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        if (schema.TryGetProperty("$recursiveAnchor", out var recursiveAnchor) &&
+            recursiveAnchor.ValueKind == JsonValueKind.True)
+        {
+            return true;
+        }
+
+        return false;
     }
 }

@@ -172,6 +172,12 @@ public sealed class CodeGenerationContext
     public string LocationVariable { get; init; } = "_loc_";
 
     /// <summary>
+    /// The variable name for the dynamic scope (e.g., "_scope_").
+    /// Used for $dynamicRef and $recursiveRef resolution.
+    /// </summary>
+    public string ScopeVariable { get; init; } = "_scope_";
+
+    /// <summary>
     /// Whether to use [GeneratedRegex] partial methods (true) or regular Regex fields (false).
     /// Set to false for runtime compilation where source generators don't run.
     /// </summary>
@@ -184,6 +190,11 @@ public sealed class CodeGenerationContext
     public SchemaDraft DetectedDraft { get; init; } = SchemaDraft.Draft202012;
 
     /// <summary>
+    /// Whether the generated validator needs scope tracking for $dynamicRef or $recursiveRef.
+    /// </summary>
+    public bool RequiresScopeTracking { get; init; }
+
+    /// <summary>
     /// Whether annotation tracking requires passing location through method calls.
     /// </summary>
     public bool RequiresLocationTracking => RequiresPropertyAnnotations || RequiresItemAnnotations;
@@ -194,34 +205,74 @@ public sealed class CodeGenerationContext
     public string LocationArgument => RequiresLocationTracking ? $", {LocationVariable}" : "";
 
     /// <summary>
-    /// Generates a method call to validate a subschema, passing location if needed.
+    /// Generates a method call to validate a subschema, passing scope and location if needed.
     /// For same-level calls (allOf, anyOf, etc.)
     /// </summary>
-    public string GenerateValidateCall(string hash) =>
-        RequiresLocationTracking ? $"Validate_{hash}({ElementVariable}, {LocationVariable})" : $"Validate_{hash}({ElementVariable})";
+    public string GenerateValidateCall(string hash)
+    {
+        var args = new List<string> { ElementVariable };
+        if (RequiresScopeTracking)
+        {
+            args.Add(ScopeVariable);
+        }
+        if (RequiresLocationTracking)
+        {
+            args.Add(LocationVariable);
+        }
+        return $"Validate_{hash}({string.Join(", ", args)})";
+    }
 
     /// <summary>
     /// Generates a method call to validate a subschema with a different element variable.
     /// For property validation where we're validating a property value.
     /// </summary>
-    public string GenerateValidateCallForVariable(string hash, string variable) =>
-        RequiresLocationTracking ? $"Validate_{hash}({variable}, {LocationVariable})" : $"Validate_{hash}({variable})";
+    public string GenerateValidateCallForVariable(string hash, string variable)
+    {
+        var args = new List<string> { variable };
+        if (RequiresScopeTracking)
+        {
+            args.Add(ScopeVariable);
+        }
+        if (RequiresLocationTracking)
+        {
+            args.Add(LocationVariable);
+        }
+        return $"Validate_{hash}({string.Join(", ", args)})";
+    }
 
     /// <summary>
     /// Generates a method call to validate a child property (pushes property name onto location).
     /// </summary>
-    public string GenerateValidateCallForProperty(string hash, string propertyValueVar, string propertyNameLiteral) =>
-        RequiresLocationTracking
-            ? $"Validate_{hash}({propertyValueVar}, {LocationVariable} + \"/\" + EscapeJsonPointer({propertyNameLiteral}))"
-            : $"Validate_{hash}({propertyValueVar})";
+    public string GenerateValidateCallForProperty(string hash, string propertyValueVar, string propertyNameLiteral)
+    {
+        var args = new List<string> { propertyValueVar };
+        if (RequiresScopeTracking)
+        {
+            args.Add(ScopeVariable);
+        }
+        if (RequiresLocationTracking)
+        {
+            args.Add($"{LocationVariable} + \"/\" + EscapeJsonPointer({propertyNameLiteral})");
+        }
+        return $"Validate_{hash}({string.Join(", ", args)})";
+    }
 
     /// <summary>
     /// Generates a method call to validate a child array item (pushes index onto location).
     /// </summary>
-    public string GenerateValidateCallForItem(string hash, string itemVar, string indexVar) =>
-        RequiresLocationTracking
-            ? $"Validate_{hash}({itemVar}, {LocationVariable} + \"/\" + {indexVar})"
-            : $"Validate_{hash}({itemVar})";
+    public string GenerateValidateCallForItem(string hash, string itemVar, string indexVar)
+    {
+        var args = new List<string> { itemVar };
+        if (RequiresScopeTracking)
+        {
+            args.Add(ScopeVariable);
+        }
+        if (RequiresLocationTracking)
+        {
+            args.Add($"{LocationVariable} + \"/\" + {indexVar}");
+        }
+        return $"Validate_{hash}({string.Join(", ", args)})";
+    }
 }
 
 /// <summary>

@@ -72,24 +72,43 @@ public sealed class RecursiveRefCodeGenerator : IKeywordCodeGenerator
             return ResolveToLocalRoot(context);
         }
 
-        // Bookend exists - generate code that checks for recursive scope root at runtime.
-        // If _dynamicScopeRoot is set (by an outer validator), use it.
-        // Otherwise fall back to local root resolution.
+        // Bookend exists - generate code that searches the dynamic scope at runtime.
+        // Per JSON Schema 2019-09 spec:
+        // "examining the dynamic scope for the outermost schema that also contains $recursiveAnchor: true"
         var localRootHash = context.ResourceRoot.HasValue
             ? context.GetSubschemaHash(context.ResourceRoot.Value)
             : context.CurrentHash;
 
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine("// $recursiveRef: # (with runtime scope check)");
-        sb.AppendLine("if (_dynamicScopeRoot != null)");
-        sb.AppendLine("{");
-        sb.AppendLine("    if (!_dynamicScopeRoot.IsValid(e)) return false;");
-        sb.AppendLine("}");
-        sb.AppendLine("else");
-        sb.AppendLine("{");
-        sb.AppendLine($"    if (!{context.GenerateValidateCall(localRootHash)}) return false;");
-        sb.Append("}");
-        return sb.ToString();
+        if (context.RequiresScopeTracking)
+        {
+            // Generate scope-aware resolution code
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("// $recursiveRef: # (with dynamic scope resolution)");
+            sb.AppendLine($"if ({context.ScopeVariable}.TryResolveRecursiveAnchor(out var _recValidator_{localRootHash[..8]}))");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!_recValidator_{localRootHash[..8]}!({context.ElementVariable}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("}");
+            sb.AppendLine("else");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!{context.GenerateValidateCall(localRootHash)}) return false;");
+            sb.Append("}");
+            return sb.ToString();
+        }
+        else
+        {
+            // Legacy path: no scope tracking, use _dynamicScopeRoot fallback
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("// $recursiveRef: # (with runtime scope check - legacy)");
+            sb.AppendLine("if (_dynamicScopeRoot != null)");
+            sb.AppendLine("{");
+            sb.AppendLine("    if (!_dynamicScopeRoot.IsValid(e)) return false;");
+            sb.AppendLine("}");
+            sb.AppendLine("else");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!{context.GenerateValidateCall(localRootHash)}) return false;");
+            sb.Append("}");
+            return sb.ToString();
+        }
     }
 
     /// <summary>

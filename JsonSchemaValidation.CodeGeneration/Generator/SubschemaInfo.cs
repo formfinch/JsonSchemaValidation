@@ -60,6 +60,38 @@ public sealed class SubschemaInfo
     /// Used to register subschemas by their fragment URIs.
     /// </summary>
     public string? JsonPointerPath { get; init; }
+
+    /// <summary>
+    /// The names of $dynamicAnchor declarations in this subschema.
+    /// Empty if no $dynamicAnchor is declared.
+    /// </summary>
+    public IReadOnlyList<string> DynamicAnchors { get; init; } = [];
+
+    /// <summary>
+    /// Whether this subschema has $recursiveAnchor: true.
+    /// </summary>
+    public bool HasRecursiveAnchor { get; init; }
+
+    /// <summary>
+    /// Whether this subschema is a schema resource root (has $id or is the root schema).
+    /// Resource roots should use ResourceAnchors for scope entries.
+    /// </summary>
+    public bool IsResourceRoot { get; init; }
+
+    /// <summary>
+    /// All $dynamicAnchor declarations within this schema resource.
+    /// Only populated for resource roots (schemas with $id or the root schema).
+    /// Each entry maps anchor name to the hash of the schema containing that anchor.
+    /// </summary>
+    public IReadOnlyList<(string AnchorName, string SchemaHash)> ResourceAnchors { get; init; } = [];
+
+    /// <summary>
+    /// Whether this subschema should push a scope entry (has anchors).
+    /// For resource roots, uses ResourceAnchors; otherwise uses direct DynamicAnchors.
+    /// </summary>
+    public bool ShouldPushScope => IsResourceRoot
+        ? (ResourceAnchors.Count > 0 || HasRecursiveAnchor)
+        : (DynamicAnchors.Count > 0 || HasRecursiveAnchor);
 }
 
 /// <summary>

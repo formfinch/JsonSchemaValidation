@@ -94,37 +94,53 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
             return ResolveAsRef(context, refValue);
         }
 
-        // Bookend exists - check for outer $dynamicAnchors
-        // Only consider $dynamicAnchors at the ROOT level (depth 0) as truly "outer".
-        // This is because we can only statically determine that the root is definitely in scope.
-        // Intermediate resources (depth > 0) may or may not be on the actual evaluation path.
-        if (context.FindOuterDynamicAnchor != null && context.ResourceDepth > 0)
-        {
-            // Look for $dynamicAnchor at depth 0 only (the root resource)
-            var outerAnchor = context.FindOuterDynamicAnchor(anchorName, 1);
-            if (outerAnchor.HasValue)
-            {
-                // Use the outer $dynamicAnchor (outermost scope wins)
-                var targetHash = context.GetSubschemaHash(outerAnchor.Value);
-                return $"// $dynamicRef: {refValue} (resolved to outer $dynamicAnchor at root)\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
-            }
-        }
-
-        // Generate code that checks for dynamic scope root at runtime.
-        // If _dynamicScopeRoot is set (by an outer validator like the metaschema), use it.
-        // Otherwise fall back to local resolution.
+        // Bookend exists - generate code that searches the dynamic scope at runtime.
+        // Per JSON Schema 2020-12 section 8.2.3.2:
+        // "the outermost schema resource in the dynamic scope that defines an identically named fragment"
         var localHash = context.GetSubschemaHash(localDynamicAnchor.Value);
-        var sb = new System.Text.StringBuilder();
-        sb.AppendLine($"// $dynamicRef: {refValue} (with runtime scope check)");
-        sb.AppendLine("if (_dynamicScopeRoot != null)");
-        sb.AppendLine("{");
-        sb.AppendLine("    if (!_dynamicScopeRoot.IsValid(e)) return false;");
-        sb.AppendLine("}");
-        sb.AppendLine("else");
-        sb.AppendLine("{");
-        sb.AppendLine($"    if (!{context.GenerateValidateCall(localHash)}) return false;");
-        sb.Append("}");
-        return sb.ToString();
+
+        if (context.RequiresScopeTracking)
+        {
+            // Generate scope-aware resolution code
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// $dynamicRef: {refValue} (with dynamic scope resolution)");
+            sb.AppendLine($"if ({context.ScopeVariable}.TryResolveDynamicAnchor(\"{anchorName}\", out var _dynValidator_{localHash[..8]}))");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!_dynValidator_{localHash[..8]}!({context.ElementVariable}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("}");
+            sb.AppendLine("else");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!{context.GenerateValidateCall(localHash)}) return false;");
+            sb.Append("}");
+            return sb.ToString();
+        }
+        else
+        {
+            // Legacy path: no scope tracking, use static resolution or _dynamicScopeRoot fallback
+            // Check for outer $dynamicAnchors at ROOT level (depth 0) only
+            if (context.FindOuterDynamicAnchor != null && context.ResourceDepth > 0)
+            {
+                var outerAnchor = context.FindOuterDynamicAnchor(anchorName, 1);
+                if (outerAnchor.HasValue)
+                {
+                    var targetHash = context.GetSubschemaHash(outerAnchor.Value);
+                    return $"// $dynamicRef: {refValue} (resolved to outer $dynamicAnchor at root)\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+                }
+            }
+
+            // Fall back to _dynamicScopeRoot at runtime
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// $dynamicRef: {refValue} (with runtime scope check - legacy)");
+            sb.AppendLine("if (_dynamicScopeRoot != null)");
+            sb.AppendLine("{");
+            sb.AppendLine("    if (!_dynamicScopeRoot.IsValid(e)) return false;");
+            sb.AppendLine("}");
+            sb.AppendLine("else");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!{context.GenerateValidateCall(localHash)}) return false;");
+            sb.Append("}");
+            return sb.ToString();
+        }
     }
 
     /// <summary>

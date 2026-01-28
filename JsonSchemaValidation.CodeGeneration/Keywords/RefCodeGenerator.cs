@@ -168,10 +168,29 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         var e2 = context.ElementVariable;
 
         // Generate null check - if external ref wasn't initialized (no registry), validation fails
-        return $"""
-            // External $ref: {refValue}
-            if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;
-            """;
+        // When scope tracking is enabled, try to use the scoped interface to pass the dynamic scope
+        if (context.RequiresScopeTracking)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// External $ref: {refValue} (with scope propagation)");
+            sb.AppendLine($"if ({fieldName} == null) return false;");
+            sb.AppendLine($"if ({fieldName} is IScopedCompiledValidator {fieldName}_scoped)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!{fieldName}_scoped.IsValid({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("}");
+            sb.AppendLine("else");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if (!{fieldName}.IsValid({e2})) return false;");
+            sb.Append("}");
+            return sb.ToString();
+        }
+        else
+        {
+            return $"""
+                // External $ref: {refValue}
+                if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;
+                """;
+        }
     }
 
     private static string GenerateFieldNameSuffix(string input)

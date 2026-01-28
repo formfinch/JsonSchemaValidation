@@ -159,4 +159,13 @@ internal static class SkipReasons
     /// </summary>
     public const string UnevaluatedNotSupported =
         "RuntimeValidatorFactory does not fully support unevaluatedItems/unevaluatedProperties with applicators";
+
+    /// <summary>
+    /// Complex $dynamicRef scenarios involving external schemas or multiple dynamic paths.
+    /// While basic $dynamicRef is supported, complex scenarios that require scope propagation
+    /// across schema boundaries (external $ref to schemas with $dynamicRef/$dynamicAnchor)
+    /// or multiple dynamic paths through different $ref chains are not fully supported.
+    /// </summary>
+    public const string ComplexDynamicRefNotSupported =
+        "Complex $dynamicRef with external schemas or multiple dynamic paths not fully supported";
 }

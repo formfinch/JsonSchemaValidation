@@ -15,7 +15,7 @@ using FormFinch.JsonSchemaValidation.Draft4.Keywords.Format;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft4Schema : ICompiledValidator
+    internal sealed class CompiledValidator_Draft4Schema : ICompiledValidator
     {
         private static readonly JsonElement[] Enum_4b8c15195535 = new JsonElement[] { JsonDocument.Parse("\"array\"").RootElement, JsonDocument.Parse("\"boolean\"").RootElement, JsonDocument.Parse("\"integer\"").RootElement, JsonDocument.Parse("\"null\"").RootElement, JsonDocument.Parse("\"number\"").RootElement, JsonDocument.Parse("\"object\"").RootElement, JsonDocument.Parse("\"string\"").RootElement };
 
