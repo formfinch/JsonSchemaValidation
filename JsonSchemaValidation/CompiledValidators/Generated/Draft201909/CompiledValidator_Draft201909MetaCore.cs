@@ -16,7 +16,7 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed partial class CompiledValidator_Draft201909MetaCore : IRegistryAwareCompiledValidator
+    internal sealed partial class CompiledValidator_Draft201909MetaCore : IScopedCompiledValidator, IRegistryAwareCompiledValidator
     {
         [GeneratedRegex(@"^[^#]*#?$", RegexOptions.None, matchTimeoutMilliseconds: 5000)]
         private static partial Regex Pattern_edcdb22c519d();
@@ -24,6 +24,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         private static partial Regex Pattern_4657485aab9e();
 
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/core");
+
+        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors => null;
+
+        public bool HasRecursiveAnchor => true;
+
+#pragma warning disable HAA0603
+        public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => Validate_97f4142fd422;
+#pragma warning restore HAA0603
 
         private ICompiledValidator? _dynamicScopeRoot;
 
@@ -40,10 +48,31 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             _dynamicScopeRoot = root;
         }
 
-        public bool IsValid(JsonElement instance) => Validate_97f4142fd422(instance);
+        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_97f4142fd422(instance, scope);
 
-    private bool Validate_97f4142fd422(JsonElement e)
+        public bool IsValid(JsonElement instance)
+        {
+            var entry = new CompiledScopeEntry
+            {
+                DynamicAnchors = DynamicAnchors,
+                RootValidator = RootValidator,
+                HasRecursiveAnchor = HasRecursiveAnchor
+            };
+            var scope = CompiledValidatorScope.Empty.Push(entry);
+            return Validate_97f4142fd422(instance, scope);
+        }
+
+    private bool Validate_97f4142fd422(JsonElement e, ICompiledValidatorScope _scope_)
     {
+        // Push scope entry for this schema's anchors
+        var _scopeEntry_ = new CompiledScopeEntry
+        {
+            DynamicAnchors = null,
+            HasRecursiveAnchor = true,
+            RootValidator = Validate_97f4142fd422
+        };
+        _scope_ = _scope_.Push(_scopeEntry_);
+
         {
             var _typeValid_ = false;
             if (e.ValueKind == JsonValueKind.Object) _typeValid_ = true;
@@ -55,39 +84,39 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             if (e.TryGetProperty("$id", out var _prop0_))
             {
-                if (!Validate_edcdb22c519d(_prop0_)) return false;
+                if (!Validate_edcdb22c519d(_prop0_, _scope_)) return false;
             }
             if (e.TryGetProperty("$schema", out var _prop1_))
             {
-                if (!Validate_f9757109fae3(_prop1_)) return false;
+                if (!Validate_f9757109fae3(_prop1_, _scope_)) return false;
             }
             if (e.TryGetProperty("$anchor", out var _prop2_))
             {
-                if (!Validate_4657485aab9e(_prop2_)) return false;
+                if (!Validate_4657485aab9e(_prop2_, _scope_)) return false;
             }
             if (e.TryGetProperty("$ref", out var _prop3_))
             {
-                if (!Validate_5dc527ab08dc(_prop3_)) return false;
+                if (!Validate_5dc527ab08dc(_prop3_, _scope_)) return false;
             }
             if (e.TryGetProperty("$recursiveRef", out var _prop4_))
             {
-                if (!Validate_5dc527ab08dc(_prop4_)) return false;
+                if (!Validate_5dc527ab08dc(_prop4_, _scope_)) return false;
             }
             if (e.TryGetProperty("$recursiveAnchor", out var _prop5_))
             {
-                if (!Validate_7cb541e84f22(_prop5_)) return false;
+                if (!Validate_7cb541e84f22(_prop5_, _scope_)) return false;
             }
             if (e.TryGetProperty("$vocabulary", out var _prop6_))
             {
-                if (!Validate_f46f77c6529f(_prop6_)) return false;
+                if (!Validate_f46f77c6529f(_prop6_, _scope_)) return false;
             }
             if (e.TryGetProperty("$comment", out var _prop7_))
             {
-                if (!Validate_00404e686415(_prop7_)) return false;
+                if (!Validate_00404e686415(_prop7_, _scope_)) return false;
             }
             if (e.TryGetProperty("$defs", out var _prop8_))
             {
-                if (!Validate_b3a76762e1d8(_prop8_)) return false;
+                if (!Validate_b3a76762e1d8(_prop8_, _scope_)) return false;
             }
         }
 
@@ -95,7 +124,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_edcdb22c519d(JsonElement e)
+    private bool Validate_edcdb22c519d(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (e.ValueKind == JsonValueKind.String)
@@ -108,7 +137,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_f9757109fae3(JsonElement e)
+    private bool Validate_f9757109fae3(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidUri(e)) return false;
@@ -116,7 +145,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_4657485aab9e(JsonElement e)
+    private bool Validate_4657485aab9e(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (e.ValueKind == JsonValueKind.String)
@@ -128,7 +157,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_5dc527ab08dc(JsonElement e)
+    private bool Validate_5dc527ab08dc(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidUriReference(e)) return false;
@@ -136,14 +165,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_7cb541e84f22(JsonElement e)
+    private bool Validate_7cb541e84f22(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
         return true;
     }
 
 
-    private bool Validate_f46f77c6529f(JsonElement e)
+    private bool Validate_f46f77c6529f(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -151,7 +180,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             foreach (var _pnProp_ in e.EnumerateObject())
             {
                 using var _pnDoc_ = JsonDocument.Parse($"\"{_pnProp_.Name}\"");
-                if (!Validate_f9757109fae3(_pnDoc_.RootElement)) return false;
+                if (!Validate_f9757109fae3(_pnDoc_.RootElement, _scope_)) return false;
             }
         }
 
@@ -159,7 +188,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             foreach (var _prop_ in e.EnumerateObject())
             {
-                if (!Validate_7cb541e84f22(_prop_.Value)) return false;
+                if (!Validate_7cb541e84f22(_prop_.Value, _scope_)) return false;
             }
         }
 
@@ -167,21 +196,21 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_00404e686415(JsonElement e)
+    private bool Validate_00404e686415(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private bool Validate_b3a76762e1d8(JsonElement e)
+    private bool Validate_b3a76762e1d8(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
         {
             foreach (var _prop_ in e.EnumerateObject())
             {
-                if (!Validate_f408d0871962(_prop_.Value)) return false;
+                if (!Validate_f408d0871962(_prop_.Value, _scope_)) return false;
             }
         }
 
@@ -189,16 +218,16 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_f408d0871962(JsonElement e)
+    private bool Validate_f408d0871962(JsonElement e, ICompiledValidatorScope _scope_)
     {
-        // $recursiveRef: # (with runtime scope check)
-        if (_dynamicScopeRoot != null)
+        // $recursiveRef: # (with dynamic scope resolution)
+        if (_scope_.TryResolveRecursiveAnchor(out var _recValidator_97f4142f))
         {
-            if (!_dynamicScopeRoot.IsValid(e)) return false;
+            if (!_recValidator_97f4142f!(e, _scope_)) return false;
         }
         else
         {
-            if (!Validate_97f4142fd422(e)) return false;
+            if (!Validate_97f4142fd422(e, _scope_)) return false;
         }
         return true;
     }

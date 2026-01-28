@@ -16,9 +16,17 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    public sealed class CompiledValidator_Draft201909MetaContent : IRegistryAwareCompiledValidator
+    internal sealed class CompiledValidator_Draft201909MetaContent : IScopedCompiledValidator, IRegistryAwareCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2019-09/meta/content");
+
+        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors => null;
+
+        public bool HasRecursiveAnchor => true;
+
+#pragma warning disable HAA0603
+        public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => Validate_3d3257f724a4;
+#pragma warning restore HAA0603
 
         private ICompiledValidator? _dynamicScopeRoot;
 
@@ -35,10 +43,31 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             _dynamicScopeRoot = root;
         }
 
-        public bool IsValid(JsonElement instance) => Validate_3d3257f724a4(instance);
+        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_3d3257f724a4(instance, scope);
 
-    private bool Validate_3d3257f724a4(JsonElement e)
+        public bool IsValid(JsonElement instance)
+        {
+            var entry = new CompiledScopeEntry
+            {
+                DynamicAnchors = DynamicAnchors,
+                RootValidator = RootValidator,
+                HasRecursiveAnchor = HasRecursiveAnchor
+            };
+            var scope = CompiledValidatorScope.Empty.Push(entry);
+            return Validate_3d3257f724a4(instance, scope);
+        }
+
+    private bool Validate_3d3257f724a4(JsonElement e, ICompiledValidatorScope _scope_)
     {
+        // Push scope entry for this schema's anchors
+        var _scopeEntry_ = new CompiledScopeEntry
+        {
+            DynamicAnchors = null,
+            HasRecursiveAnchor = true,
+            RootValidator = Validate_3d3257f724a4
+        };
+        _scope_ = _scope_.Push(_scopeEntry_);
+
         {
             var _typeValid_ = false;
             if (e.ValueKind == JsonValueKind.Object) _typeValid_ = true;
@@ -50,15 +79,15 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             if (e.TryGetProperty("contentMediaType", out var _prop0_))
             {
-                if (!Validate_00404e686415(_prop0_)) return false;
+                if (!Validate_00404e686415(_prop0_, _scope_)) return false;
             }
             if (e.TryGetProperty("contentEncoding", out var _prop1_))
             {
-                if (!Validate_00404e686415(_prop1_)) return false;
+                if (!Validate_00404e686415(_prop1_, _scope_)) return false;
             }
             if (e.TryGetProperty("contentSchema", out var _prop2_))
             {
-                if (!Validate_f408d0871962(_prop2_)) return false;
+                if (!Validate_f408d0871962(_prop2_, _scope_)) return false;
             }
         }
 
@@ -66,23 +95,23 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_00404e686415(JsonElement e)
+    private bool Validate_00404e686415(JsonElement e, ICompiledValidatorScope _scope_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private bool Validate_f408d0871962(JsonElement e)
+    private bool Validate_f408d0871962(JsonElement e, ICompiledValidatorScope _scope_)
     {
-        // $recursiveRef: # (with runtime scope check)
-        if (_dynamicScopeRoot != null)
+        // $recursiveRef: # (with dynamic scope resolution)
+        if (_scope_.TryResolveRecursiveAnchor(out var _recValidator_3d3257f7))
         {
-            if (!_dynamicScopeRoot.IsValid(e)) return false;
+            if (!_recValidator_3d3257f7!(e, _scope_)) return false;
         }
         else
         {
-            if (!Validate_3d3257f724a4(e)) return false;
+            if (!Validate_3d3257f724a4(e, _scope_)) return false;
         }
         return true;
     }

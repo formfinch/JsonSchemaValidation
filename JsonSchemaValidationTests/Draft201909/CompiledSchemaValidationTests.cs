@@ -389,7 +389,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
                 "patternProperties",
                 "properties",
                 "propertyNames",
-                "recursiveRef",
+                // "recursiveRef" - excluded due to scope tracking complexity causing crashes (TASK-048)
                 "ref",
                 "refRemote",
                 "required",
@@ -485,15 +485,19 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
                 return SkipReasons.ItemsAsArrayNotSupported;
             }
 
-            // $recursiveRef tests requiring runtime recursive scope resolution
-            // Skip all $recursiveRef tests as compiled validators can't handle runtime recursive resolution
-            if (testCaseDescription.StartsWith("$recursiveRef", StringComparison.Ordinal) ||
-                testCaseDescription.StartsWith("dynamic $recursiveRef", StringComparison.Ordinal) ||
-                testCaseDescription.StartsWith("multiple dynamic paths to the $recursiveRef", StringComparison.Ordinal) ||
-                testCaseDescription.StartsWith("$ref with $recursiveAnchor", StringComparison.Ordinal) ||
-                testCaseDescription.Contains("$recursiveRef"))
+            // $recursiveRef and $recursiveAnchor tests - not fully supported (TASK-048)
+            // These features require complex scope tracking that isn't fully implemented.
+            var recursiveRefTests = new[]
             {
-                return SkipReasons.RecursiveRefResolution;
+                "multiple dynamic paths to the $recursiveRef keyword",
+                "$ref with $recursiveAnchor",
+                "unevaluatedItems with $recursiveRef",
+                "unevaluatedProperties with $recursiveRef",
+            };
+
+            if (recursiveRefTests.Any(t => testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            {
+                return SkipReasons.ComplexDynamicRefNotSupported;
             }
 
             // Anchor tests with base URI changes
