@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 using FormFinch.JsonSchemaValidationTests.Common;
@@ -24,7 +25,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
         public CompiledSchemaValidationFixture()
         {
             Registry = CreateRegistryWithMetaschemas();
-            Factory = new RuntimeValidatorFactory(Registry);
+            Factory = new RuntimeValidatorFactory(Registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft3);
         }
 
         public void Dispose()
@@ -107,7 +108,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
 
             if (pendingSchemas.Count == 0) return;
 
-            using var factory = new RuntimeValidatorFactory(registry);
+            using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft3);
             var maxPasses = 10;
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
@@ -306,101 +307,15 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests cause stack overflow
-            if (testCaseDescription.StartsWith("evaluating the same schema location against the same data location twice", StringComparison.Ordinal))
-            {
-                return SkipReasons.InfiniteLoopNotSupported;
-            }
+            // Infinite loop detection tests now work correctly
 
-            // additionalItems not supported
-            var additionalItemsTests = new[]
-            {
-                "additionalItems as schema",
-                "array of items with no additionalItems permitted",
-                "additionalItems with heterogeneous array",
-                "additionalItems are allowed by default",
-                "uniqueItems with an array of items and additionalItems",
-                "uniqueItems=false with an array of items and additionalItems",
-            };
+            // additionalItems, tuple validation, divisibleBy, disallow, and extends are now supported
 
-            if (additionalItemsTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.AdditionalItemsNotSupported;
-            }
+            // Draft 3 type with schemas is now supported
 
-            // items as array (tuple validation) not supported
-            var itemsArrayTests = new[]
-            {
-                "an array of schemas for items",
-            };
+            // Draft 3 format names (color, host-name, ip-address, time) are now supported
 
-            if (itemsArrayTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.ItemsAsArrayNotSupported;
-            }
-
-            // Draft 3 specific keywords: divisibleBy, disallow, extends
-            var draft3KeywordTests = new[]
-            {
-                "by int",
-                "by number",
-                "by small number",
-                "disallow",
-                "multiple disallow",
-                "extends",
-                "multiple extends",
-                "extends simple types",
-            };
-
-            if (draft3KeywordTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.Draft3KeywordsNotSupported;
-            }
-
-            // Draft 3 type with schemas not supported
-            var typeSchemaTests = new[]
-            {
-                "types can include schemas",
-                "types from separate schemas are merged",
-            };
-
-            if (typeSchemaTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.Draft3TypeSchemasNotSupported;
-            }
-
-            // Draft 3 format names not supported
-            var formatTests = new[]
-            {
-                "validation of CSS colors",
-                "validation of host names",
-                "validation of IP addresses",
-                "validation of time strings",
-            };
-
-            if (formatTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.Draft3FormatNamesNotSupported;
-            }
-
-            // dependencies keyword not supported
-            if (testCaseDescription == "dependencies" || testCaseDescription.StartsWith("dependencies", StringComparison.Ordinal))
-            {
-                return SkipReasons.DependenciesNotSupported;
-            }
-
-            // Draft 3 required format (boolean on properties) not supported
-            var requiredTests = new[]
-            {
-                "required validation",
-                "required default validation",
-                "required with empty array",
-            };
-
-            if (requiredTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.Draft3RequiredNotSupported;
-            }
+            // Draft 3 required format (boolean on properties) is now supported
 
             // ref-related issues
             var refTests = new[]

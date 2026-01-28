@@ -4,15 +4,17 @@
 using System.Globalization;
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
 /// <summary>
 /// Generates code for numeric constraint keywords: minimum, maximum, exclusiveMinimum, exclusiveMaximum, multipleOf.
+/// Also supports Draft 3 "divisibleBy" (alias for multipleOf).
 /// </summary>
 public sealed class NumericConstraintsCodeGenerator : IKeywordCodeGenerator
 {
-    public string Keyword => "minimum/maximum/exclusiveMinimum/exclusiveMaximum/multipleOf";
+    public string Keyword => "minimum/maximum/exclusiveMinimum/exclusiveMaximum/multipleOf/divisibleBy";
     public int Priority => 50;
 
     public bool CanGenerate(JsonElement schema)
@@ -26,7 +28,8 @@ public sealed class NumericConstraintsCodeGenerator : IKeywordCodeGenerator
                schema.TryGetProperty("maximum", out _) ||
                schema.TryGetProperty("exclusiveMinimum", out _) ||
                schema.TryGetProperty("exclusiveMaximum", out _) ||
-               schema.TryGetProperty("multipleOf", out _);
+               schema.TryGetProperty("multipleOf", out _) ||
+               schema.TryGetProperty("divisibleBy", out _); // Draft 3
     }
 
     public string GenerateCode(CodeGenerationContext context)
@@ -40,6 +43,14 @@ public sealed class NumericConstraintsCodeGenerator : IKeywordCodeGenerator
         var hasExMin = schema.TryGetProperty("exclusiveMinimum", out var exMinElement);
         var hasExMax = schema.TryGetProperty("exclusiveMaximum", out var exMaxElement);
         var hasMultipleOf = schema.TryGetProperty("multipleOf", out var multipleOfElement);
+
+        // Draft 3 only: divisibleBy is the same as multipleOf
+        var hasDivisibleBy = schema.TryGetProperty("divisibleBy", out var divisibleByElement);
+        if (!hasMultipleOf && hasDivisibleBy && context.DetectedDraft == SchemaDraft.Draft3)
+        {
+            hasMultipleOf = true;
+            multipleOfElement = divisibleByElement;
+        }
 
         if (!hasMin && !hasMax && !hasExMin && !hasExMax && !hasMultipleOf)
         {

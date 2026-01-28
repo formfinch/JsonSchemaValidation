@@ -489,11 +489,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests cause stack overflow
-            if (testCaseDescription.StartsWith("evaluating the same schema location against the same data location twice", StringComparison.Ordinal))
-            {
-                return SkipReasons.InfiniteLoopNotSupported;
-            }
+            // Infinite loop detection tests now work correctly
 
             // Complex $dynamicRef scenarios (TASK-048)
             // Tests verified 2026-01-28:

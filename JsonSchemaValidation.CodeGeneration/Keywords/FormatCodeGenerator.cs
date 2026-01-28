@@ -24,7 +24,10 @@ public sealed class FormatCodeGenerator : IKeywordCodeGenerator
     {
         [SchemaDraft.Draft3] = new(StringComparer.Ordinal)
         {
-            "date-time", "date", "time", "email", "hostname", "ipv4", "ipv6", "uri", "regex", "color"
+            "date-time", "date", "time", "email",
+            "hostname", "host-name",    // Draft 3 uses "host-name", modern uses "hostname"
+            "ipv4", "ip-address",       // Draft 3 uses "ip-address", modern uses "ipv4"
+            "ipv6", "uri", "regex", "color"
         },
         [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
         {
@@ -32,12 +35,12 @@ public sealed class FormatCodeGenerator : IKeywordCodeGenerator
         },
         [SchemaDraft.Draft6] = new(StringComparer.Ordinal)
         {
-            "date-time", "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference", "json-pointer"
+            "date-time", "email", "hostname", "ipv4", "ipv6", "uri", "uri-reference", "uri-template", "json-pointer"
         },
         [SchemaDraft.Draft7] = new(StringComparer.Ordinal)
         {
             "date-time", "date", "time", "email", "idn-email", "hostname", "idn-hostname",
-            "ipv4", "ipv6", "uri", "uri-reference", "iri", "iri-reference",
+            "ipv4", "ipv6", "uri", "uri-reference", "uri-template", "iri", "iri-reference",
             "json-pointer", "relative-json-pointer", "regex"
         },
         [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
@@ -110,9 +113,9 @@ if (!{{validatorMethod}}({{e}})) return false;
         "duration" => "FormatValidators.IsValidDuration",
         "email" => "FormatValidators.IsValidEmail",
         "idn-email" => "FormatValidators.IsValidEmail",
-        "hostname" => "FormatValidators.IsValidHostname",
+        "hostname" or "host-name" => "FormatValidators.IsValidHostname",  // Draft 3 alias
         "idn-hostname" => "FormatValidators.IsValidIdnHostname",
-        "ipv4" => "FormatValidators.IsValidIpv4",
+        "ipv4" or "ip-address" => "FormatValidators.IsValidIpv4",         // Draft 3 alias
         "ipv6" => "FormatValidators.IsValidIpv6",
         "uri" => "FormatValidators.IsValidUri",
         "uri-reference" => "FormatValidators.IsValidUriReference",

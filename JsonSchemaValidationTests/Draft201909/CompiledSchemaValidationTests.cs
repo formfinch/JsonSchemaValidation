@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 using FormFinch.JsonSchemaValidationTests.Common;
@@ -24,7 +25,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
         public CompiledSchemaValidationFixture()
         {
             Registry = CreateRegistryWithMetaschemas();
-            Factory = new RuntimeValidatorFactory(Registry);
+            Factory = new RuntimeValidatorFactory(Registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft201909);
         }
 
         public void Dispose()
@@ -113,7 +114,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
             if (pendingSchemas.Count == 0) return;
 
             // Use multi-pass compilation to handle dependencies
-            using var factory = new RuntimeValidatorFactory(registry);
+            using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft201909);
             var maxPasses = 10;
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
@@ -443,47 +444,9 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests cause stack overflow
-            if (testCaseDescription.StartsWith("evaluating the same schema location against the same data location twice", StringComparison.Ordinal))
-            {
-                return SkipReasons.InfiniteLoopNotSupported;
-            }
+            // Infinite loop detection tests now work correctly
 
-            // additionalItems not supported
-            var additionalItemsTests = new[]
-            {
-                "additionalItems as schema",
-                "array of items with no additionalItems permitted",
-                "additionalItems are allowed by default",
-                "additionalItems does not look in applicators",
-                "items validation adjusts the starting index for additionalItems",
-                "additionalItems with heterogeneous array",
-                "additionalItems with null instance elements",
-                "uniqueItems with an array of items and additionalItems",
-                "uniqueItems=false with an array of items and additionalItems",
-                "unevaluatedItems with items and additionalItems",
-                "unevaluatedItems with nested items and additionalItems",
-            };
-
-            if (additionalItemsTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.AdditionalItemsNotSupported;
-            }
-
-            // items as array (tuple validation) not supported
-            var itemsArrayTests = new[]
-            {
-                "an array of schemas for items",
-                "items with boolean schemas",
-                "items and subitems",
-                "unevaluatedItems with tuple",
-                "unevaluatedItems with nested tuple",
-            };
-
-            if (itemsArrayTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.ItemsAsArrayNotSupported;
-            }
+            // additionalItems and tuple validation are now supported by the code generator
 
             // $recursiveRef and $recursiveAnchor tests - not fully supported (TASK-048)
             // These features require complex scope tracking that isn't fully implemented.

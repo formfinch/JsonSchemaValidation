@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -284,6 +285,181 @@ public sealed class NotCodeGenerator : IKeywordCodeGenerator
         }
 
         return $"// not: subschema must NOT match\nif ({context.GenerateValidateCall(hash)}) return false;";
+    }
+
+    public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
+    {
+        return [];
+    }
+}
+
+/// <summary>
+/// Generates code for the "extends" keyword (Draft 3 only).
+/// extends is functionally equivalent to allOf - all extended schemas must validate.
+/// </summary>
+public sealed class ExtendsCodeGenerator : IKeywordCodeGenerator
+{
+    public string Keyword => "extends";
+    public int Priority => 30;
+
+    public bool CanGenerate(JsonElement schema)
+    {
+        return schema.ValueKind == JsonValueKind.Object &&
+               schema.TryGetProperty("extends", out _);
+    }
+
+    public string GenerateCode(CodeGenerationContext context)
+    {
+        // extends is Draft 3 only - ignore in other drafts
+        if (context.DetectedDraft != SchemaDraft.Draft3)
+        {
+            return string.Empty;
+        }
+
+        if (!context.CurrentSchema.TryGetProperty("extends", out var extendsElement))
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("// extends (Draft 3): all extended schemas must match");
+
+        if (extendsElement.ValueKind == JsonValueKind.Array)
+        {
+            // Multiple schemas: all must validate
+            foreach (var subschema in extendsElement.EnumerateArray())
+            {
+                var hash = context.GetSubschemaHash(subschema);
+                sb.AppendLine($"if (!{context.GenerateValidateCall(hash)}) return false;");
+            }
+        }
+        else if (extendsElement.ValueKind == JsonValueKind.Object ||
+                 extendsElement.ValueKind == JsonValueKind.True ||
+                 extendsElement.ValueKind == JsonValueKind.False)
+        {
+            // Single schema
+            var hash = context.GetSubschemaHash(extendsElement);
+            sb.AppendLine($"if (!{context.GenerateValidateCall(hash)}) return false;");
+        }
+
+        return sb.ToString();
+    }
+
+    public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)
+    {
+        return [];
+    }
+}
+
+/// <summary>
+/// Generates code for the "disallow" keyword (Draft 3 only).
+/// disallow is the inverse of type - validation fails if instance matches any disallowed type or schema.
+/// Can contain type strings or schema objects.
+/// </summary>
+public sealed class DisallowCodeGenerator : IKeywordCodeGenerator
+{
+    public string Keyword => "disallow";
+    public int Priority => 95; // Right after type check
+
+    public bool CanGenerate(JsonElement schema)
+    {
+        return schema.ValueKind == JsonValueKind.Object &&
+               schema.TryGetProperty("disallow", out _);
+    }
+
+    public string GenerateCode(CodeGenerationContext context)
+    {
+        // disallow is Draft 3 only - ignore in other drafts
+        if (context.DetectedDraft != SchemaDraft.Draft3)
+        {
+            return string.Empty;
+        }
+
+        if (!context.CurrentSchema.TryGetProperty("disallow", out var disallowElement))
+        {
+            return string.Empty;
+        }
+
+        var e = context.ElementVariable;
+        var sb = new StringBuilder();
+
+        if (disallowElement.ValueKind == JsonValueKind.String)
+        {
+            // Single disallowed type
+            var type = disallowElement.GetString()!;
+            var check = GetTypeCheck(type, e);
+            if (!string.IsNullOrEmpty(check))
+            {
+                sb.AppendLine($"// disallow (Draft 3): {type}");
+                sb.AppendLine($"if ({check}) return false;");
+            }
+        }
+        else if (disallowElement.ValueKind == JsonValueKind.Array)
+        {
+            // Multiple disallowed types or schemas
+            var typeChecks = new List<string>();
+            var schemaChecks = new List<string>();
+
+            foreach (var item in disallowElement.EnumerateArray())
+            {
+                if (item.ValueKind == JsonValueKind.String)
+                {
+                    var type = item.GetString()!;
+                    var check = GetTypeCheck(type, e);
+                    if (!string.IsNullOrEmpty(check))
+                    {
+                        typeChecks.Add(check);
+                    }
+                }
+                else if (item.ValueKind == JsonValueKind.Object ||
+                         item.ValueKind == JsonValueKind.True ||
+                         item.ValueKind == JsonValueKind.False)
+                {
+                    // Schema object - validation fails if instance matches the schema
+                    var hash = context.GetSubschemaHash(item);
+                    schemaChecks.Add(context.GenerateValidateCall(hash));
+                }
+            }
+
+            sb.AppendLine("// disallow (Draft 3): instance must NOT match any of these types/schemas");
+
+            if (typeChecks.Count > 0)
+            {
+                sb.AppendLine($"if ({string.Join(" || ", typeChecks)}) return false;");
+            }
+
+            foreach (var schemaCheck in schemaChecks)
+            {
+                sb.AppendLine($"if ({schemaCheck}) return false;");
+            }
+        }
+        else if (disallowElement.ValueKind == JsonValueKind.Object ||
+                 disallowElement.ValueKind == JsonValueKind.True ||
+                 disallowElement.ValueKind == JsonValueKind.False)
+        {
+            // Single disallowed schema
+            var hash = context.GetSubschemaHash(disallowElement);
+            sb.AppendLine("// disallow (Draft 3): instance must NOT match this schema");
+            sb.AppendLine($"if ({context.GenerateValidateCall(hash)}) return false;");
+        }
+
+        return sb.ToString();
+    }
+
+    private static string? GetTypeCheck(string type, string e)
+    {
+        return type switch
+        {
+            "string" => $"{e}.ValueKind == JsonValueKind.String",
+            "number" => $"{e}.ValueKind == JsonValueKind.Number",
+            "integer" => $"({e}.ValueKind == JsonValueKind.Number && {e}.TryGetDecimal(out var _disallowInt_) && _disallowInt_ == decimal.Truncate(_disallowInt_))",
+            "boolean" => $"({e}.ValueKind == JsonValueKind.True || {e}.ValueKind == JsonValueKind.False)",
+            "null" => $"{e}.ValueKind == JsonValueKind.Null",
+            "array" => $"{e}.ValueKind == JsonValueKind.Array",
+            "object" => $"{e}.ValueKind == JsonValueKind.Object",
+            "any" => "true", // "any" matches everything, so disallow "any" rejects everything
+            _ => null
+        };
     }
 
     public IEnumerable<StaticFieldInfo> GetStaticFields(CodeGenerationContext context)

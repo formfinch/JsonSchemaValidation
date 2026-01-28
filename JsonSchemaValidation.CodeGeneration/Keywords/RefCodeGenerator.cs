@@ -160,6 +160,13 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
 
         // External refs with fragments - the fragment URI should be registered separately
         // in the registry (e.g., http://example.com/schema.json#/$defs/foo)
+        //
+        // Normalize the URI: if the fragment is just "#" (root reference), strip it
+        // This ensures http://example.com/schema# matches http://example.com/schema
+        if (targetUri.Fragment == "#")
+        {
+            targetUri = new Uri(targetUri.GetLeftPart(UriPartial.Query));
+        }
 
         // Generate a unique field name based on the hash of the target URI
         var fieldName = $"_extRef_{GenerateFieldNameSuffix(targetUri.AbsoluteUri)}";

@@ -57,7 +57,16 @@ public sealed class DependenciesCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine($"    if ({e}.TryGetProperty(\"{triggerProp}\", out _))");
             sb.AppendLine("    {");
 
-            if (prop.Value.ValueKind == JsonValueKind.Array)
+            if (prop.Value.ValueKind == JsonValueKind.String)
+            {
+                // Draft 3: single-property dependency as string
+                var reqProp = EscapeString(prop.Value.GetString() ?? string.Empty);
+                if (!string.IsNullOrEmpty(reqProp))
+                {
+                    sb.AppendLine($"        if (!{e}.TryGetProperty(\"{reqProp}\", out _)) return false;");
+                }
+            }
+            else if (prop.Value.ValueKind == JsonValueKind.Array)
             {
                 // dependentRequired-style: array of required property names
                 foreach (var required in prop.Value.EnumerateArray())

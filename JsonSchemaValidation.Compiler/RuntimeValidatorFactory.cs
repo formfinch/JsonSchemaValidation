@@ -11,6 +11,9 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
+// Re-export SchemaDraft for consumers of RuntimeValidatorFactory
+using SchemaDraft = FormFinch.JsonSchemaValidation.CodeGeneration.Generator.SchemaDraft;
+
 namespace FormFinch.JsonSchemaValidation.Compiler;
 
 /// <summary>
@@ -30,7 +33,7 @@ internal sealed class RuntimeValidatorFactory : IDisposable
     /// Creates a new RuntimeValidatorFactory without a registry.
     /// Compiled validators with external $ref will fail to initialize.
     /// </summary>
-    public RuntimeValidatorFactory() : this(null, false)
+    public RuntimeValidatorFactory() : this(null, false, null)
     {
     }
 
@@ -38,10 +41,13 @@ internal sealed class RuntimeValidatorFactory : IDisposable
     /// Creates a new RuntimeValidatorFactory with a registry for resolving external $ref.
     /// </summary>
     /// <param name="registry">The registry for resolving external $ref dependencies.</param>
-    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry, bool forceAnnotationTracking = false)
+    /// <param name="forceAnnotationTracking">Force annotation tracking even without unevaluated* keywords.</param>
+    /// <param name="defaultDraft">Default draft version when schema has no $schema. If null, defaults to Draft 2020-12.</param>
+    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry, bool forceAnnotationTracking = false, SchemaDraft? defaultDraft = null)
     {
         _registry = registry;
         _codeGenerator.ForceAnnotationTracking = forceAnnotationTracking;
+        _codeGenerator.DefaultDraft = defaultDraft;
     }
 
     /// <summary>

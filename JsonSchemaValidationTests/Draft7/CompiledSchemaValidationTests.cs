@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 using FormFinch.JsonSchemaValidationTests.Common;
@@ -24,7 +25,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
         public CompiledSchemaValidationFixture()
         {
             Registry = CreateRegistryWithMetaschemas();
-            Factory = new RuntimeValidatorFactory(Registry);
+            Factory = new RuntimeValidatorFactory(Registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft7);
         }
 
         public void Dispose()
@@ -108,7 +109,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
 
             if (pendingSchemas.Count == 0) return;
 
-            using var factory = new RuntimeValidatorFactory(registry);
+            using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft7);
             var maxPasses = 10;
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
@@ -370,66 +371,11 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests cause stack overflow
-            if (testCaseDescription.StartsWith("evaluating the same schema location against the same data location twice", StringComparison.Ordinal))
-            {
-                return SkipReasons.InfiniteLoopNotSupported;
-            }
+            // Infinite loop detection tests now work correctly
 
-            // additionalItems not supported
-            var additionalItemsTests = new[]
-            {
-                "additionalItems as schema",
-                "array of items with no additionalItems permitted",
-                "additionalItems are allowed by default",
-                "additionalItems does not look in applicators",
-                "items validation adjusts the starting index for additionalItems",
-                "additionalItems with heterogeneous array",
-                "additionalItems with null instance elements",
-                "uniqueItems with an array of items and additionalItems",
-                "uniqueItems=false with an array of items and additionalItems",
-            };
+            // additionalItems and tuple validation are now supported by the code generator
 
-            if (additionalItemsTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.AdditionalItemsNotSupported;
-            }
-
-            // items as array (tuple validation) not supported
-            var itemsArrayTests = new[]
-            {
-                "an array of schemas for items",
-                "items with boolean schemas",
-                "items and subitems",
-            };
-
-            if (itemsArrayTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.ItemsAsArrayNotSupported;
-            }
-
-            // dependencies keyword not supported
-            var dependenciesTests = new[]
-            {
-                "dependencies",
-                "dependencies with empty array",
-                "dependencies with escaped characters",
-                "multiple dependencies",
-                "multiple dependencies subschema",
-                "single dependency",
-            };
-
-            if (dependenciesTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.DependenciesNotSupported;
-            }
-
-            // Metaschema validation not supported
-            if (testCaseDescription == "validate definition against metaschema" ||
-                testCaseDescription.StartsWith("validate definition against metaschema", StringComparison.Ordinal))
-            {
-                return SkipReasons.MetaschemaValidationNotSupported;
-            }
+            // Metaschema validation is now supported (metaschemas are pre-registered)
 
             // Remote refs and id resolution issues
             var remoteRefTests = new[]
@@ -464,18 +410,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
                 return SkipReasons.CrossDraft;
             }
 
-            // contentMediaType/contentEncoding not supported
-            var contentTests = new[]
-            {
-                "validation of string-encoded content based on media type",
-                "validation of binary string-encoding",
-                "validation of binary-encoded media type documents",
-            };
-
-            if (contentTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.ContentValidationNotSupported;
-            }
+            // contentMediaType/contentEncoding is now supported
 
             return null;
         }

@@ -20,11 +20,13 @@ public sealed class SubschemaExtractor
     };
 
     // Keywords that contain object-valued subschemas
+    // Note: "items" is NOT here because it can be an array (tuple validation) in Draft 3-7
+    // and needs special handling in WalkSchema
     private static readonly HashSet<string> ObjectSubschemaKeywords = new(StringComparer.Ordinal)
     {
         "additionalProperties",
         "additionalItems",
-        "items",
+        // "items" is handled specially - can be object or array depending on draft
         "contains",
         "not",
         "if",
@@ -584,7 +586,70 @@ public sealed class SubschemaExtractor
             // Build child JSON Pointer path
             var childPath = jsonPointerPath != null ? $"{jsonPointerPath}/{EscapeJsonPointer(property.Name)}" : null;
 
-            if (ObjectSubschemaKeywords.Contains(property.Name))
+            // Handle "items" specially - can be object (schema) or array (tuple) depending on draft
+            if (property.Name == "items")
+            {
+                if (property.Value.ValueKind == JsonValueKind.Array)
+                {
+                    // Draft 3-7, 2019-09: items as array (tuple validation)
+                    WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                }
+                else
+                {
+                    // items as schema (applies to all items)
+                    WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                }
+            }
+            // Handle "extends" specially (Draft 3) - can be object (single schema) or array of schemas
+            else if (property.Name == "extends")
+            {
+                if (property.Value.ValueKind == JsonValueKind.Array)
+                {
+                    WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                }
+                else
+                {
+                    WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                }
+            }
+            // Handle "disallow" specially (Draft 3) - can contain types (strings) or schemas
+            else if (property.Name == "disallow")
+            {
+                if (property.Value.ValueKind == JsonValueKind.Array)
+                {
+                    // Walk only schema elements, not type strings
+                    foreach (var item in property.Value.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Object ||
+                            item.ValueKind == JsonValueKind.True ||
+                            item.ValueKind == JsonValueKind.False)
+                        {
+                            WalkSubschema(item, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                        }
+                    }
+                }
+                else if (property.Value.ValueKind == JsonValueKind.Object ||
+                         property.Value.ValueKind == JsonValueKind.True ||
+                         property.Value.ValueKind == JsonValueKind.False)
+                {
+                    WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                }
+            }
+            // Handle "type" specially (Draft 3) - array can contain schemas
+            else if (property.Name == "type" && property.Value.ValueKind == JsonValueKind.Array)
+            {
+                // Walk only schema elements, not type strings
+                foreach (var item in property.Value.EnumerateArray())
+                {
+                    if (item.ValueKind == JsonValueKind.Object ||
+                        item.ValueKind == JsonValueKind.True ||
+                        item.ValueKind == JsonValueKind.False)
+                    {
+                        WalkSubschema(item, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
+                    }
+                }
+            }
+            else if (ObjectSubschemaKeywords.Contains(property.Name))
             {
                 WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
@@ -594,11 +659,6 @@ public sealed class SubschemaExtractor
             }
             else if (ArrayOfSubschemasKeywords.Contains(property.Name))
             {
-                WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
-            }
-            else if (property.Name == "items" && property.Value.ValueKind == JsonValueKind.Array)
-            {
-                // Draft 4/6/7 items as array
                 WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
             else if (property.Name == "$ref" && property.Value.ValueKind == JsonValueKind.String)
