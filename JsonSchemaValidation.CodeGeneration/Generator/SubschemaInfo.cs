@@ -48,6 +48,12 @@ public sealed class SubschemaInfo
     public JsonElement? ResourceRoot { get; init; }
 
     /// <summary>
+    /// The hash of the resource root this subschema belongs to.
+    /// Used to detect cross-resource references and scope entry requirements.
+    /// </summary>
+    public string ResourceRootHash { get; init; } = "";
+
+    /// <summary>
     /// The depth of the resource this subschema belongs to.
     /// Root is depth 0, nested resources with $id increment the depth.
     /// Used for $dynamicRef scope resolution.
