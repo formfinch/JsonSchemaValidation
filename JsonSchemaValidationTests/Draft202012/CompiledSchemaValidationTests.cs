@@ -25,7 +25,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
         public CompiledSchemaValidationFixture()
         {
             Registry = CreateRegistryWithMetaschemas();
-            Factory = new RuntimeValidatorFactory(Registry);
+            Factory = new RuntimeValidatorFactory(Registry, forceAnnotationTracking: true);
         }
 
         public void Dispose()
@@ -147,7 +147,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
 
             // Use multi-pass compilation to handle dependencies
             // Each pass attempts to compile schemas that failed in previous passes
-            using var factory = new RuntimeValidatorFactory(registry);
+            using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: true);
             var maxPasses = 10; // Prevent infinite loops
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
@@ -495,28 +495,22 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 return SkipReasons.InfiniteLoopNotSupported;
             }
 
-            // Complex $dynamicRef scenarios not fully supported (TASK-048)
-            // Scope tracking is implemented but doesn't yet handle:
-            // 1. Cross-resource $dynamicRef (e.g., "extended#meta" vs "#meta")
-            // 2. Proper scope stack cleanup when leaving applicator branches (if/then/else)
-            // 3. External schemas loaded from remotes with $dynamicRef/$dynamicAnchor
-            var complexDynamicRefTests = new[]
-            {
-                // Tests with external schemas that contain $dynamicRef/$dynamicAnchor
-                "strict-tree schema, guards against misspelled properties",
-                "tests for implementation dynamic anchor and reference link",
-                "$ref and $dynamicAnchor are independent of order",  // covers both variants
-                "$ref to $dynamicRef finds detached $dynamicAnchor",
+            // Complex $dynamicRef scenarios (TASK-048)
+            // Tests verified 2026-01-28:
+            // - "multiple dynamic paths" PASSES with resource-level anchor collection
+            // - "A $dynamicRef that initially resolves..." PASSES with cross-resource parsing
+            // - "after leaving a dynamic scope" PASSES with cross-resource parsing
+            // - "$dynamicRef avoids the root" PASSES with resource-level scope pushing
+            // - "$dynamicRef skips over intermediate" PASSES with resource-level scope pushing
+            // - "strict-tree schema..." PASSES with external annotation merge
+            var complexDynamicRefTests = Array.Empty<string>();
 
-                // Tests with cross-resource $dynamicRef (e.g., "extended#meta" not "#meta")
-                "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor",
-                "multiple dynamic paths to the $dynamicRef keyword",
-                "after leaving a dynamic scope, it is not used by a $dynamicRef",
-                "$dynamicRef avoids the root of each schema, but scopes are still registered",
-                "$dynamicRef skips over intermediate resources",  // covers both variants
-            };
-
-            if (complexDynamicRefTests.Any(t => testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            var allowComplexDynamicRef = string.Equals(
+                Environment.GetEnvironmentVariable("FF_ALLOW_COMPLEX_DYNAMICREF"),
+                "1",
+                StringComparison.Ordinal);
+            if (!allowComplexDynamicRef &&
+                complexDynamicRefTests.Any(t => testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
             {
                 return SkipReasons.ComplexDynamicRefNotSupported;
             }

@@ -104,10 +104,20 @@ public sealed class CodeGenerationContext
     public required Func<string, JsonElement, JsonElement?> ResolveLocalRefInResource { get; init; }
 
     /// <summary>
+    /// Function to resolve subschema metadata by hash.
+    /// </summary>
+    public required Func<string, SubschemaInfo?> GetSubschemaInfo { get; init; }
+
+    /// <summary>
     /// The schema resource root for the current subschema (nearest ancestor with $id, or root schema).
     /// Used for resolving local JSON Pointer refs (#/$defs/...).
     /// </summary>
     public JsonElement? ResourceRoot { get; init; }
+
+    /// <summary>
+    /// The hash of the current subschema's resource root.
+    /// </summary>
+    public string CurrentResourceRootHash { get; init; } = "";
 
     /// <summary>
     /// The depth of the resource containing the current subschema.

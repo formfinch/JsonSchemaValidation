@@ -1,5 +1,12 @@
 #nullable enable
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator
+FormFinch.JsonSchemaValidation.Abstractions.EvaluatedStateSnapshot
+FormFinch.JsonSchemaValidation.Abstractions.EvaluatedStateSnapshot.EvaluatedItemIndices.get -> System.Collections.Generic.IDictionary<string!, System.Collections.Generic.HashSet<int>!>!
+FormFinch.JsonSchemaValidation.Abstractions.EvaluatedStateSnapshot.EvaluatedItemsUpTo.get -> System.Collections.Generic.IDictionary<string!, int>!
+FormFinch.JsonSchemaValidation.Abstractions.EvaluatedStateSnapshot.EvaluatedProperties.get -> System.Collections.Generic.IDictionary<string!, System.Collections.Generic.HashSet<string!>!>!
+FormFinch.JsonSchemaValidation.Abstractions.EvaluatedStateSnapshot.EvaluatedStateSnapshot() -> void
+FormFinch.JsonSchemaValidation.Abstractions.IEvaluatedStateAwareCompiledValidator
+FormFinch.JsonSchemaValidation.Abstractions.IEvaluatedStateAwareCompiledValidator.GetEvaluatedStateSnapshot() -> FormFinch.JsonSchemaValidation.Abstractions.EvaluatedStateSnapshot!
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.IsEmpty.get -> bool
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.Push(FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry entry) -> FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!

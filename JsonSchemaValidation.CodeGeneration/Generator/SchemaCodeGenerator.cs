@@ -15,6 +15,13 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 /// </summary>
 public sealed class SchemaCodeGenerator
 {
+    private sealed record FragmentSubschemaInfo(
+        string Hash,
+        string FragmentUri,
+        string ResourceRootHash,
+        IReadOnlyList<(string AnchorName, string SchemaHash)> ResourceAnchors,
+        bool HasRecursiveAnchor);
+
     private readonly List<IKeywordCodeGenerator> _keywordGenerators;
     private readonly SubschemaExtractor _extractor = new();
 
@@ -24,6 +31,13 @@ public sealed class SchemaCodeGenerator
     /// Defaults to false for compatibility with runtime compilation (Roslyn) and older TFMs.
     /// </summary>
     public bool UseGeneratedRegex { get; set; }
+
+    /// <summary>
+    /// Forces annotation tracking even when unevaluated* keywords are not present.
+    /// Useful when compiled validators are used behind external $ref and their
+    /// evaluated annotations must be merged by the caller.
+    /// </summary>
+    public bool ForceAnnotationTracking { get; set; }
 
     public SchemaCodeGenerator()
     {
@@ -115,8 +129,8 @@ public sealed class SchemaCodeGenerator
             var rootHash = SchemaHasher.ComputeHash(schema);
 
             // Check if annotation tracking is needed
-            var requiresPropertyAnnotations = _extractor.HasUnevaluatedProperties;
-            var requiresItemAnnotations = _extractor.HasUnevaluatedItems;
+            var requiresPropertyAnnotations = _extractor.HasUnevaluatedProperties || ForceAnnotationTracking;
+            var requiresItemAnnotations = _extractor.HasUnevaluatedItems || ForceAnnotationTracking;
 
             // Collect all static fields and external refs
             var allStaticFields = new List<StaticFieldInfo>();
@@ -124,7 +138,7 @@ public sealed class SchemaCodeGenerator
 
             // Collect subschemas that should be registered by fragment URI
             // (e.g., #/$defs/foo should be registered as baseUri#/$defs/foo)
-            var fragmentSubschemas = new List<(string Hash, string FragmentUri)>();
+            var fragmentSubschemas = new List<FragmentSubschemaInfo>();
             if (baseUri != null)
             {
                 foreach (var (hash, subschemaInfo) in uniqueSchemas)
@@ -138,38 +152,54 @@ public sealed class SchemaCodeGenerator
                         if (subschemaInfo.JsonPointerPath.StartsWith("/$defs/"))
                         {
                             var fragmentUri = $"{baseUri.AbsoluteUri}#{subschemaInfo.JsonPointerPath}";
-                            fragmentSubschemas.Add((hash, fragmentUri));
+                            if (!uniqueSchemas.TryGetValue(subschemaInfo.ResourceRootHash, out var resourceRootInfo))
+                            {
+                                fragmentSubschemas.Add(new FragmentSubschemaInfo(hash, fragmentUri, subschemaInfo.ResourceRootHash, [], false));
+                            }
+                            else
+                            {
+                                fragmentSubschemas.Add(new FragmentSubschemaInfo(
+                                    hash,
+                                    fragmentUri,
+                                    subschemaInfo.ResourceRootHash,
+                                    resourceRootInfo.ResourceAnchors,
+                                    resourceRootInfo.HasRecursiveAnchor));
+                            }
                         }
                     }
                 }
             }
 
-            // Pre-scan pass: detect external refs and dynamic scope requirements
-            var hasDynamicRefWithBookend = false;
+            var hasDynamicRef = detectedDraft == SchemaDraft.Draft202012 &&
+                uniqueSchemas.Values.Any(s => s.Schema.ValueKind == JsonValueKind.Object &&
+                                              s.Schema.TryGetProperty("$dynamicRef", out _));
+            var hasRecursiveRef = detectedDraft == SchemaDraft.Draft201909 &&
+                uniqueSchemas.Values.Any(s => s.Schema.ValueKind == JsonValueKind.Object &&
+                                              s.Schema.TryGetProperty("$recursiveRef", out _));
+            var hasDynamicAnchors = detectedDraft == SchemaDraft.Draft202012 &&
+                uniqueSchemas.Values.Any(s => s.DynamicAnchors.Count > 0);
+            var hasRecursiveAnchors = uniqueSchemas.Values.Any(s => s.HasRecursiveAnchor);
+
+            // Enable scope tracking if any dynamic scope features are present.
+            var requiresScopeTracking = hasDynamicRef || hasRecursiveRef || hasDynamicAnchors || hasRecursiveAnchors;
+
+            // Pre-scan pass: detect external refs
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
-                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft, false);
+                var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft, requiresScopeTracking);
                 foreach (var generator in _keywordGenerators)
                 {
                     if (generator.CanGenerate(subschemaInfo.Schema))
                     {
                         // This populates allExternalRefs via the context
-                        var generatedCode = generator.GenerateCode(context);
-                        // Track if any $dynamicRef or $recursiveRef code requires scope
-                        if (generatedCode.Contains("_dynamicScopeRoot") || generatedCode.Contains("scope resolution"))
-                        {
-                            hasDynamicRefWithBookend = true;
-                        }
+                        _ = generator.GenerateCode(context);
                     }
                 }
             }
 
             var hasExternalRefs = allExternalRefs.Count > 0;
             var hasFragmentSubschemas = fragmentSubschemas.Count > 0;
-            var needsRegistryAware = hasExternalRefs || hasFragmentSubschemas || hasDynamicRefWithBookend;
-
-            // Enable scope tracking for proper $dynamicRef/$recursiveRef resolution
-            var requiresScopeTracking = hasDynamicRefWithBookend;
+            var needsRegistryAware = hasExternalRefs || hasFragmentSubschemas;
 
             // Collect root resource anchors for IScopedCompiledValidator
             // This includes all $dynamicAnchors within the root schema resource (e.g., in $defs)
@@ -289,7 +319,7 @@ public sealed class SchemaCodeGenerator
                 foreach (var (anchorName, schemaHash) in anchorsToInclude)
                 {
                     // Map anchor name to the validation method of the schema containing that anchor
-                    sb.AppendLine($"                [\"{EscapeString(anchorName)}\"] = Validate_{schemaHash},");
+                    sb.AppendLine($"                [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking)},");
                 }
                 sb.AppendLine("            },");
             }
@@ -303,7 +333,7 @@ public sealed class SchemaCodeGenerator
             // RootValidator points to this schema's validation method for $recursiveRef
             if (subschemaInfo.HasRecursiveAnchor)
             {
-                sb.AppendLine($"            RootValidator = Validate_{subschemaInfo.Hash}");
+                sb.AppendLine($"            RootValidator = {GetAnchorDelegateExpression(subschemaInfo.Hash, hasAnnotationTracking)}");
             }
             else
             {
@@ -358,7 +388,9 @@ public sealed class SchemaCodeGenerator
             ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue),
             ResolveInternalId = uri => _extractor.ResolveInternalId(uri),
             ResolveLocalRefInResource = (refValue, resourceRoot) => _extractor.ResolveLocalRefInResource(refValue, resourceRoot),
+            GetSubschemaInfo = hash => allSchemas.TryGetValue(hash, out var info) ? info : null,
             ResourceRoot = subschemaInfo.ResourceRoot,
+            CurrentResourceRootHash = subschemaInfo.ResourceRootHash,
             ResourceDepth = subschemaInfo.ResourceDepth,
             FindOutermostDynamicAnchor = anchorName => _extractor.FindOutermostDynamicAnchor(anchorName),
             FindOuterDynamicAnchor = (anchorName, depth) => _extractor.FindOuterDynamicAnchor(anchorName, depth),
@@ -380,7 +412,7 @@ public sealed class SchemaCodeGenerator
         string rootHash,
         List<StaticFieldInfo> staticFields,
         List<ExternalRefInfo> externalRefs,
-        List<(string Hash, string FragmentUri)> fragmentSubschemas,
+        List<FragmentSubschemaInfo> fragmentSubschemas,
         bool needsRegistryAware,
         string methods,
         bool requiresPropertyAnnotations,
@@ -412,7 +444,7 @@ public sealed class SchemaCodeGenerator
         sb.AppendLine("using System.Text.RegularExpressions;");
         sb.AppendLine("using FormFinch.JsonSchemaValidation.Abstractions;");
         sb.AppendLine($"using FormFinch.JsonSchemaValidation.{SchemaDraftDetector.GetNamespace(detectedDraft)}.Keywords.Format;");
-        if (needsRegistryAware)
+        if (needsRegistryAware || requiresScopeTracking)
         {
             sb.AppendLine("using FormFinch.JsonSchemaValidation.CompiledValidators;");
         }
@@ -435,7 +467,11 @@ public sealed class SchemaCodeGenerator
             // Need registry awareness for external refs or fragment subschemas
             interfaces.Add("IRegistryAwareCompiledValidator");
         }
-        if (interfaces.Count == 0)
+        if (requiresPropertyAnnotations || requiresItemAnnotations)
+        {
+            interfaces.Add("IEvaluatedStateAwareCompiledValidator");
+        }
+        if (!interfaces.Contains("IScopedCompiledValidator") && !interfaces.Contains("ICompiledValidator"))
         {
             interfaces.Add("ICompiledValidator");
         }
@@ -522,7 +558,7 @@ public sealed class SchemaCodeGenerator
                 sb.AppendLine("                    {");
                 foreach (var (name, hash) in rootDynamicAnchors)
                 {
-                    sb.AppendLine($"                        [\"{EscapeString(name)}\"] = Validate_{hash},");
+                    sb.AppendLine($"                        [\"{EscapeString(name)}\"] = {GetAnchorDelegateExpression(hash, hasAnnotationTracking)},");
                 }
                 sb.AppendLine("                    };");
                 sb.AppendLine("                }");
@@ -543,7 +579,7 @@ public sealed class SchemaCodeGenerator
             // RootValidator property - delegate to root validation method
             // Suppress heap allocation warning - this is an intentional delegate allocation on the public API boundary
             sb.AppendLine("#pragma warning disable HAA0603");
-            sb.AppendLine($"        public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => Validate_{rootHash};");
+            sb.AppendLine($"        public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => {GetAnchorDelegateExpression(rootHash, hasAnnotationTracking)};");
             sb.AppendLine("#pragma warning restore HAA0603");
             sb.AppendLine();
         }
@@ -561,9 +597,9 @@ public sealed class SchemaCodeGenerator
             if (hasFragmentSubschemas)
             {
                 sb.AppendLine("            // Register subschemas by fragment URI so other validators can reference them");
-                foreach (var (hash, fragmentUri) in fragmentSubschemas)
+                foreach (var fragment in fragmentSubschemas)
                 {
-                    sb.AppendLine($"            registry.RegisterForUri(new Uri(\"{EscapeString(fragmentUri)}\"), new SubschemaValidator_{hash}(this));");
+                    sb.AppendLine($"            registry.RegisterForUri(new Uri(\"{EscapeString(fragment.FragmentUri)}\"), new SubschemaValidator_{fragment.Hash}(this));");
                 }
             }
             sb.AppendLine("        }");
@@ -672,6 +708,16 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("        private static string EscapeJsonPointer(string segment)");
             sb.AppendLine("        {");
             sb.AppendLine("            return segment.Replace(\"~\", \"~0\").Replace(\"/\", \"~1\");");
+            sb.AppendLine("        }");
+        }
+
+        // Expose evaluated annotations when annotation tracking is enabled
+        if (hasAnnotationTracking)
+        {
+            sb.AppendLine();
+            sb.AppendLine("        public EvaluatedStateSnapshot GetEvaluatedStateSnapshot()");
+            sb.AppendLine("        {");
+            sb.AppendLine("            return _eval_.ToSnapshot();");
             sb.AppendLine("        }");
         }
 
@@ -815,6 +861,57 @@ public sealed class SchemaCodeGenerator
             }
             sb.AppendLine("            }");
             sb.AppendLine();
+            sb.AppendLine("            public EvaluatedStateSnapshot ToSnapshot()");
+            sb.AppendLine("            {");
+            sb.AppendLine("                var snapshot = new EvaluatedStateSnapshot();");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("                foreach (var kvp in _evaluatedProperties)");
+                sb.AppendLine("                    snapshot.EvaluatedProperties[kvp.Key] = new HashSet<string>(kvp.Value, StringComparer.Ordinal);");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("                foreach (var kvp in _evaluatedItemsUpTo)");
+                sb.AppendLine("                    snapshot.EvaluatedItemsUpTo[kvp.Key] = kvp.Value;");
+                sb.AppendLine("                foreach (var kvp in _evaluatedItemIndices)");
+                sb.AppendLine("                    snapshot.EvaluatedItemIndices[kvp.Key] = new HashSet<int>(kvp.Value);");
+            }
+            sb.AppendLine("                return snapshot;");
+            sb.AppendLine("            }");
+            sb.AppendLine();
+            sb.AppendLine("            public void MergeFromSnapshot(EvaluatedStateSnapshot snapshot)");
+            sb.AppendLine("            {");
+            if (requiresPropertyAnnotations)
+            {
+                sb.AppendLine("                foreach (var kvp in snapshot.EvaluatedProperties)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    if (!_evaluatedProperties.TryGetValue(kvp.Key, out var props))");
+                sb.AppendLine("                    {");
+                sb.AppendLine("                        props = new HashSet<string>(StringComparer.Ordinal);");
+                sb.AppendLine("                        _evaluatedProperties[kvp.Key] = props;");
+                sb.AppendLine("                    }");
+                sb.AppendLine("                    props.UnionWith(kvp.Value);");
+                sb.AppendLine("                }");
+            }
+            if (requiresItemAnnotations)
+            {
+                sb.AppendLine("                foreach (var kvp in snapshot.EvaluatedItemsUpTo)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    if (!_evaluatedItemsUpTo.TryGetValue(kvp.Key, out var current) || kvp.Value > current)");
+                sb.AppendLine("                        _evaluatedItemsUpTo[kvp.Key] = kvp.Value;");
+                sb.AppendLine("                }");
+                sb.AppendLine("                foreach (var kvp in snapshot.EvaluatedItemIndices)");
+                sb.AppendLine("                {");
+                sb.AppendLine("                    if (!_evaluatedItemIndices.TryGetValue(kvp.Key, out var indices))");
+                sb.AppendLine("                    {");
+                sb.AppendLine("                        indices = new HashSet<int>();");
+                sb.AppendLine("                        _evaluatedItemIndices[kvp.Key] = indices;");
+                sb.AppendLine("                    }");
+                sb.AppendLine("                    indices.UnionWith(kvp.Value);");
+                sb.AppendLine("                }");
+            }
+            sb.AppendLine("            }");
+            sb.AppendLine();
             sb.AppendLine("            public void SaveTo(out EvaluatedState snapshot)");
             sb.AppendLine("            {");
             sb.AppendLine("                snapshot = Clone();");
@@ -831,9 +928,9 @@ public sealed class SchemaCodeGenerator
             if (requiresItemAnnotations)
             {
                 sb.AppendLine("                _evaluatedItemsUpTo.Clear();");
-                sb.AppendLine("                _evaluatedItemIndices.Clear();");
                 sb.AppendLine("                foreach (var kvp in snapshot._evaluatedItemsUpTo)");
                 sb.AppendLine("                    _evaluatedItemsUpTo[kvp.Key] = kvp.Value;");
+                sb.AppendLine("                _evaluatedItemIndices.Clear();");
                 sb.AppendLine("                foreach (var kvp in snapshot._evaluatedItemIndices)");
                 sb.AppendLine("                    _evaluatedItemIndices[kvp.Key] = new HashSet<int>(kvp.Value);");
             }
@@ -845,8 +942,10 @@ public sealed class SchemaCodeGenerator
         if (hasFragmentSubschemas)
         {
             sb.AppendLine();
-            foreach (var (hash, fragmentUri) in fragmentSubschemas)
+            foreach (var fragment in fragmentSubschemas)
             {
+                var hash = fragment.Hash;
+                var fragmentUri = fragment.FragmentUri;
                 // Fragment validators implement IScopedCompiledValidator when scope tracking is needed
                 // to properly propagate dynamic scope from callers
                 if (requiresScopeTracking)
@@ -858,7 +957,7 @@ public sealed class SchemaCodeGenerator
                     sb.AppendLine($"            public Uri SchemaUri => new Uri(\"{EscapeString(fragmentUri)}\");");
 
                     // IScopedCompiledValidator properties - fragments don't declare their own anchors at the wrapper level
-                    // (the underlying schema may have anchors which will be pushed when Validate_{hash} runs)
+                    // (resource anchors are pushed when entering via this wrapper)
                     sb.AppendLine("            public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors => null;");
                     sb.AppendLine("            public bool HasRecursiveAnchor => false;");
                     sb.AppendLine("            public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => null;");
@@ -869,7 +968,42 @@ public sealed class SchemaCodeGenerator
                     {
                         scopedCallArgs.Add("\"\"");
                     }
-                    sb.AppendLine($"            public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => _parent.Validate_{hash}({string.Join(", ", scopedCallArgs)});");
+                    sb.AppendLine("            public bool IsValid(JsonElement instance, ICompiledValidatorScope scope)");
+                    sb.AppendLine("            {");
+                    if (fragment.ResourceAnchors.Count > 0 || fragment.HasRecursiveAnchor)
+                    {
+                        var scopeSuffix = hash[..8];
+                        sb.AppendLine($"                var _scopeEntry_{scopeSuffix} = new CompiledScopeEntry");
+                        sb.AppendLine("                {");
+                    if (fragment.ResourceAnchors.Count > 0)
+                    {
+                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+                        sb.AppendLine("                    {");
+                        foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
+                        {
+                            sb.AppendLine($"                        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking, "_parent")},");
+                        }
+                        sb.AppendLine("                    },");
+                    }
+                        else
+                        {
+                            sb.AppendLine("                    DynamicAnchors = null,");
+                        }
+                        sb.AppendLine($"                    HasRecursiveAnchor = {(fragment.HasRecursiveAnchor ? "true" : "false")},");
+                        if (fragment.HasRecursiveAnchor)
+                        {
+                            sb.AppendLine($"                    RootValidator = {GetAnchorDelegateExpression(fragment.ResourceRootHash, hasAnnotationTracking, "_parent")}");
+                        }
+                        else
+                        {
+                            sb.AppendLine("                    RootValidator = null");
+                        }
+                        sb.AppendLine("                };");
+                        sb.AppendLine($"                var _scope_{scopeSuffix} = scope.Push(_scopeEntry_{scopeSuffix});");
+                        scopedCallArgs[1] = $"_scope_{scopeSuffix}";
+                    }
+                    sb.AppendLine($"                return _parent.Validate_{hash}({string.Join(", ", scopedCallArgs)});");
+                    sb.AppendLine("            }");
 
                     // Non-scoped IsValid - creates empty scope for standalone use
                     var nonScopedCallArgs = new List<string> { "instance", "CompiledValidatorScope.Empty" };
@@ -877,7 +1011,42 @@ public sealed class SchemaCodeGenerator
                     {
                         nonScopedCallArgs.Add("\"\"");
                     }
-                    sb.AppendLine($"            public bool IsValid(JsonElement instance) => _parent.Validate_{hash}({string.Join(", ", nonScopedCallArgs)});");
+                    sb.AppendLine("            public bool IsValid(JsonElement instance)");
+                    sb.AppendLine("            {");
+                    if (fragment.ResourceAnchors.Count > 0 || fragment.HasRecursiveAnchor)
+                    {
+                        var scopeSuffix = hash[..8];
+                        sb.AppendLine($"                var _scopeEntry_{scopeSuffix} = new CompiledScopeEntry");
+                        sb.AppendLine("                {");
+                    if (fragment.ResourceAnchors.Count > 0)
+                    {
+                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+                        sb.AppendLine("                    {");
+                        foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
+                        {
+                            sb.AppendLine($"                        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking, "_parent")},");
+                        }
+                        sb.AppendLine("                    },");
+                    }
+                        else
+                        {
+                            sb.AppendLine("                    DynamicAnchors = null,");
+                        }
+                        sb.AppendLine($"                    HasRecursiveAnchor = {(fragment.HasRecursiveAnchor ? "true" : "false")},");
+                        if (fragment.HasRecursiveAnchor)
+                        {
+                            sb.AppendLine($"                    RootValidator = {GetAnchorDelegateExpression(fragment.ResourceRootHash, hasAnnotationTracking, "_parent")}");
+                        }
+                        else
+                        {
+                            sb.AppendLine("                    RootValidator = null");
+                        }
+                        sb.AppendLine("                };");
+                        sb.AppendLine($"                var _scope_{scopeSuffix} = CompiledValidatorScope.Empty.Push(_scopeEntry_{scopeSuffix});");
+                        nonScopedCallArgs[1] = $"_scope_{scopeSuffix}";
+                    }
+                    sb.AppendLine($"                return _parent.Validate_{hash}({string.Join(", ", nonScopedCallArgs)});");
+                    sb.AppendLine("            }");
                     sb.AppendLine("        }");
                 }
                 else
@@ -979,5 +1148,16 @@ public sealed class SchemaCodeGenerator
     private static string EscapeString(string s)
     {
         return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+    }
+
+    private static string GetAnchorDelegateExpression(string hash, bool hasAnnotationTracking, string? instancePrefix = null)
+    {
+        var prefix = string.IsNullOrEmpty(instancePrefix) ? string.Empty : $"{instancePrefix}.";
+        if (!hasAnnotationTracking)
+        {
+            return $"{prefix}Validate_{hash}";
+        }
+
+        return $"(JsonElement _e, ICompiledValidatorScope _s) => {prefix}Validate_{hash}(_e, _s, \"\")";
     }
 }

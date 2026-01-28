@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+using System.Collections.Generic;
 using System.Text.Json;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
@@ -103,7 +104,7 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         // Get the hash of the target schema and generate a call to its validation method
         var targetHash = context.GetSubschemaHash(targetSchema.Value);
 
-        return $"// $ref: {refValue}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        return GenerateLocalRefCallWithScope(context, refValue, targetHash);
     }
 
     private static string GenerateExternalRefCode(CodeGenerationContext context, string refValue)
@@ -136,9 +137,25 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
         var internalSchema = context.ResolveInternalId(targetUriWithoutFragment.AbsoluteUri);
         if (internalSchema.HasValue)
         {
+            JsonElement? targetSchema = internalSchema.Value;
+            var fragment = targetUri.Fragment;
+            if (!string.IsNullOrEmpty(fragment) && fragment != "#")
+            {
+                if (!fragment.StartsWith('#'))
+                {
+                    fragment = $"#{fragment}";
+                }
+                targetSchema = context.ResolveLocalRefInResource(fragment, internalSchema.Value);
+            }
+
+            if (!targetSchema.HasValue)
+            {
+                return $"// WARNING: Could not resolve $ref: {refValue}";
+            }
+
             // This is an internal reference - generate a local method call
-            var targetHash = context.GetSubschemaHash(internalSchema.Value);
-            return $"// $ref: {refValue} (internal $id)\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+            var targetHash = context.GetSubschemaHash(targetSchema.Value);
+            return GenerateLocalRefCallWithScope(context, refValue, targetHash, "internal $id");
         }
 
         // External refs with fragments - the fragment URI should be registered separately
@@ -174,23 +191,131 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             var sb = new System.Text.StringBuilder();
             sb.AppendLine($"// External $ref: {refValue} (with scope propagation)");
             sb.AppendLine($"if ({fieldName} == null) return false;");
-            sb.AppendLine($"if ({fieldName} is IScopedCompiledValidator {fieldName}_scoped)");
-            sb.AppendLine("{");
-            sb.AppendLine($"    if (!{fieldName}_scoped.IsValid({e2}, {context.ScopeVariable})) return false;");
-            sb.AppendLine("}");
-            sb.AppendLine("else");
-            sb.AppendLine("{");
-            sb.AppendLine($"    if (!{fieldName}.IsValid({e2})) return false;");
-            sb.Append("}");
+
+            sb.AppendLine($"    if ({fieldName} is IScopedCompiledValidator {fieldName}_scoped)");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        if (!{fieldName}_scoped.IsValid({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("    }");
+            sb.AppendLine("    else");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        if (!{fieldName}.IsValid({e2})) return false;");
+            sb.AppendLine("    }");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"    if ({fieldName} is IEvaluatedStateAwareCompiledValidator {fieldName}_eval)");
+                sb.AppendLine("    {");
+                sb.AppendLine($"        {context.EvaluatedStateVariable}.MergeFromSnapshot({fieldName}_eval.GetEvaluatedStateSnapshot());");
+                sb.AppendLine("    }");
+            }
+
             return sb.ToString();
+        }
+
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// External $ref: {refValue}");
+            sb.AppendLine($"if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;");
+            sb.AppendLine($"if ({fieldName} is IEvaluatedStateAwareCompiledValidator {fieldName}_eval)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    {context.EvaluatedStateVariable}.MergeFromSnapshot({fieldName}_eval.GetEvaluatedStateSnapshot());");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
+        return $"""
+            // External $ref: {refValue}
+            if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;
+            """;
+    }
+
+    private static string GenerateLocalRefCallWithScope(CodeGenerationContext context, string refValue, string targetHash, string? suffix = null)
+    {
+        var commentSuffix = string.IsNullOrEmpty(suffix) ? string.Empty : $" ({suffix})";
+
+        if (!context.RequiresScopeTracking)
+        {
+            return $"// $ref: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        var targetInfo = context.GetSubschemaInfo(targetHash);
+        if (targetInfo == null)
+        {
+            return $"// $ref: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        // If we're staying within the same resource (or entering a resource root),
+        // the target's own method will push anchors as needed.
+        if (targetInfo.IsResourceRoot || targetInfo.ResourceRootHash == context.CurrentResourceRootHash)
+        {
+            return $"// $ref: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        var resourceRootInfo = context.GetSubschemaInfo(targetInfo.ResourceRootHash);
+        if (resourceRootInfo == null || (resourceRootInfo.ResourceAnchors.Count == 0 && !resourceRootInfo.HasRecursiveAnchor))
+        {
+            return $"// $ref: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        var scopeSuffix = targetHash[..8];
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"// $ref: {refValue}{commentSuffix} (push resource scope)");
+        sb.AppendLine("{");
+        sb.AppendLine($"var _scopeEntry_{scopeSuffix} = new CompiledScopeEntry");
+        sb.AppendLine("{");
+        if (resourceRootInfo.ResourceAnchors.Count > 0)
+        {
+            sb.AppendLine("    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+            sb.AppendLine("    {");
+            foreach (var (anchorName, schemaHash) in resourceRootInfo.ResourceAnchors)
+            {
+                sb.AppendLine($"        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(context, schemaHash)},");
+            }
+            sb.AppendLine("    },");
         }
         else
         {
-            return $"""
-                // External $ref: {refValue}
-                if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;
-                """;
+            sb.AppendLine("    DynamicAnchors = null,");
         }
+        sb.AppendLine($"    HasRecursiveAnchor = {(resourceRootInfo.HasRecursiveAnchor ? "true" : "false")},");
+        if (resourceRootInfo.HasRecursiveAnchor)
+        {
+            sb.AppendLine($"    RootValidator = {GetAnchorDelegateExpression(context, resourceRootInfo.Hash)}");
+        }
+        else
+        {
+            sb.AppendLine("    RootValidator = null");
+        }
+        sb.AppendLine("};");
+        sb.AppendLine($"var _scope_{scopeSuffix} = {context.ScopeVariable}.Push(_scopeEntry_{scopeSuffix});");
+        sb.AppendLine($"if (!{GenerateValidateCallWithScope(context, targetHash, $"_scope_{scopeSuffix}")}) return false;");
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+
+    private static string GenerateValidateCallWithScope(CodeGenerationContext context, string hash, string scopeVariable)
+    {
+        var args = new List<string> { context.ElementVariable, scopeVariable };
+        if (context.RequiresLocationTracking)
+        {
+            args.Add(context.LocationVariable);
+        }
+        return $"Validate_{hash}({string.Join(", ", args)})";
+    }
+
+    private static string GetAnchorDelegateExpression(CodeGenerationContext context, string hash)
+    {
+        if (!context.RequiresLocationTracking)
+        {
+            return $"Validate_{hash}";
+        }
+
+        return $"(JsonElement _e, ICompiledValidatorScope _s) => Validate_{hash}(_e, _s, \"\")";
+    }
+
+    private static string EscapeString(string s)
+    {
+        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 
     private static string GenerateFieldNameSuffix(string input)

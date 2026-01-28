@@ -394,6 +394,8 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+/.dotnet-home
+/.dotnet
 .claude/*
 tmpclaude-*-cwd
 nul

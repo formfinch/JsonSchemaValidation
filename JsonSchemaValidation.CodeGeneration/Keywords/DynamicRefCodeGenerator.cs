@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+using System.Collections.Generic;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
@@ -40,9 +41,8 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
             return false;
         }
 
-        // Handle local references (both anchor #name and JSON pointer #/path)
-        // These can be resolved statically when in the same schema resource
-        return refValue.StartsWith('#');
+        // Allow both local and external references
+        return true;
     }
 
     public string GenerateCode(CodeGenerationContext context)
@@ -64,10 +64,10 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
             return string.Empty;
         }
 
-        // Only handle local references
+        // External or relative references (not starting with #)
         if (!refValue.StartsWith('#'))
         {
-            return $"// $dynamicRef with external URI not supported in compiled mode: {refValue}";
+            return GenerateExternalDynamicRefCode(context, refValue);
         }
 
         // Handle JSON Pointer references (e.g., "#/$defs/foo")
@@ -164,7 +164,352 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
         }
 
         var targetHash = context.GetSubschemaHash(targetSchema.Value);
-        return $"// $dynamicRef: {refValue} (resolved as $ref)\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        return GenerateLocalDynamicRefCallWithScope(context, refValue, targetHash, "resolved as $ref");
+    }
+
+    private static string GenerateExternalDynamicRefCode(CodeGenerationContext context, string refValue)
+    {
+        // Resolve the external URI
+        if (!TryResolveUri(context, refValue, out var targetUri))
+        {
+            return $"// WARNING: Could not parse $dynamicRef URI: {refValue}";
+        }
+
+        var fragment = targetUri.Fragment;
+
+        // If the fragment is a JSON pointer (or empty), treat as normal $ref
+        if (string.IsNullOrEmpty(fragment) || fragment == "#" || fragment.StartsWith("#/", StringComparison.Ordinal))
+        {
+            return GenerateExternalRefLikeCode(context, refValue, targetUri);
+        }
+
+        // Anchor reference: "#anchorName"
+        var anchorName = fragment[1..];
+
+        // If this resolves to an internal $id (same document), treat as local and check bookend
+        var targetUriWithoutFragment = new Uri(targetUri.GetLeftPart(UriPartial.Query));
+        var internalResource = context.ResolveInternalId(targetUriWithoutFragment.AbsoluteUri);
+        if (internalResource.HasValue)
+        {
+            var localTarget = context.ResolveLocalRefInResource(fragment, internalResource.Value);
+            if (!localTarget.HasValue)
+            {
+                return $"// WARNING: Could not resolve $dynamicRef: {refValue}";
+            }
+
+            // Bookend check within the target resource
+            var localDynamicAnchor = FindDynamicAnchorInResource(anchorName, internalResource.Value);
+            if (!localDynamicAnchor.HasValue)
+            {
+                var targetHash = context.GetSubschemaHash(localTarget.Value);
+                return GenerateLocalDynamicRefCallWithScope(context, refValue, targetHash, "resolved as $ref");
+            }
+
+            var localHash = context.GetSubschemaHash(localDynamicAnchor.Value);
+            if (context.RequiresScopeTracking)
+            {
+                var fallbackCode = GenerateLocalDynamicRefCallWithScope(context, refValue, localHash, "resolved as $ref");
+                var sb = new System.Text.StringBuilder();
+                sb.AppendLine($"// $dynamicRef: {refValue} (with dynamic scope resolution)");
+                sb.AppendLine($"if ({context.ScopeVariable}.TryResolveDynamicAnchor(\"{anchorName}\", out var _dynValidator_{localHash[..8]}))");
+                sb.AppendLine("{");
+                sb.AppendLine($"    if (!_dynValidator_{localHash[..8]}!({context.ElementVariable}, {context.ScopeVariable})) return false;");
+                sb.AppendLine("}");
+                sb.AppendLine("else");
+                sb.AppendLine("{");
+                foreach (var line in fallbackCode.Split('\n'))
+                {
+                    if (!string.IsNullOrWhiteSpace(line))
+                    {
+                        sb.AppendLine($"    {line.TrimEnd()}");
+                    }
+                }
+                sb.Append("}");
+                return sb.ToString();
+            }
+
+            return GenerateLocalDynamicRefCallWithScope(context, refValue, localHash, "resolved as $ref");
+        }
+
+        // External reference - use registry-provided validator with runtime bookend check
+        var fieldName = GetOrRegisterExternalRef(context, targetUri, refValue);
+        var e2 = context.ElementVariable;
+
+        if (context.RequiresScopeTracking)
+        {
+            var fieldSuffix = fieldName.Length > 8 ? fieldName[8..] : fieldName;
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// External $dynamicRef: {refValue} (with dynamic scope resolution)");
+            sb.AppendLine($"if ({fieldName} == null) return false;");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"var _usedExternal_{fieldSuffix} = false;");
+            }
+            sb.AppendLine($"if ({fieldName} is IScopedCompiledValidator {fieldName}_scoped && {fieldName}_scoped.DynamicAnchors?.ContainsKey(\"{EscapeString(anchorName)}\") == true)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if ({context.ScopeVariable}.TryResolveDynamicAnchor(\"{EscapeString(anchorName)}\", out var _dynValidator_{fieldSuffix}))");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        if (!_dynValidator_{fieldSuffix}!({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("    }");
+            sb.AppendLine("    else");
+            sb.AppendLine("    {");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"        _usedExternal_{fieldSuffix} = true;");
+            }
+            sb.AppendLine($"        if (!{fieldName}_scoped.IsValid({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+            sb.AppendLine("else");
+            sb.AppendLine("{");
+            sb.AppendLine($"    if ({fieldName} is IScopedCompiledValidator {fieldName}_fallbackScoped)");
+            sb.AppendLine("    {");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"        _usedExternal_{fieldSuffix} = true;");
+            }
+            sb.AppendLine($"        if (!{fieldName}_fallbackScoped.IsValid({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("    }");
+            sb.AppendLine("    else");
+            sb.AppendLine("    {");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"        _usedExternal_{fieldSuffix} = true;");
+            }
+            sb.AppendLine($"        if (!{fieldName}.IsValid({e2})) return false;");
+            sb.AppendLine("    }");
+            sb.AppendLine("}");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"if (_usedExternal_{fieldSuffix} && {fieldName} is IEvaluatedStateAwareCompiledValidator {fieldName}_eval)");
+                sb.AppendLine("{");
+                sb.AppendLine($"    {context.EvaluatedStateVariable}.MergeFromSnapshot({fieldName}_eval.GetEvaluatedStateSnapshot());");
+                sb.AppendLine("}");
+            }
+            return sb.ToString();
+        }
+
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// External $dynamicRef: {refValue}");
+            sb.AppendLine($"if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;");
+            sb.AppendLine($"if ({fieldName} is IEvaluatedStateAwareCompiledValidator {fieldName}_eval)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    {context.EvaluatedStateVariable}.MergeFromSnapshot({fieldName}_eval.GetEvaluatedStateSnapshot());");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
+        return $"// External $dynamicRef: {refValue}\nif ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;";
+    }
+
+    private static string GenerateExternalRefLikeCode(CodeGenerationContext context, string refValue, Uri targetUri)
+    {
+        var targetUriWithoutFragment = new Uri(targetUri.GetLeftPart(UriPartial.Query));
+        var internalResource = context.ResolveInternalId(targetUriWithoutFragment.AbsoluteUri);
+        if (internalResource.HasValue)
+        {
+            JsonElement? targetSchema = internalResource.Value;
+            var fragment = targetUri.Fragment;
+            if (!string.IsNullOrEmpty(fragment) && fragment != "#")
+            {
+                targetSchema = context.ResolveLocalRefInResource(fragment, internalResource.Value);
+            }
+
+            if (!targetSchema.HasValue)
+            {
+                return $"// WARNING: Could not resolve $dynamicRef: {refValue}";
+            }
+
+            var targetHash = context.GetSubschemaHash(targetSchema.Value);
+            return GenerateLocalDynamicRefCallWithScope(context, refValue, targetHash, "resolved as $ref");
+        }
+
+        var fieldName = GetOrRegisterExternalRef(context, targetUri, refValue);
+        var e2 = context.ElementVariable;
+
+        if (context.RequiresScopeTracking)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// External $dynamicRef: {refValue}");
+            sb.AppendLine($"if ({fieldName} == null) return false;");
+            sb.AppendLine($"    if ({fieldName} is IScopedCompiledValidator {fieldName}_scoped)");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        if (!{fieldName}_scoped.IsValid({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine("    }");
+            sb.AppendLine("    else");
+            sb.AppendLine("    {");
+            sb.AppendLine($"        if (!{fieldName}.IsValid({e2})) return false;");
+            sb.AppendLine("    }");
+            if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"if ({fieldName} is IEvaluatedStateAwareCompiledValidator {fieldName}_eval)");
+                sb.AppendLine("{");
+                sb.AppendLine($"    {context.EvaluatedStateVariable}.MergeFromSnapshot({fieldName}_eval.GetEvaluatedStateSnapshot());");
+                sb.AppendLine("}");
+            }
+            return sb.ToString();
+        }
+
+        if (context.RequiresPropertyAnnotations || context.RequiresItemAnnotations)
+        {
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine($"// External $dynamicRef: {refValue}");
+            sb.AppendLine($"if ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;");
+            sb.AppendLine($"if ({fieldName} is IEvaluatedStateAwareCompiledValidator {fieldName}_eval)");
+            sb.AppendLine("{");
+            sb.AppendLine($"    {context.EvaluatedStateVariable}.MergeFromSnapshot({fieldName}_eval.GetEvaluatedStateSnapshot());");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
+
+        return $"// External $dynamicRef: {refValue}\nif ({fieldName} == null || !{fieldName}.IsValid({e2})) return false;";
+    }
+
+    private static string GenerateLocalDynamicRefCallWithScope(CodeGenerationContext context, string refValue, string targetHash, string suffix)
+    {
+        var commentSuffix = string.IsNullOrEmpty(suffix) ? string.Empty : $" ({suffix})";
+
+        if (!context.RequiresScopeTracking)
+        {
+            return $"// $dynamicRef: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        var targetInfo = context.GetSubschemaInfo(targetHash);
+        if (targetInfo == null)
+        {
+            return $"// $dynamicRef: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        if (targetInfo.IsResourceRoot || targetInfo.ResourceRootHash == context.CurrentResourceRootHash)
+        {
+            return $"// $dynamicRef: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        var resourceRootInfo = context.GetSubschemaInfo(targetInfo.ResourceRootHash);
+        if (resourceRootInfo == null || (resourceRootInfo.ResourceAnchors.Count == 0 && !resourceRootInfo.HasRecursiveAnchor))
+        {
+            return $"// $dynamicRef: {refValue}{commentSuffix}\nif (!{context.GenerateValidateCall(targetHash)}) return false;";
+        }
+
+        var scopeSuffix = targetHash[..8];
+        var sb = new System.Text.StringBuilder();
+        sb.AppendLine($"// $dynamicRef: {refValue}{commentSuffix} (push resource scope)");
+        sb.AppendLine("{");
+        sb.AppendLine($"var _scopeEntry_{scopeSuffix} = new CompiledScopeEntry");
+        sb.AppendLine("{");
+        if (resourceRootInfo.ResourceAnchors.Count > 0)
+        {
+            sb.AppendLine("    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+            sb.AppendLine("    {");
+            foreach (var (anchorName, schemaHash) in resourceRootInfo.ResourceAnchors)
+            {
+                sb.AppendLine($"        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(context, schemaHash)},");
+            }
+            sb.AppendLine("    },");
+        }
+        else
+        {
+            sb.AppendLine("    DynamicAnchors = null,");
+        }
+        sb.AppendLine($"    HasRecursiveAnchor = {(resourceRootInfo.HasRecursiveAnchor ? "true" : "false")},");
+        if (resourceRootInfo.HasRecursiveAnchor)
+        {
+            sb.AppendLine($"    RootValidator = {GetAnchorDelegateExpression(context, resourceRootInfo.Hash)}");
+        }
+        else
+        {
+            sb.AppendLine("    RootValidator = null");
+        }
+        sb.AppendLine("};");
+        sb.AppendLine($"var _scope_{scopeSuffix} = {context.ScopeVariable}.Push(_scopeEntry_{scopeSuffix});");
+        sb.AppendLine($"if (!{GenerateValidateCallWithScope(context, targetHash, $"_scope_{scopeSuffix}")}) return false;");
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+
+    private static string GenerateValidateCallWithScope(CodeGenerationContext context, string hash, string scopeVariable)
+    {
+        var args = new List<string> { context.ElementVariable, scopeVariable };
+        if (context.RequiresLocationTracking)
+        {
+            args.Add(context.LocationVariable);
+        }
+        return $"Validate_{hash}({string.Join(", ", args)})";
+    }
+
+    private static string GetAnchorDelegateExpression(CodeGenerationContext context, string hash)
+    {
+        if (!context.RequiresLocationTracking)
+        {
+            return $"Validate_{hash}";
+        }
+
+        return $"(JsonElement _e, ICompiledValidatorScope _s) => Validate_{hash}(_e, _s, \"\")";
+    }
+
+    private static bool TryResolveUri(CodeGenerationContext context, string refValue, out Uri targetUri)
+    {
+        if (Uri.TryCreate(refValue, UriKind.Absolute, out var absoluteUri))
+        {
+            targetUri = absoluteUri;
+            return true;
+        }
+
+        if (context.BaseUri != null && Uri.TryCreate(context.BaseUri, refValue, out var resolvedUri))
+        {
+            targetUri = resolvedUri;
+            return true;
+        }
+
+        try
+        {
+            targetUri = new Uri(refValue, UriKind.RelativeOrAbsolute);
+            return true;
+        }
+        catch
+        {
+            targetUri = null!;
+            return false;
+        }
+    }
+
+    private static string GetOrRegisterExternalRef(CodeGenerationContext context, Uri targetUri, string refValue)
+    {
+        var fieldName = $"_extRef_{GenerateFieldNameSuffix(targetUri.AbsoluteUri)}";
+
+        var existingRef = context.ExternalRefs.Find(r => r.TargetUri.AbsoluteUri == targetUri.AbsoluteUri);
+        if (existingRef == null)
+        {
+            context.ExternalRefs.Add(new ExternalRefInfo
+            {
+                FieldName = fieldName,
+                TargetUri = targetUri,
+                OriginalRef = refValue
+            });
+        }
+        else
+        {
+            fieldName = existingRef.FieldName;
+        }
+
+        return fieldName;
+    }
+
+    private static string GenerateFieldNameSuffix(string input)
+    {
+        var hash = 0u;
+        foreach (var c in input)
+        {
+            hash = (hash * 31) + c;
+        }
+        return hash.ToString("x8");
+    }
+
+    private static string EscapeString(string s)
+    {
+        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 
     /// <summary>

@@ -30,7 +30,7 @@ internal sealed class RuntimeValidatorFactory : IDisposable
     /// Creates a new RuntimeValidatorFactory without a registry.
     /// Compiled validators with external $ref will fail to initialize.
     /// </summary>
-    public RuntimeValidatorFactory() : this(null)
+    public RuntimeValidatorFactory() : this(null, false)
     {
     }
 
@@ -38,9 +38,10 @@ internal sealed class RuntimeValidatorFactory : IDisposable
     /// Creates a new RuntimeValidatorFactory with a registry for resolving external $ref.
     /// </summary>
     /// <param name="registry">The registry for resolving external $ref dependencies.</param>
-    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry)
+    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry, bool forceAnnotationTracking = false)
     {
         _registry = registry;
+        _codeGenerator.ForceAnnotationTracking = forceAnnotationTracking;
     }
 
     /// <summary>
@@ -255,6 +256,14 @@ internal sealed class RuntimeValidatorFactory : IDisposable
         // for those refs (the generated code has null checks that return false)
         if (_registry != null)
         {
+            foreach (var validator in result.Values)
+            {
+                if (validator is IRegistryAwareCompiledValidator registryAware)
+                {
+                    registryAware.RegisterSubschemas(_registry);
+                }
+            }
+
             foreach (var validator in result.Values)
             {
                 if (validator is IRegistryAwareCompiledValidator registryAware)
