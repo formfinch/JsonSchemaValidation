@@ -205,66 +205,57 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
 
 ---
 
-### TASK-048: Implement scope stack for $dynamicRef in compiled validators [~]
+### TASK-048: Implement scope stack for $dynamicRef in compiled validators [x]
 - **Labels:** `architecture`, `compiled-validators`, `enhancement`
 - **Priority:** Medium
-- **Status:** Partially Complete (infrastructure done, blocker identified)
+- **Status:** Complete
 - **Description:**
   Implement runtime scope tracking to enable `$dynamicRef` resolution in compiled validators.
 
   **Implementation completed (2026-01-28):**
+
+  **Phase 1 - Scope stack infrastructure:**
   1. Created `ICompiledValidatorScope` interface for scope resolution
   2. Created `IScopedCompiledValidator` interface extending `ICompiledValidator` with scope support
   3. Created `CompiledScopeEntry` struct to hold anchor data in scope entries
   4. Created `CompiledValidatorScope` immutable linked-list implementation with outermost-first search
-  5. Updated `SchemaCodeGenerator` to:
-     - Push scope entries at validation method entry for schemas with `$dynamicAnchor` or `$recursiveAnchor`
-     - Pass scope through all validation calls
+  5. Updated `SchemaCodeGenerator` to push scope entries and pass scope through validation calls
   6. Updated `RefCodeGenerator` to pass scope to external refs via `IScopedCompiledValidator`
-  7. Updated fragment validators to implement `IScopedCompiledValidator` and propagate caller's scope
-  8. **Resource-level anchor collection (2026-01-28):**
-     - Added `IsResourceRoot` and `ResourceAnchors` properties to `SubschemaInfo`
-     - `SubschemaExtractor` now tracks which anchors belong to which resource
-     - Resource root schemas (with `$id` or root schema) collect ALL `$dynamicAnchor` declarations within their resource
-     - `GenerateValidationMethod` uses `ResourceAnchors` for resource roots when pushing scope
-     - Added `GetRootResourceAnchors()` method to return all anchors in the root resource
-  9. Regenerated all 19 metaschema validators with scope tracking
 
-  **What works:**
-  - Local `$dynamicRef` with `#anchor` syntax (e.g., `"$dynamicRef": "#items"`)
-  - Scope tracking across validation method calls
-  - Resource-level anchor collection for nested `$defs`
+  **Phase 2 - Resource-level anchor collection:**
+  7. Added `IsResourceRoot`, `ResourceAnchors`, and `ResourceRootHash` properties to `SubschemaInfo`
+  8. `SubschemaExtractor` tracks which anchors belong to which resource
+  9. Resource root schemas collect ALL `$dynamicAnchor` declarations within their resource
 
-  **Actual blocker - Cross-resource $dynamicRef not supported:**
-  The skipped tests use **cross-resource `$dynamicRef`** syntax like `"extended#meta"` (not `"#meta"`).
-  `DynamicRefCodeGenerator.CanGenerate()` only handles local `#anchor` references:
-  ```csharp
-  return refValue.StartsWith('#');  // Only handles "#anchor", not "resource#anchor"
-  ```
+  **Phase 3 - Cross-resource $dynamicRef support:**
+  10. `DynamicRefCodeGenerator` now handles cross-resource URIs like `"extended#meta"`
+  11. `GenerateExternalDynamicRefCode()` resolves external dynamic references with bookend checks
+  12. `GenerateLocalDynamicRefCallWithScope()` pushes resource anchors when entering via fragment ref
 
-  **Skipped tests and why:**
-  | Test | $dynamicRef syntax | Why skipped |
-  |------|-------------------|-------------|
-  | "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor" | `"extended#meta"` | Cross-resource ref |
-  | "multiple dynamic paths to the $dynamicRef keyword" | `"#itemType"` but via if/then/else | Scope cleanup on branch exit |
-  | "after leaving a dynamic scope, it is not used by a $dynamicRef" | `"inner_scope#thingy"` | Cross-resource ref + scope cleanup |
-  | "$dynamicRef skips over intermediate resources" | `"#content"` via external resource | External schema compilation |
-  | "$dynamicRef avoids the root of each schema" | External schemas | External schema compilation |
+  **Phase 4 - Evaluated state tracking:**
+  13. Created `IEvaluatedStateAwareCompiledValidator` interface to expose annotations
+  14. Created `EvaluatedStateSnapshot` for merging evaluated properties/items across external `$ref`
+  15. Enables `unevaluatedProperties`/`unevaluatedItems` to work correctly across external refs
 
-  **Next steps to resolve skipped tests:**
-  1. Update `DynamicRefCodeGenerator` to handle cross-resource `$dynamicRef` (e.g., `"extended#meta"`)
-  2. Implement proper scope cleanup when exiting applicator branches (if/then/else)
-  3. (Lower priority) Compile remote schemas with scope support in test infrastructure
+  **Tests now passing:**
+  - "A $dynamicRef resolves to the first $dynamicAnchor still in scope" ✓
+  - "A $dynamicRef that initially resolves to a schema with a matching $dynamicAnchor" ✓
+  - "multiple dynamic paths to the $dynamicRef keyword" ✓
+  - "after leaving a dynamic scope, it is not used by a $dynamicRef" ✓
+  - "$dynamicRef avoids the root of each schema, but scopes are still registered" ✓
+  - "$dynamicRef skips over intermediate resources" ✓
+  - "strict-tree schema, guards against misspelled properties" ✓
+
+  **Test results:** 3971 passed, 192 skipped, 0 failed (+10 tests from before implementation)
 
   **Acceptance criteria:**
   - [x] Scope stack mechanism designed and documented
   - [x] Local `$dynamicRef` with `#anchor` syntax works
-  - [x] API remains backward compatible (new `IScopedCompiledValidator` interface)
-  - [x] All tests pass (3960 passed, 203 skipped, 0 failed)
-  - [x] Resource-level anchor collection implemented (infrastructure ready)
-  - [ ] Cross-resource `$dynamicRef` support in `DynamicRefCodeGenerator`
-  - [ ] Scope cleanup on applicator branch exit
-  - [ ] Skipped `$dynamicRef` tests pass
+  - [x] Cross-resource `$dynamicRef` support (e.g., `"extended#meta"`)
+  - [x] Fragment reference scope pushing (entering resource via `#/$defs/foo`)
+  - [x] Evaluated state tracking for `unevaluatedProperties`/`unevaluatedItems`
+  - [x] API remains backward compatible
+  - [x] All $dynamicRef tests pass (previously skipped tests now enabled)
 
 ---
 
@@ -276,13 +267,13 @@ This backlog tracks tasks required to release FormFinch.JsonSchemaValidation as 
   Create clear documentation of what compiled validators cannot do compared to dynamic validators.
 
   **Known limitations to document:**
-  1. **$dynamicRef with runtime scope resolution** - Cannot inspect dynamic call chain (addressable via TASK-048)
-  2. **$recursiveRef with runtime scope resolution** - Cannot inspect recursive call chain (addressable via TASK-048)
+  1. ~~**$dynamicRef with runtime scope resolution**~~ - ✅ RESOLVED via TASK-048
+  2. ~~**$recursiveRef with runtime scope resolution**~~ - ✅ RESOLVED via TASK-048
   3. **Remote refs with internal $ref** - Cannot compile subschemas referencing siblings
   4. **Vocabulary-based validation** - Cannot enable/disable keywords via $vocabulary
   5. **Cross-draft compatibility** - Cannot process $ref targets according to declared $schema
 
-  **Note:** Limitations 1-2 are architectural but solvable with scope stack implementation (TASK-048). Limitations 3-5 are fundamental to the compiled approach.
+  **Note:** Limitations 1-2 have been resolved with the scope stack implementation (TASK-048). Limitations 3-5 are fundamental to the compiled approach.
 
   **Deliverables:**
   - Add section to KNOWN_LIMITATIONS.md or create COMPILED_LIMITATIONS.md
@@ -1319,4 +1310,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-28 (TASK-048: Infrastructure complete, blocker is cross-resource $dynamicRef in DynamicRefCodeGenerator)*
+*Last updated: 2026-01-28 (TASK-048: Complete - full $dynamicRef support with cross-resource refs and evaluated state tracking)*

@@ -2,20 +2,20 @@
 
 ## Implementation Plan
 
-**Status:** PARTIALLY COMPLETE (2026-01-28) - Infrastructure done, blocker identified
+**Status:** COMPLETE (2026-01-28)
 **Priority:** Medium
 **Estimated Complexity:** High
 
 > **Implementation Summary:**
-> Scope stack infrastructure is complete including resource-level anchor collection.
-> Local `$dynamicRef` with `#anchor` syntax works correctly.
+> Full $dynamicRef support implemented in compiled validators including:
+> - Scope stack infrastructure with outermost-first anchor resolution
+> - Resource-level anchor collection for nested `$defs`
+> - Cross-resource `$dynamicRef` support (e.g., `"extended#meta"`)
+> - Fragment reference scope pushing (entering resource via `#/$defs/foo`)
+> - Evaluated state tracking for `unevaluatedProperties`/`unevaluatedItems` across external refs
 >
-> **Blocker:** Skipped tests use cross-resource `$dynamicRef` (e.g., `"extended#meta"`), but
-> `DynamicRefCodeGenerator` only handles local `#anchor` references (`refValue.StartsWith('#')`).
->
-> **Next steps:**
-> 1. Update `DynamicRefCodeGenerator` to handle cross-resource `$dynamicRef`
-> 2. Implement scope cleanup when exiting applicator branches (if/then/else)
+> **Results:** 3971 passed, 192 skipped, 0 failed (+10 tests from before implementation)
+> All previously skipped $dynamicRef tests now pass.
 
 ---
 
