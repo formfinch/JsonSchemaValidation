@@ -33,6 +33,7 @@ public interface ICompiledValidatorScope
     /// <param name="anchorName">The anchor name to search for (without the # prefix).</param>
     /// <param name="validator">
     /// When this method returns true, contains the validation function for the matched anchor.
+    /// The function accepts (element, scope, location) and returns validity.
     /// When this method returns false, contains null.
     /// </param>
     /// <returns>
@@ -41,13 +42,14 @@ public interface ICompiledValidatorScope
     /// </returns>
     bool TryResolveDynamicAnchor(
         string anchorName,
-        out Func<JsonElement, ICompiledValidatorScope, bool>? validator);
+        out Func<JsonElement, ICompiledValidatorScope, string, bool>? validator);
 
     /// <summary>
     /// Searches the scope stack from outermost to innermost for a schema with $recursiveAnchor: true.
     /// </summary>
     /// <param name="validator">
     /// When this method returns true, contains the root validation function for the matched schema.
+    /// The function accepts (element, scope, location) and returns validity.
     /// When this method returns false, contains null.
     /// </param>
     /// <returns>
@@ -55,7 +57,7 @@ public interface ICompiledValidatorScope
     /// false to indicate the caller should use the static target.
     /// </returns>
     bool TryResolveRecursiveAnchor(
-        out Func<JsonElement, ICompiledValidatorScope, bool>? validator);
+        out Func<JsonElement, ICompiledValidatorScope, string, bool>? validator);
 
     /// <summary>
     /// Creates a new scope with the specified entry pushed onto the stack.

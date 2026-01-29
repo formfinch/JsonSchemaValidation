@@ -35,10 +35,10 @@ public interface IScopedCompiledValidator : ICompiledValidator
     /// </summary>
     /// <remarks>
     /// Key: anchor name (without the # prefix).
-    /// Value: validation function for the anchored subschema.
+    /// Value: validation function for the anchored subschema that accepts (element, scope, location).
     /// Returns null if no dynamic anchors are declared.
     /// </remarks>
-    IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors { get; }
+    IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors { get; }
 
     /// <summary>
     /// Gets a value indicating whether this validator's root schema has $recursiveAnchor: true.
@@ -53,9 +53,10 @@ public interface IScopedCompiledValidator : ICompiledValidator
     /// Gets the root validation function for $recursiveRef resolution.
     /// </summary>
     /// <remarks>
+    /// The function accepts (element, scope, location) and returns validity.
     /// Returns null if <see cref="HasRecursiveAnchor"/> is false.
     /// </remarks>
-    Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator { get; }
+    Func<JsonElement, ICompiledValidatorScope, string, bool>? RootValidator { get; }
 
     /// <summary>
     /// Validates the JSON instance with dynamic scope tracking.

@@ -12,18 +12,44 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Draft7.Keywords.Format;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    internal sealed class CompiledValidator_Draft7Schema : ICompiledValidator
+    internal sealed class CompiledValidator_Draft7Schema : IRegistryAwareCompiledValidator, ICompiledValidator
     {
         private static readonly JsonElement[] Enum_4b8c15195535 = new JsonElement[] { JsonDocument.Parse("\"array\"").RootElement, JsonDocument.Parse("\"boolean\"").RootElement, JsonDocument.Parse("\"integer\"").RootElement, JsonDocument.Parse("\"null\"").RootElement, JsonDocument.Parse("\"number\"").RootElement, JsonDocument.Parse("\"object\"").RootElement, JsonDocument.Parse("\"string\"").RootElement };
 
         public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema");
 
+        private ICompiledValidator? _dynamicScopeRoot;
+
+        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
+        {
+            // Register subschemas by fragment URI so other validators can reference them
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/schemaArray"), new SubschemaValidator_21b31fd4a956(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/schemaArray/items"), new SubschemaValidator_b17aa97428d3(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeInteger"), new SubschemaValidator_0d3ac1e9e006(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeIntegerDefault0"), new SubschemaValidator_82d312edecf2(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeIntegerDefault0/allOf/0"), new SubschemaValidator_9d77184891dc(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeIntegerDefault0/allOf/1"), new SubschemaValidator_44136fa355b3(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/simpleTypes"), new SubschemaValidator_4b8c15195535(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/stringArray"), new SubschemaValidator_822d2c4e6703(this));
+            registry.RegisterForUri(new Uri("http://json-schema.org/draft-07/schema#/definitions/stringArray/items"), new SubschemaValidator_00404e686415(this));
+        }
+
+        public void Initialize(ICompiledValidatorRegistry registry)
+        {
+        }
+
+        public void SetDynamicScopeRoot(ICompiledValidator? root)
+        {
+            _dynamicScopeRoot = root;
+        }
+
         public bool IsValid(JsonElement instance) => Validate_2de1c7d56d90(instance);
 
-    private static bool Validate_2de1c7d56d90(JsonElement e)
+    private bool Validate_2de1c7d56d90(JsonElement e)
     {
         {
             var _typeValid_ = false;
@@ -224,7 +250,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_21b31fd4a956(JsonElement e)
+    private bool Validate_21b31fd4a956(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -247,7 +273,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_b17aa97428d3(JsonElement e)
+    private bool Validate_b17aa97428d3(JsonElement e)
     {
         // $ref: #
         if (!Validate_2de1c7d56d90(e)) return false;
@@ -255,7 +281,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_0d3ac1e9e006(JsonElement e)
+    private bool Validate_0d3ac1e9e006(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Number) return false;
         {
@@ -275,7 +301,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_82d312edecf2(JsonElement e)
+    private bool Validate_82d312edecf2(JsonElement e)
     {
         // allOf: all subschemas must match
         if (!Validate_9d77184891dc(e)) return false;
@@ -285,7 +311,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_9d77184891dc(JsonElement e)
+    private bool Validate_9d77184891dc(JsonElement e)
     {
         // $ref: #/definitions/nonNegativeInteger
         if (!Validate_0d3ac1e9e006(e)) return false;
@@ -293,13 +319,13 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_44136fa355b3(JsonElement e)
+    private bool Validate_44136fa355b3(JsonElement e)
     {
         return true;
     }
 
 
-    private static bool Validate_4b8c15195535(JsonElement e)
+    private bool Validate_4b8c15195535(JsonElement e)
     {
         // enum check
         {
@@ -319,7 +345,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_822d2c4e6703(JsonElement e)
+    private bool Validate_822d2c4e6703(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -351,14 +377,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_00404e686415(JsonElement e)
+    private bool Validate_00404e686415(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         return true;
     }
 
 
-    private static bool Validate_5dc527ab08dc(JsonElement e)
+    private bool Validate_5dc527ab08dc(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidUriReference(e)) return false;
@@ -366,7 +392,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_f9757109fae3(JsonElement e)
+    private bool Validate_f9757109fae3(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidUri(e)) return false;
@@ -374,20 +400,20 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_b5bea41b6c62(JsonElement e)
+    private bool Validate_b5bea41b6c62(JsonElement e)
     {
         return true;
     }
 
 
-    private static bool Validate_7cb541e84f22(JsonElement e)
+    private bool Validate_7cb541e84f22(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.True && e.ValueKind != JsonValueKind.False) return false;
         return true;
     }
 
 
-    private static bool Validate_11d4ea710c08(JsonElement e)
+    private bool Validate_11d4ea710c08(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -404,7 +430,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_f8eb23dcc068(JsonElement e)
+    private bool Validate_f8eb23dcc068(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Number) return false;
         if (e.ValueKind == JsonValueKind.Number)
@@ -417,14 +443,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_cddf8275afa1(JsonElement e)
+    private bool Validate_cddf8275afa1(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Number) return false;
         return true;
     }
 
 
-    private static bool Validate_2df20126dd52(JsonElement e)
+    private bool Validate_2df20126dd52(JsonElement e)
     {
         // $ref: #/definitions/nonNegativeIntegerDefault0
         if (!Validate_82d312edecf2(e)) return false;
@@ -432,7 +458,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_2028a8659daf(JsonElement e)
+    private bool Validate_2028a8659daf(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         if (!FormatValidators.IsValidRegex(e)) return false;
@@ -440,7 +466,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_254ffe3c61cb(JsonElement e)
+    private bool Validate_254ffe3c61cb(JsonElement e)
     {
         // anyOf: at least one subschema must match
         {
@@ -454,7 +480,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_70ad97a912ba(JsonElement e)
+    private bool Validate_70ad97a912ba(JsonElement e)
     {
         // $ref: #/definitions/schemaArray
         if (!Validate_21b31fd4a956(e)) return false;
@@ -462,7 +488,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_8831a4f86008(JsonElement e)
+    private bool Validate_8831a4f86008(JsonElement e)
     {
         // $ref: #/definitions/stringArray
         if (!Validate_822d2c4e6703(e)) return false;
@@ -470,7 +496,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_d1a2c4af4125(JsonElement e)
+    private bool Validate_d1a2c4af4125(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -485,7 +511,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_99ea2ac99713(JsonElement e)
+    private bool Validate_99ea2ac99713(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -509,14 +535,14 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_a0c839cc99e3(JsonElement e)
+    private bool Validate_a0c839cc99e3(JsonElement e)
     {
         if (!FormatValidators.IsValidRegex(e)) return false;
         return true;
     }
 
 
-    private static bool Validate_9b72fb30cfca(JsonElement e)
+    private bool Validate_9b72fb30cfca(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Object) return false;
         if (e.ValueKind == JsonValueKind.Object)
@@ -531,7 +557,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_bc4d91bf496e(JsonElement e)
+    private bool Validate_bc4d91bf496e(JsonElement e)
     {
         // anyOf: at least one subschema must match
         {
@@ -545,7 +571,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_6760e7c71c97(JsonElement e)
+    private bool Validate_6760e7c71c97(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -578,7 +604,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_bb5981042649(JsonElement e)
+    private bool Validate_bb5981042649(JsonElement e)
     {
         // anyOf: at least one subschema must match
         {
@@ -592,7 +618,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_ef13d5113a2b(JsonElement e)
+    private bool Validate_ef13d5113a2b(JsonElement e)
     {
         // $ref: #/definitions/simpleTypes
         if (!Validate_4b8c15195535(e)) return false;
@@ -600,7 +626,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_658d8742033a(JsonElement e)
+    private bool Validate_658d8742033a(JsonElement e)
     {
         if (e.ValueKind != JsonValueKind.Array) return false;
         if (e.ValueKind == JsonValueKind.Array)
@@ -633,5 +659,69 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
+
+        private sealed class SubschemaValidator_21b31fd4a956 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_21b31fd4a956(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/schemaArray");
+            public bool IsValid(JsonElement instance) => _parent.Validate_21b31fd4a956(instance);
+        }
+        private sealed class SubschemaValidator_b17aa97428d3 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_b17aa97428d3(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/schemaArray/items");
+            public bool IsValid(JsonElement instance) => _parent.Validate_b17aa97428d3(instance);
+        }
+        private sealed class SubschemaValidator_0d3ac1e9e006 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_0d3ac1e9e006(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeInteger");
+            public bool IsValid(JsonElement instance) => _parent.Validate_0d3ac1e9e006(instance);
+        }
+        private sealed class SubschemaValidator_82d312edecf2 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_82d312edecf2(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeIntegerDefault0");
+            public bool IsValid(JsonElement instance) => _parent.Validate_82d312edecf2(instance);
+        }
+        private sealed class SubschemaValidator_9d77184891dc : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_9d77184891dc(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeIntegerDefault0/allOf/0");
+            public bool IsValid(JsonElement instance) => _parent.Validate_9d77184891dc(instance);
+        }
+        private sealed class SubschemaValidator_44136fa355b3 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_44136fa355b3(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/nonNegativeIntegerDefault0/allOf/1");
+            public bool IsValid(JsonElement instance) => _parent.Validate_44136fa355b3(instance);
+        }
+        private sealed class SubschemaValidator_4b8c15195535 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_4b8c15195535(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/simpleTypes");
+            public bool IsValid(JsonElement instance) => _parent.Validate_4b8c15195535(instance);
+        }
+        private sealed class SubschemaValidator_822d2c4e6703 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_822d2c4e6703(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/stringArray");
+            public bool IsValid(JsonElement instance) => _parent.Validate_822d2c4e6703(instance);
+        }
+        private sealed class SubschemaValidator_00404e686415 : ICompiledValidator
+        {
+            private readonly CompiledValidator_Draft7Schema _parent;
+            public SubschemaValidator_00404e686415(CompiledValidator_Draft7Schema parent) => _parent = parent;
+            public Uri SchemaUri => new Uri("http://json-schema.org/draft-07/schema#/definitions/stringArray/items");
+            public bool IsValid(JsonElement instance) => _parent.Validate_00404e686415(instance);
+        }
     }
 }

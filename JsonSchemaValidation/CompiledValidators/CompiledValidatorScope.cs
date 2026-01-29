@@ -46,7 +46,7 @@ public sealed class CompiledValidatorScope : ICompiledValidatorScope
     /// <inheritdoc/>
     public bool TryResolveDynamicAnchor(
         string anchorName,
-        out Func<JsonElement, ICompiledValidatorScope, bool>? validator)
+        out Func<JsonElement, ICompiledValidatorScope, string, bool>? validator)
     {
         // Search from outermost to innermost by collecting entries first
         // We need to reverse the traversal order since linked list is innermost-first
@@ -72,7 +72,7 @@ public sealed class CompiledValidatorScope : ICompiledValidatorScope
 
     /// <inheritdoc/>
     public bool TryResolveRecursiveAnchor(
-        out Func<JsonElement, ICompiledValidatorScope, bool>? validator)
+        out Func<JsonElement, ICompiledValidatorScope, string, bool>? validator)
     {
         // Search from outermost to innermost by collecting entries first
         var entries = CollectEntries();

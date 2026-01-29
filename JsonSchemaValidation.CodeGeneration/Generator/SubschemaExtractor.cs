@@ -57,8 +57,58 @@ public sealed class SubschemaExtractor
         "prefixItems"
     };
 
+    // Keywords whose values are definitely NOT schemas (metadata, validation constraints, etc.)
+    // Used to identify unknown keywords that might contain schemas for $ref resolution
+    private static readonly HashSet<string> NonSchemaValueKeywords = new(StringComparer.Ordinal)
+    {
+        // Core/identifier keywords
+        "$schema",
+        "$id",
+        "id",
+        "$ref",
+        "$anchor",
+        "$dynamicAnchor",
+        "$dynamicRef",
+        "$recursiveAnchor",
+        "$recursiveRef",
+        "$vocabulary",
+        "$comment",
+        // Metadata keywords
+        "title",
+        "description",
+        "default",
+        "deprecated",
+        "readOnly",
+        "writeOnly",
+        // Validation keywords (non-schema values)
+        "type",
+        "enum",
+        "const",
+        "format",
+        "pattern",
+        "minLength",
+        "maxLength",
+        "minimum",
+        "maximum",
+        "exclusiveMinimum",
+        "exclusiveMaximum",
+        "multipleOf",
+        "divisibleBy",
+        "minItems",
+        "maxItems",
+        "uniqueItems",
+        "minContains",
+        "maxContains",
+        "required",
+        "minProperties",
+        "maxProperties",
+        "dependentRequired",
+        // Content keywords
+        "contentMediaType",
+        "contentEncoding"
+    };
+
     private readonly Dictionary<string, SubschemaInfo> _uniqueSchemas = new(StringComparer.Ordinal);
-    private readonly HashSet<string> _visitedRefs = new(StringComparer.Ordinal);
     private readonly Dictionary<string, JsonElement> _anchors = new(StringComparer.Ordinal);
     private readonly Dictionary<string, JsonElement> _schemasByResolvedId = new(StringComparer.Ordinal);
     // Track $dynamicAnchors separately with their resource scope depth
@@ -76,17 +126,18 @@ public sealed class SubschemaExtractor
     private bool _hasUnevaluatedProperties;
     private bool _hasUnevaluatedItems;
     private int _currentResourceDepth;
+    private SchemaDraft _detectedDraft;
 
     /// <summary>
     /// Extracts all unique subschemas from a root schema.
     /// </summary>
     /// <param name="rootSchema">The root schema to analyze.</param>
     /// <param name="baseUri">Optional base URI for resolving relative $id values.</param>
+    /// <param name="defaultDraft">Default draft to use when schema has no $schema declaration.</param>
     /// <returns>Dictionary mapping hash to subschema info.</returns>
-    public Dictionary<string, SubschemaInfo> ExtractUniqueSubschemas(JsonElement rootSchema, Uri? baseUri = null)
+    public Dictionary<string, SubschemaInfo> ExtractUniqueSubschemas(JsonElement rootSchema, Uri? baseUri = null, SchemaDraft? defaultDraft = null)
     {
         _uniqueSchemas.Clear();
-        _visitedRefs.Clear();
         _anchors.Clear();
         _schemasByResolvedId.Clear();
         _dynamicAnchors.Clear();
@@ -99,6 +150,10 @@ public sealed class SubschemaExtractor
         _hasUnevaluatedProperties = false;
         _hasUnevaluatedItems = false;
         _currentResourceDepth = 0;
+
+        // Detect draft for $ref override semantics
+        var draftResult = SchemaDraftDetector.DetectDraft(rootSchema, defaultDraft);
+        _detectedDraft = draftResult.Success ? draftResult.Draft : (defaultDraft ?? SchemaDraft.Draft202012);
 
         // Register root schema as a resource root
         _resourceRootHashes.Add(_rootSchemaHash);
@@ -254,16 +309,52 @@ public sealed class SubschemaExtractor
             return schema;
         }
 
+        // Draft 7 and earlier: $id with fragment-only value acts as anchor (e.g., $id: "#foo")
+        if (schema.TryGetProperty("$id", out var idElement) &&
+            idElement.ValueKind == JsonValueKind.String)
+        {
+            var idValue = idElement.GetString();
+            if (idValue != null && idValue.StartsWith('#') && idValue.Length > 1)
+            {
+                var idAnchorName = idValue[1..]; // Remove the leading #
+                if (idAnchorName == anchorName)
+                {
+                    return schema;
+                }
+            }
+        }
+
+        // Draft 4 and earlier: "id" (without $) with fragment-only value acts as anchor
+        if (schema.TryGetProperty("id", out var legacyIdElement) &&
+            legacyIdElement.ValueKind == JsonValueKind.String)
+        {
+            var idValue = legacyIdElement.GetString();
+            if (idValue != null && idValue.StartsWith('#') && idValue.Length > 1)
+            {
+                var idAnchorName = idValue[1..]; // Remove the leading #
+                if (idAnchorName == anchorName)
+                {
+                    return schema;
+                }
+            }
+        }
+
         // Search in subschema-containing keywords
         foreach (var keyword in ObjectSubschemaKeywords)
         {
             if (schema.TryGetProperty(keyword, out var subschema))
             {
-                // Skip if this subschema has its own $id (different resource)
+                // Skip if this subschema has its own $id that creates a new resource (different resource)
+                // Fragment-only $id (e.g., "#foo") doesn't create a new resource - it's just an anchor
                 if (subschema.ValueKind == JsonValueKind.Object &&
-                    subschema.TryGetProperty("$id", out _))
+                    subschema.TryGetProperty("$id", out var subId) &&
+                    subId.ValueKind == JsonValueKind.String)
                 {
-                    continue;
+                    var subIdValue = subId.GetString();
+                    if (subIdValue != null && !subIdValue.StartsWith('#'))
+                    {
+                        continue; // This $id creates a new resource, skip it
+                    }
                 }
 
                 var result = FindAnchorInSchema(anchorName, subschema);
@@ -278,11 +369,17 @@ public sealed class SubschemaExtractor
             {
                 foreach (var prop in container.EnumerateObject())
                 {
-                    // Skip if this subschema has its own $id (different resource)
+                    // Skip if this subschema has its own $id that creates a new resource
+                    // Fragment-only $id (e.g., "#foo") doesn't create a new resource
                     if (prop.Value.ValueKind == JsonValueKind.Object &&
-                        prop.Value.TryGetProperty("$id", out _))
+                        prop.Value.TryGetProperty("$id", out var propId) &&
+                        propId.ValueKind == JsonValueKind.String)
                     {
-                        continue;
+                        var propIdValue = propId.GetString();
+                        if (propIdValue != null && !propIdValue.StartsWith('#'))
+                        {
+                            continue; // This $id creates a new resource, skip it
+                        }
                     }
 
                     var result = FindAnchorInSchema(anchorName, prop.Value);
@@ -298,11 +395,17 @@ public sealed class SubschemaExtractor
             {
                 foreach (var item in array.EnumerateArray())
                 {
-                    // Skip if this subschema has its own $id (different resource)
+                    // Skip if this subschema has its own $id that creates a new resource
+                    // Fragment-only $id (e.g., "#foo") doesn't create a new resource
                     if (item.ValueKind == JsonValueKind.Object &&
-                        item.TryGetProperty("$id", out _))
+                        item.TryGetProperty("$id", out var itemId) &&
+                        itemId.ValueKind == JsonValueKind.String)
                     {
-                        continue;
+                        var itemIdValue = itemId.GetString();
+                        if (itemIdValue != null && !itemIdValue.StartsWith('#'))
+                        {
+                            continue; // This $id creates a new resource, skip it
+                        }
                     }
 
                     var result = FindAnchorInSchema(anchorName, item);
@@ -494,7 +597,7 @@ public sealed class SubschemaExtractor
         return current;
     }
 
-    private void WalkSchema(JsonElement schema, Uri? currentBaseUri, JsonElement? currentResourceRoot = null, int? parentResourceDepth = null, string? currentResourceRootHash = null, string? jsonPointerPath = null)
+    private void WalkSchema(JsonElement schema, Uri? currentBaseUri, JsonElement? currentResourceRoot = null, int? parentResourceDepth = null, string? currentResourceRootHash = null, string? jsonPointerPath = null, bool insideUnknownKeyword = false)
     {
         _totalCount++;
 
@@ -522,48 +625,167 @@ public sealed class SubschemaExtractor
         var effectiveResourceRoot = currentResourceRoot ?? _rootSchema;
         var childResourceDepth = schemaResourceDepth; // Depth for children without $id
         var childResourceRootHash = effectiveResourceRootHash; // Children inherit this resource root
-        if (schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
+
+        // Draft 7 and earlier: $ref masks sibling keywords including $id
+        // If $ref is present, sibling $id should NOT change the base URI
+        var hasRef = schema.TryGetProperty("$ref", out _);
+        var refMasksSiblingId = hasRef && _detectedDraft <= SchemaDraft.Draft7;
+
+        // Per JSON Schema spec, $id inside an unknown keyword is NOT a real identifier
+        // When walking inside unknown keywords, we only register by JSON Pointer path
+        if (!insideUnknownKeyword && schema.TryGetProperty("$id", out var idElement) && idElement.ValueKind == JsonValueKind.String)
         {
             var idValue = idElement.GetString();
             if (!string.IsNullOrEmpty(idValue))
             {
-                // Resolve the $id against the current base URI
-                Uri? resolvedId = null;
-                if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                // Fragment-only $id (e.g., "#foo") is a location-independent anchor in Draft 7 and earlier
+                // It does NOT change the base URI - only creates an anchor reference point
+                // Note: Fragment-only $id is still valid even with sibling $ref (it's an anchor, not a base URI)
+                if (idValue.StartsWith('#'))
                 {
-                    resolvedId = absoluteId;
+                    // This is an anchor, not a base URI change
+                    // The anchor is handled by FindAnchorInSchema when resolving $ref: "#foo"
+                    // Don't modify effectiveBaseUri or effectiveResourceRoot
                 }
-                else if (currentBaseUri != null && Uri.TryCreate(currentBaseUri, idValue, out var relativeId))
+                else if (refMasksSiblingId)
                 {
-                    resolvedId = relativeId;
-                }
-
-                if (resolvedId != null)
-                {
-                    // Register the schema by its resolved $id (without fragment)
-                    var idWithoutFragment = new Uri(resolvedId.GetLeftPart(UriPartial.Query));
-                    _schemasByResolvedId.TryAdd(idWithoutFragment.AbsoluteUri, schema);
-                    // Update base URI for nested schemas
-                    effectiveBaseUri = idWithoutFragment;
-                    // This schema becomes the new resource root for nested schemas
-                    effectiveResourceRoot = schema;
-                    // This schema starts a new resource, so it gets the current depth
-                    // Children of this resource get depth+1 if they have their own $id
-                    schemaResourceDepth = _currentResourceDepth;
-                    _currentResourceDepth++;
-                    childResourceDepth = schemaResourceDepth; // Children inherit this resource's depth
-
-                    // Register this schema as a resource root with its own anchor collection
-                    var schemaHash = SchemaHasher.ComputeHash(schema);
-                    _resourceRootHashes.Add(schemaHash);
-                    if (!_resourceAnchors.ContainsKey(schemaHash))
+                    // In Draft 7 and earlier, $ref masks sibling $id
+                    // Don't update base URI, but still register the schema by its $id for external refs
+                    Uri? resolvedId = null;
+                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
                     {
-                        _resourceAnchors[schemaHash] = new List<(string, string)>();
+                        resolvedId = absoluteId;
                     }
-                    // Children belong to this resource
-                    childResourceRootHash = schemaHash;
-                    // But this schema itself belongs to its own resource (for anchor tracking)
-                    effectiveResourceRootHash = schemaHash;
+                    else if (currentBaseUri != null && Uri.TryCreate(currentBaseUri, idValue, out var relativeId))
+                    {
+                        resolvedId = relativeId;
+                    }
+                    if (resolvedId != null)
+                    {
+                        var idWithoutFragment = new Uri(resolvedId.GetLeftPart(UriPartial.Query));
+                        _schemasByResolvedId.TryAdd(idWithoutFragment.AbsoluteUri, schema);
+                    }
+                    // Don't modify effectiveBaseUri or effectiveResourceRoot
+                }
+                else
+                {
+                    // Resolve the $id against the current base URI
+                    Uri? resolvedId = null;
+                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    {
+                        resolvedId = absoluteId;
+                    }
+                    else if (currentBaseUri != null && Uri.TryCreate(currentBaseUri, idValue, out var relativeId))
+                    {
+                        resolvedId = relativeId;
+                    }
+
+                    if (resolvedId != null)
+                    {
+                        // Register the schema by its resolved $id (without fragment)
+                        var idWithoutFragment = new Uri(resolvedId.GetLeftPart(UriPartial.Query));
+                        _schemasByResolvedId.TryAdd(idWithoutFragment.AbsoluteUri, schema);
+                        // Update base URI for nested schemas
+                        effectiveBaseUri = idWithoutFragment;
+                        // This schema becomes the new resource root for nested schemas
+                        effectiveResourceRoot = schema;
+                        // This schema starts a new resource, so it gets the current depth
+                        // Children of this resource get depth+1 if they have their own $id
+                        schemaResourceDepth = _currentResourceDepth;
+                        _currentResourceDepth++;
+                        childResourceDepth = schemaResourceDepth; // Children inherit this resource's depth
+
+                        // Register this schema as a resource root with its own anchor collection
+                        var schemaHash = SchemaHasher.ComputeHash(schema);
+                        _resourceRootHashes.Add(schemaHash);
+                        if (!_resourceAnchors.ContainsKey(schemaHash))
+                        {
+                            _resourceAnchors[schemaHash] = new List<(string, string)>();
+                        }
+                        // Children belong to this resource
+                        childResourceRootHash = schemaHash;
+                        // But this schema itself belongs to its own resource (for anchor tracking)
+                        effectiveResourceRootHash = schemaHash;
+                    }
+                }
+            }
+        }
+
+        // Also check for legacy "id" (without $) for Draft 4 and earlier
+        // Per JSON Schema spec, id inside an unknown keyword is NOT a real identifier
+        if (!insideUnknownKeyword && schema.TryGetProperty("id", out var legacyIdElement) && legacyIdElement.ValueKind == JsonValueKind.String)
+        {
+            var idValue = legacyIdElement.GetString();
+            if (!string.IsNullOrEmpty(idValue))
+            {
+                // Fragment-only id (e.g., "#foo") is a location-independent anchor
+                // It does NOT change the base URI - only creates an anchor reference point
+                if (idValue.StartsWith('#'))
+                {
+                    // This is an anchor, not a base URI change
+                    // The anchor is handled by FindAnchorInSchema when resolving $ref: "#foo"
+                    // Don't modify effectiveBaseUri or effectiveResourceRoot
+                }
+                else if (refMasksSiblingId)
+                {
+                    // In Draft 7 and earlier, $ref masks sibling id
+                    // Don't update base URI, but still register the schema by its id for external refs
+                    Uri? resolvedId = null;
+                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    {
+                        resolvedId = absoluteId;
+                    }
+                    else if (currentBaseUri != null && Uri.TryCreate(currentBaseUri, idValue, out var relativeId))
+                    {
+                        resolvedId = relativeId;
+                    }
+                    if (resolvedId != null)
+                    {
+                        var idWithoutFragment = new Uri(resolvedId.GetLeftPart(UriPartial.Query));
+                        _schemasByResolvedId.TryAdd(idWithoutFragment.AbsoluteUri, schema);
+                    }
+                    // Don't modify effectiveBaseUri or effectiveResourceRoot
+                }
+                else
+                {
+                    // Resolve the id against the current base URI
+                    Uri? resolvedId = null;
+                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    {
+                        resolvedId = absoluteId;
+                    }
+                    else if (currentBaseUri != null && Uri.TryCreate(currentBaseUri, idValue, out var relativeId))
+                    {
+                        resolvedId = relativeId;
+                    }
+
+                    if (resolvedId != null)
+                    {
+                        // Register the schema by its resolved id (without fragment)
+                        var idWithoutFragment = new Uri(resolvedId.GetLeftPart(UriPartial.Query));
+                        _schemasByResolvedId.TryAdd(idWithoutFragment.AbsoluteUri, schema);
+                        // Update base URI for nested schemas
+                        effectiveBaseUri = idWithoutFragment;
+                        // This schema becomes the new resource root for nested schemas
+                        effectiveResourceRoot = schema;
+                        // This schema starts a new resource, so it gets the current depth
+                        // Children of this resource get depth+1 if they have their own id
+                        schemaResourceDepth = _currentResourceDepth;
+                        _currentResourceDepth++;
+                        childResourceDepth = schemaResourceDepth; // Children inherit this resource's depth
+
+                        // Register this schema as a resource root with its own anchor collection
+                        var schemaHash = SchemaHasher.ComputeHash(schema);
+                        _resourceRootHashes.Add(schemaHash);
+                        if (!_resourceAnchors.ContainsKey(schemaHash))
+                        {
+                            _resourceAnchors[schemaHash] = new List<(string, string)>();
+                        }
+                        // Children belong to this resource
+                        childResourceRootHash = schemaHash;
+                        // But this schema itself belongs to its own resource (for anchor tracking)
+                        effectiveResourceRootHash = schemaHash;
+                    }
                 }
             }
         }
@@ -661,11 +883,11 @@ public sealed class SubschemaExtractor
             {
                 WalkArrayOfSubschemas(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath);
             }
-            else if (property.Name == "$ref" && property.Value.ValueKind == JsonValueKind.String)
-            {
-                // Walk into local $ref targets to ensure they're registered
-                WalkRefTarget(property.Value.GetString(), effectiveBaseUri, effectiveResourceRoot, childResourceRootHash);
-            }
+            // Note: We no longer call WalkRefTarget for local $refs.
+            // The normal tree walk already visits all subschemas (in definitions, $defs, etc.)
+            // with correct base URI propagation through intermediate $id changes.
+            // WalkRefTarget was causing issues when a JSON Pointer ref (e.g., #/definitions/baz/definitions/bar)
+            // skipped over intermediate schemas with $id, resulting in the wrong base URI being used.
             else if (property.Name == "dependencies" && property.Value.ValueKind == JsonValueKind.Object)
             {
                 // Legacy dependencies keyword - values can be arrays or schemas
@@ -681,6 +903,37 @@ public sealed class SubschemaExtractor
                     }
                 }
             }
+            else if (!NonSchemaValueKeywords.Contains(property.Name) &&
+                     !ObjectSubschemaKeywords.Contains(property.Name) &&
+                     !ObjectOfSubschemasKeywords.Contains(property.Name) &&
+                     !ArrayOfSubschemasKeywords.Contains(property.Name))
+            {
+                // Unknown keyword - register as potential $ref target if it looks like a schema
+                // This enables $ref to arbitrary keywords like "#/unknown-keyword" or "#/examples/0"
+                // Pass insideUnknownKeyword=true so that $id values inside are NOT treated as real identifiers
+                if (property.Value.ValueKind == JsonValueKind.Object ||
+                    property.Value.ValueKind == JsonValueKind.True ||
+                    property.Value.ValueKind == JsonValueKind.False)
+                {
+                    WalkSubschema(property.Value, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, childPath, insideUnknownKeyword: true);
+                }
+                else if (property.Value.ValueKind == JsonValueKind.Array)
+                {
+                    // Walk array elements that look like schemas (e.g., examples: [{...}])
+                    var index = 0;
+                    foreach (var item in property.Value.EnumerateArray())
+                    {
+                        if (item.ValueKind == JsonValueKind.Object ||
+                            item.ValueKind == JsonValueKind.True ||
+                            item.ValueKind == JsonValueKind.False)
+                        {
+                            var itemPath = childPath != null ? $"{childPath}/{index}" : null;
+                            WalkSubschema(item, effectiveBaseUri, effectiveResourceRoot, childResourceDepth, childResourceRootHash, itemPath, insideUnknownKeyword: true);
+                        }
+                        index++;
+                    }
+                }
+            }
         }
     }
 
@@ -689,33 +942,13 @@ public sealed class SubschemaExtractor
         return segment.Replace("~", "~0").Replace("/", "~1");
     }
 
-    private void WalkRefTarget(string? refValue, Uri? currentBaseUri, JsonElement? currentResourceRoot, string? currentResourceRootHash)
-    {
-        if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#'))
-        {
-            return; // External refs not supported
-        }
-
-        // Avoid infinite recursion for self-references
-        if (!_visitedRefs.Add(refValue))
-        {
-            return;
-        }
-
-        var target = ResolveLocalRef(refValue);
-        if (target.HasValue)
-        {
-            WalkSchema(target.Value, currentBaseUri, currentResourceRoot, currentResourceRootHash: currentResourceRootHash);
-        }
-    }
-
-    private void WalkSubschema(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? currentResourceRootHash, string? jsonPointerPath)
+    private void WalkSubschema(JsonElement element, Uri? currentBaseUri, JsonElement? currentResourceRoot, int parentResourceDepth, string? currentResourceRootHash, string? jsonPointerPath, bool insideUnknownKeyword = false)
     {
         if (element.ValueKind == JsonValueKind.Object ||
             element.ValueKind == JsonValueKind.True ||
             element.ValueKind == JsonValueKind.False)
         {
-            WalkSchema(element, currentBaseUri, currentResourceRoot, parentResourceDepth, currentResourceRootHash, jsonPointerPath);
+            WalkSchema(element, currentBaseUri, currentResourceRoot, parentResourceDepth, currentResourceRootHash, jsonPointerPath, insideUnknownKeyword);
         }
     }
 
@@ -756,10 +989,12 @@ public sealed class SubschemaExtractor
         if (_uniqueSchemas.TryGetValue(hash, out var existingInfo))
         {
             // Schema already registered - but update the path if the new one is more canonical
-            // Prefer paths under $defs as they're the ones that get externally referenced
-            if (!string.IsNullOrEmpty(jsonPointerPath) &&
-                jsonPointerPath.StartsWith("/$defs/") &&
-                (string.IsNullOrEmpty(existingInfo.JsonPointerPath) || !existingInfo.JsonPointerPath.StartsWith("/$defs/")))
+            // Prefer paths under $defs (2019-09+) or definitions (Draft 3-7) as they're externally referenced
+            var isCanonicalPath = !string.IsNullOrEmpty(jsonPointerPath) &&
+                (jsonPointerPath.StartsWith("/$defs/") || jsonPointerPath.StartsWith("/definitions/"));
+            var existingIsCanonical = !string.IsNullOrEmpty(existingInfo.JsonPointerPath) &&
+                (existingInfo.JsonPointerPath.StartsWith("/$defs/") || existingInfo.JsonPointerPath.StartsWith("/definitions/"));
+            if (isCanonicalPath && !existingIsCanonical)
             {
                 // Update with the better path - create a new SubschemaInfo with updated path
                 _uniqueSchemas[hash] = new SubschemaInfo

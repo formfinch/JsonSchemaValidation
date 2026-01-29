@@ -12,17 +12,65 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    internal sealed class CompiledValidator_Draft202012MetaFormatAnnotation : ICompiledValidator
+    internal sealed class CompiledValidator_Draft202012MetaFormatAnnotation : IScopedCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/format-annotation");
 
-        public bool IsValid(JsonElement instance) => Validate_908a5eef6977(instance);
+        private IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? _dynamicAnchors;
 
-    private static bool Validate_908a5eef6977(JsonElement e)
+        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors
+        {
+            get
+            {
+                if (_dynamicAnchors == null)
+                {
+                    _dynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)
+                    {
+                        ["meta"] = Validate_908a5eef6977,
+                    };
+                }
+                return _dynamicAnchors;
+            }
+        }
+
+        public bool HasRecursiveAnchor => false;
+
+#pragma warning disable HAA0603
+        public Func<JsonElement, ICompiledValidatorScope, string, bool>? RootValidator => Validate_908a5eef6977;
+#pragma warning restore HAA0603
+
+        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_908a5eef6977(instance, scope, "");
+
+        public bool IsValid(JsonElement instance)
+        {
+            var entry = new CompiledScopeEntry
+            {
+                DynamicAnchors = DynamicAnchors,
+                RootValidator = RootValidator,
+                HasRecursiveAnchor = HasRecursiveAnchor
+            };
+            var scope = CompiledValidatorScope.Empty.Push(entry);
+            return Validate_908a5eef6977(instance, scope, "");
+        }
+
+    private static bool Validate_908a5eef6977(JsonElement e, ICompiledValidatorScope _scope_, string _loc_)
     {
+        // Push scope entry for this schema's anchors
+        var _scopeEntry_ = new CompiledScopeEntry
+        {
+            DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)
+            {
+                ["meta"] = Validate_908a5eef6977,
+            },
+            HasRecursiveAnchor = false,
+            RootValidator = null
+        };
+        _scope_ = _scope_.Push(_scopeEntry_);
+
         {
             var _typeValid_ = false;
             if (e.ValueKind == JsonValueKind.Object) _typeValid_ = true;
@@ -34,7 +82,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             if (e.TryGetProperty("format", out var _prop0_))
             {
-                if (!Validate_00404e686415(_prop0_)) return false;
+                if (!Validate_00404e686415(_prop0_, _scope_, "")) return false;
             }
         }
 
@@ -42,7 +90,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_00404e686415(JsonElement e)
+    private static bool Validate_00404e686415(JsonElement e, ICompiledValidatorScope _scope_, string _loc_)
     {
         if (e.ValueKind != JsonValueKind.String) return false;
         return true;

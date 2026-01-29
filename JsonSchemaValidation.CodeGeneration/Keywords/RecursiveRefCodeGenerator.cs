@@ -86,7 +86,7 @@ public sealed class RecursiveRefCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("// $recursiveRef: # (with dynamic scope resolution)");
             sb.AppendLine($"if ({context.ScopeVariable}.TryResolveRecursiveAnchor(out var _recValidator_{localRootHash[..8]}))");
             sb.AppendLine("{");
-            sb.AppendLine($"    if (!_recValidator_{localRootHash[..8]}!({context.ElementVariable}, {context.ScopeVariable})) return false;");
+            sb.AppendLine($"    if (!_recValidator_{localRootHash[..8]}!({context.ElementVariable}, {context.ScopeVariable}, {context.LocationVariable})) return false;");
             sb.AppendLine("}");
             sb.AppendLine("else");
             sb.AppendLine("{");

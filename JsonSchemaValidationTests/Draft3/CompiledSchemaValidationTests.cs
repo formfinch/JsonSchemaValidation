@@ -103,13 +103,14 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
             CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2019-09"), "http://localhost:1234/draft2019-09/");
             CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2020-12"), "http://localhost:1234/draft2020-12/");
 
-            // Collect root-level remotes
-            CollectRemotesFromPath(pendingSchemas, remotesPath, "http://localhost:1234/", topLevelOnly: true);
+            // Collect root-level remotes (including subdirectories like baseUriChange/, nested/)
+            CollectRemotesFromPath(pendingSchemas, remotesPath, "http://localhost:1234/");
 
             if (pendingSchemas.Count == 0) return;
 
             using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft3);
             var maxPasses = 10;
+            var compiledValidators = new List<ICompiledValidator>();
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
             {
@@ -121,6 +122,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
                     {
                         var validator = factory.Compile(content);
                         registry.RegisterForUri(schemaUri, validator);
+                        compiledValidators.Add(validator);
 
                         try
                         {
@@ -144,6 +146,38 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
 
                 pendingSchemas = stillPending;
             }
+
+            // Two-phase initialization: first register all subschemas (fragment URIs)
+            foreach (var validator in compiledValidators)
+            {
+                try
+                {
+                    if (validator is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.RegisterSubschemas(registry);
+                    }
+                }
+                catch
+                {
+                    // Ignore registration errors
+                }
+            }
+
+            // Then initialize (resolve external refs)
+            foreach (var validator in compiledValidators)
+            {
+                try
+                {
+                    if (validator is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.Initialize(registry);
+                    }
+                }
+                catch
+                {
+                    // Ignore initialization errors
+                }
+            }
         }
 
         private static void CollectRemotesFromPath(List<(Uri SchemaUri, string Content)> schemas, string path, string baseUrl, bool topLevelOnly = false)
@@ -158,12 +192,51 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
                     var content = File.ReadAllText(file);
                     var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
                     var schemaUri = new Uri(baseUrl + relativePath);
+
+                    // Inject id if not present, so fragment subschemas are registered correctly
+                    // Draft 3 uses "id" instead of "$id"
+                    content = InjectIdIfMissing(content, schemaUri.AbsoluteUri);
+
                     schemas.Add((schemaUri, content));
                 }
                 catch
                 {
                     // Ignore errors reading files
                 }
+            }
+        }
+
+        private static string InjectIdIfMissing(string content, string id)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+
+                if (root.ValueKind != JsonValueKind.Object)
+                {
+                    return content;
+                }
+
+                // If id already present, return unchanged (Draft 3 uses 'id', not '$id')
+                if (root.TryGetProperty("id", out _))
+                {
+                    return content;
+                }
+
+                // Inject id after the opening brace
+                var firstBrace = content.IndexOf('{');
+                if (firstBrace < 0)
+                {
+                    return content;
+                }
+
+                var injection = $"\n    \"id\": \"{id}\",";
+                return content.Insert(firstBrace + 1, injection);
+            }
+            catch
+            {
+                return content;
             }
         }
     }
@@ -181,9 +254,24 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
             _factory = fixture.Factory;
         }
 
-        [SkippableTheory]
+        [Theory]
         [MemberData(nameof(GetDraft3Tests))]
         public void Draft3CompiledTests(TestCase testCase)
+        {
+            RunTestCase(testCase);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetDraft3FormatAssertionTests))]
+        public void Draft3CompiledFormatAssertionTests(TestCase testCase)
+        {
+            RunTestCase(testCase);
+        }
+
+        [SkippableTheory]
+        [Trait("Category", "KnownLimitation")]
+        [MemberData(nameof(GetDraft3KnownLimitationTests))]
+        public void Draft3CompiledKnownLimitationTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -191,8 +279,9 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
         }
 
         [SkippableTheory]
-        [MemberData(nameof(GetDraft3FormatAssertionTests))]
-        public void Draft3CompiledFormatAssertionTests(TestCase testCase)
+        [Trait("Category", "KnownLimitation")]
+        [MemberData(nameof(GetDraft3FormatAssertionKnownLimitationTests))]
+        public void Draft3CompiledFormatAssertionKnownLimitationTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -250,6 +339,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
         }
 
         public static IEnumerable<object[]> GetDraft3Tests()
+            => GetAllDraft3Tests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
+
+        public static IEnumerable<object[]> GetDraft3KnownLimitationTests()
+            => GetAllDraft3Tests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) != null);
+
+        private static IEnumerable<object[]> GetAllDraft3Tests()
             => new TestCaseLoader(new string[] {
                 // Draft 3 keyword tests
                 // Note: Draft 3 does NOT have: allOf, anyOf, oneOf, not, const, contains, propertyNames, maxProperties, minProperties
@@ -287,6 +382,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft3");
 
         public static IEnumerable<object[]> GetDraft3FormatAssertionTests()
+            => GetAllDraft3FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
+
+        public static IEnumerable<object[]> GetDraft3FormatAssertionKnownLimitationTests()
+            => GetAllDraft3FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) != null);
+
+        private static IEnumerable<object[]> GetAllDraft3FormatAssertionTests()
             => new TestCaseLoader(new string[] {
                 @"\optional\ecmascript-regex",
                 @"\optional\format\color",
@@ -307,35 +408,19 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests now work correctly
-
-            // additionalItems, tuple validation, divisibleBy, disallow, and extends are now supported
-
-            // Draft 3 type with schemas is now supported
-
-            // Draft 3 format names (color, host-name, ip-address, time) are now supported
-
-            // Draft 3 required format (boolean on properties) is now supported
-
-            // ref-related issues
-            var refTests = new[]
+            // Draft 3 uses different $ref semantics - $ref overrides sibling keywords
+            if (testCaseDescription == "ref overrides any sibling keywords" ||
+                testCaseDescription.StartsWith("ref overrides any sibling keywords", StringComparison.Ordinal))
             {
-                "ref within remote ref",
-                "base URI change - change folder in subschema",
-                "root ref in remote ref",
-                "relative pointer ref to array",
-                "ref overrides any sibling keywords",
-                "$ref prevents a sibling id from changing the base uri",
-                "remote ref, containing refs itself",
-                "fragment within remote ref",
-                "change resolution scope",
-                "enums in properties",
-                "applies a nested schema",
-            };
+                return SkipReasons.RefOverrideSemantics;
+            }
 
-            if (refTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            // Draft 3 uses id: "#fragment" for location-independent identifiers (anchors)
+            // In older drafts, $ref overrides sibling id, so id doesn't change the base URI
+            if (testCaseDescription == "$ref prevents a sibling id from changing the base uri" ||
+                testCaseDescription.StartsWith("$ref prevents a sibling id from changing the base uri", StringComparison.Ordinal))
             {
-                return SkipReasons.RemoteRefWithInternalRef;
+                return SkipReasons.RefOverrideSemantics;
             }
 
             return null;

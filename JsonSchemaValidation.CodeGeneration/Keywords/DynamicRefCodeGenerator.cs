@@ -106,7 +106,7 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine($"// $dynamicRef: {refValue} (with dynamic scope resolution)");
             sb.AppendLine($"if ({context.ScopeVariable}.TryResolveDynamicAnchor(\"{anchorName}\", out var _dynValidator_{localHash[..8]}))");
             sb.AppendLine("{");
-            sb.AppendLine($"    if (!_dynValidator_{localHash[..8]}!({context.ElementVariable}, {context.ScopeVariable})) return false;");
+            sb.AppendLine($"    if (!_dynValidator_{localHash[..8]}!({context.ElementVariable}, {context.ScopeVariable}, {context.LocationVariable})) return false;");
             sb.AppendLine("}");
             sb.AppendLine("else");
             sb.AppendLine("{");
@@ -213,7 +213,7 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
                 sb.AppendLine($"// $dynamicRef: {refValue} (with dynamic scope resolution)");
                 sb.AppendLine($"if ({context.ScopeVariable}.TryResolveDynamicAnchor(\"{anchorName}\", out var _dynValidator_{localHash[..8]}))");
                 sb.AppendLine("{");
-                sb.AppendLine($"    if (!_dynValidator_{localHash[..8]}!({context.ElementVariable}, {context.ScopeVariable})) return false;");
+                sb.AppendLine($"    if (!_dynValidator_{localHash[..8]}!({context.ElementVariable}, {context.ScopeVariable}, {context.LocationVariable})) return false;");
                 sb.AppendLine("}");
                 sb.AppendLine("else");
                 sb.AppendLine("{");
@@ -249,7 +249,7 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
             sb.AppendLine("{");
             sb.AppendLine($"    if ({context.ScopeVariable}.TryResolveDynamicAnchor(\"{EscapeString(anchorName)}\", out var _dynValidator_{fieldSuffix}))");
             sb.AppendLine("    {");
-            sb.AppendLine($"        if (!_dynValidator_{fieldSuffix}!({e2}, {context.ScopeVariable})) return false;");
+            sb.AppendLine($"        if (!_dynValidator_{fieldSuffix}!({e2}, {context.ScopeVariable}, {context.LocationVariable})) return false;");
             sb.AppendLine("    }");
             sb.AppendLine("    else");
             sb.AppendLine("    {");
@@ -401,7 +401,7 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
         sb.AppendLine("{");
         if (resourceRootInfo.ResourceAnchors.Count > 0)
         {
-            sb.AppendLine("    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+            sb.AppendLine("    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
             sb.AppendLine("    {");
             foreach (var (anchorName, schemaHash) in resourceRootInfo.ResourceAnchors)
             {
@@ -431,22 +431,24 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
 
     private static string GenerateValidateCallWithScope(CodeGenerationContext context, string hash, string scopeVariable)
     {
+        // When scope tracking is enabled, always pass location for delegate signature compatibility
         var args = new List<string> { context.ElementVariable, scopeVariable };
         if (context.RequiresLocationTracking)
         {
             args.Add(context.LocationVariable);
+        }
+        else
+        {
+            args.Add("\"\""); // Empty location when not tracking but scope is enabled
         }
         return $"Validate_{hash}({string.Join(", ", args)})";
     }
 
     private static string GetAnchorDelegateExpression(CodeGenerationContext context, string hash)
     {
-        if (!context.RequiresLocationTracking)
-        {
-            return $"Validate_{hash}";
-        }
-
-        return $"(JsonElement _e, ICompiledValidatorScope _s) => Validate_{hash}(_e, _s, \"\")";
+        // Delegate signature now includes location parameter: Func<JsonElement, ICompiledValidatorScope, string, bool>
+        // The Validate_xxx method always matches this signature when scope tracking is enabled
+        return $"Validate_{hash}";
     }
 
     private static bool TryResolveUri(CodeGenerationContext context, string refValue, out Uri targetUri)
