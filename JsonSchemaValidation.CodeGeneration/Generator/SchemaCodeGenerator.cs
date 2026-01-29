@@ -134,8 +134,8 @@ public sealed class SchemaCodeGenerator
                 Uri.TryCreate(schemaUri, UriKind.Absolute, out baseUri);
             }
 
-            // Extract all unique subschemas (pass baseUri for $id resolution)
-            var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema, baseUri);
+            // Extract all unique subschemas (pass baseUri for $id resolution, defaultDraft for $ref/$id semantics)
+            var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema, baseUri, DefaultDraft);
             var rootHash = SchemaHasher.ComputeHash(schema);
 
             // Check if annotation tracking is needed
@@ -158,8 +158,9 @@ public sealed class SchemaCodeGenerator
 
                     if (!string.IsNullOrEmpty(subschemaInfo.JsonPointerPath) && subschemaInfo.JsonPointerPath != "")
                     {
-                        // Only register subschemas under $defs (the most common case for external refs)
-                        if (subschemaInfo.JsonPointerPath.StartsWith("/$defs/"))
+                        // Register subschemas under $defs (2019-09+) or definitions (Draft 4-7)
+                        if (subschemaInfo.JsonPointerPath.StartsWith("/$defs/") ||
+                            subschemaInfo.JsonPointerPath.StartsWith("/definitions/"))
                         {
                             var fragmentUri = $"{baseUri.AbsoluteUri}#{subschemaInfo.JsonPointerPath}";
                             if (!uniqueSchemas.TryGetValue(subschemaInfo.ResourceRootHash, out var resourceRootInfo))
@@ -285,12 +286,14 @@ public sealed class SchemaCodeGenerator
         var staticModifier = requiresInstance ? "" : "static ";
 
         // Build parameter list
+        // When scope tracking is enabled, always include the location parameter for delegate compatibility
         var paramList = new List<string> { "JsonElement e" };
         if (requiresScopeTracking)
         {
             paramList.Add("ICompiledValidatorScope _scope_");
+            paramList.Add("string _loc_");
         }
-        if (hasAnnotationTracking)
+        else if (hasAnnotationTracking)
         {
             paramList.Add("string _loc_");
         }
@@ -324,7 +327,7 @@ public sealed class SchemaCodeGenerator
 
             if (anchorsToInclude.Count > 0)
             {
-                sb.AppendLine("            DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+                sb.AppendLine("            DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
                 sb.AppendLine("            {");
                 foreach (var (anchorName, schemaHash) in anchorsToInclude)
                 {
@@ -556,15 +559,15 @@ public sealed class SchemaCodeGenerator
             // DynamicAnchors property - dictionary of anchor names to validation functions
             if (rootDynamicAnchors.Count > 0)
             {
-                sb.AppendLine("        private IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? _dynamicAnchors;");
+                sb.AppendLine("        private IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? _dynamicAnchors;");
                 sb.AppendLine();
-                sb.AppendLine("        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors");
+                sb.AppendLine("        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors");
                 sb.AppendLine("        {");
                 sb.AppendLine("            get");
                 sb.AppendLine("            {");
                 sb.AppendLine("                if (_dynamicAnchors == null)");
                 sb.AppendLine("                {");
-                sb.AppendLine("                    _dynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+                sb.AppendLine("                    _dynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
                 sb.AppendLine("                    {");
                 foreach (var (name, hash) in rootDynamicAnchors)
                 {
@@ -578,7 +581,7 @@ public sealed class SchemaCodeGenerator
             }
             else
             {
-                sb.AppendLine("        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors => null;");
+                sb.AppendLine("        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors => null;");
             }
             sb.AppendLine();
 
@@ -589,7 +592,7 @@ public sealed class SchemaCodeGenerator
             // RootValidator property - delegate to root validation method
             // Suppress heap allocation warning - this is an intentional delegate allocation on the public API boundary
             sb.AppendLine("#pragma warning disable HAA0603");
-            sb.AppendLine($"        public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => {GetAnchorDelegateExpression(rootHash, hasAnnotationTracking)};");
+            sb.AppendLine($"        public Func<JsonElement, ICompiledValidatorScope, string, bool>? RootValidator => {GetAnchorDelegateExpression(rootHash, hasAnnotationTracking)};");
             sb.AppendLine("#pragma warning restore HAA0603");
             sb.AppendLine();
         }
@@ -656,6 +659,7 @@ public sealed class SchemaCodeGenerator
         if (requiresScopeTracking)
         {
             // Scoped IsValid method (IScopedCompiledValidator)
+            // When scope tracking is enabled, Validate methods always have location parameter
             if (hasAnnotationTracking)
             {
                 sb.AppendLine("        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope)");
@@ -666,7 +670,7 @@ public sealed class SchemaCodeGenerator
             }
             else
             {
-                sb.AppendLine($"        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_{rootHash}(instance, scope);");
+                sb.AppendLine($"        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_{rootHash}(instance, scope, \"\");");
             }
             sb.AppendLine();
 
@@ -684,14 +688,8 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine("                HasRecursiveAnchor = HasRecursiveAnchor");
             sb.AppendLine("            };");
             sb.AppendLine("            var scope = CompiledValidatorScope.Empty.Push(entry);");
-            if (hasAnnotationTracking)
-            {
-                sb.AppendLine($"            return Validate_{rootHash}(instance, scope, \"\");");
-            }
-            else
-            {
-                sb.AppendLine($"            return Validate_{rootHash}(instance, scope);");
-            }
+            // When scope tracking is enabled, Validate methods always have location parameter
+            sb.AppendLine($"            return Validate_{rootHash}(instance, scope, \"\");");
             sb.AppendLine("        }");
         }
         else if (hasAnnotationTracking)
@@ -968,16 +966,13 @@ public sealed class SchemaCodeGenerator
 
                     // IScopedCompiledValidator properties - fragments don't declare their own anchors at the wrapper level
                     // (resource anchors are pushed when entering via this wrapper)
-                    sb.AppendLine("            public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors => null;");
+                    sb.AppendLine("            public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors => null;");
                     sb.AppendLine("            public bool HasRecursiveAnchor => false;");
-                    sb.AppendLine("            public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => null;");
+                    sb.AppendLine("            public Func<JsonElement, ICompiledValidatorScope, string, bool>? RootValidator => null;");
 
                     // Scoped IsValid - propagates caller's scope
-                    var scopedCallArgs = new List<string> { "instance", "scope" };
-                    if (hasAnnotationTracking)
-                    {
-                        scopedCallArgs.Add("\"\"");
-                    }
+                    // When scope tracking is enabled, always pass location for delegate signature compatibility
+                    var scopedCallArgs = new List<string> { "instance", "scope", "\"\"" };
                     sb.AppendLine("            public bool IsValid(JsonElement instance, ICompiledValidatorScope scope)");
                     sb.AppendLine("            {");
                     if (fragment.ResourceAnchors.Count > 0 || fragment.HasRecursiveAnchor)
@@ -987,7 +982,7 @@ public sealed class SchemaCodeGenerator
                         sb.AppendLine("                {");
                     if (fragment.ResourceAnchors.Count > 0)
                     {
-                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
                         sb.AppendLine("                    {");
                         foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
                         {
@@ -1016,11 +1011,8 @@ public sealed class SchemaCodeGenerator
                     sb.AppendLine("            }");
 
                     // Non-scoped IsValid - creates empty scope for standalone use
-                    var nonScopedCallArgs = new List<string> { "instance", "CompiledValidatorScope.Empty" };
-                    if (hasAnnotationTracking)
-                    {
-                        nonScopedCallArgs.Add("\"\"");
-                    }
+                    // When scope tracking is enabled, always pass location for delegate signature compatibility
+                    var nonScopedCallArgs = new List<string> { "instance", "CompiledValidatorScope.Empty", "\"\"" };
                     sb.AppendLine("            public bool IsValid(JsonElement instance)");
                     sb.AppendLine("            {");
                     if (fragment.ResourceAnchors.Count > 0 || fragment.HasRecursiveAnchor)
@@ -1030,7 +1022,7 @@ public sealed class SchemaCodeGenerator
                         sb.AppendLine("                {");
                     if (fragment.ResourceAnchors.Count > 0)
                     {
-                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)");
+                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
                         sb.AppendLine("                    {");
                         foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
                         {
@@ -1162,12 +1154,9 @@ public sealed class SchemaCodeGenerator
 
     private static string GetAnchorDelegateExpression(string hash, bool hasAnnotationTracking, string? instancePrefix = null)
     {
+        // The delegate signature now includes location: Func<JsonElement, ICompiledValidatorScope, string, bool>
+        // The Validate_xxx method always matches this signature when scope tracking is enabled
         var prefix = string.IsNullOrEmpty(instancePrefix) ? string.Empty : $"{instancePrefix}.";
-        if (!hasAnnotationTracking)
-        {
-            return $"{prefix}Validate_{hash}";
-        }
-
-        return $"(JsonElement _e, ICompiledValidatorScope _s) => {prefix}Validate_{hash}(_e, _s, \"\")";
+        return $"{prefix}Validate_{hash}";
     }
 }

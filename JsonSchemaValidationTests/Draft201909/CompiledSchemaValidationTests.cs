@@ -25,7 +25,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
         public CompiledSchemaValidationFixture()
         {
             Registry = CreateRegistryWithMetaschemas();
-            Factory = new RuntimeValidatorFactory(Registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft201909);
+            Factory = new RuntimeValidatorFactory(Registry, forceAnnotationTracking: true, defaultDraft: SchemaDraft.Draft201909);
         }
 
         public void Dispose()
@@ -114,7 +114,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
             if (pendingSchemas.Count == 0) return;
 
             // Use multi-pass compilation to handle dependencies
-            using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft201909);
+            using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: true, defaultDraft: SchemaDraft.Draft201909);
             var maxPasses = 10;
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
@@ -164,9 +164,14 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
                     var content = File.ReadAllText(file);
                     var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
                     var schemaUri = new Uri(baseUrl + relativePath);
+
+                    // Inject $id if not present, so fragment subschemas are registered correctly
+                    content = InjectIdIfMissing(content, schemaUri.AbsoluteUri);
+
                     schemas.Add((schemaUri, content));
 
-                    ExtractSelfContainedSubschemas(schemas, schemaUri, content);
+                    // Extract anchors from schema for anchor-based references
+                    ExtractAnchors(schemas, schemaUri, content);
                 }
                 catch
                 {
@@ -175,7 +180,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
             }
         }
 
-        private static void ExtractSelfContainedSubschemas(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, string content)
+        private static void ExtractAnchors(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, string content)
         {
             try
             {
@@ -184,35 +189,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
 
                 if (root.ValueKind != JsonValueKind.Object) return;
 
-                // Extract $defs subschemas that are self-contained
-                if (root.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var def in defs.EnumerateObject())
-                    {
-                        var subschemaContent = def.Value.GetRawText();
-                        if (!subschemaContent.Contains("\"$ref\"") && !subschemaContent.Contains("\"$recursiveRef\""))
-                        {
-                            var fragmentUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/$defs/{def.Name}");
-                            schemas.Add((fragmentUri, subschemaContent));
-                        }
-                    }
-                }
-
-                // Also check definitions (Draft 7 style)
-                if (root.TryGetProperty("definitions", out var definitions) && definitions.ValueKind == JsonValueKind.Object)
-                {
-                    foreach (var def in definitions.EnumerateObject())
-                    {
-                        var subschemaContent = def.Value.GetRawText();
-                        if (!subschemaContent.Contains("\"$ref\"") && !subschemaContent.Contains("\"$recursiveRef\""))
-                        {
-                            var fragmentUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/definitions/{def.Name}");
-                            schemas.Add((fragmentUri, subschemaContent));
-                        }
-                    }
-                }
-
-                ExtractSelfContainedAnchors(schemas, baseUri, root);
+                ExtractAnchorsRecursive(schemas, baseUri, root);
             }
             catch
             {
@@ -220,51 +197,94 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
             }
         }
 
-        private static void ExtractSelfContainedAnchors(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, JsonElement element)
+        private static void ExtractAnchorsRecursive(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, JsonElement element)
         {
             if (element.ValueKind != JsonValueKind.Object) return;
 
-            var content = element.GetRawText();
+            var elementContent = element.GetRawText();
 
-            if (!content.Contains("\"$ref\"") && !content.Contains("\"$recursiveRef\""))
+            // Check for $anchor
+            if (element.TryGetProperty("$anchor", out var anchor) && anchor.ValueKind == JsonValueKind.String)
             {
-                // Check for $anchor
-                if (element.TryGetProperty("$anchor", out var anchor) && anchor.ValueKind == JsonValueKind.String)
+                var anchorName = anchor.GetString();
+                if (!string.IsNullOrEmpty(anchorName))
                 {
-                    var anchorName = anchor.GetString();
-                    if (!string.IsNullOrEmpty(anchorName))
+                    // Only extract if no internal $ref (can't compile standalone)
+                    if (!elementContent.Contains("\"$ref\"") && !elementContent.Contains("\"$recursiveRef\""))
                     {
                         var anchorUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchorName}");
                         if (!schemas.Any(s => s.SchemaUri.AbsoluteUri == anchorUri.AbsoluteUri))
                         {
-                            schemas.Add((anchorUri, content));
+                            schemas.Add((anchorUri, elementContent));
                         }
                     }
                 }
-
-                // Check for $recursiveAnchor
-                if (element.TryGetProperty("$recursiveAnchor", out var recursiveAnchor) &&
-                    recursiveAnchor.ValueKind == JsonValueKind.True)
-                {
-                    // $recursiveAnchor doesn't create a named anchor, but we note it for reference
-                }
             }
 
-            // Recurse into nested objects to find more anchors
+            // Recurse into $defs
             if (element.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
             {
                 foreach (var def in defs.EnumerateObject())
                 {
-                    ExtractSelfContainedAnchors(schemas, baseUri, def.Value);
+                    ExtractAnchorsRecursive(schemas, baseUri, def.Value);
                 }
             }
 
+            // Recurse into definitions (Draft 7 style)
             if (element.TryGetProperty("definitions", out var definitions) && definitions.ValueKind == JsonValueKind.Object)
             {
                 foreach (var def in definitions.EnumerateObject())
                 {
-                    ExtractSelfContainedAnchors(schemas, baseUri, def.Value);
+                    ExtractAnchorsRecursive(schemas, baseUri, def.Value);
                 }
+            }
+        }
+
+        private static string InjectIdIfMissing(string content, string id)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                var root = doc.RootElement;
+
+                if (root.ValueKind != JsonValueKind.Object)
+                {
+                    return content;
+                }
+
+                // If $id already present, return unchanged
+                if (root.TryGetProperty("$id", out _))
+                {
+                    return content;
+                }
+
+                // Inject $id after the opening brace
+                var firstBrace = content.IndexOf('{');
+                if (firstBrace < 0)
+                {
+                    return content;
+                }
+
+                // Find position after any $schema declaration
+                var insertPos = firstBrace + 1;
+                if (root.TryGetProperty("$schema", out _))
+                {
+                    // Find the end of $schema property to insert after it
+                    var schemaMatch = System.Text.RegularExpressions.Regex.Match(
+                        content[(firstBrace + 1)..],
+                        @"""?\$schema""?\s*:\s*(""[^""]*""|'[^']*')\s*,?");
+                    if (schemaMatch.Success)
+                    {
+                        insertPos = firstBrace + 1 + schemaMatch.Index + schemaMatch.Length;
+                    }
+                }
+
+                var injection = $"\n    \"$id\": \"{id}\",";
+                return content.Insert(insertPos, injection);
+            }
+            catch
+            {
+                return content;
             }
         }
     }
@@ -282,9 +302,24 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
             _factory = fixture.Factory;
         }
 
-        [SkippableTheory]
+        [Theory]
         [MemberData(nameof(GetDraft201909Tests))]
         public void Draft201909CompiledTests(TestCase testCase)
+        {
+            RunTestCase(testCase);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetDraft201909FormatAssertionTests))]
+        public void Draft201909CompiledFormatAssertionTests(TestCase testCase)
+        {
+            RunTestCase(testCase);
+        }
+
+        [SkippableTheory]
+        [Trait("Category", "KnownLimitation")]
+        [MemberData(nameof(GetDraft201909KnownLimitationTests))]
+        public void Draft201909CompiledKnownLimitationTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -292,8 +327,9 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
         }
 
         [SkippableTheory]
-        [MemberData(nameof(GetDraft201909FormatAssertionTests))]
-        public void Draft201909CompiledFormatAssertionTests(TestCase testCase)
+        [Trait("Category", "KnownLimitation")]
+        [MemberData(nameof(GetDraft201909FormatAssertionKnownLimitationTests))]
+        public void Draft201909CompiledFormatAssertionKnownLimitationTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -351,6 +387,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
         }
 
         public static IEnumerable<object[]> GetDraft201909Tests()
+            => GetAllDraft201909Tests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
+
+        public static IEnumerable<object[]> GetDraft201909KnownLimitationTests()
+            => GetAllDraft201909Tests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) != null);
+
+        private static IEnumerable<object[]> GetAllDraft201909Tests()
             => new TestCaseLoader(new string[] {
                 "additionalItems",
                 "additionalProperties",
@@ -390,7 +432,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
                 "patternProperties",
                 "properties",
                 "propertyNames",
-                // "recursiveRef" - excluded due to scope tracking complexity causing crashes (TASK-048)
+                "recursiveRef",
                 "ref",
                 "refRemote",
                 "required",
@@ -414,6 +456,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2019-09");
 
         public static IEnumerable<object[]> GetDraft201909FormatAssertionTests()
+            => GetAllDraft201909FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
+
+        public static IEnumerable<object[]> GetDraft201909FormatAssertionKnownLimitationTests()
+            => GetAllDraft201909FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) != null);
+
+        private static IEnumerable<object[]> GetAllDraft201909FormatAssertionTests()
             => new TestCaseLoader(new string[] {
                 @"\optional\ecmascript-regex",
                 @"\optional\format\date-time",
@@ -444,54 +492,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests now work correctly
-
-            // additionalItems and tuple validation are now supported by the code generator
-
-            // $recursiveRef and $recursiveAnchor tests - not fully supported (TASK-048)
-            // These features require complex scope tracking that isn't fully implemented.
-            var recursiveRefTests = new[]
-            {
-                "multiple dynamic paths to the $recursiveRef keyword",
-                "$ref with $recursiveAnchor",
-                "unevaluatedItems with $recursiveRef",
-                "unevaluatedProperties with $recursiveRef",
-            };
-
-            if (recursiveRefTests.Any(t => testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.ComplexDynamicRefNotSupported;
-            }
-
-            // Anchor tests with base URI changes
-            var anchorBaseUriTests = new[]
-            {
-                "Location-independent identifier with base URI change in subschema",
-                "same $anchor with different base uri",
-            };
-
-            if (anchorBaseUriTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.BaseUriChange;
-            }
-
-            // Remote refs with internal references
-            var remoteRefTests = new[]
-            {
-                "ref within remote ref",
-                "base URI change - change folder in subschema",
-                "root ref in remote ref",
-                "Location-independent identifier in remote ref",
-                "retrieved nested refs resolve relative to their URI not $id",
-                "$ref to $ref finds detached $anchor",
-                "relative pointer ref to array",
-            };
-
-            if (remoteRefTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.RemoteRefWithInternalRef;
-            }
-
             // Vocabulary-based validation
             if (testCaseDescription == "schema that uses custom metaschema with with no validation vocabulary" ||
                 testCaseDescription.StartsWith("schema that uses custom metaschema with with no validation vocabulary", StringComparison.Ordinal))
@@ -504,23 +504,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft201909
                 testCaseDescription.StartsWith("refs to historic drafts are processed as historic drafts", StringComparison.Ordinal))
             {
                 return SkipReasons.CrossDraft;
-            }
-
-            // unevaluatedItems/unevaluatedProperties tests that require annotation tracking
-            var unevaluatedTests = new[]
-            {
-                "unevaluatedItems with anyOf",
-                "unevaluatedItems with oneOf",
-                "unevaluatedItems with if/then/else",
-                "unevaluatedItems with $ref",
-                "unevaluatedItems before $ref",
-                "item is evaluated in an uncle schema to unevaluatedItems",
-                "unevaluatedItems can see annotations from if without",
-            };
-
-            if (unevaluatedTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
-            {
-                return SkipReasons.UnevaluatedNotSupported;
             }
 
             return null;

@@ -27,10 +27,10 @@ public readonly struct CompiledScopeEntry
     /// </summary>
     /// <remarks>
     /// Key: anchor name (without the # prefix).
-    /// Value: validation function that accepts (element, scope) and returns validity.
+    /// Value: validation function that accepts (element, scope, location) and returns validity.
     /// Null if no dynamic anchors are declared at this scope level.
     /// </remarks>
-    public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors { get; init; }
+    public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors { get; init; }
 
     /// <summary>
     /// Gets the root validation function for this scope level.
@@ -38,9 +38,10 @@ public readonly struct CompiledScopeEntry
     /// <remarks>
     /// Used for $recursiveRef resolution. When $recursiveRef is evaluated and this scope
     /// has <see cref="HasRecursiveAnchor"/> set to true, this function is invoked.
+    /// The function accepts (element, scope, location) and returns validity.
     /// Null if <see cref="HasRecursiveAnchor"/> is false.
     /// </remarks>
-    public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator { get; init; }
+    public Func<JsonElement, ICompiledValidatorScope, string, bool>? RootValidator { get; init; }
 
     /// <summary>
     /// Gets a value indicating whether this scope declares $recursiveAnchor: true.

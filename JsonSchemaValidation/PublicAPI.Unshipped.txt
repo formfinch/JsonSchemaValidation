@@ -10,27 +10,27 @@ FormFinch.JsonSchemaValidation.Abstractions.IEvaluatedStateAwareCompiledValidato
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.IsEmpty.get -> bool
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.Push(FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry entry) -> FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!
-FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.TryResolveDynamicAnchor(string! anchorName, out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>? validator) -> bool
-FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.TryResolveRecursiveAnchor(out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>? validator) -> bool
+FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.TryResolveDynamicAnchor(string! anchorName, out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>? validator) -> bool
+FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope.TryResolveRecursiveAnchor(out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>? validator) -> bool
 FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator
-FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator.DynamicAnchors.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>!>?
+FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator.DynamicAnchors.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>!>?
 FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator.HasRecursiveAnchor.get -> bool
 FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator.IsValid(System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope! scope) -> bool
-FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator.RootValidator.get -> System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>?
+FormFinch.JsonSchemaValidation.Abstractions.IScopedCompiledValidator.RootValidator.get -> System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>?
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.CompiledScopeEntry() -> void
-FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.DynamicAnchors.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>!>?
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.DynamicAnchors.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>!>?
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.DynamicAnchors.init -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.HasAnyAnchors.get -> bool
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.HasRecursiveAnchor.get -> bool
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.HasRecursiveAnchor.init -> void
-FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.RootValidator.get -> System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>?
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.RootValidator.get -> System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>?
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry.RootValidator.init -> void
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.IsEmpty.get -> bool
 FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.Push(FormFinch.JsonSchemaValidation.CompiledValidators.CompiledScopeEntry entry) -> FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!
-FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.TryResolveDynamicAnchor(string! anchorName, out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>? validator) -> bool
-FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.TryResolveRecursiveAnchor(out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, bool>? validator) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.TryResolveDynamicAnchor(string! anchorName, out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>? validator) -> bool
+FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.TryResolveRecursiveAnchor(out System.Func<System.Text.Json.JsonElement, FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidatorScope!, string!, bool>? validator) -> bool
 static readonly FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope.Empty -> FormFinch.JsonSchemaValidation.CompiledValidators.CompiledValidatorScope!
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator.IsValid(System.Text.Json.JsonElement instance) -> bool
 FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator.SchemaUri.get -> System.Uri!

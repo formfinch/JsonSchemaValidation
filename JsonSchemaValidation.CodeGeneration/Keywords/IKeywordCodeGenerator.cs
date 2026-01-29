@@ -224,8 +224,10 @@ public sealed class CodeGenerationContext
         if (RequiresScopeTracking)
         {
             args.Add(ScopeVariable);
+            // Always pass location when scope tracking is enabled (for delegate signature compatibility)
+            args.Add(LocationVariable);
         }
-        if (RequiresLocationTracking)
+        else if (RequiresLocationTracking)
         {
             args.Add(LocationVariable);
         }
@@ -242,8 +244,10 @@ public sealed class CodeGenerationContext
         if (RequiresScopeTracking)
         {
             args.Add(ScopeVariable);
+            // Always pass location when scope tracking is enabled (for delegate signature compatibility)
+            args.Add(LocationVariable);
         }
-        if (RequiresLocationTracking)
+        else if (RequiresLocationTracking)
         {
             args.Add(LocationVariable);
         }
@@ -259,8 +263,17 @@ public sealed class CodeGenerationContext
         if (RequiresScopeTracking)
         {
             args.Add(ScopeVariable);
+            // Always pass location when scope tracking is enabled (for delegate signature compatibility)
+            if (RequiresLocationTracking)
+            {
+                args.Add($"{LocationVariable} + \"/\" + EscapeJsonPointer({propertyNameLiteral})");
+            }
+            else
+            {
+                args.Add("\"\""); // Empty location when not tracking but scope is enabled
+            }
         }
-        if (RequiresLocationTracking)
+        else if (RequiresLocationTracking)
         {
             args.Add($"{LocationVariable} + \"/\" + EscapeJsonPointer({propertyNameLiteral})");
         }
@@ -276,8 +289,17 @@ public sealed class CodeGenerationContext
         if (RequiresScopeTracking)
         {
             args.Add(ScopeVariable);
+            // Always pass location when scope tracking is enabled (for delegate signature compatibility)
+            if (RequiresLocationTracking)
+            {
+                args.Add($"{LocationVariable} + \"/\" + {indexVar}");
+            }
+            else
+            {
+                args.Add("\"\""); // Empty location when not tracking but scope is enabled
+            }
         }
-        if (RequiresLocationTracking)
+        else if (RequiresLocationTracking)
         {
             args.Add($"{LocationVariable} + \"/\" + {indexVar}");
         }

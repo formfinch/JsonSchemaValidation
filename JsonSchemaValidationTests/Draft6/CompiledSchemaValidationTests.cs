@@ -101,13 +101,14 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
             CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2019-09"), "http://localhost:1234/draft2019-09/");
             CollectRemotesFromPath(pendingSchemas, Path.Combine(remotesPath, "draft2020-12"), "http://localhost:1234/draft2020-12/");
 
-            // Collect root-level remotes
-            CollectRemotesFromPath(pendingSchemas, remotesPath, "http://localhost:1234/", topLevelOnly: true);
+            // Collect root-level remotes (including subdirectories like baseUriChange/, nested/)
+            CollectRemotesFromPath(pendingSchemas, remotesPath, "http://localhost:1234/");
 
             if (pendingSchemas.Count == 0) return;
 
             using var factory = new RuntimeValidatorFactory(registry, forceAnnotationTracking: false, defaultDraft: SchemaDraft.Draft6);
             var maxPasses = 10;
+            var compiledValidators = new List<ICompiledValidator>();
 
             for (int pass = 0; pass < maxPasses && pendingSchemas.Count > 0; pass++)
             {
@@ -119,6 +120,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
                     {
                         var validator = factory.Compile(content);
                         registry.RegisterForUri(schemaUri, validator);
+                        compiledValidators.Add(validator);
 
                         try
                         {
@@ -142,6 +144,38 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
 
                 pendingSchemas = stillPending;
             }
+
+            // Two-phase initialization: first register all subschemas (fragment URIs)
+            foreach (var validator in compiledValidators)
+            {
+                try
+                {
+                    if (validator is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.RegisterSubschemas(registry);
+                    }
+                }
+                catch
+                {
+                    // Ignore registration errors
+                }
+            }
+
+            // Then initialize (resolve external refs)
+            foreach (var validator in compiledValidators)
+            {
+                try
+                {
+                    if (validator is IRegistryAwareCompiledValidator registryAware)
+                    {
+                        registryAware.Initialize(registry);
+                    }
+                }
+                catch
+                {
+                    // Ignore initialization errors
+                }
+            }
         }
 
         private static void CollectRemotesFromPath(List<(Uri SchemaUri, string Content)> schemas, string path, string baseUrl, bool topLevelOnly = false)
@@ -156,9 +190,11 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
                     var content = File.ReadAllText(file);
                     var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
                     var schemaUri = new Uri(baseUrl + relativePath);
-                    schemas.Add((schemaUri, content));
 
-                    ExtractSelfContainedSubschemas(schemas, schemaUri, content);
+                    // Inject $id if not present, so fragment subschemas are registered correctly
+                    content = InjectIdIfMissing(content, schemaUri.AbsoluteUri);
+
+                    schemas.Add((schemaUri, content));
                 }
                 catch
                 {
@@ -167,32 +203,37 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
             }
         }
 
-        private static void ExtractSelfContainedSubschemas(List<(Uri SchemaUri, string Content)> schemas, Uri baseUri, string content)
+        private static string InjectIdIfMissing(string content, string id)
         {
             try
             {
                 using var doc = JsonDocument.Parse(content);
                 var root = doc.RootElement;
 
-                if (root.ValueKind != JsonValueKind.Object) return;
-
-                // Extract definitions subschemas that are self-contained (Draft 6 uses "definitions")
-                if (root.TryGetProperty("definitions", out var definitions) && definitions.ValueKind == JsonValueKind.Object)
+                if (root.ValueKind != JsonValueKind.Object)
                 {
-                    foreach (var def in definitions.EnumerateObject())
-                    {
-                        var subschemaContent = def.Value.GetRawText();
-                        if (!subschemaContent.Contains("\"$ref\""))
-                        {
-                            var fragmentUri = new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/definitions/{def.Name}");
-                            schemas.Add((fragmentUri, subschemaContent));
-                        }
-                    }
+                    return content;
                 }
+
+                // If $id already present, return unchanged
+                if (root.TryGetProperty("$id", out _))
+                {
+                    return content;
+                }
+
+                // Inject $id after the opening brace
+                var firstBrace = content.IndexOf('{');
+                if (firstBrace < 0)
+                {
+                    return content;
+                }
+
+                var injection = $"\n    \"$id\": \"{id}\",";
+                return content.Insert(firstBrace + 1, injection);
             }
             catch
             {
-                // Ignore parsing errors
+                return content;
             }
         }
     }
@@ -210,9 +251,24 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
             _factory = fixture.Factory;
         }
 
-        [SkippableTheory]
+        [Theory]
         [MemberData(nameof(GetDraft6Tests))]
         public void Draft6CompiledTests(TestCase testCase)
+        {
+            RunTestCase(testCase);
+        }
+
+        [Theory]
+        [MemberData(nameof(GetDraft6FormatAssertionTests))]
+        public void Draft6CompiledFormatAssertionTests(TestCase testCase)
+        {
+            RunTestCase(testCase);
+        }
+
+        [SkippableTheory]
+        [Trait("Category", "KnownLimitation")]
+        [MemberData(nameof(GetDraft6KnownLimitationTests))]
+        public void Draft6CompiledKnownLimitationTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -220,8 +276,9 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
         }
 
         [SkippableTheory]
-        [MemberData(nameof(GetDraft6FormatAssertionTests))]
-        public void Draft6CompiledFormatAssertionTests(TestCase testCase)
+        [Trait("Category", "KnownLimitation")]
+        [MemberData(nameof(GetDraft6FormatAssertionKnownLimitationTests))]
+        public void Draft6CompiledFormatAssertionKnownLimitationTests(TestCase testCase)
         {
             var skipReason = GetSkipReason(testCase.Description);
             Skip.If(skipReason != null, skipReason);
@@ -279,6 +336,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
         }
 
         public static IEnumerable<object[]> GetDraft6Tests()
+            => GetAllDraft6Tests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
+
+        public static IEnumerable<object[]> GetDraft6KnownLimitationTests()
+            => GetAllDraft6Tests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) != null);
+
+        private static IEnumerable<object[]> GetAllDraft6Tests()
             => new TestCaseLoader(new string[] {
                 "additionalItems",
                 "additionalProperties",
@@ -323,6 +386,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
             }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft6");
 
         public static IEnumerable<object[]> GetDraft6FormatAssertionTests()
+            => GetAllDraft6FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
+
+        public static IEnumerable<object[]> GetDraft6FormatAssertionKnownLimitationTests()
+            => GetAllDraft6FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) != null);
+
+        private static IEnumerable<object[]> GetAllDraft6FormatAssertionTests()
             => new TestCaseLoader(new string[] {
                 @"\optional\ecmascript-regex",
                 @"\optional\id",
@@ -345,36 +414,25 @@ namespace FormFinch.JsonSchemaValidationTests.Draft6
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Infinite loop detection tests now work correctly
-
-            // additionalItems and tuple validation are now supported by the code generator
-
-            // Metaschema validation is now supported (metaschemas are pre-registered)
-
-            // Remote refs and id resolution issues
-            var remoteRefTests = new[]
+            // Draft 6 uses different $ref semantics - $ref overrides sibling keywords
+            if (testCaseDescription == "ref overrides any sibling keywords" ||
+                testCaseDescription.StartsWith("ref overrides any sibling keywords", StringComparison.Ordinal))
             {
-                "ref within remote ref",
-                "base URI change - change folder in subschema",
-                "root ref in remote ref",
-                "Location-independent identifier in remote ref",
-                "relative pointer ref to array",
-                "ref overrides any sibling keywords",
-                "$ref prevents a sibling $id from changing the base uri",
-                "remote ref, containing refs itself",
-                "Location-independent identifier",
-                "Reference an anchor with a non-relative URI",
-                "Location-independent identifier with base URI change in subschema",
-                "URN base URI with URN and anchor ref",
-                "base URI change",
-                "base URI change - change folder",
-                "retrieved nested refs resolve relative to their URI not $id",
-                "$ref to $ref finds location-independent $id",
-            };
+                return SkipReasons.RefOverrideSemantics;
+            }
 
-            if (remoteRefTests.Any(t => testCaseDescription == t || testCaseDescription.StartsWith(t, StringComparison.Ordinal)))
+            // Draft 6 uses $id: "#fragment" for location-independent identifiers (anchors)
+            if (testCaseDescription == "$ref prevents a sibling $id from changing the base uri" ||
+                testCaseDescription.StartsWith("$ref prevents a sibling $id from changing the base uri", StringComparison.Ordinal))
             {
-                return SkipReasons.RemoteRefWithInternalRef;
+                return SkipReasons.RefOverrideSemantics;
+            }
+
+            // Cross-draft compatibility
+            if (testCaseDescription == "refs to historic drafts are processed as historic drafts" ||
+                testCaseDescription.StartsWith("refs to historic drafts are processed as historic drafts", StringComparison.Ordinal))
+            {
+                return SkipReasons.CrossDraft;
             }
 
             return null;

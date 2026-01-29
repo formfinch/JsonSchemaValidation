@@ -28,9 +28,11 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             if (e.TryGetProperty("exclusiveMinimum", out _))
             {
+                if (!e.TryGetProperty("minimum", out _)) return false;
             }
             if (e.TryGetProperty("exclusiveMaximum", out _))
             {
+                if (!e.TryGetProperty("maximum", out _)) return false;
             }
         }
 
@@ -201,9 +203,18 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             var _typeValid_ = false;
             if (e.ValueKind == JsonValueKind.String) _typeValid_ = true;
+            if (Validate_b17aa97428d3(e)) _typeValid_ = true;
             if (!_typeValid_) return false;
         }
 
+        return true;
+    }
+
+
+    private static bool Validate_b17aa97428d3(JsonElement e)
+    {
+        // $ref: #
+        if (!Validate_537de04bd0e8(e)) return false;
         return true;
     }
 
@@ -223,19 +234,12 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private static bool Validate_b17aa97428d3(JsonElement e)
-    {
-        // $ref: #
-        if (!Validate_537de04bd0e8(e)) return false;
-        return true;
-    }
-
-
     private static bool Validate_19bfdd5b79c7(JsonElement e)
     {
         {
             var _typeValid_ = false;
             if ((e.ValueKind == JsonValueKind.True || e.ValueKind == JsonValueKind.False)) _typeValid_ = true;
+            if (Validate_b17aa97428d3(e)) _typeValid_ = true;
             if (!_typeValid_) return false;
         }
 
@@ -248,6 +252,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             var _typeValid_ = false;
             if (e.ValueKind == JsonValueKind.Array) _typeValid_ = true;
+            if (Validate_b17aa97428d3(e)) _typeValid_ = true;
             if (!_typeValid_) return false;
         }
 
@@ -293,6 +298,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             var _typeValid_ = false;
             if (e.ValueKind == JsonValueKind.String) _typeValid_ = true;
             if (e.ValueKind == JsonValueKind.Array) _typeValid_ = true;
+            if (Validate_b17aa97428d3(e)) _typeValid_ = true;
             if (!_typeValid_) return false;
         }
 

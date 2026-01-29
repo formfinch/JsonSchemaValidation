@@ -16,19 +16,19 @@ using FormFinch.JsonSchemaValidation.CompiledValidators;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
-    internal sealed class CompiledValidator_Draft202012MetaUnevaluated : IScopedCompiledValidator, IRegistryAwareCompiledValidator
+    internal sealed class CompiledValidator_Draft202012MetaUnevaluated : IScopedCompiledValidator
     {
         public Uri SchemaUri => new Uri("https://json-schema.org/draft/2020-12/meta/unevaluated");
 
-        private IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? _dynamicAnchors;
+        private IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? _dynamicAnchors;
 
-        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>? DynamicAnchors
+        public IReadOnlyDictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>? DynamicAnchors
         {
             get
             {
                 if (_dynamicAnchors == null)
                 {
-                    _dynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)
+                    _dynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)
                     {
                         ["meta"] = Validate_dc8c907a6717,
                     };
@@ -40,25 +40,10 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         public bool HasRecursiveAnchor => false;
 
 #pragma warning disable HAA0603
-        public Func<JsonElement, ICompiledValidatorScope, bool>? RootValidator => Validate_dc8c907a6717;
+        public Func<JsonElement, ICompiledValidatorScope, string, bool>? RootValidator => Validate_dc8c907a6717;
 #pragma warning restore HAA0603
 
-        private ICompiledValidator? _dynamicScopeRoot;
-
-        public void RegisterSubschemas(ICompiledValidatorRegistry registry)
-        {
-        }
-
-        public void Initialize(ICompiledValidatorRegistry registry)
-        {
-        }
-
-        public void SetDynamicScopeRoot(ICompiledValidator? root)
-        {
-            _dynamicScopeRoot = root;
-        }
-
-        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_dc8c907a6717(instance, scope);
+        public bool IsValid(JsonElement instance, ICompiledValidatorScope scope) => Validate_dc8c907a6717(instance, scope, "");
 
         public bool IsValid(JsonElement instance)
         {
@@ -69,15 +54,15 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
                 HasRecursiveAnchor = HasRecursiveAnchor
             };
             var scope = CompiledValidatorScope.Empty.Push(entry);
-            return Validate_dc8c907a6717(instance, scope);
+            return Validate_dc8c907a6717(instance, scope, "");
         }
 
-    private bool Validate_dc8c907a6717(JsonElement e, ICompiledValidatorScope _scope_)
+    private static bool Validate_dc8c907a6717(JsonElement e, ICompiledValidatorScope _scope_, string _loc_)
     {
         // Push scope entry for this schema's anchors
         var _scopeEntry_ = new CompiledScopeEntry
         {
-            DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, bool>>(StringComparer.Ordinal)
+            DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)
             {
                 ["meta"] = Validate_dc8c907a6717,
             },
@@ -97,11 +82,11 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
         {
             if (e.TryGetProperty("unevaluatedItems", out var _prop0_))
             {
-                if (!Validate_380c73c6d6de(_prop0_, _scope_)) return false;
+                if (!Validate_380c73c6d6de(_prop0_, _scope_, "")) return false;
             }
             if (e.TryGetProperty("unevaluatedProperties", out var _prop1_))
             {
-                if (!Validate_380c73c6d6de(_prop1_, _scope_)) return false;
+                if (!Validate_380c73c6d6de(_prop1_, _scope_, "")) return false;
             }
         }
 
@@ -109,16 +94,16 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
     }
 
 
-    private bool Validate_380c73c6d6de(JsonElement e, ICompiledValidatorScope _scope_)
+    private static bool Validate_380c73c6d6de(JsonElement e, ICompiledValidatorScope _scope_, string _loc_)
     {
         // $dynamicRef: #meta (with dynamic scope resolution)
         if (_scope_.TryResolveDynamicAnchor("meta", out var _dynValidator_dc8c907a))
         {
-            if (!_dynValidator_dc8c907a!(e, _scope_)) return false;
+            if (!_dynValidator_dc8c907a!(e, _scope_, _loc_)) return false;
         }
         else
         {
-            if (!Validate_dc8c907a6717(e, _scope_)) return false;
+            if (!Validate_dc8c907a6717(e, _scope_, _loc_)) return false;
         }
         return true;
     }
