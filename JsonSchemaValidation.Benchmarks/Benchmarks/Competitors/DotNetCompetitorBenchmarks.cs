@@ -107,7 +107,7 @@ public class DotNetCompetitorBenchmarks
     public bool FormFinch_Dynamic()
     {
         var context = _formFinchContextFactory.CreateContextForRoot(_instanceElement);
-        return _formFinchValidator.ValidateRoot(context).IsValid;
+        return _formFinchValidator.IsValid(context);
     }
 
     [Benchmark(Description = "FormFinch (compiled)")]

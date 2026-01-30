@@ -93,7 +93,7 @@ public class ComplexValidationBenchmarks
     public bool FormFinch_Validate()
     {
         var context = _formFinchContextFactory.CreateContextForRoot(_instanceElement);
-        return _formFinchValidator.ValidateRoot(context).IsValid;
+        return _formFinchValidator.IsValid(context);
     }
 
     [Benchmark(Description = "JsonSchema.Net")]

@@ -48,16 +48,18 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            var missingProperties = new List<string>();
+            // Lazy allocation - only create list when we find missing properties
+            List<string>? missingProperties = null;
             foreach (string propertyName in _propertyNames)
             {
                 if (!context.Data.TryGetProperty(propertyName, out _))
                 {
+                    missingProperties ??= [];
                     missingProperties.Add(propertyName);
                 }
             }
 
-            if (missingProperties.Count > 0)
+            if (missingProperties is { Count: > 0 })
             {
                 var quotedProps = new List<string>(missingProperties.Count);
                 foreach (var p in missingProperties)

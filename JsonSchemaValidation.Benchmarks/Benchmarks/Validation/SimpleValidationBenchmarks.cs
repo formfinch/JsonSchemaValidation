@@ -90,7 +90,7 @@ public class SimpleValidationBenchmarks
     public bool FormFinch_Validate()
     {
         var context = _formFinchContextFactory.CreateContextForRoot(_instanceElement);
-        return _formFinchValidator.ValidateRoot(context).IsValid;
+        return _formFinchValidator.IsValid(context);
     }
 
     [Benchmark(Description = "JsonSchema.Net")]
@@ -111,7 +111,7 @@ public class SimpleValidationBenchmarks
     {
         using var doc = JsonDocument.Parse(_instanceJson);
         var context = _formFinchContextFactory.CreateContextForRoot(doc.RootElement);
-        return _formFinchValidator.ValidateRoot(context).IsValid;
+        return _formFinchValidator.IsValid(context);
     }
 
     [Benchmark(Description = "JsonSchema.Net (string)")]

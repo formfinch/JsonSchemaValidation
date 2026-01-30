@@ -65,17 +65,19 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 throw new InvalidOperationException("Array context is invalid");
             }
 
-            var children = new List<ValidationResult>();
+            List<ValidationResult>? children = null;
             int idxItem = 0;
             bool validatedAnyItems = false;
 
-            foreach (JsonElement item in context.Data.EnumerateArray())
+            var enumerator = context.Data.EnumerateArray();
+            while (enumerator.MoveNext())
             {
                 if (idxItem >= _nPrefixItems)
                 {
                     validatedAnyItems = true;
-                    var itemContext = _contextFactory.CreateContextForArrayItem(context, idxItem, item);
+                    var itemContext = _contextFactory.CreateContextForArrayItem(context, idxItem, enumerator.Current);
                     var itemValidationResult = _validator.Validate(itemContext, keywordLocation);
+                    children ??= [];
                     children.Add(itemValidationResult);
 
                     if (!itemValidationResult.IsValid)
@@ -87,7 +89,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 idxItem++;
             }
 
-            var result = ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children.Count > 0 ? children : null };
+            var result = ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children is { Count: > 0 } ? children : null };
 
             // Per spec: annotate with true if items keyword validated any items
             if (validatedAnyItems)

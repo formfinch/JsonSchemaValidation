@@ -28,9 +28,9 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
         public bool IsValid(JsonElement data)
         {
             var enumArray = _enumValuesElement.EnumerateArray();
-            for (int i = 0; enumArray.Skip(i).Any(); i++)
+            while (enumArray.MoveNext())
             {
-                if (JsonElement.DeepEquals(enumArray.ElementAt(i), data))
+                if (JsonElement.DeepEquals(enumArray.Current, data))
                     return true;
             }
             return false;

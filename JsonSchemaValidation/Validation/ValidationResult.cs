@@ -108,7 +108,16 @@ namespace FormFinch.JsonSchemaValidation.Validation
         public static ValidationResult Aggregate(string instanceLocation, string keywordLocation, IEnumerable<ValidationResult> children)
         {
             var childList = children as IReadOnlyList<ValidationResult> ?? children.ToArray();
-            var isValid = childList.All(c => c.IsValid);
+            // Use indexed loop to avoid enumerator allocation
+            bool isValid = true;
+            for (int i = 0; i < childList.Count; i++)
+            {
+                if (!childList[i].IsValid)
+                {
+                    isValid = false;
+                    break;
+                }
+            }
             return new ValidationResult(isValid, instanceLocation, keywordLocation, null)
             {
                 Children = childList

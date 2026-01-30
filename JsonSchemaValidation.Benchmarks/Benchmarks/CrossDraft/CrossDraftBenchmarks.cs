@@ -134,34 +134,34 @@ public class CrossDraftBenchmarks
     public bool Draft202012_Validate()
     {
         var context = _contextFactory202012.CreateContextForRoot(_instanceElement);
-        return _validator202012.ValidateRoot(context).IsValid;
+        return _validator202012.IsValid(context);
     }
 
     [Benchmark(Description = "Draft 2019-09")]
     public bool Draft201909_Validate()
     {
         var context = _contextFactory201909.CreateContextForRoot(_instanceElement);
-        return _validator201909.ValidateRoot(context).IsValid;
+        return _validator201909.IsValid(context);
     }
 
     [Benchmark(Description = "Draft 7")]
     public bool Draft7_Validate()
     {
         var context = _contextFactoryDraft7.CreateContextForRoot(_instanceElement);
-        return _validatorDraft7.ValidateRoot(context).IsValid;
+        return _validatorDraft7.IsValid(context);
     }
 
     [Benchmark(Description = "Draft 6")]
     public bool Draft6_Validate()
     {
         var context = _contextFactoryDraft6.CreateContextForRoot(_instanceElement);
-        return _validatorDraft6.ValidateRoot(context).IsValid;
+        return _validatorDraft6.IsValid(context);
     }
 
     [Benchmark(Description = "Draft 4")]
     public bool Draft4_Validate()
     {
         var context = _contextFactoryDraft4.CreateContextForRoot(_instanceElement);
-        return _validatorDraft4.ValidateRoot(context).IsValid;
+        return _validatorDraft4.IsValid(context);
     }
 }

@@ -39,7 +39,8 @@ namespace FormFinch.JsonSchemaValidation.Validation
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
         {
-            var children = new List<ValidationResult>();
+            // Pre-size based on validator count
+            var children = new List<ValidationResult>(_keywordValidators.Count);
 
             foreach (var validator in _keywordValidators)
             {
