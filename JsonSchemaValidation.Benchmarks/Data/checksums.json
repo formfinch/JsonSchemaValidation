@@ -3,6 +3,11 @@
   "Schemas.medium.json": "0c94ccb1e5277f739c4db21c90e9119e7c5a99296f965520ad155f01c89adc09",
   "Schemas.production-github-workflow.json": "2e8a60a9018ae6e124e576c5e31abdaf544eec79a8b41ff6060e491e6f1d3ced",
   "Schemas.simple.json": "cd2c15561c6b8ab9da1ec03c5dfa023c8977089ce94ad6dd7eb7e69c068cec4e",
+  "Schemas.CrossDraft.cross-draft-4.json": "c1990e1986786c77ec41ef4621bdaffcbcad6dace87b5cb3ecbef674e2252336",
+  "Schemas.CrossDraft.cross-draft-6.json": "fd53f79731ef136ce9e98199b7312fe73489e4b4e2cd6bc84385afaba0e26d1f",
+  "Schemas.CrossDraft.cross-draft-7.json": "0783bd20698f2bbd8777f7de7361ae21a37655ec4b1655df7950db7dc5b3b124",
+  "Schemas.CrossDraft.cross-draft-2019-09.json": "2ca9e2155021c67678468306948e55de4fcb54bdfdd0096da9d2142b841f0fc1",
+  "Schemas.CrossDraft.cross-draft-2020-12.json": "c685a4e86f55e7f10615288d711717bc36e9b92f151f73d9b5fd5d9115637509",
   "Instances.complex-invalid.json": "437d13edd9bfcf9ad0ca423c99637384b17394a8a1769f0cb0ec6aaad3b66f1d",
   "Instances.complex-valid.json": "51f9a6d08de2d11ebf1b06b0ce6c1c4aeb3d893c5533a8721c9b270519bfd065",
   "Instances.medium-invalid.json": "715ded36b723d6750f12c4332b0e5cd31f2b84b87a4fdbe1aa2827880811c13f",
@@ -10,5 +15,6 @@
   "Instances.production-invalid.json": "fa9ae3ec2b5bd04355d03e14255f757b97ba67b3b7c8a2fffeaeec61e1e7ba4d",
   "Instances.production-valid.json": "dc42f8d206cda12e839d119a953d616960c4540abce8d9a3e072e4fd48a6f66e",
   "Instances.simple-invalid.json": "bd85bcdb8d4e613a79cb62d0903946ad10c83e63dc75f67614c159c0dbf4d184",
-  "Instances.simple-valid.json": "11fc90bd25a4139f105bf5c0423c47ba4b1066cd221fabd4e255bd7d0f1b3758"
+  "Instances.simple-valid.json": "11fc90bd25a4139f105bf5c0423c47ba4b1066cd221fabd4e255bd7d0f1b3758",
+  "Instances.CrossDraft.cross-draft-valid.json": "feb5d8628e505a3ee3ec7b9ffef771a875eed51d6d4e41efeeaa68e762d59c8b"
 }

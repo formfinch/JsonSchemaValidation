@@ -134,4 +134,29 @@ public static class BenchmarkData
             .Select(n => n["FormFinch.JsonSchemaValidation.Benchmarks.Data.".Length..])
             .ToList();
     }
+
+    /// <summary>
+    /// Gets the cross-draft schema JSON for the specified draft version.
+    /// </summary>
+    public static string GetCrossDraftSchema(string draft)
+    {
+        var resourceName = draft switch
+        {
+            "Draft4" => "Schemas.CrossDraft.cross-draft-4.json",
+            "Draft6" => "Schemas.CrossDraft.cross-draft-6.json",
+            "Draft7" => "Schemas.CrossDraft.cross-draft-7.json",
+            "Draft2019-09" => "Schemas.CrossDraft.cross-draft-2019-09.json",
+            "Draft2020-12" => "Schemas.CrossDraft.cross-draft-2020-12.json",
+            _ => throw new ArgumentException($"Unknown draft: {draft}", nameof(draft))
+        };
+        return GetResource(resourceName);
+    }
+
+    /// <summary>
+    /// Gets the cross-draft valid instance JSON.
+    /// </summary>
+    public static string GetCrossDraftValidInstance()
+    {
+        return GetResource("Instances.CrossDraft.cross-draft-valid.json");
+    }
 }

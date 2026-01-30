@@ -31,7 +31,9 @@
   <!-- Embedded benchmark data files -->
   <ItemGroup>
     <EmbeddedResource Include="Data\Schemas\*.json" />
+    <EmbeddedResource Include="Data\Schemas\CrossDraft\*.json" />
     <EmbeddedResource Include="Data\Instances\*.json" />
+    <EmbeddedResource Include="Data\Instances\CrossDraft\*.json" />
     <EmbeddedResource Include="Data\checksums.json" />
   </ItemGroup>
 </Project>
