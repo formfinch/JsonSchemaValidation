@@ -83,5 +83,15 @@ namespace FormFinch.JsonSchemaValidation.Common
                 _schemaStack.Pop();
             }
         }
+
+        /// <summary>
+        /// Gets a snapshot of the dynamic scope as an array in LIFO order (innermost first, outermost last).
+        /// Stack.ToArray() returns items with top (innermost) at index 0, bottom (outermost) at index Length-1.
+        /// Callers should iterate from Length-1 down to 0 for outermost-to-innermost order.
+        /// </summary>
+        public SchemaMetadata[] GetDynamicScopeSnapshot()
+        {
+            return _schemaStack.ToArray();
+        }
     }
 }

@@ -9,6 +9,8 @@ using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Benchmarks.Config;
 using FormFinch.JsonSchemaValidation.Benchmarks.Infrastructure;
 using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Compiler;
+using FormFinch.JsonSchemaValidation.CompiledValidators;
 using FormFinch.JsonSchemaValidation.DependencyInjection;
 using Json.Schema;
 using LateApexEarlySpeed.Json.Schema;
@@ -27,10 +29,15 @@ public class LargeDocumentBenchmarks
     private JsonElement _instanceElement;
     private JsonNode? _instanceNode;
 
-    // FormFinch
+    // FormFinch Dynamic
     private ServiceProvider _formFinchProvider = null!;
     private ISchemaValidator _formFinchValidator = null!;
     private IJsonValidationContextFactory _formFinchContextFactory = null!;
+
+    // FormFinch Compiled
+    private CompiledValidatorRegistry _compiledRegistry = null!;
+    private RuntimeValidatorFactory _runtimeFactory = null!;
+    private ICompiledValidator _formFinchCompiled = null!;
 
     // JsonSchema.Net
     private JsonSchema _jsonSchemaNet = null!;
@@ -68,6 +75,11 @@ public class LargeDocumentBenchmarks
         repository.TryRegisterSchema(schemaDoc.RootElement.Clone(), out var schemaData);
         _formFinchValidator = factory.GetValidator(schemaData!.SchemaUri!);
 
+        // Setup FormFinch Compiled
+        _compiledRegistry = new CompiledValidatorRegistry();
+        _runtimeFactory = new RuntimeValidatorFactory(_compiledRegistry);
+        _formFinchCompiled = _runtimeFactory.Compile(schemaJson);
+
         // Setup JsonSchema.Net
         _jsonSchemaNet = JsonSchema.FromText(schemaJson);
         _jsonSchemaNetOptions = new EvaluationOptions
@@ -84,13 +96,20 @@ public class LargeDocumentBenchmarks
     public void Cleanup()
     {
         _formFinchProvider?.Dispose();
+        _runtimeFactory?.Dispose();
     }
 
-    [Benchmark(Baseline = true, Description = "FormFinch")]
-    public bool FormFinch_Validate()
+    [Benchmark(Baseline = true, Description = "FormFinch (dynamic)")]
+    public bool FormFinch_Dynamic()
     {
         var context = _formFinchContextFactory.CreateContextForRoot(_instanceElement);
         return _formFinchValidator.ValidateRoot(context).IsValid;
+    }
+
+    [Benchmark(Description = "FormFinch (compiled)")]
+    public bool FormFinch_Compiled()
+    {
+        return _formFinchCompiled.IsValid(_instanceElement);
     }
 
     [Benchmark(Description = "JsonSchema.Net")]

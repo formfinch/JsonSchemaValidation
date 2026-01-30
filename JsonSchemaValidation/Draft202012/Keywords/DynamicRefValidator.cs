@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+using System.Collections.Concurrent;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
@@ -16,10 +17,18 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
     internal sealed class DynamicRefValidator : IKeywordValidator
     {
         private readonly string _dynamicRef;
-        private readonly SchemaMetadata _schemaData;
         private readonly ISchemaRepository _schemaRepository;
         private readonly ILazySchemaValidatorFactory _schemaValidatorFactory;
         private readonly IJsonValidationContextFactory _contextFactory;
+
+        // Pre-parsed URI components (computed once in constructor)
+        private readonly Uri? _preResolvedUri;
+        private readonly string? _fragment;
+        private readonly bool _isJsonPointerFragment;
+
+        // Cache for resolved validators by URI to avoid re-creating validators for the same resolved schema.
+        // Thread-safe: validators are stateless and can be reused across validation contexts.
+        private readonly ConcurrentDictionary<Uri, ISchemaValidator> _validatorCache = new();
 
         public string Keyword => "$dynamicRef";
 
@@ -31,10 +40,18 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             IJsonValidationContextFactory contextFactory)
         {
             _dynamicRef = dynamicRef;
-            _schemaData = schemaData;
             _schemaRepository = schemaRepository;
             _schemaValidatorFactory = schemaValidatorFactory;
             _contextFactory = contextFactory;
+
+            // Pre-parse the reference URI once (avoids repeated Uri.TryCreate calls)
+            if (Uri.TryCreate(schemaData.SchemaUri, dynamicRef, out var resolvedUri))
+            {
+                _preResolvedUri = resolvedUri;
+                _fragment = resolvedUri.Fragment;
+                _isJsonPointerFragment = string.IsNullOrEmpty(_fragment) ||
+                    _fragment.StartsWith("#/", StringComparison.Ordinal);
+            }
         }
 
         public ValidationResult Validate(IJsonValidationContext context, JsonPointer keywordLocation)
@@ -50,13 +67,8 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Invalid(instanceLocation, kwLocation, $"Failed to resolve $dynamicRef: {_dynamicRef}");
             }
 
-            // Create a validator for the resolved schema
-            if (_schemaValidatorFactory.Value == null)
-            {
-                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
-            }
-
-            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
+            // Get or create cached validator for the resolved schema
+            var validator = GetOrCreateValidator(resolvedSchema);
 
             // Run validation with the current context (scope is shared)
             var activeContext = _contextFactory.CreateFreshContext(context);
@@ -98,13 +110,8 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 return false;
             }
 
-            // Create a validator for the resolved schema
-            if (_schemaValidatorFactory.Value == null)
-            {
-                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
-            }
-
-            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
+            // Get or create cached validator for the resolved schema
+            var validator = GetOrCreateValidator(resolvedSchema);
 
             // Use tracking if referenced schema needs it, or if parent already tracks
             bool needsTracking = validator.RequiresAnnotationTracking || context is IJsonValidationObjectContext or IJsonValidationArrayContext;
@@ -122,29 +129,56 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             }
         }
 
+        /// <summary>
+        /// Gets a cached validator for the resolved schema URI, or creates and caches a new one.
+        /// Validators are stateless and safe to reuse across validation contexts.
+        /// </summary>
+        private ISchemaValidator GetOrCreateValidator(SchemaMetadata resolvedSchema)
+        {
+            if (_schemaValidatorFactory.Value == null)
+            {
+                throw new InvalidOperationException("ISchemaValidatorFactory not initialized");
+            }
+
+            // Cache by resolved URI to avoid re-creating validators for the same dynamic resolution
+            if (resolvedSchema.SchemaUri != null &&
+                _validatorCache.TryGetValue(resolvedSchema.SchemaUri, out var cachedValidator))
+            {
+                return cachedValidator;
+            }
+
+            var validator = _schemaValidatorFactory.Value.CreateValidator(resolvedSchema);
+
+            // Cache if we have a URI key
+            if (resolvedSchema.SchemaUri != null)
+            {
+                _validatorCache.TryAdd(resolvedSchema.SchemaUri, validator);
+            }
+
+            return validator;
+        }
+
         private SchemaMetadata? ResolveDynamicRef(IJsonValidationContext context)
         {
-            // Parse the reference to get the anchor fragment
-            // $dynamicRef can be like "#anchor" or "otherSchema#anchor"
-
-            if (!Uri.TryCreate(_schemaData.SchemaUri, _dynamicRef, out Uri? referenceUri))
+            // Use pre-parsed URI (computed once in constructor)
+            if (_preResolvedUri == null)
             {
                 return null;
             }
 
-            string fragment = referenceUri.Fragment;
-
-            // If the fragment is a JSON pointer (starts with #/), treat as normal $ref
-            if (string.IsNullOrEmpty(fragment) || fragment.StartsWith("#/", StringComparison.Ordinal))
+            // If the fragment is a JSON pointer (starts with #/) or empty, treat as normal $ref
+            if (_isJsonPointerFragment)
             {
-                return _schemaRepository.GetSchema(referenceUri);
+                return _schemaRepository.GetSchema(_preResolvedUri);
             }
+
+            string fragment = _fragment!;
 
             // Get the static target first (to check for bookending)
             SchemaMetadata staticTarget;
             try
             {
-                staticTarget = _schemaRepository.GetSchema(referenceUri);
+                staticTarget = _schemaRepository.GetSchema(_preResolvedUri);
             }
             catch
             {
@@ -158,18 +192,19 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 return staticTarget;
             }
 
-            // Search the dynamic scope from outermost to innermost
-            var dynamicScope = context.Scope.GetDynamicScope();
-            for (int i = 0; dynamicScope.Skip(i).Any(); i++)
+            // Search the dynamic scope from outermost to innermost using snapshot (O(n) vs O(n^2))
+            // Snapshot is in LIFO order (innermost=0, outermost=Length-1), so iterate backwards
+            var dynamicScopeSnapshot = context.Scope.GetDynamicScopeSnapshot();
+            for (int i = dynamicScopeSnapshot.Length - 1; i >= 0; i--)
             {
-                var schemaResource = dynamicScope.ElementAt(i);
+                var schemaResource = dynamicScopeSnapshot[i];
                 if (schemaResource.DynamicAnchors.TryGetValue(fragment, out var anchoredSchema))
                 {
-                    return new SchemaMetadata(schemaResource)
-                    {
-                        Schema = anchoredSchema,
-                        SchemaUri = new Uri(schemaResource.SchemaUri!, fragment)
-                    };
+                    // Use shallow view to avoid expensive dictionary copies
+                    return SchemaMetadata.CreateShallowView(
+                        schemaResource,
+                        anchoredSchema,
+                        schemaResource.GetUriWithFragment(fragment));
                 }
             }
 

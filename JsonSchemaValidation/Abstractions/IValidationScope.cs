@@ -50,5 +50,13 @@ namespace FormFinch.JsonSchemaValidation.Abstractions
         /// </summary>
         /// <returns>The first schema with recursive anchor, or null if none found.</returns>
         SchemaMetadata? FindFirstRecursiveAnchor();
+
+        /// <summary>
+        /// Gets a snapshot of the dynamic scope as an array in LIFO order (innermost first, outermost last).
+        /// To iterate outermost-to-innermost (per JSON Schema spec), iterate from Length-1 down to 0.
+        /// More efficient than GetDynamicScope() for indexed access patterns.
+        /// </summary>
+        /// <returns>Array of schema resources with innermost at index 0, outermost at index Length-1.</returns>
+        SchemaMetadata[] GetDynamicScopeSnapshot();
     }
 }

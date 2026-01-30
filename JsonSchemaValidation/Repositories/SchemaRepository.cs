@@ -321,7 +321,8 @@ namespace FormFinch.JsonSchemaValidation.Repositories
 
             if (string.IsNullOrWhiteSpace(schemaUri.Fragment))
             {
-                return new(metadata);
+                // Return canonical metadata directly for non-fragment lookups (no allocation)
+                return metadata;
             }
 
             if (schemaUri.Fragment.StartsWith("#/", StringComparison.Ordinal))
@@ -341,7 +342,8 @@ namespace FormFinch.JsonSchemaValidation.Repositories
                     Uri.TryCreate(effectiveBaseUri, targetId, out var resolvedId) &&
                     _schemas.TryGetValue(resolvedId, out var targetResource))
                 {
-                    return new(targetResource);
+                    // Return canonical metadata directly (no allocation)
+                    return targetResource;
                 }
 
                 // Check if we passed through any $id that changed the base URI
@@ -349,32 +351,24 @@ namespace FormFinch.JsonSchemaValidation.Repositories
                 if (effectiveBaseUri != baseUri && _schemas.TryGetValue(effectiveBaseUri, out var baseResource))
                 {
                     // The target is within a subschema that has its own $id
-                    SchemaMetadata innerSchemaData = new(baseResource);
-                    innerSchemaData.Schema = targetSchema;
-                    innerSchemaData.SchemaUri = effectiveBaseUri;
-                    return innerSchemaData;
+                    // Use shallow view to avoid expensive dictionary copies
+                    return SchemaMetadata.CreateShallowView(baseResource, targetSchema, effectiveBaseUri);
                 }
 
-                SchemaMetadata innerSchemaDataDefault = new(metadata);
-                innerSchemaDataDefault.Schema = targetSchema;
-                innerSchemaDataDefault.SchemaUri = schemaUri;
-                return innerSchemaDataDefault;
+                // Use shallow view to avoid expensive dictionary copies
+                return SchemaMetadata.CreateShallowView(metadata, targetSchema, schemaUri);
             }
 
             if (metadata.Anchors.TryGetValue(schemaUri.Fragment, out var anchoredSchema))
             {
-                SchemaMetadata innerSchemaData = new(metadata);
-                innerSchemaData.Schema = anchoredSchema;
-                innerSchemaData.SchemaUri = schemaUri;
-                return innerSchemaData;
+                // Use shallow view to avoid expensive dictionary copies
+                return SchemaMetadata.CreateShallowView(metadata, anchoredSchema, schemaUri);
             }
 
             if (metadata.DynamicAnchors.TryGetValue(schemaUri.Fragment, out var dynamicAnchoredSchema))
             {
-                SchemaMetadata innerSchemaData = new(metadata);
-                innerSchemaData.Schema = dynamicAnchoredSchema;
-                innerSchemaData.SchemaUri = schemaUri;
-                return innerSchemaData;
+                // Use shallow view to avoid expensive dictionary copies
+                return SchemaMetadata.CreateShallowView(metadata, dynamicAnchoredSchema, schemaUri);
             }
 
             throw new ArgumentException($"Schema with URI {schemaUri} not found.", nameof(schemaUri));
@@ -400,10 +394,8 @@ namespace FormFinch.JsonSchemaValidation.Repositories
                 var schema = snapshot[i];
                 if (schema.DynamicAnchors.TryGetValue(dynamicAnchor, out var anchoredSchema))
                 {
-                    result = new(schema)
-                    {
-                        Schema = anchoredSchema,
-                    };
+                    // Use shallow view to avoid expensive dictionary copies
+                    result = SchemaMetadata.CreateShallowView(schema, anchoredSchema, schema.SchemaUri);
                     return true;
                 }
             }
