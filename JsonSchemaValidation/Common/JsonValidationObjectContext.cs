@@ -10,7 +10,7 @@ namespace FormFinch.JsonSchemaValidation.Common
     {
         public struct Annotations
         {
-            public IDictionary<string, JsonProperty> UnEvaluatedProperties { get; set; } = new Dictionary<string, JsonProperty>(StringComparer.Ordinal);
+            public Dictionary<string, JsonProperty> UnEvaluatedProperties { get; set; } = new Dictionary<string, JsonProperty>(StringComparer.Ordinal);
 
             public Annotations()
             {
@@ -69,20 +69,23 @@ namespace FormFinch.JsonSchemaValidation.Common
         public void SetAnnotations(Annotations annotations)
         {
             // Collect keys to remove first to avoid modifying during enumeration
-            var keysToRemove = new List<string>();
-            var keys = _current.UnEvaluatedProperties.Keys;
-            for (int i = 0; keys.Skip(i).Any(); i++)
+            List<string>? keysToRemove = null;
+            var enumerator = _current.UnEvaluatedProperties.Keys.GetEnumerator();
+            while (enumerator.MoveNext())
             {
-                var key = keys.ElementAt(i);
-                if (!annotations.UnEvaluatedProperties.ContainsKey(key))
+                if (!annotations.UnEvaluatedProperties.ContainsKey(enumerator.Current))
                 {
-                    keysToRemove.Add(key);
+                    keysToRemove ??= [];
+                    keysToRemove.Add(enumerator.Current);
                 }
             }
 
-            foreach (var key in keysToRemove)
+            if (keysToRemove != null)
             {
-                MarkPropertyEvaluated(key);
+                foreach (var key in keysToRemove)
+                {
+                    MarkPropertyEvaluated(key);
+                }
             }
         }
 

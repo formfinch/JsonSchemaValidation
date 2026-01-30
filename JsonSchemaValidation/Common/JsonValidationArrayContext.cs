@@ -99,10 +99,29 @@ namespace FormFinch.JsonSchemaValidation.Common
 
         public void SetEvaluatedIndices(IEnumerable<int> indices)
         {
-            for (int i = 0; indices.Skip(i).Any(); i++)
+            // Use index-based iteration to avoid enumerator allocation with IEnumerable
+            if (indices is IList<int> list)
             {
-                var idx = indices.ElementAt(i);
-                _current.EvaluatedIndices.Add(idx);
+                for (int i = 0; i < list.Count; i++)
+                {
+                    _current.EvaluatedIndices.Add(list[i]);
+                }
+            }
+            else if (indices is IReadOnlyList<int> readOnlyList)
+            {
+                for (int i = 0; i < readOnlyList.Count; i++)
+                {
+                    _current.EvaluatedIndices.Add(readOnlyList[i]);
+                }
+            }
+            else
+            {
+                // Fallback: materialize to array and iterate
+                int[] indicesArray = indices.ToArray();
+                for (int i = 0; i < indicesArray.Length; i++)
+                {
+                    _current.EvaluatedIndices.Add(indicesArray[i]);
+                }
             }
         }
     }

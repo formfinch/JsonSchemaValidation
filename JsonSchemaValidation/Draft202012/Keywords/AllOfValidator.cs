@@ -47,8 +47,9 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             var instanceLocation = context.InstanceLocation.ToString();
             var kwLocation = keywordLocation.ToString();
 
-            var children = new List<ValidationResult>();
-            var contexts = new List<IJsonValidationContext>();
+            // Pre-size lists based on validator count
+            var children = new List<ValidationResult>(_validators.Length);
+            List<IJsonValidationContext>? contexts = null;
             int idx = 0;
             bool allValid = true;
 
@@ -66,12 +67,13 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 }
                 else
                 {
+                    contexts ??= new List<IJsonValidationContext>(_validators.Length);
                     contexts.Add(activeContext);
                 }
                 idx++;
             }
 
-            if (allValid)
+            if (allValid && contexts != null)
             {
                 foreach (var activeContext in contexts)
                 {

@@ -93,7 +93,7 @@ public class ThroughputBenchmarks
         for (int i = 0; i < BatchSize; i++)
         {
             var context = _formFinchContextFactory.CreateContextForRoot(_instanceElement);
-            if (_formFinchValidator.ValidateRoot(context).IsValid)
+            if (_formFinchValidator.IsValid(context))
             {
                 validCount++;
             }

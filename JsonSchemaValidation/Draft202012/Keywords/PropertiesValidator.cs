@@ -58,11 +58,14 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                 return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
-            var children = new List<ValidationResult>();
-            var evaluatedProperties = new List<string>();
+            // Lazy initialization - only allocate when we have matching properties
+            List<ValidationResult>? children = null;
+            List<string>? evaluatedProperties = null;
 
-            foreach (string propertyName in _propertySchemaValidators.Keys)
+            var enumerator = _propertySchemaValidators.Keys.GetEnumerator();
+            while (enumerator.MoveNext())
             {
+                string propertyName = enumerator.Current;
                 if (context.Data.TryGetProperty(propertyName, out JsonElement value))
                 {
                     if (context is IJsonValidationObjectContext objectContext)
@@ -70,20 +73,28 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
                         objectContext.MarkPropertyEvaluated(propertyName);
                     }
 
+                    evaluatedProperties ??= [];
                     evaluatedProperties.Add(propertyName);
                     var prpContext = _contextFactory.CreateContextForProperty(context, propertyName, value);
                     var validator = _propertySchemaValidators[propertyName];
                     // Extend keyword path with property name: /properties/propertyName
                     var propertyKeywordPath = keywordLocation.Append(propertyName);
                     var validationResult = validator.Validate(prpContext, propertyKeywordPath);
+                    children ??= [];
                     children.Add(validationResult);
                 }
+            }
+
+            // Return early if no properties matched
+            if (children == null)
+            {
+                return ValidationResult.Valid(instanceLocation, kwLocation);
             }
 
             var result = ValidationResult.Aggregate(instanceLocation, kwLocation, children);
 
             // Per spec: annotate with property names that were validated
-            if (result.IsValid && evaluatedProperties.Count > 0)
+            if (result.IsValid && evaluatedProperties is { Count: > 0 })
             {
                 return result with
                 {

@@ -36,9 +36,10 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
             // If context doesn't support tracking, validate all properties conservatively
             if (context is not IJsonValidationObjectContext objectContext)
             {
-                foreach (var prp in context.Data.EnumerateObject())
+                var enumerator = context.Data.EnumerateObject();
+                while (enumerator.MoveNext())
                 {
-                    var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
+                    var prpContext = _contextFactory.CreateContextForPropertyFast(context, enumerator.Current.Value);
                     if (!_unevaluatedPropertyValidator.IsValid(prpContext))
                     {
                         return false;
@@ -48,14 +49,31 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
             }
 
             // With tracking, only validate unevaluated properties
-            var unevaluatedProps = objectContext.GetUnevaluatedProperties();
-            for (int i = 0; unevaluatedProps.Skip(i).Any(); i++)
+            // Use concrete type access when possible to avoid IEnumerable allocation
+            if (objectContext is JsonValidationObjectContext jvoc)
             {
-                var prp = unevaluatedProps.ElementAt(i);
-                var prpContext = _contextFactory.CreateContextForPropertyFast(context, prp.Value);
-                if (!_unevaluatedPropertyValidator.IsValid(prpContext))
+                var annotations = jvoc.GetAnnotations();
+                var enumerator = annotations.UnEvaluatedProperties.Values.GetEnumerator();
+                while (enumerator.MoveNext())
                 {
-                    return false;
+                    var prpContext = _contextFactory.CreateContextForPropertyFast(context, enumerator.Current.Value);
+                    if (!_unevaluatedPropertyValidator.IsValid(prpContext))
+                    {
+                        return false;
+                    }
+                }
+            }
+            else if (objectContext is FastValidationObjectContext fvoc)
+            {
+                var annotations = fvoc.GetAnnotations();
+                var enumerator = annotations.UnEvaluatedProperties.Values.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    var prpContext = _contextFactory.CreateContextForPropertyFast(context, enumerator.Current.Value);
+                    if (!_unevaluatedPropertyValidator.IsValid(prpContext))
+                    {
+                        return false;
+                    }
                 }
             }
 
@@ -78,29 +96,56 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
                 throw new InvalidOperationException("Object context is invalid");
             }
 
-            var children = new List<ValidationResult>();
-            var invalidProperties = new List<string>();
-            var evaluatedProperties = new List<string>();
+            List<ValidationResult>? children = null;
+            List<string>? invalidProperties = null;
+            List<string>? evaluatedProperties = null;
 
-            var unevaluatedProps = objectContext.GetUnevaluatedProperties();
-            for (int i = 0; unevaluatedProps.Skip(i).Any(); i++)
+            // Use concrete type access to avoid IEnumerable allocation
+            IEnumerable<JsonProperty> unevaluatedProperties = objectContext switch
             {
-                var prp = unevaluatedProps.ElementAt(i);
+                JsonValidationObjectContext jvoc => jvoc.GetAnnotations().UnEvaluatedProperties.Values,
+                FastValidationObjectContext fvoc => fvoc.GetAnnotations().UnEvaluatedProperties.Values,
+                _ => objectContext.GetUnevaluatedProperties()
+            };
+
+            if (unevaluatedProperties is Dictionary<string, JsonProperty>.ValueCollection valueCollection)
+            {
+                var enumerator = valueCollection.GetEnumerator();
+                while (enumerator.MoveNext())
+                {
+                    ProcessProperty(enumerator.Current);
+                }
+            }
+            else
+            {
+                // Fallback for other implementations - materialize to array for O(n) instead of Skip/ElementAt O(n²)
+                var propsArray = unevaluatedProperties.ToArray();
+                for (int i = 0; i < propsArray.Length; i++)
+                {
+                    ProcessProperty(propsArray[i]);
+                }
+            }
+
+            void ProcessProperty(JsonProperty prp)
+            {
                 var prpContext = _contextFactory.CreateContextForProperty(context, prp.Name, prp.Value);
                 var validationResult = _unevaluatedPropertyValidator.Validate(prpContext, keywordLocation);
+                children ??= [];
                 children.Add(validationResult);
 
                 if (!validationResult.IsValid)
                 {
+                    invalidProperties ??= [];
                     invalidProperties.Add(prp.Name);
                 }
                 else
                 {
+                    evaluatedProperties ??= [];
                     evaluatedProperties.Add(prp.Name);
                 }
             }
 
-            if (invalidProperties.Count > 0)
+            if (invalidProperties != null && invalidProperties.Count > 0)
             {
                 var quotedProps = new List<string>(invalidProperties.Count);
                 foreach (var p in invalidProperties)
@@ -113,10 +158,10 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 
             objectContext.SetUnevaluatedPropertiesEvaluated();
 
-            var result = ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children.Count > 0 ? children : null };
+            var result = ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children is { Count: > 0 } ? children : null };
 
             // Per spec: annotate with property names that were validated by this keyword
-            if (evaluatedProperties.Count > 0)
+            if (evaluatedProperties is { Count: > 0 })
             {
                 return result with
                 {

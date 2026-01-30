@@ -58,13 +58,30 @@ namespace FormFinch.JsonSchemaValidation.Common
 
         public JsonValidationObjectContext.Annotations GetAnnotations()
         {
-            // Convert to Annotations struct for compatibility
+            // Convert to Annotations struct for compatibility - inline logic to avoid IEnumerable allocation
             var annotations = new JsonValidationObjectContext.Annotations();
-            var unEvaluatedProperties = GetUnevaluatedProperties();
-            for(int i = 0; unEvaluatedProperties.Skip(i).Any(); i++)
+            if (_data.ValueKind != JsonValueKind.Object)
+                return annotations;
+
+            var enumerator = _data.EnumerateObject();
+            if (_evaluatedProperties == null || _evaluatedProperties.Count == 0)
             {
-                var prp = unEvaluatedProperties.ElementAt(i);
-                annotations.UnEvaluatedProperties[prp.Name] = prp;
+                // Nothing evaluated yet - add all properties
+                while (enumerator.MoveNext())
+                {
+                    annotations.UnEvaluatedProperties[enumerator.Current.Name] = enumerator.Current;
+                }
+            }
+            else
+            {
+                // Filter out evaluated properties
+                while (enumerator.MoveNext())
+                {
+                    if (!_evaluatedProperties.Contains(enumerator.Current.Name))
+                    {
+                        annotations.UnEvaluatedProperties[enumerator.Current.Name] = enumerator.Current;
+                    }
+                }
             }
             return annotations;
         }
@@ -77,12 +94,11 @@ namespace FormFinch.JsonSchemaValidation.Common
 
             _evaluatedProperties ??= new HashSet<string>(StringComparer.Ordinal);
             var enumerator = _data.EnumerateObject();
-            for (int i = 0; enumerator.Skip(i).Any(); i++)
+            while (enumerator.MoveNext())
             {
-                var prp = enumerator.ElementAt(i);
-                if (!annotations.UnEvaluatedProperties.ContainsKey(prp.Name))
+                if (!annotations.UnEvaluatedProperties.ContainsKey(enumerator.Current.Name))
                 {
-                    _evaluatedProperties.Add(prp.Name);
+                    _evaluatedProperties.Add(enumerator.Current.Name);
                 }
             }
         }

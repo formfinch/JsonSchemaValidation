@@ -54,8 +54,8 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             var kwLocation = keywordLocation.ToString();
 
             int nOk = 0;
-            var validContexts = new List<IJsonValidationContext>();
-            var children = new List<ValidationResult>();
+            List<IJsonValidationContext>? validContexts = null;
+            var children = new List<ValidationResult>(_validators.Length);
 
             int index = 0;
             foreach (var validator in _validators)
@@ -67,6 +67,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 
                 if (childResult.IsValid)
                 {
+                    validContexts ??= [];
                     validContexts.Add(activeContext);
                     nOk++;
                     if (nOk > 1)
@@ -79,9 +80,12 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 
             if (nOk == 1)
             {
-                foreach (var activeContext in validContexts)
+                if (validContexts != null)
                 {
-                    _contextFactory.CopyAnnotations(activeContext, context);
+                    foreach (var activeContext in validContexts)
+                    {
+                        _contextFactory.CopyAnnotations(activeContext, context);
+                    }
                 }
                 return ValidationResult.Valid(instanceLocation, kwLocation) with { Children = children };
             }
