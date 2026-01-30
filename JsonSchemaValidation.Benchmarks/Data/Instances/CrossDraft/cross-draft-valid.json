@@ -1,0 +1,17 @@
+{
+  "id": 42,
+  "name": "FormFinch Test User",
+  "email": "test@formfinch.com",
+  "status": "active",
+  "address": {
+    "street": "123 Validation Lane",
+    "city": "Schema City",
+    "postalCode": "12345"
+  },
+  "tags": ["benchmark", "test", "validation"],
+  "score": 75.5,
+  "metadata": {
+    "created_by": "benchmark",
+    "version": "1.0"
+  }
+}

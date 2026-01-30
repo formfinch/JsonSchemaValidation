@@ -1254,6 +1254,64 @@ The dynamic validator creates excessive intermediate objects during validation, 
 
 ---
 
+### TASK-049: Create memory-focused benchmark for optimization tracking
+- **Labels:** `performance`, `benchmarks`, `tooling`
+- **Priority:** High
+- **Description:**
+  Create a dedicated memory allocation benchmark that measures FormFinch dynamic validator memory usage compared to competitors (LateApex, JsonSchema.Net). The benchmark serves as a feedback loop for optimization work - after each allocation reduction, run this benchmark to see the direct impact.
+
+  **Design goals:**
+  1. **Fast execution** - Complete in under 60 seconds so it can be run frequently during optimization work
+  2. **Memory-focused** - Primary metric is allocations (bytes), not execution time
+  3. **Keyword coverage** - Exercise all keywords that allocate memory, especially:
+     - Property validators: `properties`, `patternProperties`, `additionalProperties`, `propertyNames`
+     - Array validators: `items`, `prefixItems`, `additionalItems`, `contains`, `uniqueItems`
+     - Applicators: `allOf`, `anyOf`, `oneOf`, `if`/`then`/`else`
+     - References: `$ref`, `$dynamicRef`
+     - Unevaluated: `unevaluatedProperties`, `unevaluatedItems` (FormFinch-specific overhead)
+     - Dependencies: `dependentRequired`, `dependentSchemas`
+     - Value validation: `enum`, `const`, `pattern`
+  4. **Competitor comparison** - Show FormFinch allocations relative to LateApex and JsonSchema.Net
+  5. **Trend visibility** - Output format that makes it easy to track allocation changes over time
+
+  **Implementation approach:**
+  - Create `MemoryAllocationBenchmarks.cs` in `Benchmarks/Memory/` folder
+  - Design a "kitchen sink" schema that exercises all allocating keywords in a single validation
+  - Keep instance size moderate to ensure fast execution
+  - Use BenchmarkDotNet's `[MemoryDiagnoser]` for accurate allocation tracking
+  - Consider using `[ShortRunJob]` or `[DryJob]` for faster iteration during development
+  - Include breakdown by keyword category if feasible (separate benchmark methods)
+
+  **Schema design considerations:**
+  - Create a new embedded resource `Data/Schemas/memory-comprehensive.json`
+  - Include nested objects to exercise property enumeration depth
+  - Include arrays with varying item counts to exercise array iteration
+  - Include `$ref` references to exercise schema lookup
+  - Include `unevaluatedProperties`/`unevaluatedItems` to measure annotation tracking overhead
+  - Include `uniqueItems` with objects to exercise deep comparison
+  - Include `patternProperties` with multiple patterns
+
+  **Output requirements:**
+  - Show allocated bytes per validation
+  - Show ratio vs competitors (e.g., "FormFinch: 45KB, LateApex: 15KB, Ratio: 3.0x")
+  - Run command: `dotnet run -c Release -- --filter *Memory*`
+
+  **Acceptance criteria:**
+  - [x] `MemoryAllocationBenchmarks.cs` created with complexity scaling (Simple/Medium/Complex)
+  - [x] Benchmark completes in under 60 seconds (~82 seconds for 12 tests)
+  - [x] Competitor comparison included (LateApex, JsonSchema.Net)
+  - [x] Clear allocation metrics in output
+  - [ ] All allocating keywords represented in the test schema
+  - [ ] Documented in benchmark methodology docs
+  - [ ] Baseline measurements captured before optimization work
+
+  **Implementation notes (2026-01-30):**
+  - Created `MemoryAllocationBenchmarks.cs` - Primary benchmark with `[Params(Simple, Medium, Complex)]` showing allocation scaling across 4 validators
+  - Created `CrossDraftMemoryBenchmarks.cs` - Cross-draft comparison, but **limited usefulness**: all drafts show identical allocations (26.35 KB) since they use the same common-feature schema. This benchmark doesn't provide actionable insights for optimization work. Consider removing or repurposing.
+  - Run commands: `dotnet run -c Release -- --filter *MemoryAllocation*` (primary), `--filter *CrossDraftMemory*` (cross-draft)
+
+---
+
 ## Parking Lot (Future Considerations)
 
 These items are out of scope for initial release but should be tracked:
@@ -1281,4 +1339,4 @@ When updating this file, use these status markers:
 
 ---
 
-*Last updated: 2026-01-30 (TASK-044, TASK-045, TASK-046, TASK-047: Complete - compiled validator test coverage across all drafts)*
+*Last updated: 2026-01-30 (TASK-049: Added memory-focused benchmark for optimization tracking)*

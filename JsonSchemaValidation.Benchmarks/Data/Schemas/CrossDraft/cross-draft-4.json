@@ -1,0 +1,44 @@
+{
+  "id": "urn:formfinch:cross-draft-4",
+  "definitions": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string", "minLength": 1 },
+        "city": { "type": "string", "minLength": 1 },
+        "postalCode": { "type": "string", "pattern": "^[0-9A-Z-]+$" }
+      },
+      "required": ["street", "city"]
+    },
+    "tag": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "email": { "type": "string", "pattern": "^[^@]+@[^@]+$" },
+    "status": { "enum": ["active"] },
+    "address": { "$ref": "#/definitions/address" },
+    "tags": {
+      "type": "array",
+      "items": { "$ref": "#/definitions/tag" },
+      "minItems": 0,
+      "maxItems": 10
+    },
+    "score": {
+      "type": "number",
+      "minimum": 50,
+      "maximum": 100
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "required": ["id", "name", "email", "status"],
+  "additionalProperties": false
+}

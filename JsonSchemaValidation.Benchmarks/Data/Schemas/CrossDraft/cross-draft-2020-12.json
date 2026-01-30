@@ -1,0 +1,55 @@
+{
+  "$id": "urn:formfinch:cross-draft-2020-12",
+  "$defs": {
+    "address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string", "minLength": 1 },
+        "city": { "type": "string", "minLength": 1 },
+        "postalCode": { "type": "string", "pattern": "^[0-9A-Z-]+$" }
+      },
+      "required": ["street", "city"],
+      "unevaluatedProperties": false
+    },
+    "tag": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 50
+    }
+  },
+  "type": "object",
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "name": { "type": "string", "minLength": 1, "maxLength": 200 },
+    "email": { "type": "string", "pattern": "^[^@]+@[^@]+$" },
+    "status": { "const": "active" },
+    "address": { "$ref": "#/$defs/address" },
+    "tags": {
+      "type": "array",
+      "prefixItems": [
+        { "$ref": "#/$defs/tag" }
+      ],
+      "items": { "$ref": "#/$defs/tag" },
+      "minItems": 0,
+      "maxItems": 10
+    },
+    "score": {
+      "type": "number",
+      "minimum": 50,
+      "exclusiveMaximum": 100
+    },
+    "metadata": {
+      "type": "object",
+      "propertyNames": { "pattern": "^[a-z_]+$" },
+      "additionalProperties": { "type": "string" }
+    }
+  },
+  "required": ["id", "name", "email", "status"],
+  "unevaluatedProperties": false,
+  "if": {
+    "properties": { "score": { "minimum": 75 } }
+  },
+  "then": {
+    "properties": { "metadata": { "required": [] } }
+  }
+}
