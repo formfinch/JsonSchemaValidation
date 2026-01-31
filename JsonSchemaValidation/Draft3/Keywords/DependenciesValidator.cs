@@ -42,7 +42,6 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
             }
 
             // Check property dependencies (strings and arrays)
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var dependency in _propertyDependencies)
             {
                 if (propertyNames.Contains(dependency.Key))
@@ -54,16 +53,13 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
                     }
                 }
             }
-#pragma warning restore S3267
 
             // Check schema dependencies (objects/booleans)
-#pragma warning disable S3267, S1066 // Loop has early return for performance
             foreach (var dependency in _schemaDependencies)
             {
                 if (propertyNames.Contains(dependency.Key) && !dependency.Value.IsValid(context))
                     return false;
             }
-#pragma warning restore S3267, S1066
 
             return true;
         }

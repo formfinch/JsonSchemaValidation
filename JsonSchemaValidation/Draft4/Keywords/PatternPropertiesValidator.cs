@@ -77,9 +77,7 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
                 }
 
                 // get all properties matching with propertyNamePattern.
-#pragma warning disable S3267 // Loop has side effects (validation calls, early return)
                 foreach (var prp in context.Data.EnumerateObject())
-#pragma warning restore S3267
                 {
                     if (!rxPropertyName.IsMatch(prp.Name)) continue;
                     if (!context.Data.TryGetProperty(prp.Name, out JsonElement value)) continue;

@@ -36,13 +36,11 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
                 propertyNames.Add(prpElement.Name);
             }
 
-#pragma warning disable S3267, S1066 // Loop has early return for performance
             foreach (var dependency in _dependentSchemasProperties)
             {
                 if (propertyNames.Contains(dependency.Key) && !dependency.Value.IsValid(context))
                     return false;
             }
-#pragma warning restore S3267, S1066
 
             return true;
         }

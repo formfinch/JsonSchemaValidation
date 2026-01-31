@@ -27,6 +27,18 @@ generated_code = true
 MA0051.maximum_statements_per_method = 60
 MA0051.maximum_lines_per_method = 100
 
+# IDE0008: Use explicit type - allow var usage
+dotnet_diagnostic.IDE0008.severity = none
+
+# S3267: Loops should be simplified with LINQ
+# Disabled project-wide: validators use loops with early returns for performance.
+# LINQ alternatives would require full enumeration, defeating the optimization.
+dotnet_diagnostic.S3267.severity = none
+
+# S1066: Mergeable if statements should be combined
+# Disabled project-wide: often kept separate for readability and early return patterns.
+dotnet_diagnostic.S1066.severity = none
+
 # New line preferences
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
@@ -167,11 +179,6 @@ file_header_template = Copyright (c) 2026 FormFinch VOF\nLicensed under the Poly
 [src/libraries/System.Net.Http/src/System/Net/Http/{SocketsHttpHandler/Http3RequestStream.cs,BrowserHttpHandler/BrowserHttpHandler.cs}]
 # disable CA2025, the analyzer throws a NullReferenceException when processing this file: https://github.com/dotnet/roslyn-analyzers/issues/7652
 dotnet_diagnostic.CA2025.severity = none
-
-# C++ Files
-
-# IDE0008: Use explicit type
-dotnet_diagnostic.IDE0008.severity = none
 
 [*.{cpp,h,in}]
 curly_bracket_next_line = true

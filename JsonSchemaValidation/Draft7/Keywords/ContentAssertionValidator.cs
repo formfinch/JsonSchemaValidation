@@ -77,13 +77,11 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
             {
                 // Check if string contains only valid base64 characters
                 // Base64 alphabet: A-Z, a-z, 0-9, +, /, and = for padding
-#pragma warning disable S3267 // Loop has early return for performance
                 foreach (char c in value)
                 {
                     if (!char.IsLetterOrDigit(c) && c != '+' && c != '/' && c != '=' && !char.IsWhiteSpace(c))
                         return false;
                 }
-#pragma warning restore S3267
 
                 var bytes = Convert.FromBase64String(value);
                 decoded = Encoding.UTF8.GetString(bytes);

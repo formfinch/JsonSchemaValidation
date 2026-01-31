@@ -36,9 +36,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             var children = new List<ValidationResult>();
             var invalidPropertyNames = new List<string>();
 
-#pragma warning disable S3267 // Loop has side effects (validation calls)
             foreach (var prp in context.Data.EnumerateObject())
-#pragma warning restore S3267
             {
                 string jsonString = $"{{\"key\": \"{JsonEncodedText.Encode(prp.Name).ToString()}\"}}";
                 using JsonDocument doc = JsonDocument.Parse(jsonString);
