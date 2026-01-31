@@ -95,42 +95,14 @@ namespace FormFinch.JsonSchemaValidation.Common
         private ISchemaValidator CreateDynamicValidatorInternal(SchemaMetadata schemaMetaData)
         {
             string version = schemaMetaData.DraftVersion!;
-            bool usingFallback = false;
-            string? originalVersion = null;
 
             if (!_draftFactories.TryGetValue(version, out ISchemaDraftValidatorFactory? draftFactory))
             {
                 // Try fallback for cross-draft compatibility
-                if (DraftFallbacks.TryGetValue(version, out string? fallbackVersion) &&
-                    _draftFactories.TryGetValue(fallbackVersion, out draftFactory))
-                {
-                    usingFallback = true;
-                    originalVersion = version;
-                }
-                else
+                if (!DraftFallbacks.TryGetValue(version, out string? fallbackVersion) ||
+                    !_draftFactories.TryGetValue(fallbackVersion, out draftFactory))
                 {
                     throw new NotSupportedException($"Validator for draft version {version} is not supported.");
-                }
-            }
-
-            // When using fallback, filter keywords to only those that exist in the original draft
-            // This ensures keywords introduced in later drafts are ignored
-            if (usingFallback && originalVersion != null)
-            {
-                var allowedKeywords = GetAllowedKeywordsForDraft(originalVersion);
-                if (allowedKeywords != null)
-                {
-                    // Merge with any existing ActiveKeywords filter
-                    if (schemaMetaData.ActiveKeywords != null)
-                    {
-                        schemaMetaData.ActiveKeywords = new HashSet<string>(
-                            schemaMetaData.ActiveKeywords.Intersect(allowedKeywords, StringComparer.Ordinal),
-                            StringComparer.Ordinal);
-                    }
-                    else
-                    {
-                        schemaMetaData.ActiveKeywords = allowedKeywords;
-                    }
                 }
             }
 
@@ -146,22 +118,6 @@ namespace FormFinch.JsonSchemaValidation.Common
             }
 
             return validator;
-        }
-
-        /// <summary>
-        /// Gets the set of keywords that are valid for a specific draft version.
-        /// Used for cross-draft compatibility to filter out keywords introduced in later drafts.
-        /// Note: Now that native Draft 3, 4, 6, and 7 implementations exist, this is primarily
-        /// for cross-draft schema references where an older draft references a newer draft's keywords.
-        /// </summary>
-#pragma warning disable S1172 // Method parameter is kept for future extensibility
-        private static HashSet<string>? GetAllowedKeywordsForDraft(string draftVersion)
-#pragma warning restore S1172
-        {
-            // Native draft implementations handle their own keyword filtering,
-            // so no keyword filtering needed when using fallback to same-family native implementation
-            _ = draftVersion; // Suppress unused parameter warning
-            return null;
         }
 
         /// <summary>

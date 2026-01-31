@@ -20,12 +20,10 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 
         public DependentSchemasValidatorFactory(
             ISchemaFactory schemaFactory,
-            ILazySchemaValidatorFactory schemaValidatorFactory,
-            IJsonValidationContextFactory contextFactory)
+            ILazySchemaValidatorFactory schemaValidatorFactory)
         {
             _schemaFactory = schemaFactory;
             _schemaValidatorFactory = schemaValidatorFactory;
-            _ = contextFactory; // Reserved for future use
         }
 
         public string Keyword => "dependentSchemas";
