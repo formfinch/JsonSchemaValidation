@@ -41,26 +41,22 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
             }
 
             // If data matches ANY disallowed type, it's invalid
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var validator in _typeValidators)
             {
                 if (validator.IsValid(data))
                     return false;
             }
-#pragma warning restore S3267
             return true;
         }
 
         public bool IsValid(IJsonValidationContext context)
         {
             // If data matches ANY disallowed type, it's invalid
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var validator in _typeValidators)
             {
                 if (validator.IsValid(context.Data))
                     return false;
             }
-#pragma warning restore S3267
 
             // If data matches ANY disallowed schema, it's invalid
             foreach (var validator in _schemaValidators)
@@ -79,7 +75,6 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
             var kwLocation = keywordLocation.ToString();
 
             // If data matches ANY disallowed type, it's invalid
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var validator in _typeValidators)
             {
                 if (validator.IsValid(context.Data))
@@ -87,7 +82,6 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
                     return ValidationResult.Invalid(instanceLocation, kwLocation, $"Value matches a disallowed type: {validator.Keyword}");
                 }
             }
-#pragma warning restore S3267
 
             // If data matches ANY disallowed schema, it's invalid
             int idx = 0;

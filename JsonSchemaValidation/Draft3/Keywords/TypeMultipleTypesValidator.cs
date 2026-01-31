@@ -35,26 +35,22 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
         public bool IsValid(JsonElement data)
         {
             // Fast path for type-only validation
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var validator in _typeValidators)
             {
                 if (validator.IsValid(data))
                     return true;
             }
-#pragma warning restore S3267
             return false;
         }
 
         public bool IsValid(IJsonValidationContext context)
         {
             // Check type validators first
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var validator in _typeValidators)
             {
                 if (validator.IsValid(context.Data))
                     return true;
             }
-#pragma warning restore S3267
 
             // Check schema validators
             foreach (var validator in _schemaValidators)

@@ -41,7 +41,6 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
                 propertyNames.Add(prpElement.Name);
             }
 
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var dependency in _dependentRequiredProperties)
             {
                 if (propertyNames.Contains(dependency.Key))
@@ -53,7 +52,6 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
                     }
                 }
             }
-#pragma warning restore S3267
             return true;
         }
 

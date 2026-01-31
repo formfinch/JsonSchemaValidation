@@ -24,13 +24,11 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 
         public bool IsValid(JsonElement data)
         {
-#pragma warning disable S3267 // Loop has early return for performance
             foreach (var validator in _validators)
             {
                 if (validator.IsValid(data))
                     return true;
             }
-#pragma warning restore S3267
             return false;
         }
 
