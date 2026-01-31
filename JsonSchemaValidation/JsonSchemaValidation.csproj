@@ -13,7 +13,7 @@
     <Company>FormFinch VOF</Company>
     <Description>FormFinch JsonSchemaValidation is a .NET class library for validating JSON documents against JSON Schemas without reliance on third-party libraries, built on top of System.Text.Json.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
-    <RepositoryUrl>https://formfinch.visualstudio.com/formfinch-next/_git/JsonSchemaValidation</RepositoryUrl>
+    <RepositoryUrl>https://github.com/formfinch/JsonSchemaValidation</RepositoryUrl>
     <PackageTags>json schema validation</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>FormFinch JsonSchemaValidation</Title>
