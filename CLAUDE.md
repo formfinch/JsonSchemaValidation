@@ -199,6 +199,7 @@ None currently identified. Cross-draft compatibility is fully supported.
 
 1. **Plan before implementing:** Always present a plan before starting any implementation work. Wait for approval before coding.
 2. **No commits without permission:** Do not commit changes without explicit permission from the user.
+3. **Use Git Flow:** Never commit directly to `main`. Always create a feature branch, commit changes there, push, create a PR, and merge.
 
 
 Follow the Karpathy Guidelines for coding agents
