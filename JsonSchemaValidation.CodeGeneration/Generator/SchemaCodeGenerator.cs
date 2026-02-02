@@ -709,6 +709,64 @@ public sealed class SchemaCodeGenerator
         // Validation methods
         sb.Append(methods);
 
+        // Generate DeepEquals helper if enum/const/uniqueItems are used in the schema
+        if (methods.Contains("DeepEquals("))
+        {
+            sb.AppendLine();
+            sb.AppendLine("        // Helper for deep equality comparison of JSON elements");
+            sb.AppendLine("        private static bool DeepEquals(JsonElement left, JsonElement right)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            if (left.ValueKind != right.ValueKind) return false;");
+            sb.AppendLine("            return left.ValueKind switch");
+            sb.AppendLine("            {");
+            sb.AppendLine("                JsonValueKind.Null => true,");
+            sb.AppendLine("                JsonValueKind.True => true,");
+            sb.AppendLine("                JsonValueKind.False => true,");
+            sb.AppendLine("                JsonValueKind.String => string.Equals(left.GetString(), right.GetString(), StringComparison.Ordinal),");
+            sb.AppendLine("                JsonValueKind.Number => CompareNumbers(left, right),");
+            sb.AppendLine("                JsonValueKind.Array => CompareArrays(left, right),");
+            sb.AppendLine("                JsonValueKind.Object => CompareObjects(left, right),");
+            sb.AppendLine("                _ => false");
+            sb.AppendLine("            };");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static bool CompareNumbers(JsonElement left, JsonElement right)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var leftRaw = left.GetRawText();");
+            sb.AppendLine("            var rightRaw = right.GetRawText();");
+            sb.AppendLine("            if (string.Equals(leftRaw, rightRaw, StringComparison.Ordinal)) return true;");
+            sb.AppendLine("            if (left.TryGetDecimal(out var ld) && right.TryGetDecimal(out var rd)) return ld == rd;");
+            sb.AppendLine("            if (left.TryGetDouble(out var ldd) && right.TryGetDouble(out var rdd)) return ldd.Equals(rdd);");
+            sb.AppendLine("            return false;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static bool CompareArrays(JsonElement left, JsonElement right)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var ll = left.GetArrayLength();");
+            sb.AppendLine("            if (ll != right.GetArrayLength()) return false;");
+            sb.AppendLine("            using var le = left.EnumerateArray();");
+            sb.AppendLine("            using var re = right.EnumerateArray();");
+            sb.AppendLine("            while (le.MoveNext() && re.MoveNext())");
+            sb.AppendLine("            {");
+            sb.AppendLine("                if (!DeepEquals(le.Current, re.Current)) return false;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            return true;");
+            sb.AppendLine("        }");
+            sb.AppendLine();
+            sb.AppendLine("        private static bool CompareObjects(JsonElement left, JsonElement right)");
+            sb.AppendLine("        {");
+            sb.AppendLine("            var lc = 0; foreach (var _ in left.EnumerateObject()) lc++;");
+            sb.AppendLine("            var rc = 0; foreach (var _ in right.EnumerateObject()) rc++;");
+            sb.AppendLine("            if (lc != rc) return false;");
+            sb.AppendLine("            foreach (var lp in left.EnumerateObject())");
+            sb.AppendLine("            {");
+            sb.AppendLine("                if (!right.TryGetProperty(lp.Name, out var rv)) return false;");
+            sb.AppendLine("                if (!DeepEquals(lp.Value, rv)) return false;");
+            sb.AppendLine("            }");
+            sb.AppendLine("            return true;");
+            sb.AppendLine("        }");
+        }
+
         // Generate JSON Pointer escape helper if annotation tracking is enabled
         if (hasAnnotationTracking)
         {

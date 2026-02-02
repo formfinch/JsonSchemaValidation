@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Polyfills;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Validation;
@@ -22,7 +23,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             _expectedValue = expectedValue;
         }
 
-        public bool IsValid(JsonElement data) => JsonElement.DeepEquals(_expectedValue, data);
+        public bool IsValid(JsonElement data) => JsonElementHelper.DeepEquals(_expectedValue, data);
 
         public bool IsValid(IJsonValidationContext context) => IsValid(context.Data);
 

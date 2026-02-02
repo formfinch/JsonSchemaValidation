@@ -39,6 +39,11 @@ dotnet_diagnostic.S3267.severity = none
 # Disabled project-wide: often kept separate for readability and early return patterns.
 dotnet_diagnostic.S1066.severity = none
 
+# MA0158: Use System.Threading.Lock
+# Disabled project-wide: using lock(object) for multi-target compatibility (net8.0/net10.0).
+# The Lock type is only available in .NET 9+, but we target net8.0 where it doesn't exist.
+dotnet_diagnostic.MA0158.severity = none
+
 # New line preferences
 csharp_new_line_before_open_brace = all
 csharp_new_line_before_else = true
