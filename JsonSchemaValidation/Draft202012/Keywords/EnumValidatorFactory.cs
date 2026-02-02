@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Polyfills;
 using FormFinch.JsonSchemaValidation.Exceptions;
 using FormFinch.JsonSchemaValidation.Repositories;
 
@@ -40,7 +41,7 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
             {
                 for (int j = i + 1; j < nEnumValues; j++)
                 {
-                    if (JsonElement.DeepEquals(enumValuesElement[i], enumValuesElement[j]))
+                    if (JsonElementHelper.DeepEquals(enumValuesElement[i], enumValuesElement[j]))
                     {
                         throw new InvalidSchemaException("Elements in the enum array should be unique.");
                     }

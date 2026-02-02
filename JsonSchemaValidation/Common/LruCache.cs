@@ -16,7 +16,7 @@ namespace FormFinch.JsonSchemaValidation.Common
     {
         private readonly Dictionary<TKey, LinkedListNode<KeyValuePair<TKey, TValue>>> _dictionary;
         private readonly LinkedList<KeyValuePair<TKey, TValue>> _accessOrder;
-        private readonly Lock _lock = new();
+        private readonly object _lock = new();
         private readonly int _capacity;
 
         /// <summary>
@@ -40,14 +40,9 @@ namespace FormFinch.JsonSchemaValidation.Common
         {
             get
             {
-                _lock.Enter();
-                try
+                lock (_lock)
                 {
                     return _dictionary.Count;
-                }
-                finally
-                {
-                    _lock.Exit();
                 }
             }
         }
@@ -61,8 +56,7 @@ namespace FormFinch.JsonSchemaValidation.Common
         /// <returns><c>true</c> if the key was found; otherwise, <c>false</c>.</returns>
         public bool TryGetValue(TKey key, [MaybeNullWhen(false)] out TValue value)
         {
-            _lock.Enter();
-            try
+            lock (_lock)
             {
                 if (_dictionary.TryGetValue(key, out var node))
                 {
@@ -76,10 +70,6 @@ namespace FormFinch.JsonSchemaValidation.Common
                 value = default;
                 return false;
             }
-            finally
-            {
-                _lock.Exit();
-            }
         }
 
         /// <summary>
@@ -90,8 +80,7 @@ namespace FormFinch.JsonSchemaValidation.Common
         /// <param name="value">The value of the entry.</param>
         public void Set(TKey key, TValue value)
         {
-            _lock.Enter();
-            try
+            lock (_lock)
             {
                 if (_dictionary.TryGetValue(key, out var existingNode))
                 {
@@ -114,10 +103,6 @@ namespace FormFinch.JsonSchemaValidation.Common
                     var node = _accessOrder.AddFirst(new KeyValuePair<TKey, TValue>(key, value));
                     _dictionary[key] = node;
                 }
-            }
-            finally
-            {
-                _lock.Exit();
             }
         }
     }
