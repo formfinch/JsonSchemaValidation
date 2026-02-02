@@ -12,6 +12,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Draft3.Keywords.Format;
+using FormFinch.JsonSchemaValidation.Polyfills;
 
 namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
 {
@@ -178,7 +179,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             {
                 foreach (var _existing_ in _items_)
                 {
-                    if (JsonElement.DeepEquals(_item_, _existing_)) return false;
+                    if (JsonElementHelper.DeepEquals(_item_, _existing_)) return false;
                 }
                 _items_.Add(_item_);
             }
@@ -385,7 +386,7 @@ namespace FormFinch.JsonSchemaValidation.CompiledValidators.Generated
             {
                 foreach (var _existing_ in _items_)
                 {
-                    if (JsonElement.DeepEquals(_item_, _existing_)) return false;
+                    if (JsonElementHelper.DeepEquals(_item_, _existing_)) return false;
                 }
                 _items_.Add(_item_);
             }

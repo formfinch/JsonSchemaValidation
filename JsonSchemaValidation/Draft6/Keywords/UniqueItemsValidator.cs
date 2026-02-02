@@ -6,6 +6,7 @@
 
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Polyfills;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Validation;
@@ -28,7 +29,7 @@ namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
             {
                 for (int j = i + 1; j < itemCount; j++)
                 {
-                    if (JsonElement.DeepEquals(data[i], data[j]))
+                    if (JsonElementHelper.DeepEquals(data[i], data[j]))
                         return false;
                 }
             }
