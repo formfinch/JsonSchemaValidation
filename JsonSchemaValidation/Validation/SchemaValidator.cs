@@ -15,7 +15,7 @@ namespace FormFinch.JsonSchemaValidation.Validation
         // Cached arrays for fast path to avoid LINQ overhead
         private IKeywordValidator[]? _directValidators;
         private IKeywordValidator[]? _contextValidators;
-        private readonly Lock _cacheLock = new();
+        private readonly object _cacheLock = new();
         private volatile bool _cacheBuilt;
         private bool _requiresAnnotationTracking;
 
@@ -93,8 +93,7 @@ namespace FormFinch.JsonSchemaValidation.Validation
                 return;
             }
 
-            _cacheLock.Enter();
-            try
+            lock (_cacheLock)
             {
                 if (_cacheBuilt)
                 {
@@ -115,10 +114,6 @@ namespace FormFinch.JsonSchemaValidation.Validation
                 _directValidators = directList.Count > 0 ? directList.ToArray() : null;
                 _contextValidators = contextList.Count > 0 ? contextList.ToArray() : null;
                 _cacheBuilt = true;
-            }
-            finally
-            {
-                _cacheLock.Exit();
             }
         }
     }
