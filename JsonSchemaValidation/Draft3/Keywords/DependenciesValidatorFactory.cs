@@ -115,7 +115,9 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
                 return null;
             }
 
-            return new DependenciesValidator(propertyDependencies, schemaDependencies);
+            return new DependenciesValidator(
+                propertyDependencies,
+                schemaDependencies);
         }
 
         private ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement schemaElement)

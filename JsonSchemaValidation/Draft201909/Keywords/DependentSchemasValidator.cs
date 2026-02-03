@@ -5,7 +5,6 @@
 // Note: In Draft 6 and Draft 7, this functionality was part of the "dependencies" keyword.
 // Validates schema dependencies when a property is present.
 
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -16,13 +15,13 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class DependentSchemasValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, ISchemaValidator> _dependentSchemasProperties;
+        private readonly Dictionary<string, ISchemaValidator> _dependentSchemasProperties;
 
         public string Keyword => "dependentSchemas";
 
-        public DependentSchemasValidator(IDictionary<string, ISchemaValidator> dependentSchemasProperties)
+        public DependentSchemasValidator(Dictionary<string, ISchemaValidator> dependentSchemasProperties)
         {
-            _dependentSchemasProperties = dependentSchemasProperties.ToFrozenDictionary(StringComparer.Ordinal);
+            _dependentSchemasProperties = dependentSchemasProperties;
         }
 
         public bool IsValid(IJsonValidationContext context)

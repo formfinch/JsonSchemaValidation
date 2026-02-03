@@ -13,15 +13,15 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
 {
     internal sealed class AnyOfValidator : IKeywordValidator
     {
-        private readonly ISchemaValidator[] _validators;
+        private readonly List<ISchemaValidator> _validators;
         private readonly IJsonValidationContextFactory _contextFactory;
         private readonly bool _requiresTracking;
 
         public string Keyword => "anyOf";
 
-        public AnyOfValidator(IEnumerable<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
+        public AnyOfValidator(List<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
         {
-            _validators = validators.ToArray();
+            _validators = validators;
             _contextFactory = contextFactory;
             // Check if any sub-schema requires annotation tracking
             _requiresTracking = _validators.Any(v => v.RequiresAnnotationTracking);

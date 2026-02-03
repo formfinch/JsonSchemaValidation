@@ -1,7 +1,6 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -12,13 +11,13 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 {
     internal sealed class DependentSchemasValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, ISchemaValidator> _dependentSchemasProperties;
+        private readonly Dictionary<string, ISchemaValidator> _dependentSchemasProperties;
 
         public string Keyword => "dependentSchemas";
 
-        public DependentSchemasValidator(IDictionary<string, ISchemaValidator> dependentSchemasProperties)
+        public DependentSchemasValidator(Dictionary<string, ISchemaValidator> dependentSchemasProperties)
         {
-            _dependentSchemasProperties = dependentSchemasProperties.ToFrozenDictionary(StringComparer.Ordinal);
+            _dependentSchemasProperties = dependentSchemasProperties;
         }
 
         public bool IsValid(IJsonValidationContext context)

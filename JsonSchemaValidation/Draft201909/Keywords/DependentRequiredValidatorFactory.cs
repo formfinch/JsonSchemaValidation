@@ -36,7 +36,7 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
             }
             string keyword = dependenciesCompatibility ? "dependencies" : "dependentRequired";
 
-            Dictionary<string, IEnumerable<string>> dependentRequiredProperties = new(StringComparer.Ordinal);
+            Dictionary<string, List<string>> dependentRequiredProperties = new(StringComparer.Ordinal);
             foreach (var valueListElement in dependentRequiredElement.EnumerateObject())
             {
                 if (valueListElement.Value.ValueKind != JsonValueKind.Array)
@@ -67,7 +67,7 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
                     thenRequiredPropertyNames.Add(propertyName!);
                 }
 
-                if (thenRequiredPropertyNames.Any())
+                if (thenRequiredPropertyNames.Count > 0)
                 {
                     dependentRequiredProperties.Add(whenPropertyInObject, thenRequiredPropertyNames);
                 }
