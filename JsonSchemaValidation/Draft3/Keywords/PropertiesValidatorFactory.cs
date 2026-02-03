@@ -76,7 +76,10 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
                 return null;
             }
 
-            return new PropertiesValidator(propertySchemaValidators, requiredProperties, _contextFactory);
+            return new PropertiesValidator(
+                propertySchemaValidators,
+                requiredProperties,
+                _contextFactory);
         }
 
         ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)

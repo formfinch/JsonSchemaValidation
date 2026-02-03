@@ -14,15 +14,15 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class TypeMultipleTypesValidator : IKeywordValidator
     {
-        private readonly IKeywordValidator[] _validators;
+        private readonly List<IKeywordValidator> _validators;
 
         public string Keyword => "type";
 
         public bool SupportsDirectValidation => true;
 
-        public TypeMultipleTypesValidator(IEnumerable<IKeywordValidator> validators)
+        public TypeMultipleTypesValidator(List<IKeywordValidator> validators)
         {
-            _validators = validators.ToArray();
+            _validators = validators;
         }
 
         public bool IsValid(JsonElement data)

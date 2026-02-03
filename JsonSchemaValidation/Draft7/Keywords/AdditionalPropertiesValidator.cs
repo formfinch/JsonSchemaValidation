@@ -4,7 +4,6 @@
 // Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
 // Validates properties not covered by 'properties' or 'patternProperties'.
 
-using System.Collections.Frozen;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
@@ -17,27 +16,21 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
     internal sealed class AdditionalPropertiesValidator : IKeywordValidator
     {
         private readonly ISchemaValidator _additionalPropertiesSchemaValidator;
-        private readonly FrozenSet<string> _filterPropertyNames;
-        private readonly Regex[] _filterPropertyPatternRegexes;
+        private readonly HashSet<string> _filterPropertyNames;
+        private readonly List<Regex> _filterPropertyPatternRegexes;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "additionalProperties";
 
         public AdditionalPropertiesValidator(
             ISchemaValidator additionalPropertiesSchemaValidator,
-            IEnumerable<string> filterPropertyNames,
-            IEnumerable<string> filterPropertyNamePatterns,
+            HashSet<string> filterPropertyNames,
+            List<Regex> filterPropertyPatternRegexes,
             IJsonValidationContextFactory contextFactory)
         {
             _additionalPropertiesSchemaValidator = additionalPropertiesSchemaValidator;
-            _filterPropertyNames = filterPropertyNames.ToFrozenSet(StringComparer.Ordinal);
-            var patternsArray = filterPropertyNamePatterns as string[] ?? filterPropertyNamePatterns.ToArray();
-            var regexes = new Regex[patternsArray.Length];
-            for (int i = 0; i < patternsArray.Length; i++)
-            {
-                regexes[i] = EcmaScriptRegexHelper.CreateEcmaScriptRegex(patternsArray[i]);
-            }
-            _filterPropertyPatternRegexes = regexes;
+            _filterPropertyNames = filterPropertyNames;
+            _filterPropertyPatternRegexes = filterPropertyPatternRegexes;
             _contextFactory = contextFactory;
         }
 
@@ -121,7 +114,7 @@ namespace FormFinch.JsonSchemaValidation.Draft7.Keywords
 
         private bool MatchesAnyPattern(string propertyName)
         {
-            for (int i = 0; i < _filterPropertyPatternRegexes.Length; i++)
+            for (int i = 0; i < _filterPropertyPatternRegexes.Count; i++)
             {
                 if (_filterPropertyPatternRegexes[i].IsMatch(propertyName))
                     return true;

@@ -15,18 +15,18 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 {
     internal sealed class ItemsArrayValidator : IKeywordValidator
     {
-        private readonly ISchemaValidator[] _validators;
+        private readonly List<ISchemaValidator> _validators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "items";
 
-        public ItemsArrayValidator(IEnumerable<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
+        public ItemsArrayValidator(List<ISchemaValidator> validators, IJsonValidationContextFactory contextFactory)
         {
-            _validators = validators.ToArray();
+            _validators = validators;
             _contextFactory = contextFactory;
         }
 
-        public int TupleSize => _validators.Length;
+        public int TupleSize => _validators.Count;
 
         public bool IsValid(IJsonValidationContext context)
         {
@@ -38,7 +38,7 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
             int idx = 0;
             foreach (JsonElement item in context.Data.EnumerateArray())
             {
-                if (idx >= _validators.Length)
+                if (idx >= _validators.Count)
                 {
                     // Additional items are handled by additionalItems validator
                     break;
@@ -76,7 +76,7 @@ namespace FormFinch.JsonSchemaValidation.Draft4.Keywords
 
             foreach (JsonElement item in context.Data.EnumerateArray())
             {
-                if (idx >= _validators.Length)
+                if (idx >= _validators.Count)
                 {
                     break;
                 }

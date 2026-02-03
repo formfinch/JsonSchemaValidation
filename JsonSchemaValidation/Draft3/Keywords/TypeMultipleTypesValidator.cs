@@ -14,21 +14,21 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal sealed class TypeMultipleTypesValidator : IKeywordValidator
     {
-        private readonly IKeywordValidator[] _typeValidators;
-        private readonly ISchemaValidator[] _schemaValidators;
+        private readonly List<IKeywordValidator> _typeValidators;
+        private readonly List<ISchemaValidator> _schemaValidators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "type";
 
-        public bool SupportsDirectValidation => _schemaValidators.Length == 0;
+        public bool SupportsDirectValidation => _schemaValidators.Count == 0;
 
         public TypeMultipleTypesValidator(
-            IEnumerable<IKeywordValidator> typeValidators,
-            IEnumerable<ISchemaValidator> schemaValidators,
+            List<IKeywordValidator> typeValidators,
+            List<ISchemaValidator> schemaValidators,
             IJsonValidationContextFactory contextFactory)
         {
-            _typeValidators = typeValidators.ToArray();
-            _schemaValidators = schemaValidators.ToArray();
+            _typeValidators = typeValidators;
+            _schemaValidators = schemaValidators;
             _contextFactory = contextFactory;
         }
 
