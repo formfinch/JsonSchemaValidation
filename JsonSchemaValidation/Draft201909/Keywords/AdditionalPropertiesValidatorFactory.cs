@@ -5,6 +5,8 @@
 // Factory for additionalProperties keyword validator.
 
 using System.Text.Json;
+using System.Text.RegularExpressions;
+using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Exceptions;
@@ -57,20 +59,26 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
                 throw new InvalidSchemaException("The value of additionalProperties MUST be a valid JSON Schema.");
             }
 
-            IEnumerable<string> propertyNames = Array.Empty<string>();
+            HashSet<string> propertyNames = new(StringComparer.Ordinal);
             schema.TryGetProperty("properties", out var propertiesElement);
             if (propertiesElement.ValueKind == JsonValueKind.Object)
             {
-                propertyNames = propertiesElement.EnumerateObject().Select(prp => prp.Name);
+                foreach (var prp in propertiesElement.EnumerateObject())
+                {
+                    propertyNames.Add(prp.Name);
+                }
             }
 
-            IEnumerable<string> propertyNamePatterns = Array.Empty<string>();
+            List<Regex> patternRegexes = new();
             schema.TryGetProperty("patternProperties", out var patternPropertiesElement);
             if (patternPropertiesElement.ValueKind == JsonValueKind.Object)
             {
-                propertyNamePatterns = patternPropertiesElement.EnumerateObject().Select(prp => prp.Name);
+                foreach (var prp in patternPropertiesElement.EnumerateObject())
+                {
+                    patternRegexes.Add(EcmaScriptRegexHelper.CreateEcmaScriptRegex(prp.Name));
+                }
             }
-            return new AdditionalPropertiesValidator(validator, propertyNames, propertyNamePatterns, _contextFactory);
+            return new AdditionalPropertiesValidator(validator, propertyNames, patternRegexes, _contextFactory);
         }
 
         ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)

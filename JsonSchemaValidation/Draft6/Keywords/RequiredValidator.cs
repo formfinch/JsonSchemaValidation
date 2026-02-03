@@ -14,15 +14,15 @@ namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
 {
     internal sealed class RequiredValidator : IKeywordValidator
     {
-        private readonly string[] _propertyNames;
+        private readonly List<string> _propertyNames;
 
         public string Keyword => "required";
 
         public bool SupportsDirectValidation => true;
 
-        public RequiredValidator(IEnumerable<string> propertyNames)
+        public RequiredValidator(List<string> propertyNames)
         {
-            _propertyNames = propertyNames as string[] ?? propertyNames.ToArray();
+            _propertyNames = propertyNames;
         }
 
         public bool IsValid(JsonElement data)

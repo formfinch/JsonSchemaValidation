@@ -1,7 +1,6 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -12,18 +11,15 @@ namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 {
     internal sealed class DependentRequiredValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, string[]> _dependentRequiredProperties;
+        private readonly Dictionary<string, string[]> _dependentRequiredProperties;
 
         public string Keyword => "dependentRequired";
 
         public bool SupportsDirectValidation => true;
 
-        public DependentRequiredValidator(IDictionary<string, IEnumerable<string>> dependentRequiredProperties)
+        public DependentRequiredValidator(Dictionary<string, string[]> dependentRequiredProperties)
         {
-            _dependentRequiredProperties = dependentRequiredProperties.ToFrozenDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToArray(),
-                StringComparer.Ordinal);
+            _dependentRequiredProperties = dependentRequiredProperties;
         }
 
         public bool IsValid(JsonElement data)
