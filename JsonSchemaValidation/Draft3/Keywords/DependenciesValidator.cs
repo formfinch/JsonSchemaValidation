@@ -6,7 +6,6 @@
 // - Array: multiple property dependencies (e.g., "bar": ["foo", "baz"])
 // - Schema: schema dependency (e.g., "bar": {...})
 
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -17,17 +16,17 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal sealed class DependenciesValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, string[]> _propertyDependencies;
-        private readonly FrozenDictionary<string, ISchemaValidator> _schemaDependencies;
+        private readonly Dictionary<string, string[]> _propertyDependencies;
+        private readonly Dictionary<string, ISchemaValidator> _schemaDependencies;
 
         public string Keyword => "dependencies";
 
         public DependenciesValidator(
-            IDictionary<string, string[]> propertyDependencies,
-            IDictionary<string, ISchemaValidator> schemaDependencies)
+            Dictionary<string, string[]> propertyDependencies,
+            Dictionary<string, ISchemaValidator> schemaDependencies)
         {
-            _propertyDependencies = propertyDependencies.ToFrozenDictionary(StringComparer.Ordinal);
-            _schemaDependencies = schemaDependencies.ToFrozenDictionary(StringComparer.Ordinal);
+            _propertyDependencies = propertyDependencies;
+            _schemaDependencies = schemaDependencies;
         }
 
         public bool IsValid(IJsonValidationContext context)

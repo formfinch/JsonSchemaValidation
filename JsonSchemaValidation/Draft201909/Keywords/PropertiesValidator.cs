@@ -4,7 +4,6 @@
 // Draft behavior: Identical in Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
 // Validates that object properties match their corresponding schemas.
 
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -15,14 +14,14 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class PropertiesValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, ISchemaValidator> _propertySchemaValidators;
+        private readonly Dictionary<string, ISchemaValidator> _propertySchemaValidators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "properties";
 
         public PropertiesValidator(Dictionary<string, ISchemaValidator> propertySchemaValidators, IJsonValidationContextFactory contextFactory)
         {
-            _propertySchemaValidators = propertySchemaValidators.ToFrozenDictionary(StringComparer.Ordinal);
+            _propertySchemaValidators = propertySchemaValidators;
             _contextFactory = contextFactory;
         }
 

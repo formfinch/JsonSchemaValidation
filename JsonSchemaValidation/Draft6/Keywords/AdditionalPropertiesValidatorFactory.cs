@@ -5,8 +5,10 @@
 // Factory for additionalProperties keyword validator.
 
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Exceptions;
 using FormFinch.JsonSchemaValidation.Repositories;
 
@@ -57,20 +59,36 @@ namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
                 throw new InvalidSchemaException("The value of additionalProperties MUST be a valid JSON Schema.");
             }
 
-            IEnumerable<string> propertyNames = Array.Empty<string>();
+            HashSet<string> propertyNames;
             schema.TryGetProperty("properties", out var propertiesElement);
             if (propertiesElement.ValueKind == JsonValueKind.Object)
             {
-                propertyNames = propertiesElement.EnumerateObject().Select(prp => prp.Name);
+                propertyNames = new HashSet<string>(StringComparer.Ordinal);
+                foreach (var prp in propertiesElement.EnumerateObject())
+                {
+                    propertyNames.Add(prp.Name);
+                }
+            }
+            else
+            {
+                propertyNames = new HashSet<string>(StringComparer.Ordinal);
             }
 
-            IEnumerable<string> propertyNamePatterns = Array.Empty<string>();
+            List<Regex> propertyPatternRegexes;
             schema.TryGetProperty("patternProperties", out var patternPropertiesElement);
             if (patternPropertiesElement.ValueKind == JsonValueKind.Object)
             {
-                propertyNamePatterns = patternPropertiesElement.EnumerateObject().Select(prp => prp.Name);
+                propertyPatternRegexes = new List<Regex>();
+                foreach (var prp in patternPropertiesElement.EnumerateObject())
+                {
+                    propertyPatternRegexes.Add(EcmaScriptRegexHelper.CreateEcmaScriptRegex(prp.Name));
+                }
             }
-            return new AdditionalPropertiesValidator(validator, propertyNames, propertyNamePatterns, _contextFactory);
+            else
+            {
+                propertyPatternRegexes = new List<Regex>();
+            }
+            return new AdditionalPropertiesValidator(validator, propertyNames, propertyPatternRegexes, _contextFactory);
         }
 
         ISchemaValidator CreateValidator(SchemaMetadata schemaData, JsonElement itemSchemaElement)

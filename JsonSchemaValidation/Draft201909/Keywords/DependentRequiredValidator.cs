@@ -5,7 +5,6 @@
 // Note: In Draft 6 and Draft 7, this functionality was part of the "dependencies" keyword.
 // Validates that when a property is present, other properties are also required.
 
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -16,18 +15,15 @@ namespace FormFinch.JsonSchemaValidation.Draft201909.Keywords
 {
     internal sealed class DependentRequiredValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, string[]> _dependentRequiredProperties;
+        private readonly Dictionary<string, List<string>> _dependentRequiredProperties;
 
         public string Keyword => "dependentRequired";
 
         public bool SupportsDirectValidation => true;
 
-        public DependentRequiredValidator(IDictionary<string, IEnumerable<string>> dependentRequiredProperties)
+        public DependentRequiredValidator(Dictionary<string, List<string>> dependentRequiredProperties)
         {
-            _dependentRequiredProperties = dependentRequiredProperties.ToFrozenDictionary(
-                kvp => kvp.Key,
-                kvp => kvp.Value.ToArray(),
-                StringComparer.Ordinal);
+            _dependentRequiredProperties = dependentRequiredProperties;
         }
 
         public bool IsValid(JsonElement data)

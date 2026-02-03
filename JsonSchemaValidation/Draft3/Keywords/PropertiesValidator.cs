@@ -4,7 +4,6 @@
 // Draft 3 behavior: Properties validates object properties AND handles required boolean.
 // In Draft 3, "required" is a boolean on each property definition, not an array at schema level.
 
-using System.Collections.Frozen;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
@@ -15,8 +14,8 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal sealed class PropertiesValidator : IKeywordValidator
     {
-        private readonly FrozenDictionary<string, ISchemaValidator> _propertySchemaValidators;
-        private readonly FrozenSet<string> _requiredProperties;
+        private readonly Dictionary<string, ISchemaValidator> _propertySchemaValidators;
+        private readonly HashSet<string> _requiredProperties;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "properties";
@@ -26,8 +25,8 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
             HashSet<string> requiredProperties,
             IJsonValidationContextFactory contextFactory)
         {
-            _propertySchemaValidators = propertySchemaValidators.ToFrozenDictionary(StringComparer.Ordinal);
-            _requiredProperties = requiredProperties.ToFrozenSet(StringComparer.Ordinal);
+            _propertySchemaValidators = propertySchemaValidators;
+            _requiredProperties = requiredProperties;
             _contextFactory = contextFactory;
         }
 

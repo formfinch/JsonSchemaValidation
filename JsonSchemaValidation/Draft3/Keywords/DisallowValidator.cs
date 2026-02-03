@@ -14,28 +14,28 @@ namespace FormFinch.JsonSchemaValidation.Draft3.Keywords
 {
     internal sealed class DisallowValidator : IKeywordValidator
     {
-        private readonly IKeywordValidator[] _typeValidators;
-        private readonly ISchemaValidator[] _schemaValidators;
+        private readonly List<IKeywordValidator> _typeValidators;
+        private readonly List<ISchemaValidator> _schemaValidators;
         private readonly IJsonValidationContextFactory _contextFactory;
 
         public string Keyword => "disallow";
 
-        public bool SupportsDirectValidation => _schemaValidators.Length == 0;
+        public bool SupportsDirectValidation => _schemaValidators.Count == 0;
 
         public DisallowValidator(
-            IEnumerable<IKeywordValidator> typeValidators,
-            IEnumerable<ISchemaValidator> schemaValidators,
+            List<IKeywordValidator> typeValidators,
+            List<ISchemaValidator> schemaValidators,
             IJsonValidationContextFactory contextFactory)
         {
-            _typeValidators = typeValidators.ToArray();
-            _schemaValidators = schemaValidators.ToArray();
+            _typeValidators = typeValidators;
+            _schemaValidators = schemaValidators;
             _contextFactory = contextFactory;
         }
 
         public bool IsValid(JsonElement data)
         {
             // Only use this fast path when there are no schema validators
-            if (_schemaValidators.Length > 0)
+            if (_schemaValidators.Count > 0)
             {
                 throw new InvalidOperationException("Cannot use direct validation when schema validators are present");
             }
