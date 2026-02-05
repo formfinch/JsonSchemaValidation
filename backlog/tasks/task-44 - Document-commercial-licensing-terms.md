@@ -4,7 +4,7 @@ title: Document commercial licensing terms
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-02-04 23:12'
+updated_date: '2026-02-05 22:53'
 labels:
   - postponed
 milestone: 'Phase 8: Commercial'
@@ -36,4 +36,6 @@ Create `COMMERCIAL.md` explaining commercial license terms.
 
 <!-- SECTION:NOTES:BEGIN -->
 Postponed: All licensing tasks deferred until the package is ready to be published to NuGet.
+
+TODO: The "Commercial License Options" section needs to be changed.
 <!-- SECTION:NOTES:END -->
