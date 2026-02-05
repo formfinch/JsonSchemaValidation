@@ -1,10 +1,10 @@
 ---
 id: TASK-32.5
 title: Archive Azure DevOps repository
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-01-31 21:45'
-updated_date: '2026-01-31 21:45'
+updated_date: '2026-02-03 21:27'
 labels:
   - azure-devops
   - infrastructure

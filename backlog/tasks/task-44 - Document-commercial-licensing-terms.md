@@ -4,14 +4,13 @@ title: Document commercial licensing terms
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-01-31 10:50'
+updated_date: '2026-02-04 23:12'
 labels:
-  - licensing
-  - commercial
+  - postponed
 milestone: 'Phase 8: Commercial'
 dependencies:
   - TASK-12
-priority: high
+priority: low
 ---
 
 ## Description
@@ -32,3 +31,9 @@ Create `COMMERCIAL.md` explaining commercial license terms.
 - [ ] #2 Linked from LICENSE and README
 - [ ] #3 Clear definition of commercial vs non-commercial use
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Postponed: All licensing tasks deferred until the package is ready to be published to NuGet.
+<!-- SECTION:NOTES:END -->

@@ -159,14 +159,14 @@ None currently identified. Cross-draft compatibility is fully supported.
 
 ### Target Frameworks
 
-**Current:** `net10.0`
+**Current:** `net8.0;net10.0`
 
 **Policy:**
-- Target the latest .NET LTS version
-- Evaluate adding previous LTS (net8.0) based on user demand
+- Support current LTS (.NET 8) and latest LTS (.NET 10)
+- Evaluate adding net6.0 based on user demand (EOL but ~15% market share)
 - No netstandard2.0 support (allows use of modern APIs)
 
-**Rationale:** Targeting only latest LTS keeps the codebase simple, allows use of modern C# features and APIs, and reduces testing matrix. Trade-off is excluding users on older frameworks.
+**Rationale:** Multi-targeting net8.0 and net10.0 covers ~60% of the .NET market while keeping the codebase simple. APIs are nearly identical between these versions, requiring only minor adjustments (e.g., using `lock(object)` instead of the .NET 9+ `Lock` type).
 
 ### Versioning
 

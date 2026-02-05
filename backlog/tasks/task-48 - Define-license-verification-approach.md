@@ -4,15 +4,13 @@ title: Define license verification approach
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:58'
-updated_date: '2026-01-31 10:50'
+updated_date: '2026-02-04 23:12'
 labels:
-  - commercial
-  - policy
-  - decision
+  - postponed
 milestone: 'Phase 8: Commercial'
 dependencies:
   - TASK-46
-priority: medium
+priority: low
 ---
 
 ## Description
@@ -34,3 +32,9 @@ Decide how commercial users prove they're licensed.
 - [ ] #1 Verification approach decided and documented
 - [ ] #2 If technical enforcement chosen, implementation planned
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Postponed: All licensing tasks deferred until the package is ready to be published to NuGet.
+<!-- SECTION:NOTES:END -->

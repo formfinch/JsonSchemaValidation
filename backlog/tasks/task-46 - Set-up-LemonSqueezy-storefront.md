@@ -4,14 +4,13 @@ title: Set up LemonSqueezy storefront
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:58'
-updated_date: '2026-01-31 10:50'
+updated_date: '2026-02-04 23:12'
 labels:
-  - commercial
-  - infrastructure
+  - postponed
 milestone: 'Phase 8: Commercial'
 dependencies:
   - TASK-45
-priority: high
+priority: low
 ---
 
 ## Description
@@ -37,3 +36,9 @@ Implement commercial license purchasing via LemonSqueezy.
 - [ ] #4 Purchase confirmation emails working
 - [ ] #5 Test purchase completed successfully
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+Postponed: All licensing tasks deferred until the package is ready to be published to NuGet.
+<!-- SECTION:NOTES:END -->
