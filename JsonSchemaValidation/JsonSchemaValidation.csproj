@@ -17,6 +17,8 @@
     <RepositoryUrl>https://github.com/formfinch/JsonSchemaValidation</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <PackageTags>json schema validation</PackageTags>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>FormFinch JsonSchemaValidation</Title>
@@ -24,6 +26,8 @@
     <PackageProjectUrl>https://www.formfinch.com</PackageProjectUrl>
   </PropertyGroup>
   <PropertyGroup>
+    <Deterministic>true</Deterministic>
+    <ContinuousIntegrationBuild Condition="'$(CI)' == 'true'">true</ContinuousIntegrationBuild>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Suppress backcompat warnings for 1.0.0 release - no prior public API to maintain -->
