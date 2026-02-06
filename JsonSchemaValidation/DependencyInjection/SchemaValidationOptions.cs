@@ -12,12 +12,40 @@ namespace FormFinch.JsonSchemaValidation.DependencyInjection
     /// </remarks>
     public class SchemaValidationOptions
     {
+        /// <summary>
+        /// Gets or sets the default JSON Schema draft version URI used when a schema does not declare <c>$schema</c>.
+        /// Defaults to Draft 2020-12.
+        /// </summary>
         public string DefaultDraftVersion { get; set; } = "https://json-schema.org/draft/2020-12/schema";
+
+        /// <summary>
+        /// Gets or sets a value indicating whether JSON Schema Draft 2020-12 is enabled. Default is <see langword="true"/>.
+        /// </summary>
         public bool EnableDraft202012 { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether JSON Schema Draft 2019-09 is enabled. Default is <see langword="true"/>.
+        /// </summary>
         public bool EnableDraft201909 { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether JSON Schema Draft 7 is enabled. Default is <see langword="true"/>.
+        /// </summary>
         public bool EnableDraft7 { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether JSON Schema Draft 6 is enabled. Default is <see langword="true"/>.
+        /// </summary>
         public bool EnableDraft6 { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether JSON Schema Draft 4 is enabled. Default is <see langword="true"/>.
+        /// </summary>
         public bool EnableDraft4 { get; set; } = true;
+
+        /// <summary>
+        /// Gets or sets a value indicating whether JSON Schema Draft 3 is enabled. Default is <see langword="true"/>.
+        /// </summary>
         public bool EnableDraft3 { get; set; } = true;
 
         /// <summary>

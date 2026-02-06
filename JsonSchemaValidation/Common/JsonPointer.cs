@@ -19,6 +19,9 @@ namespace FormFinch.JsonSchemaValidation.Common
         private readonly string[] _segments;
         private string? _cachedString;
 
+        /// <summary>
+        /// Gets the empty JSON Pointer, representing the root of the document.
+        /// </summary>
         public static JsonPointer Empty { get; } = new([]);
 
         private JsonPointer(string[] segments)
@@ -146,6 +149,7 @@ namespace FormFinch.JsonSchemaValidation.Common
             return segment.Replace("~1", "/").Replace("~0", "~");
         }
 
+        /// <inheritdoc />
         public override bool Equals(object? obj)
         {
             if (obj is JsonPointer other)
@@ -155,6 +159,7 @@ namespace FormFinch.JsonSchemaValidation.Common
             return false;
         }
 
+        /// <inheritdoc />
         public override int GetHashCode()
         {
             var hash = new HashCode();
