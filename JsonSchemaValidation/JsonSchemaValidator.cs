@@ -34,7 +34,7 @@ namespace FormFinch.JsonSchemaValidation
     /// </para>
     /// <para>
     /// For advanced scenarios (custom configuration, dependency injection integration),
-    /// use <see cref="SchemaValidationSetup.AddJsonSchemaValidation"/> instead.
+    /// use <see cref="SchemaValidationSetup.AddJsonSchemaValidation(IServiceCollection, Action{SchemaValidationOptions}?)"/> instead.
     /// </para>
     /// <para>
     /// <b>Note:</b> Schemas are cached by content hash to avoid unbounded memory growth
