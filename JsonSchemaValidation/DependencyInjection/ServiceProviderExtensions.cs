@@ -8,8 +8,18 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
+    /// <summary>
+    /// Extension methods for initializing JSON Schema validation services after the service provider is built.
+    /// </summary>
     public static class ServiceProviderExtensions
     {
+        /// <summary>
+        /// Initializes all singleton validation services, registers compiled metaschema validators,
+        /// and loads draft meta schemas into the schema repository.
+        /// Must be called after building the service provider.
+        /// </summary>
+        /// <param name="serviceProvider">The service provider to initialize services from.</param>
+        /// <exception cref="InvalidOperationException">Thrown when a draft meta schema cannot be registered.</exception>
         public static void InitializeSingletonServices(this IServiceProvider serviceProvider)
         {
             // List the types of the singleton services you want to initialize
