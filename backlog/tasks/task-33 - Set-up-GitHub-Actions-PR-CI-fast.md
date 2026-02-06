@@ -1,10 +1,10 @@
 ---
 id: TASK-33
 title: Set up GitHub Actions - PR CI (fast)
-status: To Do
+status: In Progress
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-02-06 13:42'
+updated_date: '2026-02-06 23:10'
 labels:
   - infrastructure
   - ci-cd
