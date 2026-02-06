@@ -15,8 +15,26 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidation.DependencyInjection
 {
+    /// <summary>
+    /// Extension methods for configuring JSON Schema validation services in a dependency injection container.
+    /// </summary>
     public static class SchemaValidationSetup
     {
+        /// <summary>
+        /// Adds JSON Schema validation services to the specified <see cref="IServiceCollection"/>.
+        /// </summary>
+        /// <param name="services">The service collection to add services to.</param>
+        /// <param name="setupAction">An optional action to configure <see cref="SchemaValidationOptions"/>.</param>
+        /// <returns>The service collection for chaining.</returns>
+        /// <example>
+        /// <code>
+        /// services.AddJsonSchemaValidation(options =>
+        /// {
+        ///     options.EnableDraft3 = false;
+        ///     options.Draft202012.FormatAssertionEnabled = true;
+        /// });
+        /// </code>
+        /// </example>
         public static IServiceCollection AddJsonSchemaValidation(this IServiceCollection services, Action<SchemaValidationOptions>? setupAction = null)
         {
             var options = new SchemaValidationOptions();
@@ -24,6 +42,12 @@ namespace FormFinch.JsonSchemaValidation.DependencyInjection
             return services.AddJsonSchemaValidation(options);
         }
 
+        /// <summary>
+        /// Adds JSON Schema validation services to the specified <see cref="IServiceCollection"/> using the provided options.
+        /// </summary>
+        /// <param name="services">The service collection to add services to.</param>
+        /// <param name="options">The options that control validation behavior and supported drafts.</param>
+        /// <returns>The service collection for chaining.</returns>
         public static IServiceCollection AddJsonSchemaValidation(this IServiceCollection services, SchemaValidationOptions options)
         {
             services.AddSingleton(options);

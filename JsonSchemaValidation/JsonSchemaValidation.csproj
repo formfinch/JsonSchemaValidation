@@ -25,8 +25,7 @@
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Suppress backcompat warnings for 1.0.0 release - no prior public API to maintain -->
-    <!-- CS1591: suppress until TASK-21 adds missing XML docs to all public APIs -->
-    <NoWarn>$(NoWarn);RS0026;RS0027;CS1591</NoWarn>
+    <NoWarn>$(NoWarn);RS0026;RS0027</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\LICENSE" Pack="true" PackagePath="" />
