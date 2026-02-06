@@ -1,10 +1,10 @@
 ---
 id: TASK-62
 title: Add memory leak detection tests
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-02-02 21:47'
-updated_date: '2026-02-06 15:19'
+updated_date: '2026-02-06 16:26'
 labels:
   - testing
   - quality
@@ -75,3 +75,19 @@ All 9 tests pass on both net8.0 and net10.0.
 
 **AC #5 (nightly workflow)** — TASK-67 dependency, not in scope here.
 <!-- SECTION:NOTES:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Added 11 memory leak detection tests in `JsonSchemaValidationTests.Stress/Memory/MemoryLeakTests.cs`:
+
+**WeakReference pattern (4 tests):** LruCache eviction, ServiceProvider disposal, OutputUnit lifetime, IJsonSchema lifetime.
+
+**Bounded memory pattern (7 tests):** LruCache 50K ops, IsValid/Validate repeated 10K iterations, 2K unique schemas via IsValid/Validate, complex schema (exercising $ref, allOf, if/then/else, patternProperties, unevaluatedProperties, format) repeated 10K iterations via IsValid/Validate.
+
+All 11 tests pass on net8.0 and net10.0. No project file changes needed.
+
+AC #4 (compiled validators) deferred — requires cross-project dependency. AC #5 (nightly workflow) depends on TASK-67.
+
+PR: #9
+<!-- SECTION:FINAL_SUMMARY:END -->
