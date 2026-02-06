@@ -1,10 +1,10 @@
 ---
 id: TASK-21
 title: Review XML documentation completeness
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-01-30 21:56'
-updated_date: '2026-02-06 13:43'
+updated_date: '2026-02-06 14:32'
 labels:
   - documentation
   - code-quality
@@ -29,7 +29,13 @@ Audit all public APIs for complete XML documentation.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 No CS1591 warnings (missing XML comment)
-- [ ] #2 Key APIs have <example> tags
-- [ ] #3 Exception documentation complete
+- [x] #1 No CS1591 warnings (missing XML comment)
+- [x] #2 Key APIs have <example> tags
+- [x] #3 Exception documentation complete
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Added XML documentation to all 198 undocumented public members across 13 files. Core consumer API documented with usage examples (SchemaValidationSetup). FormatValidators across all 6 drafts documented with format names and RFC references. CS1591 suppression removed — build has zero warnings. PR #6 merged.
+<!-- SECTION:FINAL_SUMMARY:END -->

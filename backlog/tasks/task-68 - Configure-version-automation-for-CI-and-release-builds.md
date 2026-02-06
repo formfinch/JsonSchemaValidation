@@ -1,9 +1,10 @@
 ---
 id: TASK-68
 title: Configure version automation for CI and release builds
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-06 13:43'
+updated_date: '2026-02-06 14:10'
 labels:
   - infrastructure
   - nuget-package
@@ -35,8 +36,14 @@ Replace `<Version>1.0.0</Version>` with `<VersionPrefix>1.0.0</VersionPrefix>` i
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `<Version>` replaced with `<VersionPrefix>` in JsonSchemaValidation.csproj
-- [ ] #2 `dotnet pack --version-suffix ci.1` produces a package versioned `1.0.0-ci.1`
-- [ ] #3 `dotnet pack -p:Version=1.0.0` produces a package versioned `1.0.0`
-- [ ] #4 No other version-related changes or tooling added
+- [x] #1 `<Version>` replaced with `<VersionPrefix>` in JsonSchemaValidation.csproj
+- [x] #2 `dotnet pack --version-suffix ci.1` produces a package versioned `1.0.0-ci.1`
+- [x] #3 `dotnet pack -p:Version=1.0.0` produces a package versioned `1.0.0`
+- [x] #4 No other version-related changes or tooling added
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Replaced `<Version>1.0.0</Version>` with `<VersionPrefix>1.0.0</VersionPrefix>` in JsonSchemaValidation.csproj. Verified: `--version-suffix ci.1` produces `1.0.0-ci.1`, `-p:Version=1.0.0` produces `1.0.0`. No additional tooling added. PR #4 merged.
+<!-- SECTION:FINAL_SUMMARY:END -->

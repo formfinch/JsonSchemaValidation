@@ -1,10 +1,10 @@
 ---
 id: TASK-24
 title: Configure deterministic builds
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-01-30 21:56'
-updated_date: '2026-02-06 13:43'
+updated_date: '2026-02-06 15:04'
 labels:
   - nuget-package
   - reproducibility
