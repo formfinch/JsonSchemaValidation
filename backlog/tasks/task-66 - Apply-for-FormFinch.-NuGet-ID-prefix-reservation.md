@@ -4,9 +4,11 @@ title: Apply for FormFinch. NuGet ID prefix reservation
 status: To Do
 assignee: []
 created_date: '2026-02-05 22:23'
+updated_date: '2026-02-06 13:43'
 labels:
   - nuget
   - infrastructure
+milestone: 1.0.0 Release
 dependencies:
   - TASK-35
 documentation:

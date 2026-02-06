@@ -4,10 +4,12 @@ title: Add memory leak detection tests
 status: To Do
 assignee: []
 created_date: '2026-02-02 21:47'
+updated_date: '2026-02-06 13:43'
 labels:
   - testing
   - quality
   - memory
+milestone: 1.0.0 Release
 dependencies: []
 priority: high
 ---
@@ -45,6 +47,6 @@ Implementation approach:
 - [ ] #2 Memory leak tests exist for LruCache
 - [ ] #3 Memory leak tests exist for Static API repeated usage
 - [ ] #4 Memory leak tests exist for compiled validator lifecycle
-- [ ] #5 Tests run as part of CI pipeline
+- [ ] #5 Tests run as part of the nightly workflow (TASK-67), not PR CI
 - [ ] #6 No memory leaks detected in current implementation
 <!-- AC:END -->

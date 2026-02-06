@@ -4,11 +4,11 @@ title: Configure deterministic builds
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:56'
-updated_date: '2026-01-31 10:50'
+updated_date: '2026-02-06 13:43'
 labels:
   - nuget-package
   - reproducibility
-milestone: 'Phase 4: Package Configuration'
+milestone: 1.0.0 Release
 dependencies: []
 priority: medium
 ---

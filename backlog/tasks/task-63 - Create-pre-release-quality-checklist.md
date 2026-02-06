@@ -4,10 +4,12 @@ title: Create pre-release quality checklist
 status: To Do
 assignee: []
 created_date: '2026-02-02 21:47'
+updated_date: '2026-02-06 13:43'
 labels:
   - documentation
   - process
   - quality
+milestone: 1.0.0 Release
 dependencies: []
 priority: high
 ---

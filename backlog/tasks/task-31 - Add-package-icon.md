@@ -4,11 +4,11 @@ title: Add package icon
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-01-31 10:50'
+updated_date: '2026-02-06 13:43'
 labels:
   - nuget-package
   - branding
-milestone: 'Phase 5: Documentation & Samples'
+milestone: 1.0.0 Release
 dependencies: []
 priority: medium
 ---

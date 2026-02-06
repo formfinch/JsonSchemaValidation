@@ -4,11 +4,11 @@ title: Configure NuGet.org account
 status: To Do
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-02-05 22:23'
+updated_date: '2026-02-06 13:43'
 labels:
   - infrastructure
   - nuget
-milestone: 'Phase 6: Release Infrastructure'
+milestone: 1.0.0 Release
 dependencies:
   - TASK-65
 priority: high
