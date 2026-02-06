@@ -238,6 +238,132 @@ public class MemoryLeakTests
 
     #endregion
 
+    #region Static API — Complex Schema Tests
+
+    // Schema exercising applicators ($ref, allOf, if/then/else), property
+    // keywords (properties, patternProperties, unevaluatedProperties), array
+    // keywords (prefixItems, items), and format validation. This ensures the
+    // deeper validator call trees and annotation tracking don't leak.
+    private const string ComplexSchema = """
+        {
+            "$defs": {
+                "address": {
+                    "type": "object",
+                    "properties": {
+                        "street": { "type": "string", "minLength": 1 },
+                        "city": { "type": "string" },
+                        "zip": { "type": "string", "pattern": "^[0-9]{5}$" }
+                    },
+                    "required": ["street", "city"]
+                }
+            },
+            "type": "object",
+            "properties": {
+                "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+                "email": { "type": "string", "format": "email" },
+                "age": { "type": "integer", "minimum": 0, "maximum": 150 },
+                "address": { "$ref": "#/$defs/address" },
+                "tags": {
+                    "type": "array",
+                    "prefixItems": [{ "type": "string" }],
+                    "items": { "type": "string", "maxLength": 50 },
+                    "minItems": 1,
+                    "uniqueItems": true
+                }
+            },
+            "patternProperties": {
+                "^x-": { "type": "string" }
+            },
+            "unevaluatedProperties": false,
+            "required": ["name", "email"],
+            "allOf": [
+                { "properties": { "name": { "minLength": 1 } } }
+            ],
+            "if": { "properties": { "age": { "minimum": 18 } } },
+            "then": { "properties": { "email": { "minLength": 5 } } },
+            "else": { "properties": { "name": { "maxLength": 200 } } }
+        }
+        """;
+
+    private const string ComplexValidInstance = """
+        {
+            "name": "John Doe",
+            "email": "john@example.com",
+            "age": 30,
+            "address": { "street": "123 Main St", "city": "Springfield", "zip": "12345" },
+            "tags": ["developer", "tester"],
+            "x-custom": "value"
+        }
+        """;
+
+    private const string ComplexInvalidInstance = """
+        {
+            "name": "",
+            "email": "not-an-email",
+            "age": -5,
+            "address": { "city": "Springfield", "zip": "bad" },
+            "tags": [],
+            "x-custom": 42,
+            "unknown": true
+        }
+        """;
+
+    [Fact]
+    public void StaticApi_ComplexSchema_RepeatedIsValid_BoundedMemory()
+    {
+        const int iterations = 5_000;
+
+        // Warm up
+        JsonSchemaValidator.IsValid(ComplexSchema, ComplexValidInstance);
+        JsonSchemaValidator.IsValid(ComplexSchema, ComplexInvalidInstance);
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+
+        var baselineMemory = GC.GetTotalMemory(forceFullCollection: true);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            JsonSchemaValidator.IsValid(ComplexSchema, ComplexValidInstance);
+            JsonSchemaValidator.IsValid(ComplexSchema, ComplexInvalidInstance);
+        }
+
+        var finalMemory = GC.GetTotalMemory(forceFullCollection: true);
+        var growth = finalMemory - baselineMemory;
+
+        Assert.True(growth < 2 * 1024 * 1024,
+            $"Complex IsValid: Memory grew by {growth:N0} bytes after {iterations * 2:N0} iterations (baseline: {baselineMemory:N0}, final: {finalMemory:N0})");
+    }
+
+    [Fact]
+    public void StaticApi_ComplexSchema_RepeatedValidate_BoundedMemory()
+    {
+        const int iterations = 5_000;
+
+        // Warm up
+        JsonSchemaValidator.Validate(ComplexSchema, ComplexValidInstance);
+        JsonSchemaValidator.Validate(ComplexSchema, ComplexInvalidInstance);
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+        GC.WaitForPendingFinalizers();
+        GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+
+        var baselineMemory = GC.GetTotalMemory(forceFullCollection: true);
+
+        for (int i = 0; i < iterations; i++)
+        {
+            JsonSchemaValidator.Validate(ComplexSchema, ComplexValidInstance);
+            JsonSchemaValidator.Validate(ComplexSchema, ComplexInvalidInstance);
+        }
+
+        var finalMemory = GC.GetTotalMemory(forceFullCollection: true);
+        var growth = finalMemory - baselineMemory;
+
+        Assert.True(growth < 2 * 1024 * 1024,
+            $"Complex Validate: Memory grew by {growth:N0} bytes after {iterations * 2:N0} iterations (baseline: {baselineMemory:N0}, final: {finalMemory:N0})");
+    }
+
+    #endregion
+
     #region Object Lifetime Tests
 
     [Fact]
