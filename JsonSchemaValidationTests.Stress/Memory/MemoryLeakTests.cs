@@ -112,9 +112,8 @@ public class MemoryLeakTests
 
         // Use the repository so it's actually initialized
         var repo = sp.GetRequiredService<ISchemaRepository>();
-        repo.TryRegisterSchema(
-            System.Text.Json.JsonDocument.Parse("""{"type": "string"}""").RootElement,
-            out _);
+        using var doc = System.Text.Json.JsonDocument.Parse("""{"type": "string"}""");
+        repo.TryRegisterSchema(doc.RootElement, out _);
 
         var weakRef = new WeakReference(sp);
         sp.Dispose();
@@ -167,7 +166,7 @@ public class MemoryLeakTests
         // Generate 2000 unique schemas (LRU cache capacity is 1000)
         for (int i = 0; i < uniqueSchemas; i++)
         {
-            var schema = $$"""{"type": "integer", "minimum": {{i}}}""";
+            var schema = $$"""{"$id": "urn:memory-test:isvalid:{{i}}", "type": "integer", "minimum": {{i}}}""";
             JsonSchemaValidator.IsValid(schema, "42");
         }
 
@@ -226,7 +225,7 @@ public class MemoryLeakTests
 
         for (int i = 0; i < uniqueSchemas; i++)
         {
-            var schema = $$"""{"type": "integer", "minimum": {{i}}}""";
+            var schema = $$"""{"$id": "urn:memory-test:validate:{{i}}", "type": "integer", "minimum": {{i}}}""";
             JsonSchemaValidator.Validate(schema, "42");
         }
 
