@@ -112,14 +112,28 @@ jobs:
         run: dotnet restore --source https://api.nuget.org/v3/index.json
 
       - name: Check for vulnerable packages
+        shell: pwsh
         run: |
-          OUTPUT=$(dotnet list package --vulnerable --include-transitive 2>&1)
-          echo "$OUTPUT"
-          if echo "$OUTPUT" | grep -q "has the following vulnerable packages"; then
-            echo "::error::Vulnerable packages detected!"
+          $output = dotnet list package --vulnerable --include-transitive --format json 2>&1
+          $json = $output | ConvertFrom-Json
+
+          $vulns = @()
+          foreach ($project in $json.projects) {
+            foreach ($framework in $project.frameworks) {
+              foreach ($pkg in @($framework.topLevelPackages; $framework.transitivePackages)) {
+                if ($pkg.vulnerabilities) {
+                  $vulns += $pkg
+                }
+              }
+            }
+          }
+
+          if ($vulns.Count -gt 0) {
+            Write-Host "::error::Vulnerable packages detected! ($($vulns.Count) vulnerable package(s) found)"
+            $vulns | ForEach-Object { Write-Host "  - $($_.id) $($_.resolvedVersion)" }
             exit 1
-          fi
-          echo "No vulnerable packages found."
+          }
+          Write-Host 'No vulnerable packages found.'
 
   memory-leak-tests:
     name: Memory Leak Tests
@@ -247,8 +261,14 @@ jobs:
           $baselineData = Get-Content $baseline -Raw | ConvertFrom-Json
           $resultsDir = 'BenchmarkDotNet.Artifacts/results'
           $failed = $false
+          $reportFiles = Get-ChildItem "$resultsDir/*-report-full.json" -ErrorAction SilentlyContinue
 
-          foreach ($file in Get-ChildItem "$resultsDir/*-report-full.json" -ErrorAction SilentlyContinue) {
+          if (-not $reportFiles) {
+            Write-Host '::error::No benchmark report files found. Ensure benchmarks ran with JSON export enabled.'
+            exit 1
+          }
+
+          foreach ($file in $reportFiles) {
             Write-Host "Processing: $($file.FullName)"
             $report = Get-Content $file.FullName -Raw | ConvertFrom-Json
 
