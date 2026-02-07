@@ -114,13 +114,16 @@ jobs:
       - name: Check for vulnerable packages
         shell: pwsh
         run: |
-          $output = dotnet list package --vulnerable --include-transitive --format json 2>&1
-          $json = $output | ConvertFrom-Json
+          $output = dotnet list package --vulnerable --include-transitive --format json 2>$null
+          $json = ($output -join "`n") | ConvertFrom-Json
 
           $vulns = @()
           foreach ($project in $json.projects) {
             foreach ($framework in $project.frameworks) {
-              foreach ($pkg in @($framework.topLevelPackages; $framework.transitivePackages)) {
+              $packages = @()
+              if ($framework.topLevelPackages) { $packages += $framework.topLevelPackages }
+              if ($framework.transitivePackages) { $packages += $framework.transitivePackages }
+              foreach ($pkg in $packages) {
                 if ($pkg.vulnerabilities) {
                   $vulns += $pkg
                 }
@@ -334,10 +337,10 @@ jobs:
         run: dotnet restore --source https://api.nuget.org/v3/index.json
 
       - name: Build
-        run: dotnet build --no-restore -c Release -p:GeneratePackageOnBuild=false
+        run: dotnet build --no-restore -c Release -p:GeneratePackageOnBuild=false -p:VersionSuffix="ci.${{ github.run_number }}"
 
       - name: Pack pre-release
-        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release --version-suffix "ci.${{ github.run_number }}"
+        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release -p:VersionSuffix="ci.${{ github.run_number }}"
 
       - name: Upload NuGet packages
         uses: actions/upload-artifact@v4
