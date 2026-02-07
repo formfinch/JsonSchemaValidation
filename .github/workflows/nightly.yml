@@ -233,67 +233,50 @@ jobs:
         run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build -- --filter "ComplexValidationBenchmarks"
 
       - name: Compare against baseline
+        shell: pwsh
         run: |
-          if ! command -v jq >/dev/null 2>&1; then
-            echo "Installing jq..."
-            if [ "$(uname -s)" = "Linux" ]; then
-              sudo apt-get update -qq && sudo apt-get install -yqq jq
-            elif [ "$(uname -s)" = "Darwin" ]; then
-              brew install jq
-            else
-              echo "::error::jq is not installed and no supported package manager found."
-              exit 1
-            fi
-          fi
+          $baseline = 'benchmarks/baseline.json'
 
-          BASELINE="benchmarks/baseline.json"
-
-          if [ ! -f "$BASELINE" ]; then
-            echo "::warning::No baseline.json found — skipping regression check. Run benchmarks locally and commit benchmarks/baseline.json to enable comparison."
+          if (-not (Test-Path $baseline)) {
+            Write-Host '::warning::No baseline.json found — skipping regression check. Run benchmarks locally and commit benchmarks/baseline.json to enable comparison.'
             exit 0
-          fi
+          }
 
-          RESULTS_DIR="BenchmarkDotNet.Artifacts/results"
+          $baselineData = Get-Content $baseline -Raw | ConvertFrom-Json
+          $resultsDir = 'BenchmarkDotNet.Artifacts/results'
+          $failed = $false
 
-          # Find all BenchmarkDotNet JSON result files
-          for RESULT_FILE in "$RESULTS_DIR"/*-report-full.json; do
-            [ -f "$RESULT_FILE" ] || continue
-            echo "Processing: $RESULT_FILE"
+          foreach ($file in Get-ChildItem "$resultsDir/*-report-full.json" -ErrorAction SilentlyContinue) {
+            Write-Host "Processing: $($file.FullName)"
+            $report = Get-Content $file.FullName -Raw | ConvertFrom-Json
 
-            # Extract FormFinch benchmarks and compare against baseline
-            jq -r '.Benchmarks[] | select(.FullName | test("FormFinch_Validate")) | {
-              key: (.Type + "." + .Method + "(" + .Parameters + ")"),
-              mean: .Statistics.Mean
-            } | @base64' "$RESULT_FILE" | while read -r ENTRY; do
-              DECODED=$(echo "$ENTRY" | base64 -d)
-              KEY=$(echo "$DECODED" | jq -r '.key')
-              ACTUAL_NS=$(echo "$DECODED" | jq -r '.mean')
+            foreach ($bench in $report.Benchmarks) {
+              if ($bench.FullName -notmatch 'FormFinch_Validate') { continue }
 
-              BASELINE_NS=$(jq -r --arg k "$KEY" '.benchmarks[$k].mean_ns // empty' "$BASELINE")
+              $key = "$($bench.Type).$($bench.Method)($($bench.Parameters))"
+              $actualNs = $bench.Statistics.Mean
+              $baselineNs = $baselineData.benchmarks.$key.mean_ns
 
-              if [ -z "$BASELINE_NS" ]; then
-                echo "  ⚠ No baseline for: $KEY (skipping)"
+              if (-not $baselineNs) {
+                Write-Host "  Warning: No baseline for: $key (skipping)"
                 continue
-              fi
+              }
 
-              # Calculate regression percentage: (actual - baseline) / baseline * 100
-              REGRESSION=$(echo "$ACTUAL_NS $BASELINE_NS" | awk '{printf "%.1f", (($1 - $2) / $2) * 100}')
-              THRESHOLD=10
+              $regression = [math]::Round((($actualNs - $baselineNs) / $baselineNs) * 100, 1)
 
-              if echo "$REGRESSION $THRESHOLD" | awk '{exit !($1 > $2)}'; then
-                echo "::error::Regression detected: $KEY — ${REGRESSION}% slower (baseline: ${BASELINE_NS}ns, actual: ${ACTUAL_NS}ns)"
-                # Write to a temp file since we're in a subshell (pipe)
-                echo "1" > /tmp/bench_failed
-              else
-                echo "  ✓ $KEY — ${REGRESSION}% (baseline: ${BASELINE_NS}ns, actual: ${ACTUAL_NS}ns)"
-              fi
-            done
-          done
+              if ($regression -gt 10) {
+                Write-Host "::error::Regression detected: $key — ${regression}% slower (baseline: ${baselineNs}ns, actual: ${actualNs}ns)"
+                $failed = $true
+              } else {
+                Write-Host "  OK: $key — ${regression}% (baseline: ${baselineNs}ns, actual: ${actualNs}ns)"
+              }
+            }
+          }
 
-          if [ -f /tmp/bench_failed ]; then
-            echo "::error::One or more benchmarks regressed beyond the 10% threshold."
+          if ($failed) {
+            Write-Host '::error::One or more benchmarks regressed beyond the 10% threshold.'
             exit 1
-          fi
+          }
 
       - name: Upload benchmark artifacts
         if: always()
