@@ -5,6 +5,10 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+concurrency:
+  group: nightly-quality-gate
+  cancel-in-progress: true
+
 env:
   DOTNET_NOLOGO: true
   DOTNET_CLI_TELEMETRY_OPTOUT: true
@@ -237,7 +241,6 @@ jobs:
             exit 0
           fi
 
-          FAILED=0
           RESULTS_DIR="BenchmarkDotNet.Artifacts/results"
 
           # Find all BenchmarkDotNet JSON result files
@@ -314,7 +317,7 @@ jobs:
         run: dotnet restore --source https://api.nuget.org/v3/index.json
 
       - name: Build
-        run: dotnet build --no-restore -c Release
+        run: dotnet build --no-restore -c Release -p:GeneratePackageOnBuild=false
 
       - name: Pack pre-release
         run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release --version-suffix "ci.${{ github.run_number }}"
