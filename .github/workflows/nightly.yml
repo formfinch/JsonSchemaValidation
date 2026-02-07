@@ -5,6 +5,10 @@ on:
     - cron: '0 2 * * *'
   workflow_dispatch:
 
+permissions:
+  actions: read
+  contents: read
+
 concurrency:
   group: nightly-${{ github.ref }}
   cancel-in-progress: true
@@ -28,8 +32,11 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          LAST_SHA=$(gh api repos/${{ github.repository }}/actions/workflows/nightly.yml/runs?status=success\&per_page=1 --jq '.workflow_runs[0].head_sha // empty')
-          if [ "$LAST_SHA" == "${{ github.sha }}" ]; then
+          LAST_SHA=$(gh api "repos/${{ github.repository }}/actions/workflows/nightly.yml/runs?status=success&branch=${{ github.ref_name }}&per_page=1" --jq '.workflow_runs[0].head_sha // empty' 2>&1) || true
+          if [ -z "$LAST_SHA" ]; then
+            echo "::warning::Could not determine last successful run SHA — running anyway."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          elif [ "$LAST_SHA" == "${{ github.sha }}" ]; then
             echo "No new commits since last successful nightly run — skipping."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
@@ -103,7 +110,17 @@ jobs:
         shell: pwsh
         run: |
           $output = dotnet list package --vulnerable --include-transitive --format json 2>$null
-          $json = ($output -join "`n") | ConvertFrom-Json
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Failed to list packages. 'dotnet list package' exited with code $LASTEXITCODE."
+            exit $LASTEXITCODE
+          }
+
+          try {
+            $json = ($output -join "`n") | ConvertFrom-Json
+          } catch {
+            Write-Host "::error::Failed to parse JSON from 'dotnet list package'. Error: $($_.Exception.Message)"
+            exit 1
+          }
 
           $vulns = @()
           foreach ($project in $json.projects) {
