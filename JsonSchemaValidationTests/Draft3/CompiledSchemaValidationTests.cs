@@ -88,7 +88,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
 
         private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)
         {
-            var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes";
+            var remotesPath = "../../../../submodules/JSON-Schema-Test-Suite/remotes";
             if (!Directory.Exists(remotesPath)) return;
 
             var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
@@ -376,10 +376,10 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
                 "type",
                 "uniqueItems",
 
-                @"\optional\bignum",
-                @"\optional\non-bmp-regex",
+                "/optional/bignum",
+                "/optional/non-bmp-regex",
                 // Note: zeroTerminatedFloats excluded because .NET's System.Text.Json normalizes 1.0 to 1
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft3");
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft3");
 
         public static IEnumerable<object[]> GetDraft3FormatAssertionTests()
             => GetAllDraft3FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
@@ -389,18 +389,18 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
 
         private static IEnumerable<object[]> GetAllDraft3FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",
-                @"\optional\format\color",
-                @"\optional\format\date-time",
-                @"\optional\format\date",
-                @"\optional\format\email",
-                @"\optional\format\host-name",
-                @"\optional\format\ip-address",
-                @"\optional\format\ipv6",
-                @"\optional\format\regex",
-                @"\optional\format\time",
-                @"\optional\format\uri",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft3");
+                "/optional/ecmascript-regex",
+                "/optional/format/color",
+                "/optional/format/date-time",
+                "/optional/format/date",
+                "/optional/format/email",
+                "/optional/format/host-name",
+                "/optional/format/ip-address",
+                "/optional/format/ipv6",
+                "/optional/format/regex",
+                "/optional/format/time",
+                "/optional/format/uri",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft3");
 
         /// <summary>
         /// Returns a skip reason if the test case should be skipped, null otherwise.

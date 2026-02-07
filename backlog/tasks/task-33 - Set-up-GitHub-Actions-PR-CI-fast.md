@@ -1,10 +1,10 @@
 ---
 id: TASK-33
 title: Set up GitHub Actions - PR CI (fast)
-status: In Progress
+status: Done
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-02-06 23:10'
+updated_date: '2026-02-07 00:11'
 labels:
   - infrastructure
   - ci-cd
@@ -44,11 +44,11 @@ Create a fast GitHub Actions CI workflow for pull request validation.
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `.github/workflows/ci.yml` created
-- [ ] #2 Build passes on net8.0 and net10.0
-- [ ] #3 Unit tests run and report results
-- [ ] #4 Package build verified (`dotnet pack`)
-- [ ] #5 Path filters exclude docs/backlog changes
-- [ ] #6 Concurrency groups cancel superseded runs
+- [x] #1 `.github/workflows/ci.yml` created
+- [x] #2 Build passes on net8.0 and net10.0
+- [x] #3 Unit tests run and report results
+- [x] #4 Package build verified (`dotnet pack`)
+- [x] #5 Path filters exclude docs/backlog changes
+- [x] #6 Concurrency groups cancel superseded runs
 - [ ] #7 Status checks required for PR merge (branch protection)
 <!-- AC:END -->

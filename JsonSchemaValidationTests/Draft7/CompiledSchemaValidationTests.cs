@@ -92,7 +92,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
 
         private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)
         {
-            var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes";
+            var remotesPath = "../../../../submodules/JSON-Schema-Test-Suite/remotes";
             if (!Directory.Exists(remotesPath)) return;
 
             var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
@@ -401,12 +401,12 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
                 "type",
                 "uniqueItems",
 
-                @"\optional\bignum",
-                @"\optional\cross-draft",
-                @"\optional\float-overflow",
-                @"\optional\non-bmp-regex",
-                @"\optional\unknownKeyword",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+                "/optional/bignum",
+                "/optional/cross-draft",
+                "/optional/float-overflow",
+                "/optional/non-bmp-regex",
+                "/optional/unknownKeyword",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft7");
 
         public static IEnumerable<object[]> GetDraft7FormatAssertionTests()
             => GetAllDraft7FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
@@ -416,26 +416,26 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
 
         private static IEnumerable<object[]> GetAllDraft7FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",
-                @"\optional\format\date-time",
-                @"\optional\format\date",
-                @"\optional\format\email",
-                @"\optional\format\hostname",
-                @"\optional\format\idn-email",
-                @"\optional\format\idn-hostname",
-                @"\optional\format\ipv4",
-                @"\optional\format\ipv6",
-                @"\optional\format\iri",
-                @"\optional\format\iri-reference",
-                @"\optional\format\json-pointer",
-                @"\optional\format\regex",
-                @"\optional\format\relative-json-pointer",
-                @"\optional\format\time",
-                @"\optional\format\unknown",
-                @"\optional\format\uri",
-                @"\optional\format\uri-reference",
-                @"\optional\format\uri-template",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+                "/optional/ecmascript-regex",
+                "/optional/format/date-time",
+                "/optional/format/date",
+                "/optional/format/email",
+                "/optional/format/hostname",
+                "/optional/format/idn-email",
+                "/optional/format/idn-hostname",
+                "/optional/format/ipv4",
+                "/optional/format/ipv6",
+                "/optional/format/iri",
+                "/optional/format/iri-reference",
+                "/optional/format/json-pointer",
+                "/optional/format/regex",
+                "/optional/format/relative-json-pointer",
+                "/optional/format/time",
+                "/optional/format/unknown",
+                "/optional/format/uri",
+                "/optional/format/uri-reference",
+                "/optional/format/uri-template",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft7");
 
         public static IEnumerable<object[]> GetDraft7ContentAssertionTests()
             => GetAllDraft7ContentAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
@@ -445,8 +445,8 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
 
         private static IEnumerable<object[]> GetAllDraft7ContentAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\content",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+                "/optional/content",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft7");
 
         /// <summary>
         /// Returns a skip reason if the test case should be skipped, null otherwise.
