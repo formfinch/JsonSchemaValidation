@@ -234,7 +234,17 @@ jobs:
 
       - name: Compare against baseline
         run: |
-          command -v jq >/dev/null 2>&1 || { echo "Installing jq..."; sudo apt-get update -qq && sudo apt-get install -yqq jq; }
+          if ! command -v jq >/dev/null 2>&1; then
+            echo "Installing jq..."
+            if [ "$(uname -s)" = "Linux" ]; then
+              sudo apt-get update -qq && sudo apt-get install -yqq jq
+            elif [ "$(uname -s)" = "Darwin" ]; then
+              brew install jq
+            else
+              echo "::error::jq is not installed and no supported package manager found."
+              exit 1
+            fi
+          fi
 
           BASELINE="benchmarks/baseline.json"
 
