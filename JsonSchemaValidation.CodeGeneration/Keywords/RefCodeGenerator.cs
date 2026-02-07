@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Collections.Generic;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -66,7 +67,7 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
             var fragment = refValue[hashIndex..]; // includes the #
 
             // Try to parse the ref base as a URI and compare with RootBaseUri
-            if (Uri.TryCreate(refBase, UriKind.Absolute, out var refBaseUri))
+            if (UriHelpers.TryCreateAbsoluteSchemaUri(refBase, out var refBaseUri))
             {
                 // Compare URIs (ignoring fragment on both)
                 var rootUriWithoutFragment = new Uri(context.RootBaseUri.GetLeftPart(UriPartial.Query));
@@ -111,7 +112,7 @@ public sealed class RefCodeGenerator : IKeywordCodeGenerator
     {
         // Resolve the external URI
         Uri targetUri;
-        if (Uri.TryCreate(refValue, UriKind.Absolute, out var absoluteUri))
+        if (UriHelpers.TryCreateAbsoluteSchemaUri(refValue, out var absoluteUri))
         {
             targetUri = absoluteUri;
         }
