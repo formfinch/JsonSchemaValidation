@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: nightly-quality-gate
+  group: nightly-${{ github.ref }}
   cancel-in-progress: true
 
 env:
@@ -27,12 +27,12 @@ jobs:
         if: github.event_name == 'schedule'
         uses: actions/cache@v4
         with:
-          path: .nightly-marker
+          path: ${{ runner.temp }}/nightly-marker
           key: nightly-${{ github.sha }}
 
       - name: Create marker file
         if: github.event_name == 'schedule' && steps.skip-check.outputs.cache-hit != 'true'
-        run: date > .nightly-marker
+        run: date > "$RUNNER_TEMP/nightly-marker"
 
       - name: Set skip output
         id: set-skip
