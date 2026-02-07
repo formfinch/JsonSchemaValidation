@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 
@@ -453,7 +454,7 @@ public sealed class DynamicRefCodeGenerator : IKeywordCodeGenerator
 
     private static bool TryResolveUri(CodeGenerationContext context, string refValue, out Uri targetUri)
     {
-        if (Uri.TryCreate(refValue, UriKind.Absolute, out var absoluteUri))
+        if (UriHelpers.TryCreateAbsoluteSchemaUri(refValue, out var absoluteUri))
         {
             targetUri = absoluteUri;
             return true;

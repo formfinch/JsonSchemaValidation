@@ -652,7 +652,7 @@ public sealed class SubschemaExtractor
                     // In Draft 7 and earlier, $ref masks sibling $id
                     // Don't update base URI, but still register the schema by its $id for external refs
                     Uri? resolvedId = null;
-                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    if (UriHelpers.TryCreateAbsoluteSchemaUri(idValue, out var absoluteId))
                     {
                         resolvedId = absoluteId;
                     }
@@ -671,7 +671,7 @@ public sealed class SubschemaExtractor
                 {
                     // Resolve the $id against the current base URI
                     Uri? resolvedId = null;
-                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    if (UriHelpers.TryCreateAbsoluteSchemaUri(idValue, out var absoluteId))
                     {
                         resolvedId = absoluteId;
                     }
@@ -731,7 +731,7 @@ public sealed class SubschemaExtractor
                     // In Draft 7 and earlier, $ref masks sibling id
                     // Don't update base URI, but still register the schema by its id for external refs
                     Uri? resolvedId = null;
-                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    if (UriHelpers.TryCreateAbsoluteSchemaUri(idValue, out var absoluteId))
                     {
                         resolvedId = absoluteId;
                     }
@@ -750,7 +750,7 @@ public sealed class SubschemaExtractor
                 {
                     // Resolve the id against the current base URI
                     Uri? resolvedId = null;
-                    if (Uri.TryCreate(idValue, UriKind.Absolute, out var absoluteId))
+                    if (UriHelpers.TryCreateAbsoluteSchemaUri(idValue, out var absoluteId))
                     {
                         resolvedId = absoluteId;
                     }
