@@ -23,30 +23,18 @@ jobs:
 
     steps:
       - name: Check for new commits
-        id: skip-check
-        if: github.event_name == 'schedule'
-        uses: actions/cache@v4
-        with:
-          path: ${{ runner.temp }}/nightly-marker
-          key: nightly-${{ github.sha }}
-
-      - name: Create marker file
-        if: github.event_name == 'schedule' && steps.skip-check.outputs.cache-hit != 'true'
-        run: date > "$RUNNER_TEMP/nightly-marker"
-
-      - name: Set skip output
         id: set-skip
         if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
-          if [ "${{ steps.skip-check.outputs.cache-hit }}" == "true" ]; then
+          LAST_SHA=$(gh api repos/${{ github.repository }}/actions/workflows/nightly.yml/runs?status=success\&per_page=1 --jq '.workflow_runs[0].head_sha // empty')
+          if [ "$LAST_SHA" == "${{ github.sha }}" ]; then
+            echo "No new commits since last successful nightly run — skipping."
             echo "skip=true" >> "$GITHUB_OUTPUT"
           else
             echo "skip=false" >> "$GITHUB_OUTPUT"
           fi
-
-      - name: Skip notice
-        if: steps.set-skip.outputs.skip == 'true'
-        run: echo "No new commits since last nightly run — skipping."
 
       - name: Checkout
         if: steps.set-skip.outputs.skip != 'true'
