@@ -50,39 +50,39 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
             // Load draft3 specific remote schemas
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft3",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft3",
                 "http://localhost:1234/draft3/");
 
             // Load future draft remotes for cross-draft tests
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft4",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft4",
                 "http://localhost:1234/draft4/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft6",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft6",
                 "http://localhost:1234/draft6/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft7",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft7",
                 "http://localhost:1234/draft7/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2019-09",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2019-09",
                 "http://localhost:1234/draft2019-09/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2020-12",
                 "http://localhost:1234/draft2020-12/");
 
             // Load common remote schemas from root remotes folder (including subdirectories)
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes",
                 "http://localhost:1234/",
                 excludeDirectories: new[] { "draft3", "draft4", "draft6", "draft7", "draft2019-09", "draft2020-12", "v1" });
         }
@@ -211,10 +211,10 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
                 "type",
                 "uniqueItems",
 
-                @"\optional\bignum",
-                @"\optional\non-bmp-regex",
+                "/optional/bignum",
+                "/optional/non-bmp-regex",
                 // Note: zeroTerminatedFloats excluded because .NET's System.Text.Json normalizes 1.0 to 1
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft3");
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft3");
 
         /// <summary>
         /// Returns test cases for optional format validation tests.
@@ -222,18 +222,18 @@ namespace FormFinch.JsonSchemaValidationTests.Draft3
         /// </summary>
         public static IEnumerable<object[]> GetDraft3FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",
-                @"\optional\format\color",
-                @"\optional\format\date-time",
-                @"\optional\format\date",
-                @"\optional\format\email",
-                @"\optional\format\host-name",
-                @"\optional\format\ip-address",
-                @"\optional\format\ipv6",
-                @"\optional\format\regex",
-                @"\optional\format\time",
-                @"\optional\format\uri",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft3");
+                "/optional/ecmascript-regex",
+                "/optional/format/color",
+                "/optional/format/date-time",
+                "/optional/format/date",
+                "/optional/format/email",
+                "/optional/format/host-name",
+                "/optional/format/ip-address",
+                "/optional/format/ipv6",
+                "/optional/format/regex",
+                "/optional/format/time",
+                "/optional/format/uri",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft3");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
         {

@@ -47,19 +47,19 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
             // Load draft2020-12 specific remote schemas
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2020-12",
                 "http://localhost:1234/draft2020-12/");
 
             // Load draft2019-09 remotes for cross-draft tests
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2019-09",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2019-09",
                 "http://localhost:1234/draft2019-09/");
 
             // Load common remote schemas from root remotes folder
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes",
                 "http://localhost:1234/",
                 topLevelOnly: true);
         }
@@ -199,18 +199,18 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
                 "unknownKeyword",
                 "vocabulary",
 
-                @"\optional\anchor",
-                @"\optional\bignum",
-                @"\optional\cross-draft",
-                @"\optional\dependencies-compatibility",
-                @"\optional\dynamicRef",
-                @"\optional\float-overflow",
-                @"\optional\format-assertion",                  // Requires vocabulary support
-                @"\optional\id",
-                @"\optional\no-schema",
-                @"\optional\non-bmp-regex",
-                @"\optional\refOfUnknownKeyword",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
+                "/optional/anchor",
+                "/optional/bignum",
+                "/optional/cross-draft",
+                "/optional/dependencies-compatibility",
+                "/optional/dynamicRef",
+                "/optional/float-overflow",
+                "/optional/format-assertion",                  // Requires vocabulary support
+                "/optional/id",
+                "/optional/no-schema",
+                "/optional/non-bmp-regex",
+                "/optional/refOfUnknownKeyword",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft2020-12");
 
         /// <summary>
         /// Returns test cases for optional format validation tests.
@@ -218,28 +218,28 @@ namespace FormFinch.JsonSchemaValidationTests.Draft202012
         /// </summary>
         public static IEnumerable<object[]> GetDraft202012FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",                  // Requires format:regex validation for metaschema
-                @"\optional\format\date-time",
-                @"\optional\format\date",
-                @"\optional\format\duration",
-                @"\optional\format\email",
-                @"\optional\format\hostname",
-                @"\optional\format\idn-email",
-                @"\optional\format\idn-hostname",
-                @"\optional\format\ipv4",
-                @"\optional\format\ipv6",
-                @"\optional\format\iri",
-                @"\optional\format\iri-reference",
-                @"\optional\format\json-pointer",
-                @"\optional\format\regex",
-                @"\optional\format\relative-json-pointer",
-                @"\optional\format\time",
-                @"\optional\format\unknown",
-                @"\optional\format\uri",
-                @"\optional\format\uri-reference",
-                @"\optional\format\uri-template",
-                @"\optional\format\uuid",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft2020-12");
+                "/optional/ecmascript-regex",                  // Requires format:regex validation for metaschema
+                "/optional/format/date-time",
+                "/optional/format/date",
+                "/optional/format/duration",
+                "/optional/format/email",
+                "/optional/format/hostname",
+                "/optional/format/idn-email",
+                "/optional/format/idn-hostname",
+                "/optional/format/ipv4",
+                "/optional/format/ipv6",
+                "/optional/format/iri",
+                "/optional/format/iri-reference",
+                "/optional/format/json-pointer",
+                "/optional/format/regex",
+                "/optional/format/relative-json-pointer",
+                "/optional/format/time",
+                "/optional/format/unknown",
+                "/optional/format/uri",
+                "/optional/format/uri-reference",
+                "/optional/format/uri-template",
+                "/optional/format/uuid",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft2020-12");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
         {

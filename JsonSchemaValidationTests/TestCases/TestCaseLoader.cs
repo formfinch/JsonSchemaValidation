@@ -25,10 +25,11 @@ namespace FormFinch.JsonSchemaValidationTests.TestCases
                 {
                     foreach (var test in tests)
                     {
-                        var keyword = keywords!.FirstOrDefault(kw =>
+                        var normalizedFile = file.Replace('\\', '/');
+                    var keyword = keywords!.FirstOrDefault(kw =>
                             kw != null
-                            && file.EndsWith($"{kw}.json", StringComparison.CurrentCultureIgnoreCase)
-                            && kw.EndsWith(Path.GetFileNameWithoutExtension(file)));
+                            && normalizedFile.EndsWith($"{kw.Replace('\\', '/')}.json", StringComparison.CurrentCultureIgnoreCase)
+                            && kw.Replace('\\', '/').EndsWith(Path.GetFileNameWithoutExtension(file)));
                         if (keyword != null)
                         {
                             yield return new object[] { test };

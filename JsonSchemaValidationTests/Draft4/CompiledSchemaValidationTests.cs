@@ -88,7 +88,7 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
 
         private static void LoadRemoteSchemas(CompiledValidatorRegistry registry)
         {
-            var remotesPath = @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes";
+            var remotesPath = "../../../../submodules/JSON-Schema-Test-Suite/remotes";
             if (!Directory.Exists(remotesPath)) return;
 
             var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
@@ -378,11 +378,11 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
                 "type",
                 "uniqueItems",
 
-                @"\optional\bignum",
-                @"\optional\float-overflow",
-                @"\optional\non-bmp-regex",
+                "/optional/bignum",
+                "/optional/float-overflow",
+                "/optional/non-bmp-regex",
                 // Note: zeroTerminatedFloats excluded because .NET's System.Text.Json normalizes 1.0 to 1
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft4");
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft4");
 
         public static IEnumerable<object[]> GetDraft4FormatAssertionTests()
             => GetAllDraft4FormatAssertionTests().Where(arr => GetSkipReason(((TestCase)arr[0]).Description) == null);
@@ -392,16 +392,16 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
 
         private static IEnumerable<object[]> GetAllDraft4FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",
-                @"\optional\id",
-                @"\optional\format\date-time",
-                @"\optional\format\email",
-                @"\optional\format\hostname",
-                @"\optional\format\ipv4",
-                @"\optional\format\ipv6",
-                @"\optional\format\unknown",
-                @"\optional\format\uri",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft4");
+                "/optional/ecmascript-regex",
+                "/optional/id",
+                "/optional/format/date-time",
+                "/optional/format/email",
+                "/optional/format/hostname",
+                "/optional/format/ipv4",
+                "/optional/format/ipv6",
+                "/optional/format/unknown",
+                "/optional/format/uri",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft4");
 
         /// <summary>
         /// Returns a skip reason if the test case should be skipped, null otherwise.

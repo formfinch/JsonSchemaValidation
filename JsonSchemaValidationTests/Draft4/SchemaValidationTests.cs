@@ -50,34 +50,34 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
             // Load draft4 specific remote schemas
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft4",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft4",
                 "http://localhost:1234/draft4/");
 
             // Load future draft remotes for cross-draft tests
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft6",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft6",
                 "http://localhost:1234/draft6/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft7",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft7",
                 "http://localhost:1234/draft7/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2019-09",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2019-09",
                 "http://localhost:1234/draft2019-09/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2020-12",
                 "http://localhost:1234/draft2020-12/");
 
             // Load common remote schemas from root remotes folder (including subdirectories)
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes",
                 "http://localhost:1234/",
                 excludeDirectories: new[] { "draft3", "draft4", "draft6", "draft7", "draft2019-09", "draft2020-12", "v1" });
         }
@@ -209,11 +209,11 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
                 "type",
                 "uniqueItems",
 
-                @"\optional\bignum",
-                @"\optional\float-overflow",
-                @"\optional\non-bmp-regex",
+                "/optional/bignum",
+                "/optional/float-overflow",
+                "/optional/non-bmp-regex",
                 // Note: zeroTerminatedFloats excluded because .NET's System.Text.Json normalizes 1.0 to 1
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft4");
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft4");
 
         /// <summary>
         /// Returns test cases for optional format validation tests.
@@ -221,16 +221,16 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
         /// </summary>
         public static IEnumerable<object[]> GetDraft4FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",
-                @"\optional\id",
-                @"\optional\format\date-time",
-                @"\optional\format\email",
-                @"\optional\format\hostname",
-                @"\optional\format\ipv4",
-                @"\optional\format\ipv6",
-                @"\optional\format\unknown",
-                @"\optional\format\uri",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft4");
+                "/optional/ecmascript-regex",
+                "/optional/id",
+                "/optional/format/date-time",
+                "/optional/format/email",
+                "/optional/format/hostname",
+                "/optional/format/ipv4",
+                "/optional/format/ipv6",
+                "/optional/format/unknown",
+                "/optional/format/uri",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft4");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
         {

@@ -63,24 +63,24 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
             // Load draft7 specific remote schemas
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft7",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft7",
                 "http://localhost:1234/draft7/");
 
             // Load future draft remotes for cross-draft tests
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2019-09",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2019-09",
                 "http://localhost:1234/draft2019-09/");
 
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes\draft2020-12",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes/draft2020-12",
                 "http://localhost:1234/draft2020-12/");
 
             // Load common remote schemas from root remotes folder (including subdirectories)
             LoadRemoteSchemasFromPath(
                 schemaRepository,
-                @"..\..\..\..\submodules\JSON-Schema-Test-Suite\remotes",
+                "../../../../submodules/JSON-Schema-Test-Suite/remotes",
                 "http://localhost:1234/",
                 excludeDirectories: new[] { "draft7", "draft2019-09", "draft2020-12", "draft3", "draft4", "draft6", "v1" });
         }
@@ -225,13 +225,13 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
                 "type",
                 "uniqueItems",
 
-                @"\optional\bignum",
+                "/optional/bignum",
                 // Note: content tests removed - they require ContentAssertionEnabled
-                @"\optional\cross-draft",
-                @"\optional\float-overflow",
-                @"\optional\non-bmp-regex",
-                @"\optional\unknownKeyword",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+                "/optional/cross-draft",
+                "/optional/float-overflow",
+                "/optional/non-bmp-regex",
+                "/optional/unknownKeyword",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft7");
 
         /// <summary>
         /// Returns test cases for optional format validation tests.
@@ -239,26 +239,26 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
         /// </summary>
         public static IEnumerable<object[]> GetDraft7FormatAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\ecmascript-regex",
-                @"\optional\format\date-time",
-                @"\optional\format\date",
-                @"\optional\format\email",
-                @"\optional\format\hostname",
-                @"\optional\format\idn-email",
-                @"\optional\format\idn-hostname",
-                @"\optional\format\ipv4",
-                @"\optional\format\ipv6",
-                @"\optional\format\iri",
-                @"\optional\format\iri-reference",
-                @"\optional\format\json-pointer",
-                @"\optional\format\regex",
-                @"\optional\format\relative-json-pointer",
-                @"\optional\format\time",
-                @"\optional\format\unknown",
-                @"\optional\format\uri",
-                @"\optional\format\uri-reference",
-                @"\optional\format\uri-template",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+                "/optional/ecmascript-regex",
+                "/optional/format/date-time",
+                "/optional/format/date",
+                "/optional/format/email",
+                "/optional/format/hostname",
+                "/optional/format/idn-email",
+                "/optional/format/idn-hostname",
+                "/optional/format/ipv4",
+                "/optional/format/ipv6",
+                "/optional/format/iri",
+                "/optional/format/iri-reference",
+                "/optional/format/json-pointer",
+                "/optional/format/regex",
+                "/optional/format/relative-json-pointer",
+                "/optional/format/time",
+                "/optional/format/unknown",
+                "/optional/format/uri",
+                "/optional/format/uri-reference",
+                "/optional/format/uri-template",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft7");
 
         /// <summary>
         /// Returns test cases for optional content validation tests.
@@ -266,8 +266,8 @@ namespace FormFinch.JsonSchemaValidationTests.Draft7
         /// </summary>
         public static IEnumerable<object[]> GetDraft7ContentAssertionTests()
             => new TestCaseLoader(new string[] {
-                @"\optional\content",
-            }).LoadTestCases(@"..\..\..\..\submodules\JSON-Schema-Test-Suite\tests\draft7");
+                "/optional/content",
+            }).LoadTestCases("../../../../submodules/JSON-Schema-Test-Suite/tests/draft7");
 
         private bool IsTestDisabled(string testCaseDescription, string testDescription)
         {
