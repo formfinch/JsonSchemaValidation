@@ -119,6 +119,13 @@ namespace FormFinch.JsonSchemaValidation.Repositories
                 return null;
             }
 
+            // On Linux, /-prefixed paths like "/base" are parsed as file:///base.
+            // JSON Schema URIs are never file:// URIs, so reject them.
+            if (string.Equals(result.Scheme, Uri.UriSchemeFile, StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
             return result;
         }
 
