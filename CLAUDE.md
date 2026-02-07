@@ -201,6 +201,7 @@ None currently identified. Cross-draft compatibility is fully supported.
 2. **No commits without permission:** Do not commit changes without explicit permission from the user.
 3. **Use Git Flow:** Never commit directly to `main`. Always create a feature branch, commit changes there, push, create a PR, and merge.
 4. **PR merges require `--admin`:** Branch protection is enabled on `main`. Since there are no other contributors, always use `gh pr merge --admin` to bypass the review requirement.
+5. **Never merge without permission:** Do not merge PRs to `main` unless the user explicitly asks you to merge. Creating a PR and merging a PR are separate actions — always stop after creating the PR and wait for the user to approve the merge.
 
 
 Follow the Karpathy Guidelines for coding agents
