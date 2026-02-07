@@ -1,0 +1,357 @@
+name: Nightly Quality Gate
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: nightly-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  CI: true
+
+jobs:
+  build-and-test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.set-skip.outputs.skip }}
+
+    steps:
+      - name: Check for new commits
+        id: set-skip
+        if: github.event_name == 'schedule'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          LAST_SHA=$(gh api "repos/${{ github.repository }}/actions/workflows/nightly.yml/runs?status=success&branch=${{ github.ref_name }}&per_page=1" --jq '.workflow_runs[0].head_sha // empty' 2>&1) || true
+          if [ -z "$LAST_SHA" ]; then
+            echo "::warning::Could not determine last successful run SHA — running anyway."
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          elif [ "$LAST_SHA" == "${{ github.sha }}" ]; then
+            echo "No new commits since last successful nightly run — skipping."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Checkout
+        if: steps.set-skip.outputs.skip != 'true'
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        if: steps.set-skip.outputs.skip != 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        if: steps.set-skip.outputs.skip != 'true'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        if: steps.set-skip.outputs.skip != 'true'
+        run: dotnet restore --source https://api.nuget.org/v3/index.json
+
+      - name: Build
+        if: steps.set-skip.outputs.skip != 'true'
+        run: dotnet build --no-restore -c Release
+
+      - name: Test
+        if: steps.set-skip.outputs.skip != 'true'
+        run: dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --no-build -c Release --settings JsonSchemaValidationTests/default.runsettings --logger "trx;LogFileName=test-results.trx"
+
+      - name: Upload test results
+        if: always() && steps.set-skip.outputs.skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/test-results.trx'
+          retention-days: 7
+
+  security-scan:
+    name: Security Scan
+    needs: build-and-test
+    if: needs.build-and-test.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore --source https://api.nuget.org/v3/index.json
+
+      - name: Check for vulnerable packages
+        shell: pwsh
+        run: |
+          $output = dotnet list package --vulnerable --include-transitive --format json 2>$null
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "::error::Failed to list packages. 'dotnet list package' exited with code $LASTEXITCODE."
+            exit $LASTEXITCODE
+          }
+
+          try {
+            $json = ($output -join "`n") | ConvertFrom-Json
+          } catch {
+            Write-Host "::error::Failed to parse JSON from 'dotnet list package'. Error: $($_.Exception.Message)"
+            exit 1
+          }
+
+          $vulns = @()
+          foreach ($project in $json.projects) {
+            foreach ($framework in $project.frameworks) {
+              $packages = @()
+              if ($framework.topLevelPackages) { $packages += $framework.topLevelPackages }
+              if ($framework.transitivePackages) { $packages += $framework.transitivePackages }
+              foreach ($pkg in $packages) {
+                if ($pkg.vulnerabilities) {
+                  $vulns += $pkg
+                }
+              }
+            }
+          }
+
+          if ($vulns.Count -gt 0) {
+            Write-Host "::error::Vulnerable packages detected! ($($vulns.Count) vulnerable package(s) found)"
+            $vulns | ForEach-Object { Write-Host "  - $($_.id) $($_.resolvedVersion)" }
+            exit 1
+          }
+          Write-Host 'No vulnerable packages found.'
+
+  memory-leak-tests:
+    name: Memory Leak Tests
+    needs: build-and-test
+    if: needs.build-and-test.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore stress tests
+        run: dotnet restore JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj --source https://api.nuget.org/v3/index.json
+
+      - name: Build stress tests
+        run: dotnet build JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj --no-restore -c Release
+
+      - name: Run memory leak tests
+        run: dotnet test JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj --no-build -c Release --filter "FullyQualifiedName~MemoryLeak" --logger "trx;LogFileName=memory-leak-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-leak-results
+          path: '**/memory-leak-results.trx'
+          retention-days: 7
+
+  stress-tests:
+    name: Stress Tests
+    needs: build-and-test
+    if: needs.build-and-test.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore stress tests
+        run: dotnet restore JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj --source https://api.nuget.org/v3/index.json
+
+      - name: Build stress tests
+        run: dotnet build JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj --no-restore -c Release
+
+      - name: Run stress tests
+        run: dotnet test JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj --no-build -c Release --filter "FullyQualifiedName~StressTests|Category=Fuzzing" --logger "trx;LogFileName=stress-results.trx"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-results
+          path: '**/stress-results.trx'
+          retention-days: 7
+
+  benchmarks:
+    name: Benchmarks
+    needs: build-and-test
+    if: needs.build-and-test.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore benchmarks
+        run: dotnet restore JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj --source https://api.nuget.org/v3/index.json
+
+      - name: Build benchmarks
+        run: dotnet build JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj --no-restore -c Release
+
+      - name: Run SimpleValidationBenchmarks
+        run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build --framework net10.0 -- --filter "SimpleValidationBenchmarks"
+
+      - name: Run ComplexValidationBenchmarks
+        run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build --framework net10.0 -- --filter "ComplexValidationBenchmarks"
+
+      - name: Compare against baseline
+        shell: pwsh
+        run: |
+          $baseline = 'benchmarks/baseline.json'
+
+          if (-not (Test-Path $baseline)) {
+            Write-Host '::warning::No baseline.json found — skipping regression check. Run benchmarks locally and commit benchmarks/baseline.json to enable comparison.'
+            exit 0
+          }
+
+          $baselineData = Get-Content $baseline -Raw | ConvertFrom-Json
+          $resultsDir = 'BenchmarkDotNet.Artifacts/results'
+          $failed = $false
+          $reportFiles = Get-ChildItem "$resultsDir/*-report-full.json" -ErrorAction SilentlyContinue
+
+          if (-not $reportFiles) {
+            Write-Host '::error::No benchmark report files found. Ensure benchmarks ran with JSON export enabled.'
+            exit 1
+          }
+
+          foreach ($file in $reportFiles) {
+            Write-Host "Processing: $($file.FullName)"
+            $report = Get-Content $file.FullName -Raw | ConvertFrom-Json
+
+            foreach ($bench in $report.Benchmarks) {
+              if ($bench.FullName -notmatch 'FormFinch_Validate') { continue }
+
+              $key = "$($bench.Type).$($bench.Method)($($bench.Parameters))"
+              $actualNs = $bench.Statistics.Mean
+              $baselineNs = $baselineData.benchmarks.$key.mean_ns
+
+              if (-not $baselineNs) {
+                Write-Host "  Warning: No baseline for: $key (skipping)"
+                continue
+              }
+
+              $regression = [math]::Round((($actualNs - $baselineNs) / $baselineNs) * 100, 1)
+
+              if ($regression -gt 10) {
+                Write-Host "::error::Regression detected: $key — ${regression}% slower (baseline: ${baselineNs}ns, actual: ${actualNs}ns)"
+                $failed = $true
+              } else {
+                Write-Host "  OK: $key — ${regression}% (baseline: ${baselineNs}ns, actual: ${actualNs}ns)"
+              }
+            }
+          }
+
+          if ($failed) {
+            Write-Host '::error::One or more benchmarks regressed beyond the 10% threshold.'
+            exit 1
+          }
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: BenchmarkDotNet.Artifacts/
+          retention-days: 30
+
+  package:
+    name: Package
+    needs: build-and-test
+    if: needs.build-and-test.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore --source https://api.nuget.org/v3/index.json
+
+      - name: Build
+        run: dotnet build --no-restore -c Release -p:GeneratePackageOnBuild=false -p:VersionSuffix="ci.${{ github.run_number }}"
+
+      - name: Pack pre-release
+        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release -p:VersionSuffix="ci.${{ github.run_number }}"
+
+      - name: Upload NuGet packages
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            **/*.nupkg
+            **/*.snupkg
+          retention-days: 90
