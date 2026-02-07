@@ -229,10 +229,10 @@ jobs:
         run: dotnet build JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj --no-restore -c Release
 
       - name: Run SimpleValidationBenchmarks
-        run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build --framework net8.0 -- --filter "SimpleValidationBenchmarks"
+        run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build --framework net10.0 -- --filter "SimpleValidationBenchmarks"
 
       - name: Run ComplexValidationBenchmarks
-        run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build --framework net8.0 -- --filter "ComplexValidationBenchmarks"
+        run: dotnet run --project JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release --no-build --framework net10.0 -- --filter "ComplexValidationBenchmarks"
 
       - name: Compare against baseline
         shell: pwsh
