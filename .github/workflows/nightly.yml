@@ -109,7 +109,7 @@ jobs:
       - name: Check for vulnerable packages
         shell: pwsh
         run: |
-          $output = dotnet list package --vulnerable --include-transitive --format json --source https://api.nuget.org/v3/index.json 2>$null
+          $output = dotnet list package --vulnerable --include-transitive --format json --source https://api.nuget.org/v3/index.json
           if ($LASTEXITCODE -ne 0) {
             Write-Host "::error::Failed to list packages. 'dotnet list package' exited with code $LASTEXITCODE."
             exit $LASTEXITCODE
