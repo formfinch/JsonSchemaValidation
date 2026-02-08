@@ -8,6 +8,10 @@ on:
       version:
         description: 'Version to publish (e.g. 1.0.0, 1.0.0-rc.1)'
         required: true
+      dry-run:
+        description: 'Dry run — build, test, and pack without publishing'
+        type: boolean
+        default: false
 
 concurrency:
   group: release
@@ -66,14 +70,17 @@ jobs:
         run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release -p:Version=${{ steps.version.outputs.version }}
 
       - name: NuGet login
+        if: inputs.dry-run != true
         uses: nuget/login@v1
         with:
           nuget-api-key: ${{ secrets.NUGET_USER }}
 
       - name: Push to NuGet
+        if: inputs.dry-run != true
         run: dotnet nuget push '**/*.nupkg' --source https://api.nuget.org/v3/index.json --skip-duplicate
 
       - name: Create GitHub Release
+        if: inputs.dry-run != true
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -89,6 +96,16 @@ jobs:
             --generate-notes \
             --title "$TAG" \
             **/*.nupkg **/*.snupkg
+
+      - name: Upload NuGet packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nuget-packages
+          path: |
+            **/*.nupkg
+            **/*.snupkg
+          retention-days: 7
 
       - name: Upload test results
         if: always()
