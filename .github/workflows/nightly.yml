@@ -103,13 +103,11 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Create public-only NuGet config
-        shell: pwsh
+      - name: Override NuGet config
         run: |
           # The repo nuget.config references a private Azure DevOps feed that
-          # isn't accessible from CI. Create a temporary config with only
-          # nuget.org for restore and vulnerability checking.
-          @'
+          # isn't accessible from CI. Override it with nuget.org only.
+          cat > nuget.config << 'XMLEOF'
           <?xml version="1.0" encoding="utf-8"?>
           <configuration>
             <packageSources>
@@ -117,16 +115,15 @@ jobs:
               <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
             </packageSources>
           </configuration>
-          '@ | Set-Content (Join-Path $env:RUNNER_TEMP 'nuget-public.config')
+          XMLEOF
 
       - name: Restore
-        run: dotnet restore --configfile "$RUNNER_TEMP/nuget-public.config"
+        run: dotnet restore
 
       - name: Check for vulnerable packages
         shell: pwsh
         run: |
-          $configPath = Join-Path $env:RUNNER_TEMP 'nuget-public.config'
-          $output = dotnet list package --vulnerable --include-transitive --format json --configfile $configPath
+          $output = dotnet list package --vulnerable --include-transitive --format json
           if ($LASTEXITCODE -ne 0) {
             Write-Host "::error::Failed to list packages. 'dotnet list package' exited with code $LASTEXITCODE."
             Write-Host "Output: $($output -join "`n")"
