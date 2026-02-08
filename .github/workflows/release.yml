@@ -37,11 +37,17 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             RAW="${{ github.event.inputs.version }}"
-            echo "version=${RAW#v}" >> "$GITHUB_OUTPUT"
+            VERSION="${RAW#v}"
           else
-            TAG="${GITHUB_REF#refs/tags/v}"
-            echo "version=$TAG" >> "$GITHUB_OUTPUT"
+            VERSION="${GITHUB_REF#refs/tags/v}"
           fi
+
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$'; then
+            echo "::error::Invalid version '$VERSION'. Expected SemVer (e.g. 1.0.0, 1.0.0-rc.1)."
+            exit 1
+          fi
+
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Checkout
         uses: actions/checkout@v4
@@ -62,13 +68,17 @@ jobs:
         run: dotnet restore --source https://api.nuget.org/v3/index.json
 
       - name: Build
-        run: dotnet build --no-restore -c Release -p:Version=${{ steps.version.outputs.version }} -p:GeneratePackageOnBuild=false
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: dotnet build --no-restore -c Release -p:Version="$VERSION" -p:GeneratePackageOnBuild=false
 
       - name: Test
         run: dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --no-build -c Release --settings JsonSchemaValidationTests/default.runsettings --logger "trx;LogFileName=test-results.trx"
 
       - name: Pack
-        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release -p:Version=${{ steps.version.outputs.version }} -o ./packages
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release -p:Version="$VERSION" -o ./packages
 
       - name: NuGet login
         if: github.event.inputs.dry-run != 'true'
