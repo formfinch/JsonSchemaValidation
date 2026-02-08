@@ -1,9 +1,10 @@
 ---
 id: TASK-67
 title: Set up GitHub Actions - Nightly quality gate
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-06 13:43'
+updated_date: '2026-02-08 21:56'
 labels:
   - infrastructure
   - ci-cd
@@ -65,14 +66,20 @@ Create a GitHub Actions workflow for extended quality validation that runs on a 
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 `.github/workflows/nightly.yml` created
-- [ ] #2 Scheduled trigger configured, skips if no new commits on main
-- [ ] #3 Manual dispatch trigger available
-- [ ] #4 `dotnet list package --vulnerable` runs and fails on vulnerable dependencies
-- [ ] #5 Memory leak tests execute and report results
-- [ ] #6 Stress/thread-safety tests execute and report results
-- [ ] #7 Performance benchmarks run and compare against committed baseline
-- [ ] #8 Benchmark regression beyond threshold fails the workflow
-- [ ] #9 Pre-release `.nupkg` artifact uploaded (downloadable from Actions)
-- [ ] #10 Version suffix uses CI run number (e.g., `1.0.0-ci.42`)
+- [x] #1 `.github/workflows/nightly.yml` created
+- [x] #2 Scheduled trigger configured, skips if no new commits on main
+- [x] #3 Manual dispatch trigger available
+- [x] #4 `dotnet list package --vulnerable` runs and fails on vulnerable dependencies
+- [x] #5 Memory leak tests execute and report results
+- [x] #6 Stress/thread-safety tests execute and report results
+- [x] #7 Performance benchmarks run and compare against committed baseline
+- [x] #8 Benchmark regression beyond threshold fails the workflow
+- [x] #9 Pre-release `.nupkg` artifact uploaded (downloadable from Actions)
+- [x] #10 Version suffix uses CI run number (e.g., `1.0.0-ci.42`)
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+Nightly quality gate workflow implemented and verified. All 6 jobs passing: Build & Test, Security Scan, Memory Leak Tests, Stress Tests, Benchmarks, and Package. Includes cross-platform checksum fix (CRLF/LF normalization) and public-only nuget.config override for the security scan job.
+<!-- SECTION:FINAL_SUMMARY:END -->
