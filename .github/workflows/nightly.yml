@@ -103,15 +103,12 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Restore
-        run: dotnet restore --source https://api.nuget.org/v3/index.json
-
-      - name: Check for vulnerable packages
+      - name: Create public-only NuGet config
         shell: pwsh
         run: |
-          # Use a temporary nuget.config with only nuget.org to avoid
-          # authentication failures against the private Azure DevOps feed.
-          $configPath = Join-Path $env:RUNNER_TEMP 'nuget-security.config'
+          # The repo nuget.config references a private Azure DevOps feed that
+          # isn't accessible from CI. Create a temporary config with only
+          # nuget.org for restore and vulnerability checking.
           @'
           <?xml version="1.0" encoding="utf-8"?>
           <configuration>
@@ -120,8 +117,15 @@ jobs:
               <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
             </packageSources>
           </configuration>
-          '@ | Set-Content $configPath
+          '@ | Set-Content (Join-Path $env:RUNNER_TEMP 'nuget-public.config')
 
+      - name: Restore
+        run: dotnet restore --configfile "$RUNNER_TEMP/nuget-public.config"
+
+      - name: Check for vulnerable packages
+        shell: pwsh
+        run: |
+          $configPath = Join-Path $env:RUNNER_TEMP 'nuget-public.config'
           $output = dotnet list package --vulnerable --include-transitive --format json --configfile $configPath
           if ($LASTEXITCODE -ne 0) {
             Write-Host "::error::Failed to list packages. 'dotnet list package' exited with code $LASTEXITCODE."
