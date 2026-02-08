@@ -66,7 +66,9 @@ public static class ChecksumVerifier
     /// </summary>
     public static string ComputeSha256(string content)
     {
-        var bytes = Encoding.UTF8.GetBytes(content);
+        // Normalize line endings to LF for consistent cross-platform checksums
+        var normalized = content.ReplaceLineEndings("\n");
+        var bytes = Encoding.UTF8.GetBytes(normalized);
         var hash = SHA256.HashData(bytes);
         return Convert.ToHexString(hash).ToLowerInvariant();
     }
