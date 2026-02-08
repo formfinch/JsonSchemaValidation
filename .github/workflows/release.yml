@@ -42,7 +42,7 @@ jobs:
             VERSION="${GITHUB_REF#refs/tags/v}"
           fi
 
-          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9.]+)?$'; then
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+(-[A-Za-z0-9._-]+)?$'; then
             echo "::error::Invalid version '$VERSION'. Expected SemVer (e.g. 1.0.0, 1.0.0-rc.1)."
             exit 1
           fi
@@ -96,11 +96,16 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           TAG="v${{ steps.version.outputs.version }}"
-          gh release create "$TAG" \
-            --generate-notes \
-            --title "$TAG" \
-            --target "$GITHUB_SHA" \
-            ./packages/*
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            echo "Release $TAG already exists — uploading assets."
+            gh release upload "$TAG" ./packages/* --clobber
+          else
+            gh release create "$TAG" \
+              --generate-notes \
+              --title "$TAG" \
+              --target "$GITHUB_SHA" \
+              ./packages/*
+          fi
 
       - name: Upload NuGet packages
         if: always()
