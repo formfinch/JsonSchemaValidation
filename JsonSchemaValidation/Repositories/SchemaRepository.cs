@@ -5,7 +5,6 @@ using System.Collections.Concurrent;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Common;
-using FormFinch.JsonSchemaValidation.DependencyInjection;
 using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Logic;
 using FormFinch.JsonSchemaValidation.Exceptions;
 

@@ -5,7 +5,6 @@ using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.DependencyInjection;
-using FormFinch.JsonSchemaValidation.Validation.Output;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidationTests.Draft202012.OutputFormat;

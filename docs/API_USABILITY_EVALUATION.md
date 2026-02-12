@@ -371,7 +371,7 @@ PrintErrors(result);
 | `unevaluatedProperties` / `unevaluatedItems` | ✅ Full |
 | Format validation (19 formats) | ✅ Optional |
 | Output formats (Flag/Basic/Detailed) | ✅ Spec-compliant |
-| System.Text.Json (no external deps) | ✅ |
+| Built on System.Text.Json | ✅ |
 | Thread-safe | ✅ |
 | Schema caching | ✅ Content-hash based |
 

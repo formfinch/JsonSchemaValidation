@@ -1,13 +1,13 @@
 # FormFinch.JsonSchemaValidation
 
-A high-performance JSON Schema validation library for .NET with full draft support, built on `System.Text.Json` with zero external dependencies.
+A high-performance JSON Schema validation library for .NET with full draft support, built on `System.Text.Json`.
 
 ## Features
 
-- **Full draft support**: Draft 3, Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
+- **Draft 2020-12**: Full support for the latest JSON Schema specification, plus backward compatibility with Draft 2019-09, Draft 7, Draft 6, Draft 4, and Draft 3
 - **100% spec compliance**: Passes all JSON-Schema-Test-Suite tests
 - **High performance**: Optimized for speed with minimal allocations
-- **Pure System.Text.Json**: No Newtonsoft.Json or other JSON library dependencies
+- **Pure System.Text.Json**: No external JSON library dependencies
 - **Output formats**: Flag, Basic, and Detailed output per JSON Schema spec
 
 ## Installation
@@ -18,36 +18,52 @@ dotnet add package FormFinch.JsonSchemaValidation
 
 ## Quick Start
 
-```csharp
-using FormFinch.JsonSchemaValidation.DependencyInjection;
-using FormFinch.JsonSchemaValidation.Repositories;
-using System.Text.Json;
+**Schema:**
 
-// Set up dependency injection
-var services = new ServiceCollection();
-services.AddSchemaValidation();
-var provider = services.BuildServiceProvider();
-
-// Get the schema repository and register a schema
-var repository = provider.GetRequiredService<ISchemaRepository>();
-var schema = JsonDocument.Parse("""
+```json
 {
     "type": "object",
     "properties": {
-        "name": { "type": "string" },
-        "age": { "type": "integer", "minimum": 0 }
+        "name": { "type": "string", "minLength": 1 },
+        "age": { "type": "integer", "minimum": 0 },
+        "address": {
+            "type": "object",
+            "properties": {
+                "street": { "type": "string" },
+                "city": { "type": "string" }
+            },
+            "required": ["street", "city"]
+        }
     },
-    "required": ["name"]
+    "required": ["name", "age"]
 }
-""");
-repository.RegisterSchema("https://example.com/person.json", schema.RootElement);
+```
 
-// Validate a document
-var validator = repository.GetValidator("https://example.com/person.json");
-var document = JsonDocument.Parse("""{ "name": "Alice", "age": 30 }""");
+**Valid instance:**
 
-var result = validator.Validate(document.RootElement);
-Console.WriteLine($"Valid: {result.IsValid}");
+```json
+{ "name": "Alice", "age": 30, "address": { "street": "123 Main St", "city": "Springfield" } }
+```
+
+**Invalid instance:**
+
+```json
+{ "name": "", "age": -1, "address": { "city": 123 } }
+```
+
+**Validation:**
+
+```csharp
+using FormFinch.JsonSchemaValidation;
+
+// Simple boolean check
+var isValid = JsonSchemaValidator.IsValid(schema, valid);
+
+// Flat error list
+var basic = JsonSchemaValidator.Validate(schema, invalid);
+
+// Hierarchical errors
+var detailed = JsonSchemaValidator.Validate(schema, invalid, OutputFormat.Detailed);
 ```
 
 ## License
@@ -57,7 +73,7 @@ This library is dual-licensed:
 - **Non-commercial use**: Free under the [PolyForm Noncommercial License 1.0.0](LICENSE)
 - **Commercial use**: Requires a [commercial license](COMMERCIAL.md)
 
-See [COMMERCIAL.md](COMMERCIAL.md) for pricing and terms.
+See [COMMERCIAL.md](COMMERCIAL.md) for details.
 
 ## Documentation
 
