@@ -4,6 +4,7 @@ title: Improve compiled validator code quality
 status: To Do
 assignee: []
 created_date: '2026-01-31 11:14'
+updated_date: '2026-02-12 21:09'
 labels:
   - compiled-validators
   - code-quality
@@ -46,3 +47,19 @@ The compiled validators generate working code, but the output is clearly machine
 - [ ] #4 Performance is equal or better than before
 - [ ] #5 All compiled validator tests pass
 <!-- AC:END -->
+
+## Implementation Notes
+
+<!-- SECTION:NOTES:BEGIN -->
+## Copilot Review Suggestions (PR #16)
+
+Concrete improvements identified from Copilot review of `CompiledValidator_UserProfile.cs`:
+
+1. **Combine redundant `if` blocks for required + property validation:** The generator emits separate `if (e.ValueKind == JsonValueKind.Object)` blocks — one for required property checks and another for property validation. These can be merged into a single block since the outer type check already guarantees `Object`.
+
+2. **Eliminate redundant `ValueKind` guard after early return:** After `if (e.ValueKind != JsonValueKind.Object) return false;`, the subsequent `if (e.ValueKind == JsonValueKind.Object)` block is always true and can be removed (just emit the body directly).
+
+3. **Use `.Where(...)` for explicit filtering in `uniqueItems` check:** The nested `foreach` loop in the uniqueItems validation implicitly filters — consider using LINQ `.Where(...)` or restructuring for clarity.
+
+Source: https://github.com/formfinch/JsonSchemaValidation/pull/16
+<!-- SECTION:NOTES:END -->
