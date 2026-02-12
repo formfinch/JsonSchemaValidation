@@ -288,7 +288,7 @@ public interface IJsonSchema
 }
 ```
 
-### Root Namespace (Output Types)
+### Root Namespace (Core Public Types)
 ```csharp
 public enum OutputFormat { Flag, Basic, Detailed }
 
