@@ -73,7 +73,7 @@ internal static class CompiledValidatorScenarios
         var services = new ServiceCollection();
         services.AddJsonSchemaValidation();
         services.AddCompiledValidators(compiledValidator);
-        var provider = services.BuildServiceProvider();
+        using var provider = services.BuildServiceProvider();
         provider.InitializeSingletonServices();
 
         runner.Run("Compiled — valid instance", () =>
