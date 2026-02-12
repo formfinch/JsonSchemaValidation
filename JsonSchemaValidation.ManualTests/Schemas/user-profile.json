@@ -1,0 +1,33 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://formfinch.com/schemas/user-profile",
+    "type": "object",
+    "properties": {
+        "username": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 30,
+            "pattern": "^[a-zA-Z0-9_]+$"
+        },
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+        "age": {
+            "type": "integer",
+            "minimum": 13,
+            "maximum": 150
+        },
+        "bio": {
+            "type": "string",
+            "maxLength": 500
+        },
+        "tags": {
+            "type": "array",
+            "items": { "type": "string" },
+            "maxItems": 10,
+            "uniqueItems": true
+        }
+    },
+    "required": ["username", "email", "age"]
+}
