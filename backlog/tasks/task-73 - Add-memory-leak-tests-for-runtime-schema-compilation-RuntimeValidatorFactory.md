@@ -4,11 +4,12 @@ title: Add memory leak tests for runtime schema compilation (RuntimeValidatorFac
 status: To Do
 assignee: []
 created_date: '2026-02-07 19:49'
+updated_date: '2026-02-13 22:02'
 labels:
   - testing
   - quality
   - memory
-milestone: 1.0.0 Release
+milestone: Compiled Validators
 dependencies: []
 priority: high
 ---

@@ -4,12 +4,13 @@ title: Improve compiled validator code quality
 status: To Do
 assignee: []
 created_date: '2026-01-31 11:14'
-updated_date: '2026-02-12 21:09'
+updated_date: '2026-02-13 22:02'
 labels:
   - compiled-validators
   - code-quality
   - nice-to-have
   - future
+milestone: Compiled Validators
 dependencies: []
 priority: low
 ---

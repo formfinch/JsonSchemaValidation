@@ -4,10 +4,11 @@ title: Delete JsonSchemaValidation.Compiler project
 status: To Do
 assignee: []
 created_date: '2026-02-11 20:37'
-updated_date: '2026-02-11 20:37'
+updated_date: '2026-02-13 22:02'
 labels:
   - cleanup
   - tooling
+milestone: Compiled Validators
 dependencies:
   - TASK-75
   - TASK-76

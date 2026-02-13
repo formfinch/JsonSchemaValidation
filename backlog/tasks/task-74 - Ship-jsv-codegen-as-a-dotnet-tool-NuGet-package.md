@@ -4,13 +4,14 @@ title: Ship jsv-codegen as a dotnet tool NuGet package
 status: To Do
 assignee: []
 created_date: '2026-02-11 20:37'
-updated_date: '2026-02-11 21:05'
+updated_date: '2026-02-13 22:02'
 labels:
   - packaging
   - tooling
+milestone: Compiled Validators
 dependencies:
   - TASK-68
-priority: high
+priority: low
 ---
 
 ## Description

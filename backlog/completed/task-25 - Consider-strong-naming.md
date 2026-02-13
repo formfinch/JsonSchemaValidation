@@ -1,10 +1,10 @@
 ---
 id: TASK-25
 title: Consider strong naming
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-01-30 21:56'
-updated_date: '2026-01-31 10:50'
+updated_date: '2026-02-13 22:00'
 labels:
   - nuget-package
   - enterprise
@@ -26,6 +26,11 @@ Some enterprise customers require strongly-named assemblies. Evaluate whether to
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 Decision made on strong naming
-- [ ] #2 If yes, signing key created and configured
+- [x] #1 Decision made on strong naming
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+**Decision: No strong naming.**\n\nStrong naming will not be applied at this time. The package needs to prove its value first before investing in enterprise-specific features. Can be revisited later if users request it — adding signing is a non-breaking change."
+<!-- SECTION:FINAL_SUMMARY:END -->

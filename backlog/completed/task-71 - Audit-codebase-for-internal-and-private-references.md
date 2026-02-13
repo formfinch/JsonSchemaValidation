@@ -1,9 +1,10 @@
 ---
 id: TASK-71
 title: Audit codebase for internal and private references
-status: To Do
+status: Done
 assignee: []
 created_date: '2026-02-06 13:47'
+updated_date: '2026-02-13 15:50'
 labels:
   - security
   - infrastructure
@@ -39,9 +40,15 @@ Before making the repository public, audit the codebase and git history for refe
 
 ## Acceptance Criteria
 <!-- AC:BEGIN -->
-- [ ] #1 All source files, configs, and documentation reviewed for internal references
-- [ ] #2 Git commit messages audited for internal references
-- [ ] #3 Decision made on whether backlog/ folder is included in the public repo
-- [ ] #4 All internal references removed or replaced with public-facing equivalents
-- [ ] #5 Audit findings documented
+- [x] #1 All source files, configs, and documentation reviewed for internal references
+- [x] #2 Git commit messages audited for internal references
+- [x] #3 Decision made on whether backlog/ folder is included in the public repo
+- [x] #4 All internal references removed or replaced with public-facing equivalents
+- [x] #5 Audit findings documented
 <!-- AC:END -->
+
+## Final Summary
+
+<!-- SECTION:FINAL_SUMMARY:BEGIN -->
+**Internal references audit complete.**\n\n**Findings and actions:**\n\n| Finding | Severity | Action |\n|---|---|---|\n| Private Azure DevOps NuGet feed in `nuget.config` | HIGH | Replaced with nuget.org (PR #19) |\n| Redundant feed override step in `nightly.yml` | HIGH | Removed (PR #19) |\n| Azure DevOps source URL in backlog task-32 | HIGH | Scrubbed (PR #19) |\n| Personal email in early git history | LOW | Accepted — no security risk, recent commits use noreply |\n| CI comment about private feed | LOW | Removed along with the redundant step |\n\n**Decision: backlog/ folder included in public repo** — tasks are public, no sensitive content remaining.\n\n**No action needed for:**\n- Author name in .csproj (intentional public metadata)\n- support@formfinch.com in COMMERCIAL.md (intentional contact info)\n- test@formfinch.com in test data (standard practice)\n\n**Note:** TASK-36 (nuget.config update) is now effectively resolved by this work."
+<!-- SECTION:FINAL_SUMMARY:END -->

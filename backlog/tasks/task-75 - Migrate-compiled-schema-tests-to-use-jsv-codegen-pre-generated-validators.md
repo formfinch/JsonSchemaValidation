@@ -4,9 +4,11 @@ title: Migrate compiled schema tests to use jsv-codegen pre-generated validators
 status: To Do
 assignee: []
 created_date: '2026-02-11 20:37'
+updated_date: '2026-02-13 22:02'
 labels:
   - testing
   - tooling
+milestone: Compiled Validators
 dependencies: []
 priority: medium
 ---
