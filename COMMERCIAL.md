@@ -24,29 +24,11 @@ The following uses are free under the PolyForm Noncommercial License:
 - Non-profit organizations and charities
 - Open source projects (non-commercial)
 
-## Commercial License Options
+## Commercial Licensing
 
-Commercial licenses are available for:
+Commercial license options and pricing have not yet been determined. A licensing store will be available once the package is publicly released.
 
-- **Single Developer** - One developer, unlimited projects
-- **Team** - Up to 10 developers, unlimited projects
-- **Enterprise** - Unlimited developers, unlimited projects
-
-All commercial licenses include:
-
-- Perpetual license for the version purchased
-- Access to updates for 1 year
-- Email support
-
-## Purchase
-
-Commercial licenses can be purchased at:
-
-**[Coming Soon]**
-
-<!-- TODO: Update with LemonSqueezy link once store is set up -->
-
-For inquiries, contact: **licensing@formfinch.com**
+For inquiries, contact: **support@formfinch.com**
 
 ## FAQ
 
@@ -56,7 +38,7 @@ Yes. You can use the library freely for evaluation, testing, and proof-of-concep
 
 ### Do I need a license for each project?
 
-No. Commercial licenses are per-developer or per-team, not per-project. Once licensed, you can use the library in unlimited projects.
+License terms have not yet been finalized. Details will be published once commercial licensing is available.
 
 ### What if I'm building an open source project?
 
@@ -64,8 +46,8 @@ If your open source project is non-commercial (not generating revenue, not backe
 
 ### Can I redistribute the library in my commercial product?
 
-Yes, with a commercial license. You may include the library in your commercial products for distribution to your customers.
+Redistribution terms will be defined as part of the commercial license. Details will be published once licensing is available.
 
 ---
 
-*Last updated: January 2025*
+*Last updated: February 2026*

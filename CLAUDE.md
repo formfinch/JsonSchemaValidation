@@ -5,9 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Project Mission
 
 FormFinch.JsonSchemaValidation is a JSON Schema validation library for .NET with:
-- **Full draft support:** Draft 3, Draft 4, Draft 6, Draft 7, Draft 2019-09, Draft 2020-12
+- **Draft 2020-12:** Full support for the latest JSON Schema specification, plus backward compatibility with older drafts (2019-09, 7, 6, 4, 3)
 - **High performance:** Designed for speed
-- **Pure System.Text.Json:** No external JSON dependencies
+- **Pure System.Text.Json:** No external JSON library dependencies
 - **Public release goal:** NuGet package with source on GitHub
 
 ### Licensing Model
@@ -19,7 +19,7 @@ This dual-license model supports open source adoption while sustaining developme
 
 ## Project Overview
 
-FormFinch.JsonSchemaValidation is a .NET class library implementing JSON Schema validation using pure `System.Text.Json` (no external JSON dependencies). The library uses a plugin-based architecture with dependency injection for extensibility.
+FormFinch.JsonSchemaValidation is a .NET class library implementing JSON Schema validation using `System.Text.Json`. The library uses a plugin-based architecture with dependency injection for extensibility.
 
 **Root Namespace:** `FormFinch.JsonSchemaValidation`
 **Package ID:** `FormFinch.JsonSchemaValidation`

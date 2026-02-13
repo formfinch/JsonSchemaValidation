@@ -12,8 +12,9 @@
     <VersionPrefix>1.0.0</VersionPrefix>
     <Authors>Arjan Bosma</Authors>
     <Company>FormFinch VOF</Company>
-    <Description>FormFinch JsonSchemaValidation is a .NET class library for validating JSON documents against JSON Schemas without reliance on third-party libraries, built on top of System.Text.Json.</Description>
+    <Description>A high-performance JSON Schema validation library for .NET, built on System.Text.Json. Supports Draft 2020-12 and all prior drafts.</Description>
     <PackageLicenseFile>LICENSE</PackageLicenseFile>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
     <RepositoryUrl>https://github.com/formfinch/JsonSchemaValidation</RepositoryUrl>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
@@ -35,6 +36,7 @@
   </PropertyGroup>
   <ItemGroup>
     <None Include="..\LICENSE" Pack="true" PackagePath="" />
+    <None Include="..\README.md" Pack="true" PackagePath="" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" />
