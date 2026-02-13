@@ -18,28 +18,52 @@ dotnet add package FormFinch.JsonSchemaValidation
 
 ## Quick Start
 
-```csharp
-using FormFinch.JsonSchemaValidation;
+**Schema:**
 
-var schema = """
+```json
 {
     "type": "object",
     "properties": {
         "name": { "type": "string", "minLength": 1 },
-        "age": { "type": "integer", "minimum": 0 }
+        "age": { "type": "integer", "minimum": 0 },
+        "address": {
+            "type": "object",
+            "properties": {
+                "street": { "type": "string" },
+                "city": { "type": "string" }
+            },
+            "required": ["street", "city"]
+        }
     },
     "required": ["name", "age"]
 }
-""";
+```
+
+**Valid instance:**
+
+```json
+{ "name": "Alice", "age": 30, "address": { "street": "123 Main St", "city": "Springfield" } }
+```
+
+**Invalid instance:**
+
+```json
+{ "name": "", "age": -1, "address": { "city": 123 } }
+```
+
+**Validation:**
+
+```csharp
+using FormFinch.JsonSchemaValidation;
 
 // Simple boolean check
-var isValid = JsonSchemaValidator.IsValid(schema, """{ "name": "Alice", "age": 30 }""");
+var isValid = JsonSchemaValidator.IsValid(schema, valid);
 
-// Validate with error details
-var result = JsonSchemaValidator.Validate(schema, """{ "name": "", "age": -1 }""");
+// Flat error list
+var basic = JsonSchemaValidator.Validate(schema, invalid);
 
 // Hierarchical errors
-var detailed = JsonSchemaValidator.Validate(schema, """{ "name": "", "age": -1 }""", OutputFormat.Detailed);
+var detailed = JsonSchemaValidator.Validate(schema, invalid, OutputFormat.Detailed);
 ```
 
 ## License
