@@ -103,20 +103,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Override NuGet config
-        run: |
-          # The repo nuget.config references a private Azure DevOps feed that
-          # isn't accessible from CI. Override it with nuget.org only.
-          cat > nuget.config << 'XMLEOF'
-          <?xml version="1.0" encoding="utf-8"?>
-          <configuration>
-            <packageSources>
-              <clear />
-              <add key="nuget.org" value="https://api.nuget.org/v3/index.json" />
-            </packageSources>
-          </configuration>
-          XMLEOF
-
       - name: Restore
         run: dotnet restore
 
