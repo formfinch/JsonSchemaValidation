@@ -16,7 +16,7 @@ The boolean valid/invalid result is unaffected. Use the DI-based API if `$id` co
 
 ### Number Hashing Precision
 
-Schema hashing converts numbers through `double` (IEEE 754, ~15–17 significant digits). Two schemas differing only in numbers beyond double precision may hash identically. Practical impact is minimal — schemas rarely contain such numbers.
+Schema hashing converts numbers through `double` (IEEE 754, ~15-17 significant digits). Two schemas differing only in numbers beyond double precision may hash identically. Practical impact is minimal — schemas rarely contain such numbers.
 
 ### No Automatic Remote Schema Fetching
 
@@ -43,58 +43,21 @@ These do not affect validation results — only annotation output.
 
 Compiled validators generate optimized code at runtime for faster repeated validation. They resolve references statically at compile time, which means certain dynamic features are not supported.
 
-### Dynamic Reference Resolution
+### Complex `$dynamicRef` Scenarios (Draft 2020-12)
 
-Compiled validators cannot perform runtime dynamic scope resolution. The following keywords require stack inspection at validation time to find matching anchors in the call chain:
+Basic `$dynamicRef` / `$dynamicAnchor` resolution works. Complex scenarios involving external schemas or multiple dynamic paths through different `$ref` chains may not resolve correctly, because full dynamic scope resolution requires runtime stack inspection.
 
-- **`$dynamicRef` / `$dynamicAnchor`** (Draft 2020-12) — basic cases work; complex scenarios with external schemas or multiple dynamic paths may not resolve correctly
-- **`$recursiveRef` / `$recursiveAnchor`** (Draft 2019-09) — requires runtime recursive scope resolution
-
-### Unevaluated Keywords
-
-`unevaluatedItems` and `unevaluatedProperties` require annotation tracking across applicators to determine which items/properties have been evaluated. This is not fully supported in compiled validators when combined with applicator keywords like `allOf`, `anyOf`, `oneOf`, or `if`/`then`/`else`.
-
-### Infinite Loop Detection
-
-Compiled validators resolve `$ref` statically without tracking visited nodes. Recursive schemas that create infinite reference loops will cause a stack overflow. The dynamic validator handles this with a recursion depth limit.
-
-### Vocabulary-Based Validation
+### Vocabulary-Based Validation (Drafts 2019-09, 2020-12)
 
 Compiled validators cannot enable or disable keywords based on `$vocabulary` declarations in metaschemas. Vocabulary processing requires runtime evaluation of the metaschema.
-
-### Content Validation
-
-`contentMediaType` and `contentEncoding` validation (e.g., base64 decoding, JSON parsing of string content) is not implemented in compiled validators.
 
 ### Cross-Draft Reference Semantics
 
 Compiled validators cannot process `$ref` targets according to their declared `$schema`. When a schema references a subschema from a different draft, the compiled validator applies Draft 2020-12 semantics uniformly.
 
-### Draft 7 and Earlier
+### `$ref` Overrides Siblings (Drafts 3, 4, 6, 7)
 
-| Limitation | Details |
-|-----------|---------|
-| `$ref` overrides siblings | In Draft 7 and earlier, `$ref` causes all sibling keywords to be ignored. Compiled validators apply 2020-12 semantics where siblings are evaluated. |
-| `$id: "#fragment"` anchors | Older drafts use `$id` with a fragment for location-independent identifiers. Compiled validators use the `$anchor` keyword from 2019-09+. |
-| `id` vs `$id` resolution | Drafts 4 and earlier use `id` (without `$`) with different resolution rules. Not supported. |
-| Base URI changes | When a subschema changes the base URI via `$id`/`id`, reference resolution may require full document context that is unavailable at compile time. |
-| Anchor resolution | Some anchor resolution scenarios require access to the full document context. |
-| Remote refs with internal refs | Subschemas extracted from remote schemas that contain `$ref` to sibling definitions cannot be compiled standalone. |
-
-### Draft-Specific Keywords Not Supported
-
-| Keyword | Drafts | Notes |
-|---------|--------|-------|
-| `additionalItems` | 3, 4, 6, 7, 2019-09 | Tuple validation with array-form `items` |
-| `items` (array form) | 3, 4, 6, 7 | Array of schemas for positional validation |
-| `dependencies` | 3, 4, 6, 7 | Schema and property-array forms |
-| `divisibleBy` | 3 | Precursor to `multipleOf` |
-| `extends` | 3 | Precursor to `allOf` |
-| `disallow` | 3 | Inverse of `type` |
-| `required` (boolean) | 3 | Per-property boolean instead of array |
-| `type` (schema arrays) | 3 | Union types via array of schemas |
-| Draft 3 format names | 3 | `color`, `host-name`, `ip-address` |
-| Metaschema validation | Varies | Validating against the metaschema itself |
+In Draft 7 and earlier, `$ref` causes all sibling keywords to be ignored. Compiled validators apply Draft 2020-12 semantics where sibling keywords are evaluated alongside `$ref`.
 
 ## .NET Platform Limitations
 
