@@ -4,7 +4,7 @@ title: Create GitHub repository
 status: Done
 assignee: []
 created_date: '2026-01-30 21:57'
-updated_date: '2026-02-04 23:16'
+updated_date: '2026-02-13 15:45'
 labels:
   - infrastructure
   - github
@@ -18,7 +18,6 @@ priority: high
 <!-- SECTION:DESCRIPTION:BEGIN -->
 Migrate repository from Azure DevOps to GitHub as a private repository.
 
-**Source:** `https://formfinch.visualstudio.com/formfinch-next/_git/JsonSchemaValidation`
 **Target:** `https://github.com/formfinch/JsonSchemaValidation` (private)
 
 **Current state:**
