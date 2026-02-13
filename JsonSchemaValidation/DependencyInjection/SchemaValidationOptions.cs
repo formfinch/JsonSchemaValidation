@@ -1,7 +1,12 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
-namespace FormFinch.JsonSchemaValidation.DependencyInjection
+using FormFinch.JsonSchemaValidation.DependencyInjection;
+
+// Intentionally in root namespace for public API usability (file stays in DependencyInjection/ for organization).
+#pragma warning disable IDE0130 // Namespace does not match folder structure
+namespace FormFinch.JsonSchemaValidation
+#pragma warning restore IDE0130
 {
     /// <summary>
     /// Options that control JSON Schema validation behavior and supported drafts.

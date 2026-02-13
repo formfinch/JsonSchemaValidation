@@ -3,7 +3,6 @@
 // See LICENSE file in the project root for full license information.
 using FormFinch.JsonSchemaValidation;
 using FormFinch.JsonSchemaValidation.DependencyInjection;
-using FormFinch.JsonSchemaValidation.Validation.Output;
 
 namespace FormFinch.JsonSchemaValidationTests;
 

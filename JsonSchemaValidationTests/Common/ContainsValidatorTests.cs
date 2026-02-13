@@ -2,7 +2,6 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using FormFinch.JsonSchemaValidation;
-using FormFinch.JsonSchemaValidation.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidation.Tests.Common;
 

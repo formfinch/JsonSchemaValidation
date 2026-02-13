@@ -2,11 +2,11 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.DependencyInjection;
 using FormFinch.JsonSchemaValidation.Validation;
-using FormFinch.JsonSchemaValidation.Validation.Output;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace FormFinch.JsonSchemaValidationTests.Draft202012.OutputFormat;
@@ -813,7 +813,7 @@ public class RegressionTests
         var instance = JsonDocument.Parse("123").RootElement;
 
         var result = ValidateRoot(schema, instance);
-        var output = result.ToOutputUnit(JsonSchemaValidation.Validation.Output.OutputFormat.Flag);
+        var output = result.ToOutputUnit(JsonSchemaValidation.OutputFormat.Flag);
 
         Assert.False(output.Valid);
         Assert.Null(output.Errors);
@@ -826,7 +826,7 @@ public class RegressionTests
         var instance = JsonDocument.Parse("123").RootElement;
 
         var result = ValidateRoot(schema, instance);
-        var output = result.ToOutputUnit(JsonSchemaValidation.Validation.Output.OutputFormat.Basic);
+        var output = result.ToOutputUnit(JsonSchemaValidation.OutputFormat.Basic);
 
         Assert.False(output.Valid);
         Assert.NotNull(output.Errors);
@@ -839,7 +839,7 @@ public class RegressionTests
         var instance = JsonDocument.Parse("123").RootElement;
 
         var result = ValidateRoot(schema, instance);
-        var output = result.ToOutputUnit(JsonSchemaValidation.Validation.Output.OutputFormat.Detailed);
+        var output = result.ToOutputUnit(JsonSchemaValidation.OutputFormat.Detailed);
 
         Assert.False(output.Valid);
     }

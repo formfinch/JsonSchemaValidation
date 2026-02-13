@@ -3,7 +3,6 @@
 // See LICENSE file in the project root for full license information.
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Validation;
-using FormFinch.JsonSchemaValidation.Validation.Output;
 
 namespace FormFinch.JsonSchemaValidation.Common
 {
