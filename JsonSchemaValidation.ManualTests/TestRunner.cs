@@ -1,5 +1,3 @@
-using FormFinch.JsonSchemaValidation.Validation.Output;
-
 namespace FormFinch.JsonSchemaValidation.ManualTests;
 
 /// <summary>

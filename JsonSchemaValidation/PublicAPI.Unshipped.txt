@@ -87,34 +87,34 @@ FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.ContentAssertio
 FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.Draft7Options() -> void
 FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.FormatAssertionEnabled.get -> bool
 FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options.FormatAssertionEnabled.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.DefaultDraftVersion.get -> string!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.DefaultDraftVersion.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft201909.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft201909.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft202012.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft202012.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft3.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft3.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft4.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft4.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft6.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft6.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft7.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options!
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.Draft7.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft201909.get -> bool
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft201909.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft202012.get -> bool
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft202012.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft3.get -> bool
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft3.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft4.get -> bool
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft4.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft6.get -> bool
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft6.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft7.get -> bool
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.EnableDraft7.set -> void
-FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions.SchemaValidationOptions() -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.DefaultDraftVersion.get -> string!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.DefaultDraftVersion.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft201909.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft201909Options!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft201909.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft202012.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft202012Options!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft202012.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft3.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft3Options!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft3.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft4.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft4Options!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft4.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft6.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft6Options!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft6.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft7.get -> FormFinch.JsonSchemaValidation.DependencyInjection.Draft7Options!
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.Draft7.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft201909.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft201909.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft202012.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft202012.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft3.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft3.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft4.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft4.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft6.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft6.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft7.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft7.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.SchemaValidationOptions() -> void
 FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup
 FormFinch.JsonSchemaValidation.DependencyInjection.ServiceProviderExtensions
 FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators
@@ -126,31 +126,31 @@ FormFinch.JsonSchemaValidation.IJsonSchema
 FormFinch.JsonSchemaValidation.IJsonSchema.IsValid(string! instanceJson) -> bool
 FormFinch.JsonSchemaValidation.IJsonSchema.IsValid(System.Text.Json.JsonElement instance) -> bool
 FormFinch.JsonSchemaValidation.IJsonSchema.SchemaUri.get -> System.Uri!
-FormFinch.JsonSchemaValidation.IJsonSchema.Validate(string! instanceJson, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
-FormFinch.JsonSchemaValidation.IJsonSchema.Validate(System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+FormFinch.JsonSchemaValidation.IJsonSchema.Validate(string! instanceJson, FormFinch.JsonSchemaValidation.OutputFormat format = FormFinch.JsonSchemaValidation.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.OutputUnit!
+FormFinch.JsonSchemaValidation.IJsonSchema.Validate(System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.OutputFormat format = FormFinch.JsonSchemaValidation.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.OutputUnit!
 FormFinch.JsonSchemaValidation.JsonSchemaValidator
-FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
-FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic = 1 -> FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
-FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Detailed = 2 -> FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
-FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Flag = 0 -> FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.AbsoluteKeywordLocation.get -> string?
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.AbsoluteKeywordLocation.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotation.get -> object?
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotation.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotations.get -> System.Collections.Generic.IList<FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!>?
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Annotations.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Error.get -> string?
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Error.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Errors.get -> System.Collections.Generic.IList<FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!>?
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Errors.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.InstanceLocation.get -> string!
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.InstanceLocation.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.KeywordLocation.get -> string!
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.KeywordLocation.set -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.OutputUnit() -> void
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Valid.get -> bool
-FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit.Valid.set -> void
+FormFinch.JsonSchemaValidation.OutputFormat
+FormFinch.JsonSchemaValidation.OutputFormat.Basic = 1 -> FormFinch.JsonSchemaValidation.OutputFormat
+FormFinch.JsonSchemaValidation.OutputFormat.Detailed = 2 -> FormFinch.JsonSchemaValidation.OutputFormat
+FormFinch.JsonSchemaValidation.OutputFormat.Flag = 0 -> FormFinch.JsonSchemaValidation.OutputFormat
+FormFinch.JsonSchemaValidation.OutputUnit
+FormFinch.JsonSchemaValidation.OutputUnit.AbsoluteKeywordLocation.get -> string?
+FormFinch.JsonSchemaValidation.OutputUnit.AbsoluteKeywordLocation.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.Annotation.get -> object?
+FormFinch.JsonSchemaValidation.OutputUnit.Annotation.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.Annotations.get -> System.Collections.Generic.IList<FormFinch.JsonSchemaValidation.OutputUnit!>?
+FormFinch.JsonSchemaValidation.OutputUnit.Annotations.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.Error.get -> string?
+FormFinch.JsonSchemaValidation.OutputUnit.Error.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.Errors.get -> System.Collections.Generic.IList<FormFinch.JsonSchemaValidation.OutputUnit!>?
+FormFinch.JsonSchemaValidation.OutputUnit.Errors.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.InstanceLocation.get -> string!
+FormFinch.JsonSchemaValidation.OutputUnit.InstanceLocation.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.KeywordLocation.get -> string!
+FormFinch.JsonSchemaValidation.OutputUnit.KeywordLocation.set -> void
+FormFinch.JsonSchemaValidation.OutputUnit.OutputUnit() -> void
+FormFinch.JsonSchemaValidation.OutputUnit.Valid.get -> bool
+FormFinch.JsonSchemaValidation.OutputUnit.Valid.set -> void
 override FormFinch.JsonSchemaValidation.Common.JsonPointer.Equals(object? obj) -> bool
 override FormFinch.JsonSchemaValidation.Common.JsonPointer.GetHashCode() -> int
 override FormFinch.JsonSchemaValidation.Common.JsonPointer.ToString() -> string!
@@ -160,8 +160,8 @@ static FormFinch.JsonSchemaValidation.Common.SchemaHasher.ComputeHash(System.Tex
 static FormFinch.JsonSchemaValidation.Common.SchemaHasher.Instance.get -> FormFinch.JsonSchemaValidation.Common.SchemaHasher!
 static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddCompiledValidators(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, params FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator![]! validators) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddCompiledValidators(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Collections.Generic.IEnumerable<FormFinch.JsonSchemaValidation.Abstractions.ICompiledValidator!>! validators) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddJsonSchemaValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
-static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddJsonSchemaValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions!>? setupAction = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddJsonSchemaValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, FormFinch.JsonSchemaValidation.SchemaValidationOptions! options) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup.AddJsonSchemaValidation(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, System.Action<FormFinch.JsonSchemaValidation.SchemaValidationOptions!>? setupAction = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
 static FormFinch.JsonSchemaValidation.DependencyInjection.ServiceProviderExtensions.InitializeSingletonServices(this System.IServiceProvider! serviceProvider) -> void
 static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool
@@ -184,13 +184,13 @@ static FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format.FormatValidato
 static FormFinch.JsonSchemaValidation.JsonSchemaValidator.IsValid(string! schemaJson, string! instanceJson) -> bool
 static FormFinch.JsonSchemaValidation.JsonSchemaValidator.IsValid(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance) -> bool
 static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(string! schemaJson) -> FormFinch.JsonSchemaValidation.IJsonSchema!
-static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(string! schemaJson, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options) -> FormFinch.JsonSchemaValidation.IJsonSchema!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(string! schemaJson, FormFinch.JsonSchemaValidation.SchemaValidationOptions! options) -> FormFinch.JsonSchemaValidation.IJsonSchema!
 static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(System.Text.Json.JsonElement schema) -> FormFinch.JsonSchemaValidation.IJsonSchema!
-static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(System.Text.Json.JsonElement schema, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options) -> FormFinch.JsonSchemaValidation.IJsonSchema!
-static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(string! schemaJson, string! instanceJson, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
-static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(string! schemaJson, string! instanceJson, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
-static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationOptions! options, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
-static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat format = FormFinch.JsonSchemaValidation.Validation.Output.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.Validation.Output.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Parse(System.Text.Json.JsonElement schema, FormFinch.JsonSchemaValidation.SchemaValidationOptions! options) -> FormFinch.JsonSchemaValidation.IJsonSchema!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(string! schemaJson, string! instanceJson, FormFinch.JsonSchemaValidation.SchemaValidationOptions! options, FormFinch.JsonSchemaValidation.OutputFormat format = FormFinch.JsonSchemaValidation.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(string! schemaJson, string! instanceJson, FormFinch.JsonSchemaValidation.OutputFormat format = FormFinch.JsonSchemaValidation.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.SchemaValidationOptions! options, FormFinch.JsonSchemaValidation.OutputFormat format = FormFinch.JsonSchemaValidation.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.OutputUnit!
+static FormFinch.JsonSchemaValidation.JsonSchemaValidator.Validate(System.Text.Json.JsonElement schema, System.Text.Json.JsonElement instance, FormFinch.JsonSchemaValidation.OutputFormat format = FormFinch.JsonSchemaValidation.OutputFormat.Basic) -> FormFinch.JsonSchemaValidation.OutputUnit!
 FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators
 static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidDate(System.Text.Json.JsonElement data) -> bool
 static FormFinch.JsonSchemaValidation.Draft201909.Keywords.Format.FormatValidators.IsValidDateTime(System.Text.Json.JsonElement data) -> bool

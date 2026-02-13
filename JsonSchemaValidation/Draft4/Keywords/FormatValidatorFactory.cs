@@ -8,7 +8,6 @@
 
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
-using FormFinch.JsonSchemaValidation.DependencyInjection;
 using FormFinch.JsonSchemaValidation.Draft4.Keywords.Format;
 using FormFinch.JsonSchemaValidation.Exceptions;
 using FormFinch.JsonSchemaValidation.Repositories;

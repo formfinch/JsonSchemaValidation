@@ -3,7 +3,6 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
-using FormFinch.JsonSchemaValidation.DependencyInjection;
 using FormFinch.JsonSchemaValidation.Draft202012.Keywords.Format;
 using FormFinch.JsonSchemaValidation.Exceptions;
 using FormFinch.JsonSchemaValidation.Repositories;

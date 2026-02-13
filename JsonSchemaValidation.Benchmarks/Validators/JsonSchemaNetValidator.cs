@@ -20,7 +20,7 @@ public sealed class JsonSchemaNetValidator
         _schema = JsonSchema.FromText(schemaJson);
         _options = new EvaluationOptions
         {
-            OutputFormat = OutputFormat.Flag,
+            OutputFormat = Json.Schema.OutputFormat.Flag,
             RequireFormatValidation = false // Default to annotation-only per JSON Schema spec
         };
     }

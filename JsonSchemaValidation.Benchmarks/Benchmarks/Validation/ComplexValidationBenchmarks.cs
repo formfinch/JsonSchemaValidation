@@ -75,7 +75,7 @@ public class ComplexValidationBenchmarks
         _jsonSchemaNet = JsonSchema.FromText(schemaJson);
         _jsonSchemaNetOptions = new EvaluationOptions
         {
-            OutputFormat = OutputFormat.Flag,
+            OutputFormat = Json.Schema.OutputFormat.Flag,
             RequireFormatValidation = false
         };
 

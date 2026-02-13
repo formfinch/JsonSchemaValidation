@@ -36,10 +36,10 @@ These are the types users directly interact with:
 |------|-----------|---------|
 | `JsonSchemaValidator` | Root | Static entry point for validation |
 | `IJsonSchema` | Root | Parsed schema interface |
-| `OutputUnit` | Validation.Output | Spec-compliant validation output |
-| `OutputFormat` | Validation.Output | Output format enum (Flag/Basic/Detailed) |
+| `OutputUnit` | Root | Spec-compliant validation output |
+| `OutputFormat` | Root | Output format enum (Flag/Basic/Detailed) |
 | `SchemaValidationSetup` | DependencyInjection | DI extension methods |
-| `SchemaValidationOptions` | DependencyInjection | Main configuration class |
+| `SchemaValidationOptions` | Root | Main configuration class |
 | `Draft202012Options` | DependencyInjection | Draft 2020-12 options |
 | `Draft201909Options` | DependencyInjection | Draft 2019-09 options |
 | `Draft7Options` | DependencyInjection | Draft 7 options |
@@ -182,7 +182,7 @@ public class MyService
 |------|------------|----------|
 | `ValidationResult` | public | **Make internal** - Internal type, users get `OutputUnit` |
 
-### FormFinch.JsonSchemaValidation.Validation.Output
+### FormFinch.JsonSchemaValidation (Root) — Output Types
 
 | Type | Visibility | Decision |
 |------|------------|----------|
@@ -194,9 +194,10 @@ public class MyService
 | Type | Visibility | Decision |
 |------|------------|----------|
 | `SchemaValidationSetup` | public | **Keep** - DI entry point |
-| `SchemaValidationOptions` | public | **Keep** - Configuration |
 | `Draft*Options` (6 classes) | public | **Keep** - Configuration |
 | `ServiceProviderExtensions` | public | **Keep** - Required for initialization |
+
+*Note: `SchemaValidationOptions` has moved to the root namespace (`FormFinch.JsonSchemaValidation`).*
 
 ### FormFinch.JsonSchemaValidation.Abstractions
 
@@ -287,7 +288,7 @@ public interface IJsonSchema
 }
 ```
 
-### Validation.Output Namespace
+### Root Namespace (Core Public Types)
 ```csharp
 public enum OutputFormat { Flag, Basic, Detailed }
 
@@ -302,6 +303,8 @@ public class OutputUnit
     IList<OutputUnit>? Errors { get; set; }
     IList<OutputUnit>? Annotations { get; set; }
 }
+
+public class SchemaValidationOptions { /* configuration properties */ }
 ```
 
 ### DependencyInjection Namespace
@@ -318,7 +321,6 @@ public static class ServiceProviderExtensions
     static void InitializeSingletonServices(this IServiceProvider serviceProvider);
 }
 
-public class SchemaValidationOptions { /* configuration properties */ }
 public class Draft202012Options { bool FormatAssertionEnabled { get; set; } }
 public class Draft201909Options { bool FormatAssertionEnabled { get; set; } }
 public class Draft7Options { bool FormatAssertionEnabled { get; set; } bool ContentAssertionEnabled { get; set; } }
