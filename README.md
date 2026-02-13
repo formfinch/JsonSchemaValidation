@@ -77,6 +77,8 @@ See [COMMERCIAL.md](COMMERCIAL.md) for details.
 
 ## Documentation
 
+- [Known Limitations](KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps
+
 Full documentation coming soon.
 
 ---
