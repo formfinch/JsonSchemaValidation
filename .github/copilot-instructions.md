@@ -39,7 +39,7 @@ Nullable reference types are enabled. Code style is enforced in build (`EnforceC
 ## Naming Conventions
 
 - `_camelCase` for private/internal fields
-- `s_camelCase` for private/internal static fields
+- `PascalCase` for private/internal static readonly fields
 - `PascalCase` for constants, properties, methods
 - Allman brace style, `using` directives outside namespace
 
