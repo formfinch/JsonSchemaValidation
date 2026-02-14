@@ -198,8 +198,19 @@ public sealed class SchemaCodeGenerator
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
                 var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft, requiresScopeTracking);
+
+                // Draft 7 and earlier: $ref overrides all sibling keywords
+                var refMasksSiblings = detectedDraft <= SchemaDraft.Draft7
+                    && subschemaInfo.Schema.ValueKind == JsonValueKind.Object
+                    && subschemaInfo.Schema.TryGetProperty("$ref", out _);
+
                 foreach (var generator in _keywordGenerators)
                 {
+                    if (refMasksSiblings && generator.Keyword != "$ref")
+                    {
+                        continue;
+                    }
+
                     if (generator.CanGenerate(subschemaInfo.Schema))
                     {
                         // This populates allExternalRefs via the context
@@ -230,8 +241,19 @@ public sealed class SchemaCodeGenerator
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
                 var context = CreateContext(subschemaInfo, uniqueSchemas, baseUri, allExternalRefs, requiresPropertyAnnotations, requiresItemAnnotations, detectedDraft, requiresScopeTracking);
+
+                // Draft 7 and earlier: $ref overrides all sibling keywords
+                var refMasksSiblings = detectedDraft <= SchemaDraft.Draft7
+                    && subschemaInfo.Schema.ValueKind == JsonValueKind.Object
+                    && subschemaInfo.Schema.TryGetProperty("$ref", out _);
+
                 foreach (var generator in _keywordGenerators)
                 {
+                    if (refMasksSiblings && generator.Keyword != "$ref")
+                    {
+                        continue;
+                    }
+
                     if (generator.CanGenerate(subschemaInfo.Schema))
                     {
                         foreach (var field in generator.GetStaticFields(context))
@@ -358,9 +380,19 @@ public sealed class SchemaCodeGenerator
             sb.AppendLine();
         }
 
+        // Draft 7 and earlier: $ref overrides all sibling keywords
+        var refMasksSiblings = detectedDraft <= SchemaDraft.Draft7
+            && subschemaInfo.Schema.ValueKind == JsonValueKind.Object
+            && subschemaInfo.Schema.TryGetProperty("$ref", out _);
+
         // Generate code for each applicable keyword
         foreach (var generator in _keywordGenerators)
         {
+            if (refMasksSiblings && generator.Keyword != "$ref")
+            {
+                continue;
+            }
+
             if (generator.CanGenerate(subschemaInfo.Schema))
             {
                 var code = generator.GenerateCode(context);
