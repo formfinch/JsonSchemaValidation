@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common.Keywords;
 using FormFinch.JsonSchemaValidation.Draft6.Keywords;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -66,6 +67,12 @@ namespace FormFinch.JsonSchemaValidation.Draft6
             services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory, FormatValidatorFactory>(DraftVersion);
 
             // Note: contentEncoding and contentMediaType are NOT in Draft 6 (added in Draft 7)
+
+            // Annotation-only keywords
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("title"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("description"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("default"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("examples"));
 
             return services;
         }

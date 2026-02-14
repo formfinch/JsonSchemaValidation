@@ -26,6 +26,12 @@ namespace FormFinch.JsonSchemaValidation.Abstractions.Keywords
         int ExecutionOrder => 0;
 
         /// <summary>
+        /// When true, this factory is always evaluated regardless of vocabulary-based keyword filtering.
+        /// Used for custom annotation keywords registered via <c>AddAnnotationKeyword</c>.
+        /// </summary>
+        bool IgnoreVocabularyFilter => false;
+
+        /// <summary>
         /// Creates a keyword validator for the given schema metadata.
         /// </summary>
         /// <param name="schemaData">The schema metadata to create a validator for.</param>

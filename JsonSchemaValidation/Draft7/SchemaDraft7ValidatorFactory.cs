@@ -54,7 +54,8 @@ namespace FormFinch.JsonSchemaValidation.Draft7
                 // Empty keyword (e.g., BooleanValidatorFactory) is always allowed
                 if (activeKeywords != null
                     && !string.IsNullOrEmpty(keywordFactory.Keyword)
-                    && !activeKeywords.Contains(keywordFactory.Keyword))
+                    && !activeKeywords.Contains(keywordFactory.Keyword)
+                    && !keywordFactory.IgnoreVocabularyFilter)
                 {
                     continue;
                 }

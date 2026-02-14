@@ -2,7 +2,9 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
+using FormFinch.JsonSchemaValidation.Common.Keywords;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 using FormFinch.JsonSchemaValidation.Draft3;
 using FormFinch.JsonSchemaValidation.Draft4;
@@ -121,6 +123,29 @@ namespace FormFinch.JsonSchemaValidation.DependencyInjection
             params ICompiledValidator[] validators)
         {
             return services.AddCompiledValidators(validators.AsEnumerable());
+        }
+
+        /// <summary>
+        /// Registers a custom annotation-only keyword for all draft versions.
+        /// The keyword will always pass validation and emit the schema value as an annotation.
+        /// Call this after <see cref="AddJsonSchemaValidation(IServiceCollection, Action{SchemaValidationOptions}?)"/>.
+        /// </summary>
+        /// <param name="services">The service collection.</param>
+        /// <param name="keyword">The keyword name (e.g., "x-display-order").</param>
+        /// <returns>The service collection for chaining.</returns>
+        public static IServiceCollection AddAnnotationKeyword(
+            this IServiceCollection services, string keyword)
+        {
+            var factory = new AnnotationKeywordValidatorFactory(keyword, ignoreVocabularyFilter: true);
+
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft202012Setup.DraftVersion, factory);
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft201909Setup.DraftVersion, factory);
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft7Setup.DraftVersion, factory);
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft6Setup.DraftVersion, factory);
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft4Setup.DraftVersion, factory);
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft3Setup.DraftVersion, factory);
+
+            return services;
         }
     }
 }
