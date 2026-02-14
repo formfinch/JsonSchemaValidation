@@ -28,10 +28,6 @@ Compiled validators cannot enable or disable keywords based on `$vocabulary` dec
 
 Compiled validators cannot process `$ref` targets according to their declared `$schema`. When a schema references a subschema from a different draft, the compiled validator applies Draft 2020-12 semantics uniformly.
 
-### `$ref` Overrides Siblings (Drafts 3, 4, 6, 7)
-
-In Draft 7 and earlier, `$ref` causes all sibling keywords to be ignored. Compiled validators apply Draft 2020-12 semantics where sibling keywords are evaluated alongside `$ref`.
-
 ## .NET Platform Limitations
 
 ### Float Normalization
