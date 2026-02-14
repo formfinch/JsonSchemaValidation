@@ -136,6 +136,8 @@ namespace FormFinch.JsonSchemaValidation.DependencyInjection
         public static IServiceCollection AddAnnotationKeyword(
             this IServiceCollection services, string keyword)
         {
+            ArgumentException.ThrowIfNullOrWhiteSpace(keyword);
+
             var factory = new AnnotationKeywordValidatorFactory(keyword, ignoreVocabularyFilter: true);
 
             services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(SchemaDraft202012Setup.DraftVersion, factory);
