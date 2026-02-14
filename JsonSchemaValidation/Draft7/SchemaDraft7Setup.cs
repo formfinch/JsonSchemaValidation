@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common.Keywords;
 using FormFinch.JsonSchemaValidation.Draft7.Keywords;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -70,6 +71,14 @@ namespace FormFinch.JsonSchemaValidation.Draft7
             // Content keywords
             services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory, ContentEncodingValidatorFactory>(DraftVersion);
             services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory, ContentMediaTypeValidatorFactory>(DraftVersion);
+
+            // Annotation-only keywords
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("title"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("description"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("default"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("examples"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("readOnly"));
+            services.AddKeyedSingleton<ISchemaDraftKeywordValidatorFactory>(DraftVersion, new AnnotationKeywordValidatorFactory("writeOnly"));
 
             return services;
         }
