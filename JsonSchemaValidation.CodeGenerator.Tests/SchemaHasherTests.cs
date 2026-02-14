@@ -41,11 +41,26 @@ public class SchemaHasherTests
     }
 
     [Fact]
-    public void ComputeHash_IgnoresMetadataKeywords()
+    public void ComputeHash_AnnotationKeywordsAffectHash()
     {
-        // Arrange - title and description are metadata, should be ignored
+        // Arrange - annotation keywords are part of the schema's observable behavior
         var schema1 = JsonDocument.Parse("""{"type": "string"}""").RootElement;
         var schema2 = JsonDocument.Parse("""{"type": "string", "title": "Test", "description": "A test"}""").RootElement;
+
+        // Act
+        var hash1 = SchemaHasher.ComputeHash(schema1);
+        var hash2 = SchemaHasher.ComputeHash(schema2);
+
+        // Assert
+        Assert.NotEqual(hash1, hash2);
+    }
+
+    [Fact]
+    public void ComputeHash_IgnoresNonBehavioralKeywords()
+    {
+        // Arrange - $id and $comment do not affect validation behavior
+        var schema1 = JsonDocument.Parse("""{"type": "string"}""").RootElement;
+        var schema2 = JsonDocument.Parse("""{"type": "string", "$id": "urn:test:schema", "$comment": "for docs only"}""").RootElement;
 
         // Act
         var hash1 = SchemaHasher.ComputeHash(schema1);

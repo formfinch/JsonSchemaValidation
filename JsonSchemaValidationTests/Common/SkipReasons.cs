@@ -35,12 +35,4 @@ internal static class SkipReasons
     /// </summary>
     public const string ComplexDynamicRefNotSupported =
         "Complex $dynamicRef with external schemas or multiple dynamic paths not fully supported";
-
-    /// <summary>
-    /// Draft 7 and earlier use different $ref semantics - $ref overrides sibling keywords.
-    /// In these drafts, when a schema has $ref, all other keywords are ignored.
-    /// The compiled validator applies 2020-12 semantics where siblings are evaluated.
-    /// </summary>
-    public const string RefOverrideSemantics =
-        "Draft 7 and earlier: $ref overrides sibling keywords, but compiled validators use 2020-12 semantics";
 }

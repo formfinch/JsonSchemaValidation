@@ -409,20 +409,6 @@ namespace FormFinch.JsonSchemaValidationTests.Draft4
         /// </summary>
         private static string? GetSkipReason(string testCaseDescription)
         {
-            // Draft 4 uses different $ref semantics - $ref overrides sibling keywords
-            if (testCaseDescription == "ref overrides any sibling keywords" ||
-                testCaseDescription.StartsWith("ref overrides any sibling keywords", StringComparison.Ordinal))
-            {
-                return SkipReasons.RefOverrideSemantics;
-            }
-
-            // Draft 4 uses $id: "#fragment" for location-independent identifiers (anchors)
-            if (testCaseDescription == "$ref prevents a sibling id from changing the base uri" ||
-                testCaseDescription.StartsWith("$ref prevents a sibling id from changing the base uri", StringComparison.Ordinal))
-            {
-                return SkipReasons.RefOverrideSemantics;
-            }
-
             // Cross-draft compatibility
             if (testCaseDescription == "refs to historic drafts are processed as historic drafts" ||
                 testCaseDescription.StartsWith("refs to historic drafts are processed as historic drafts", StringComparison.Ordinal))
