@@ -4,40 +4,13 @@ This document lists known limitations and edge cases. The library passes 100% of
 
 ## Dynamic (DI-Based) Validator
 
-### Static API Schema Caching
-
-The static `JsonSchemaValidator` API caches schemas by content hash. The hash excludes `$id` for performance, so two schemas differing only by `$id` share a cached validator. This means:
-
-- Internal `$ref: "#"` resolves to the first schema's base URI
-- Output locations show the first schema's URI
-- The second schema's `$id` is never registered
-
-The boolean valid/invalid result is unaffected. Use the DI-based API if `$id` correctness matters.
-
 ### Number Hashing Precision
 
 Schema hashing converts numbers through `double` (IEEE 754, ~15-17 significant digits). Two schemas differing only in numbers beyond double precision may hash identically. Practical impact is minimal — schemas rarely contain such numbers.
 
 ### No Automatic Remote Schema Fetching
 
-Remote schemas (`$ref` to external URIs) must be pre-registered in `SchemaRepository`. The library does not fetch schemas over HTTP. Use `SchemaRepository.Register()` to load them before validation.
-
-### Annotation-Only Keywords Not Yet Emitted
-
-The following keywords are correctly ignored during validation (per spec) but do not yet produce annotations in `ValidateDetailed()` output:
-
-| Keyword | Drafts |
-|---------|--------|
-| `title` | 4, 6, 7, 2019-09, 2020-12 |
-| `description` | 4, 6, 7, 2019-09, 2020-12 |
-| `default` | 3, 4, 6, 7, 2019-09, 2020-12 |
-| `deprecated` | 2019-09, 2020-12 |
-| `readOnly` | 7, 2019-09, 2020-12 |
-| `writeOnly` | 7, 2019-09, 2020-12 |
-| `examples` | 6, 7, 2019-09, 2020-12 |
-| `$comment` | 7, 2019-09, 2020-12 |
-
-These do not affect validation results — only annotation output.
+Remote schemas (`$ref` to external URIs) must be pre-registered in `SchemaRepository`. The library does not fetch schemas over HTTP — automatic fetching would introduce security hazards (e.g., SSRF) beyond the scope of a validation library. Use `SchemaRepository.Register()` to load external schemas before validation.
 
 ## Compiled Validators
 
