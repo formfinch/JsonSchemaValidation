@@ -25,27 +25,26 @@ public sealed class SchemaHasher
     // and external references TO this schema, but not the validation results themselves.
     // Trade-off: schemas differing only by $id will share a cached validator.
     //
+    // $comment is excluded per spec: it MUST NOT be used for processing (RFC 2119).
+    //
     // $schema is NOT excluded: it determines which draft's semantics apply, which directly
     // affects validation behavior.
     //
+    // Note: Annotation keywords (title, description, default, examples, deprecated,
+    // readOnly, writeOnly) are NOT excluded — they produce observable annotations
+    // in detailed output and must be part of the cache key.
+    //
     // Note: $defs and definitions ARE included because their contents affect validation
     // when referenced via $ref.
-    private static readonly HashSet<string> MetadataKeywords = new(StringComparer.Ordinal)
+    private static readonly HashSet<string> NonBehavioralKeywords = new(StringComparer.Ordinal)
     {
         "$id",
-        "$comment",
-        "title",
-        "description",
-        "default",
-        "examples",
-        "deprecated",
-        "readOnly",
-        "writeOnly"
+        "$comment"
     };
 
     /// <summary>
     /// Computes a stable hash for a schema based on its normalized content.
-    /// Ignores metadata keywords that don't affect validation.
+    /// Ignores non-behavioral keywords ($id, $comment) that don't affect validation.
     /// </summary>
     /// <param name="schema">The schema to hash.</param>
     /// <returns>A 12-character lowercase hex hash.</returns>
@@ -78,8 +77,8 @@ public sealed class SchemaHasher
 
         foreach (var property in element.EnumerateObject())
         {
-            // Skip metadata keywords
-            if (MetadataKeywords.Contains(property.Name))
+            // Skip non-behavioral keywords ($id, $comment)
+            if (NonBehavioralKeywords.Contains(property.Name))
             {
                 continue;
             }
