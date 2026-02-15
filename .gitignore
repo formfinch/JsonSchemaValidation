@@ -402,3 +402,6 @@ nul
 
 # Generated compiled validators (regenerated on demand)
 JsonSchemaValidationBenchmarks/Generated/
+
+# Backlog.md task management (local only)
+backlog/
