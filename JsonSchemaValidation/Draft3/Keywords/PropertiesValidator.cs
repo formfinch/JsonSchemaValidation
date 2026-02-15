@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+
 // Draft 3 behavior: Properties validates object properties AND handles required boolean.
 // In Draft 3, "required" is a boolean on each property definition, not an array at schema level.
 

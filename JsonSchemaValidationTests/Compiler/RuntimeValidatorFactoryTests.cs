@@ -2,8 +2,8 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
-using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.Abstractions;
+using FormFinch.JsonSchemaValidation.Compiler;
 
 namespace FormFinch.JsonSchemaValidation.Tests.Compiler;
 

@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+
 // Draft behavior: In Draft 4, maximum is a number with optional exclusiveMaximum boolean modifier.
 // Validates that numeric data is <= (or <) the maximum value.
 

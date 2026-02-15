@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+
 // Draft 7 behavior: Validates that at least one array item matches the given schema.
 // Note: minContains and maxContains were added in Draft 2019-09 and are NOT supported in Draft 7.
 // Factory for contains keyword validator.

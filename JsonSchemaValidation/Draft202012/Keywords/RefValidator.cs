@@ -1,12 +1,12 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+using System.Threading;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Repositories;
 using FormFinch.JsonSchemaValidation.Validation;
-using System.Threading;
 
 namespace FormFinch.JsonSchemaValidation.Draft202012.Keywords
 {
