@@ -397,6 +397,7 @@ FodyWeavers.xsd
 /.dotnet-home
 /.dotnet
 .claude/*
+CLAUDE.md
 tmpclaude-*-cwd
 nul
 
