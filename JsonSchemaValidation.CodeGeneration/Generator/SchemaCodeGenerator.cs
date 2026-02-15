@@ -1070,16 +1070,16 @@ public sealed class SchemaCodeGenerator
                         var scopeSuffix = hash[..8];
                         sb.AppendLine($"                var _scopeEntry_{scopeSuffix} = new CompiledScopeEntry");
                         sb.AppendLine("                {");
-                    if (fragment.ResourceAnchors.Count > 0)
-                    {
-                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
-                        sb.AppendLine("                    {");
-                        foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
+                        if (fragment.ResourceAnchors.Count > 0)
                         {
-                            sb.AppendLine($"                        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking, "_parent")},");
+                            sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
+                            sb.AppendLine("                    {");
+                            foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
+                            {
+                                sb.AppendLine($"                        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking, "_parent")},");
+                            }
+                            sb.AppendLine("                    },");
                         }
-                        sb.AppendLine("                    },");
-                    }
                         else
                         {
                             sb.AppendLine("                    DynamicAnchors = null,");
@@ -1110,16 +1110,16 @@ public sealed class SchemaCodeGenerator
                         var scopeSuffix = hash[..8];
                         sb.AppendLine($"                var _scopeEntry_{scopeSuffix} = new CompiledScopeEntry");
                         sb.AppendLine("                {");
-                    if (fragment.ResourceAnchors.Count > 0)
-                    {
-                        sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
-                        sb.AppendLine("                    {");
-                        foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
+                        if (fragment.ResourceAnchors.Count > 0)
                         {
-                            sb.AppendLine($"                        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking, "_parent")},");
+                            sb.AppendLine("                    DynamicAnchors = new Dictionary<string, Func<JsonElement, ICompiledValidatorScope, string, bool>>(StringComparer.Ordinal)");
+                            sb.AppendLine("                    {");
+                            foreach (var (anchorName, schemaHash) in fragment.ResourceAnchors)
+                            {
+                                sb.AppendLine($"                        [\"{EscapeString(anchorName)}\"] = {GetAnchorDelegateExpression(schemaHash, hasAnnotationTracking, "_parent")},");
+                            }
+                            sb.AppendLine("                    },");
                         }
-                        sb.AppendLine("                    },");
-                    }
                         else
                         {
                             sb.AppendLine("                    DynamicAnchors = null,");

@@ -3,9 +3,9 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 using System.Text.RegularExpressions;
-using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
+using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.Exceptions;
 using FormFinch.JsonSchemaValidation.Repositories;
 

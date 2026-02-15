@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+
 // Draft behavior: Identical in Draft 2019-09, Draft 2020-12
 // Note: UUID format was added in Draft 2019-09.
 // Validates UUID format per RFC 4122.

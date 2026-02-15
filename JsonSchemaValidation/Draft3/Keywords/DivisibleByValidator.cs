@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+
 // Draft 3 behavior: divisibleBy is equivalent to multipleOf in later drafts.
 // Validates that numeric data is a multiple of the specified divisor.
 

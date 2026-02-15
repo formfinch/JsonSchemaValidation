@@ -27,6 +27,9 @@ generated_code = true
 MA0051.maximum_statements_per_method = 60
 MA0051.maximum_lines_per_method = 100
 
+# IDE0073: Require license header in all source files
+dotnet_diagnostic.IDE0073.severity = warning
+
 # IDE0008: Use explicit type - allow var usage
 dotnet_diagnostic.IDE0008.severity = none
 

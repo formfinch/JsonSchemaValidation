@@ -1,6 +1,7 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+
 // Draft 3 format validator factory.
 // In Draft 3, format was annotation-only by default.
 // Format assertion can be enabled via FormatAssertionEnabled option.

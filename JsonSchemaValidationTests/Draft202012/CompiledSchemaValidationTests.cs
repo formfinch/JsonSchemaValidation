@@ -4,8 +4,8 @@
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
+using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidationTests.Common;
 using FormFinch.JsonSchemaValidationTests.TestCases;
 using Xunit.Sdk;
