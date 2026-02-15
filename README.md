@@ -1,5 +1,8 @@
 # FormFinch.JsonSchemaValidation
 
+[![Nightly Quality Gate](https://github.com/formfinch/JsonSchemaValidation/actions/workflows/nightly.yml/badge.svg)](https://github.com/formfinch/JsonSchemaValidation/actions/workflows/nightly.yml)
+[![NuGet](https://img.shields.io/nuget/v/FormFinch.JsonSchemaValidation)](https://www.nuget.org/packages/FormFinch.JsonSchemaValidation)
+
 A high-performance JSON Schema validation library for .NET with full draft support, built on `System.Text.Json`.
 
 ## Features
@@ -78,8 +81,15 @@ See [COMMERCIAL.md](COMMERCIAL.md) for details.
 ## Documentation
 
 - [Known Limitations](KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps
+- [Contributing](CONTRIBUTING.md) — how to report issues, submit PRs, and code standards
+- API docs are provided via XML documentation comments and IntelliSense
+- Release history is maintained in GitHub Releases
 
-Full documentation coming soon.
+## Behavior Notes
+
+- `$ref` sibling keywords are draft-specific:
+- Draft 7 and earlier: siblings of `$ref` are ignored (masked)
+- Draft 2019-09 and 2020-12: siblings of `$ref` are evaluated normally
 
 ---
 
