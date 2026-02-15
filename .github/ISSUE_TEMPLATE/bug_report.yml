@@ -1,0 +1,110 @@
+name: Bug Report
+description: Report a validation bug or unexpected behavior
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting a bug. Please fill in all fields so we can reproduce and fix the issue.
+
+  - type: input
+    id: version
+    attributes:
+      label: Package Version
+      description: The version of FormFinch.JsonSchemaValidation you are using.
+      placeholder: "1.0.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: draft
+    attributes:
+      label: JSON Schema Draft
+      description: Which JSON Schema draft does your schema use?
+      options:
+        - Draft 2020-12
+        - Draft 2019-09
+        - Draft 7
+        - Draft 6
+        - Draft 4
+        - Draft 3
+        - Unknown / Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: validator
+    attributes:
+      label: Validator Type
+      description: Which validator are you using?
+      options:
+        - Interpreted (default)
+        - Compiled
+    validations:
+      required: true
+
+  - type: dropdown
+    id: output-format
+    attributes:
+      label: Output Format
+      description: Which output format are you using?
+      options:
+        - Flag
+        - Basic
+        - Detailed
+    validations:
+      required: false
+
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: A clear description of the bug.
+    validations:
+      required: true
+
+  - type: textarea
+    id: schema
+    attributes:
+      label: Schema
+      description: The JSON Schema that triggers the issue.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: instance
+    attributes:
+      label: Instance
+      description: The JSON instance being validated.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected Behavior
+      description: What should the validation result be?
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual Behavior
+      description: What is the actual validation result? Include the output if possible.
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: |
+        Additional environment details.
+      placeholder: |
+        .NET version: 8.0
+        OS: Windows 11
+    validations:
+      required: false
