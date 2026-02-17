@@ -24,7 +24,7 @@
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Title>FormFinch JsonSchemaValidation</Title>
     <Copyright>2026 FormFinch VOF</Copyright>
-    <PackageProjectUrl>https://www.formfinch.com</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/formfinch/JsonSchemaValidation</PackageProjectUrl>
   </PropertyGroup>
   <PropertyGroup>
     <Deterministic>true</Deterministic>

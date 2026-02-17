@@ -73,15 +73,15 @@ var detailed = JsonSchemaValidator.Validate(schema, invalid, OutputFormat.Detail
 
 This library is dual-licensed:
 
-- **Non-commercial use**: Free under the [PolyForm Noncommercial License 1.0.0](LICENSE)
-- **Commercial use**: Requires a [commercial license](COMMERCIAL.md)
+- **Non-commercial use**: Free under the [PolyForm Noncommercial License 1.0.0](https://github.com/formfinch/JsonSchemaValidation/blob/main/LICENSE)
+- **Commercial use**: Requires a [commercial license](https://github.com/formfinch/JsonSchemaValidation/blob/main/COMMERCIAL.md)
 
-See [COMMERCIAL.md](COMMERCIAL.md) for details.
+See [COMMERCIAL.md](https://github.com/formfinch/JsonSchemaValidation/blob/main/COMMERCIAL.md) for details.
 
 ## Documentation
 
-- [Known Limitations](KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps
-- [Contributing](CONTRIBUTING.md) — how to report issues, submit PRs, and code standards
+- [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps
+- [Contributing](https://github.com/formfinch/JsonSchemaValidation/blob/main/CONTRIBUTING.md) — how to report issues, submit PRs, and code standards
 - API docs are provided via XML documentation comments and IntelliSense
 - Release history is maintained in GitHub Releases
 
