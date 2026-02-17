@@ -81,6 +81,7 @@ jobs:
         run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release -p:Version="$VERSION" -o ./packages
 
       - name: NuGet login
+        id: nuget-login
         if: github.event.inputs['dry-run'] != 'true'
         uses: nuget/login@v1
         with:
@@ -88,7 +89,7 @@ jobs:
 
       - name: Push to NuGet
         if: github.event.inputs['dry-run'] != 'true'
-        run: dotnet nuget push ./packages/*.nupkg --source https://api.nuget.org/v3/index.json --skip-duplicate
+        run: dotnet nuget push ./packages/*.nupkg --source https://api.nuget.org/v3/index.json --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" --skip-duplicate
 
       - name: Create GitHub Release
         if: github.event.inputs['dry-run'] != 'true'
