@@ -239,4 +239,128 @@ public class JsReviewFixesTests
                 ("\"2023-01-15T23:61:00Z\"", false),
             ]);
     }
+
+    // [P2] Gate is draft-aware. Post-Draft-4 keywords like unevaluatedProperties
+    // or $dynamicRef are unknown keywords in Draft 4 and must be ignored, not
+    // rejected. Schema-valued keywords that don't exist in Draft 4 (propertyNames,
+    // if/then/else, contains, dependentSchemas, $defs) must not be traversed.
+    [Fact]
+    public void Gate_Draft4_AcceptsUnevaluatedProperties_AsUnknownKeyword()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "unevaluatedProperties": false
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
+    }
+
+    [Fact]
+    public void Gate_Draft4_AcceptsDynamicRef_AsUnknownKeyword()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "$dynamicRef": "#meta"
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
+    }
+
+    [Fact]
+    public void Gate_Draft4_DoesNotTraverseIntoPropertyNames()
+    {
+        // propertyNames is unknown in Draft 4. Even if its value contains a
+        // keyword that WOULD be deferred in 2020-12, Draft 4 must ignore
+        // the whole structure.
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "propertyNames": { "unevaluatedProperties": false }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
+    }
+
+    [Fact]
+    public void Gate_Draft4_DoesNotTraverseIntoIfThenElse()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "if": { "$dynamicRef": "#x" },
+              "then": { "unevaluatedItems": false }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
+    }
+
+    [Fact]
+    public void Gate_Draft4_DoesNotTraverseIntoContains()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "contains": { "$recursiveRef": "#x" }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
+    }
+
+    [Fact]
+    public void Gate_Draft4_DoesNotTraverseIntoDefs()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "$defs": { "a": { "unevaluatedProperties": false } }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
+    }
+
+    // Draft 2020-12 behavior is unchanged — must still reject real deferred
+    // features when the keyword exists in the detected draft.
+    [Fact]
+    public void Gate_Draft202012_StillRejectsUnevaluatedProperties()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "unevaluatedProperties": false
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("unevaluatedProperties", result.Error);
+    }
+
+    [Fact]
+    public void Gate_Draft202012_StillRejectsDynamicRef()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$dynamicRef": "#meta"
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("$dynamicRef", result.Error);
+    }
 }

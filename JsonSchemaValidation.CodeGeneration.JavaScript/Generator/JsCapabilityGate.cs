@@ -8,22 +8,14 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 
 /// <summary>
 /// Gates the JS target to features actually supported by the MVP emitter.
-/// Walks only through known schema-valued keywords so that annotation/data
-/// keywords (default, examples, enum, const) aren't confused for subschemas.
-/// Returns early with a descriptive message when a deferred feature is found.
+/// Walking is draft-aware: deferred-feature rejection and applicator recursion
+/// only apply when the keyword actually exists in the detected draft, so a
+/// Draft 4 schema using a post-Draft-4 name (e.g. unevaluatedProperties,
+/// $dynamicRef, propertyNames) is correctly accepted as an unknown-keyword
+/// annotation per spec, not rejected.
 /// </summary>
 public static class JsCapabilityGate
 {
-    private static readonly HashSet<string> DeferredKeywords = new(StringComparer.Ordinal)
-    {
-        "unevaluatedProperties",
-        "unevaluatedItems",
-        "$dynamicRef",
-        "$dynamicAnchor",
-        "$recursiveRef",
-        "$recursiveAnchor",
-    };
-
     private static readonly HashSet<SchemaDraft> SupportedDrafts = new()
     {
         SchemaDraft.Draft4,
@@ -31,39 +23,84 @@ public static class JsCapabilityGate
     };
 
     /// <summary>
-    /// Keywords whose value is itself a schema (object or boolean).
+    /// Per-draft deferred-keyword set: reject only when the keyword exists in
+    /// the target draft. Empty for Draft 4 because none of these keywords were
+    /// part of that draft.
     /// </summary>
-    private static readonly HashSet<string> SchemaValuedKeywords = new(StringComparer.Ordinal)
+    private static readonly Dictionary<SchemaDraft, HashSet<string>> DeferredPerDraft = new()
     {
-        "not",
-        "if", "then", "else",
-        "contains",
-        "additionalProperties",
-        "additionalItems",
-        "propertyNames",
-        "unevaluatedProperties",
-        "unevaluatedItems",
-        "contentSchema",
+        [SchemaDraft.Draft4] = new(StringComparer.Ordinal),
+        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        {
+            "unevaluatedProperties",
+            "unevaluatedItems",
+            "$dynamicRef",
+            "$dynamicAnchor",
+            "$recursiveRef",
+            "$recursiveAnchor",
+        },
     };
 
     /// <summary>
-    /// Keywords whose value is an array of schemas.
+    /// Per-draft keywords whose value is itself a schema (object or boolean).
+    /// Recursion only happens for keywords defined in the current draft; others
+    /// are treated as unknown annotations and not traversed.
     /// </summary>
-    private static readonly HashSet<string> SchemaArrayKeywords = new(StringComparer.Ordinal)
+    private static readonly Dictionary<SchemaDraft, HashSet<string>> SchemaValuedPerDraft = new()
     {
-        "allOf", "anyOf", "oneOf",
-        "prefixItems",
+        [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
+        {
+            "not",
+            "additionalProperties",
+            "additionalItems",
+        },
+        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        {
+            "not",
+            "if", "then", "else",
+            "contains",
+            "additionalProperties",
+            "propertyNames",
+            "unevaluatedProperties",
+            "unevaluatedItems",
+            "contentSchema",
+        },
     };
 
     /// <summary>
-    /// Keywords whose value is a map of name/pattern to schema.
+    /// Per-draft keywords whose value is an array of schemas.
     /// </summary>
-    private static readonly HashSet<string> SchemaMapKeywords = new(StringComparer.Ordinal)
+    private static readonly Dictionary<SchemaDraft, HashSet<string>> SchemaArrayPerDraft = new()
     {
-        "properties",
-        "patternProperties",
-        "$defs", "definitions",
-        "dependentSchemas",
+        [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
+        {
+            "allOf", "anyOf", "oneOf",
+        },
+        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        {
+            "allOf", "anyOf", "oneOf",
+            "prefixItems",
+        },
+    };
+
+    /// <summary>
+    /// Per-draft keywords whose value is a map of name/pattern to schema.
+    /// </summary>
+    private static readonly Dictionary<SchemaDraft, HashSet<string>> SchemaMapPerDraft = new()
+    {
+        [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
+        {
+            "properties",
+            "patternProperties",
+            "definitions",
+        },
+        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        {
+            "properties",
+            "patternProperties",
+            "$defs",
+            "dependentSchemas",
+        },
     };
 
     /// <summary>
@@ -77,30 +114,24 @@ public static class JsCapabilityGate
             return $"JS target MVP supports Draft 4 and Draft 2020-12 only; detected {detectedDraft}. " +
                    "Other drafts are tracked as follow-up work.";
         }
-        return Walk(root);
+        return Walk(root, detectedDraft);
     }
 
-    private static string? Walk(JsonElement node)
+    private static string? Walk(JsonElement node, SchemaDraft draft)
     {
-        switch (node.ValueKind)
-        {
-            case JsonValueKind.Object:
-                return WalkObject(node);
-            case JsonValueKind.True:
-            case JsonValueKind.False:
-                // Boolean schemas are valid; nothing to inspect.
-                return null;
-            default:
-                // Primitives cannot host schema keywords.
-                return null;
-        }
+        return node.ValueKind == JsonValueKind.Object ? WalkObject(node, draft) : null;
     }
 
-    private static string? WalkObject(JsonElement node)
+    private static string? WalkObject(JsonElement node, SchemaDraft draft)
     {
+        var deferred = DeferredPerDraft[draft];
+        var schemaValued = SchemaValuedPerDraft[draft];
+        var schemaArray = SchemaArrayPerDraft[draft];
+        var schemaMap = SchemaMapPerDraft[draft];
+
         foreach (var prop in node.EnumerateObject())
         {
-            if (DeferredKeywords.Contains(prop.Name))
+            if (deferred.Contains(prop.Name))
             {
                 return $"JS target MVP does not support '{prop.Name}'. " +
                        "Deferred to follow-up: unevaluated*, $dynamicRef/$dynamicAnchor, " +
@@ -117,20 +148,30 @@ public static class JsCapabilityGate
                 }
             }
 
-            // Special case for "items": can be a single schema (all drafts) or an
-            // array of schemas (Draft 4 + 2019-09). Recurse into whichever shape it is.
+            // Draft-specific "items": single schema in 2020-12; single or array in Draft 4.
+            // Only traverse when items is a known keyword in the current draft (it is in both
+            // MVP drafts, but the shape differs).
             if (prop.Name == "items")
             {
-                var rejection = prop.Value.ValueKind == JsonValueKind.Array
-                    ? WalkSchemaArray(prop.Value)
-                    : Walk(prop.Value);
-                if (rejection != null) return rejection;
+                if (draft == SchemaDraft.Draft4 && prop.Value.ValueKind == JsonValueKind.Array)
+                {
+                    var rejection = WalkSchemaArray(prop.Value, draft);
+                    if (rejection != null) return rejection;
+                }
+                else
+                {
+                    var rejection = Walk(prop.Value, draft);
+                    if (rejection != null) return rejection;
+                }
                 continue;
             }
 
-            // Draft 4-7 "dependencies": each value is either an array of property
+            // Draft 4 "dependencies": each value is either an array of property
             // names (data) or a schema. Only recurse into schema-shaped values.
-            if (prop.Name == "dependencies" && prop.Value.ValueKind == JsonValueKind.Object)
+            // In Draft 2020-12 "dependencies" is no longer a keyword; treat as
+            // unknown annotation and do not recurse.
+            if (prop.Name == "dependencies" && draft == SchemaDraft.Draft4 &&
+                prop.Value.ValueKind == JsonValueKind.Object)
             {
                 foreach (var dep in prop.Value.EnumerateObject())
                 {
@@ -138,52 +179,51 @@ public static class JsCapabilityGate
                         dep.Value.ValueKind == JsonValueKind.True ||
                         dep.Value.ValueKind == JsonValueKind.False)
                     {
-                        var rejection = Walk(dep.Value);
+                        var rejection = Walk(dep.Value, draft);
                         if (rejection != null) return rejection;
                     }
                 }
                 continue;
             }
 
-            if (SchemaValuedKeywords.Contains(prop.Name))
+            if (schemaValued.Contains(prop.Name))
             {
-                var rejection = Walk(prop.Value);
+                var rejection = Walk(prop.Value, draft);
                 if (rejection != null) return rejection;
             }
-            else if (SchemaArrayKeywords.Contains(prop.Name) &&
+            else if (schemaArray.Contains(prop.Name) &&
                      prop.Value.ValueKind == JsonValueKind.Array)
             {
-                var rejection = WalkSchemaArray(prop.Value);
+                var rejection = WalkSchemaArray(prop.Value, draft);
                 if (rejection != null) return rejection;
             }
-            else if (SchemaMapKeywords.Contains(prop.Name) &&
+            else if (schemaMap.Contains(prop.Name) &&
                      prop.Value.ValueKind == JsonValueKind.Object)
             {
-                var rejection = WalkSchemaMap(prop.Value);
+                var rejection = WalkSchemaMap(prop.Value, draft);
                 if (rejection != null) return rejection;
             }
-            // All other property values (default, examples, enum, const, type,
-            // required, pattern, numeric constraints, format, etc.) are data or
-            // annotations and are intentionally not walked.
+            // All other property values (data, annotations, unknown-in-this-draft
+            // keywords) are intentionally not walked.
         }
         return null;
     }
 
-    private static string? WalkSchemaArray(JsonElement array)
+    private static string? WalkSchemaArray(JsonElement array, SchemaDraft draft)
     {
         foreach (var item in array.EnumerateArray())
         {
-            var rejection = Walk(item);
+            var rejection = Walk(item, draft);
             if (rejection != null) return rejection;
         }
         return null;
     }
 
-    private static string? WalkSchemaMap(JsonElement map)
+    private static string? WalkSchemaMap(JsonElement map, SchemaDraft draft)
     {
         foreach (var entry in map.EnumerateObject())
         {
-            var rejection = Walk(entry.Value);
+            var rejection = Walk(entry.Value, draft);
             if (rejection != null) return rejection;
         }
         return null;
