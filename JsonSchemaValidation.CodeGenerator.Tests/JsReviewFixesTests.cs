@@ -455,37 +455,89 @@ public class JsReviewFixesTests
     // Copilot review: isInteger must not accept BigInt, since numeric-constraint
     // emitters only handle `typeof v === "number"`. Accepting BigInt in the type
     // check would let values silently skip minimum/maximum/multipleOf.
+    // Copilot round 3: NaN/Infinity must not silently pass numeric constraints
+    // or type: number. JSON.parse can't produce them, but direct API callers can.
     [Fact]
-    public void Integer_RejectsBigInt_SoNumericConstraintsApplyConsistently()
+    public void Type_Number_RejectsNaN_ViaDirectApi()
     {
+        AssertVerdictForJsExpr("""{ "type": "number" }""", "NaN", false);
+        AssertVerdictForJsExpr("""{ "type": "number" }""", "Infinity", false);
+        AssertVerdictForJsExpr("""{ "type": "number" }""", "-Infinity", false);
+        AssertVerdictForJsExpr("""{ "type": "number" }""", "42", true);
+    }
+
+    [Fact]
+    public void TypeNumber_Plus_Minimum_RejectsNaN()
+    {
+        // With type: number enforcing finiteness, NaN fails type before reaching
+        // numeric constraints. Confirms the guard keeps NaN from slipping through.
+        AssertVerdictForJsExpr("""{ "type": "number", "minimum": 0 }""", "NaN", false);
+        AssertVerdictForJsExpr("""{ "type": "number", "minimum": 0 }""", "Infinity", false);
+        AssertVerdictForJsExpr("""{ "type": "number", "minimum": 0 }""", "1", true);
+        AssertVerdictForJsExpr("""{ "type": "number", "minimum": 0 }""", "-1", false);
+    }
+
+    [Fact]
+    public void BareMinimum_SkipsNaN_AsUnknownType()
+    {
+        // Without type: number the schema doesn't restrict type, and JSON Schema
+        // numeric constraints only apply to JSON numbers — NaN isn't one. Validator
+        // returns true because no applicable constraint was violated.
+        AssertVerdictForJsExpr("""{ "minimum": 0 }""", "NaN", true);
+        AssertVerdictForJsExpr("""{ "minimum": 0 }""", "1", true);
+        AssertVerdictForJsExpr("""{ "minimum": 0 }""", "-1", false);
+    }
+
+    [Fact]
+    public void StringConstraints_DoNotEmitUnusedRuntimeImport()
+    {
+        // When minLength/maxLength are present but non-integer, GenerateCode
+        // ignores them and must NOT import graphemeLength.
         var gen = new JsSchemaCodeGenerator();
         var schema = JsonDocument.Parse("""
-            { "type": "integer", "minimum": 1 }
+            { "minLength": "not-an-integer" }
             """).RootElement;
         var result = gen.Generate(schema);
         Assert.True(result.Success, result.Error);
+        Assert.DoesNotContain("graphemeLength", result.GeneratedCode);
+    }
 
-        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-bigint-" + Guid.NewGuid().ToString("N"));
+    private static void AssertVerdictForJsExpr(string schemaJson, string dataJsExpr, bool expected)
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse(schemaJson).RootElement;
+        var genResult = gen.Generate(schema);
+        Assert.True(genResult.Success, genResult.Error);
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-direct-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(tempDir);
         try
         {
             File.WriteAllText(
                 Path.Combine(tempDir, FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime.JsRuntime.FileName),
                 FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime.JsRuntime.GetSource());
-            File.WriteAllText(Path.Combine(tempDir, "validator.js"), result.GeneratedCode!);
-
-            var engine = new Jint.Engine(opts => opts.EnableModules(tempDir));
+            File.WriteAllText(Path.Combine(tempDir, "validator.js"), genResult.GeneratedCode!);
+            var engine = new Engine(opts => opts.EnableModules(tempDir));
             var module = engine.Modules.Import("./validator.js");
             var validate = module.Get("validate");
-            var verdict = engine.Invoke(validate, engine.Evaluate("5n"));
-            Assert.True(verdict.IsBoolean());
-            // BigInt 5n would pass minimum=1 if isInteger returned true, but with
-            // the fix it's rejected at the type check.
-            Assert.False(verdict.AsBoolean());
+            var verdict = engine.Invoke(validate, engine.Evaluate(dataJsExpr));
+            Assert.True(verdict.IsBoolean(),
+                $"Non-boolean verdict for {dataJsExpr}. Source:\n{genResult.GeneratedCode}");
+            Assert.True(verdict.AsBoolean() == expected,
+                $"Data {dataJsExpr}: expected {expected}, got {verdict.AsBoolean()}.\n" +
+                $"Source:\n{genResult.GeneratedCode}");
         }
         finally
         {
             try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
         }
+    }
+
+    [Fact]
+    public void Integer_RejectsBigInt_SoNumericConstraintsApplyConsistently()
+    {
+        // BigInt would pass minimum=1 if isInteger returned true for it, but with
+        // the fix it's rejected at the type check before numeric constraints run.
+        AssertVerdictForJsExpr("""{ "type": "integer", "minimum": 1 }""", "5n", false);
     }
 }

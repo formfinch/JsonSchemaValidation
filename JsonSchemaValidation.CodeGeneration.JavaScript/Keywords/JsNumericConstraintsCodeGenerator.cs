@@ -42,7 +42,10 @@ public sealed class JsNumericConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
         var v = context.ElementExpr;
         var sb = new StringBuilder();
-        sb.AppendLine($"if (typeof {v} === \"number\") {{");
+        // Number.isFinite guard: NaN/Infinity would bypass every comparison below
+        // (NaN comparisons always return false) and silently accept invalid values.
+        // JSON can't express them, but direct API callers can, so reject defensively.
+        sb.AppendLine($"if (typeof {v} === \"number\" && Number.isFinite({v})) {{");
 
         if (hasMin && minElem.TryGetDouble(out var min))
         {

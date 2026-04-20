@@ -47,7 +47,19 @@ public sealed class JsStringConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
-        yield return "graphemeLength";
+        // Only yield the import when GenerateCode will actually emit a
+        // graphemeLength call — skip for non-integer minLength/maxLength values
+        // that GenerateCode ignores, so unused imports don't creep into the
+        // emitted module.
+        var schema = context.CurrentSchema;
+        var hasMin = schema.TryGetProperty("minLength", out var minElem) &&
+                     TryGetIntegerValue(minElem, out _);
+        var hasMax = schema.TryGetProperty("maxLength", out var maxElem) &&
+                     TryGetIntegerValue(maxElem, out _);
+        if (hasMin || hasMax)
+        {
+            yield return "graphemeLength";
+        }
     }
 
     private static bool TryGetIntegerValue(JsonElement element, out long value)

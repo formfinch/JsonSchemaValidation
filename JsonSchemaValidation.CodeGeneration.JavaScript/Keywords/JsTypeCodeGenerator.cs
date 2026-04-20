@@ -76,10 +76,12 @@ public sealed class JsTypeCodeGenerator : IJsKeywordCodeGenerator
 
     private static string RejectUnlessType(string type, string v)
     {
+        // "number" rejects NaN/Infinity to match JSON numeric semantics —
+        // JSON.parse can't produce them, but direct API callers can.
         return type switch
         {
             "string" => $"if (typeof {v} !== \"string\") return false;",
-            "number" => $"if (typeof {v} !== \"number\") return false;",
+            "number" => $"if (typeof {v} !== \"number\" || !Number.isFinite({v})) return false;",
             "integer" => $"if (!isInteger({v})) return false;",
             "boolean" => $"if (typeof {v} !== \"boolean\") return false;",
             "null" => $"if ({v} !== null) return false;",
@@ -98,7 +100,7 @@ public sealed class JsTypeCodeGenerator : IJsKeywordCodeGenerator
             var cond = item.GetString() switch
             {
                 "string" => $"typeof {v} === \"string\"",
-                "number" => $"typeof {v} === \"number\"",
+                "number" => $"(typeof {v} === \"number\" && Number.isFinite({v}))",
                 "integer" => $"isInteger({v})",
                 "boolean" => $"typeof {v} === \"boolean\"",
                 "null" => $"{v} === null",
