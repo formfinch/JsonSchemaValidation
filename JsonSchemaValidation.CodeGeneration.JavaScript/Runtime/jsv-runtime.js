@@ -77,13 +77,15 @@ export function graphemeLength(str) {
 
 /**
  * Returns true if v is a JSON integer for validation purposes.
- * Accepts BigInt and finite Number values with no fractional part.
- * Matches the IEEE-754 semantics used by the C# compiled path.
+ * Accepts finite Number values with no fractional part. Rejects BigInt to
+ * stay consistent with the IEEE-754 semantics used by the C# compiled path
+ * and by every numeric-constraint emitter (minimum/maximum/multipleOf guard
+ * on `typeof === "number"`); allowing BigInt here would let `type: integer`
+ * accept values that silently skip numeric constraints.
  * @param {unknown} v
  * @returns {boolean}
  */
 export function isInteger(v) {
-    if (typeof v === "bigint") return true;
     if (typeof v !== "number") return false;
     if (!Number.isFinite(v)) return false;
     return Math.floor(v) === v;

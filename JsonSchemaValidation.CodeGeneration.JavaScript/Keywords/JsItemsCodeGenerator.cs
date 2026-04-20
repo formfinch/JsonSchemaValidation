@@ -33,7 +33,15 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
 
     private static string GenerateDraft202012(JsCodeGenerationContext ctx, JsonElement items)
     {
-        if (items.ValueKind == JsonValueKind.Array) return string.Empty; // invalid in 2020-12
+        if (items.ValueKind == JsonValueKind.Array)
+        {
+            // Draft 2020-12 replaced the tuple form of items with prefixItems.
+            // Silently no-opping would let an invalid schema compile too loosely,
+            // so surface this as a generation failure (matches dynamic validator).
+            throw new InvalidOperationException(
+                "Schema uses array-form \"items\" under Draft 2020-12. " +
+                "Use \"prefixItems\" for tuple validation in 2020-12; \"items\" must be a single schema.");
+        }
         var hash = ctx.GetSubschemaHash(items);
         var v = ctx.ElementExpr;
         var prefixCount = 0;

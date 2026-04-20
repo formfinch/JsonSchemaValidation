@@ -20,8 +20,7 @@ public sealed class JsPatternCodeGenerator : IJsKeywordCodeGenerator
     {
         return schema.ValueKind == JsonValueKind.Object &&
                schema.TryGetProperty("pattern", out var p) &&
-               p.ValueKind == JsonValueKind.String &&
-               !string.IsNullOrEmpty(p.GetString());
+               p.ValueKind == JsonValueKind.String;
     }
 
     public string GenerateCode(JsCodeGenerationContext context)
@@ -34,7 +33,11 @@ public sealed class JsPatternCodeGenerator : IJsKeywordCodeGenerator
         var pattern = patternElement.GetString();
         if (string.IsNullOrEmpty(pattern))
         {
-            return string.Empty;
+            // Dynamic validator rejects empty "pattern" as an invalid schema; surface
+            // the same intent here rather than silently emitting no regex check.
+            throw new InvalidOperationException(
+                "Schema has an empty \"pattern\" string, which is invalid — pattern must be " +
+                "a non-empty ECMA-262 regular expression.");
         }
 
         var v = context.ElementExpr;

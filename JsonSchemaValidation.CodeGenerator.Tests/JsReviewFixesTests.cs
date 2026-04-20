@@ -4,6 +4,7 @@
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
+using Jint;
 using Xunit;
 
 namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
@@ -400,5 +401,91 @@ public class JsReviewFixesTests
         Assert.All(result.Verdicts, v => Assert.True(v));
         // The dead object-keys loop should not appear.
         Assert.DoesNotContain("for (const _k of Object.keys", result.GeneratedSource);
+    }
+
+    // Copilot review: items as an array is invalid in Draft 2020-12 (replaced
+    // by prefixItems). Codegen must fail loudly rather than silently compile.
+    [Fact]
+    public void Items_AsArray_InDraft202012_FailsCodegen()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "items": [ { "type": "integer" }, { "type": "string" } ]
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("array-form \"items\"", result.Error);
+    }
+
+    [Fact]
+    public void Items_AsArray_InDraft4_StillValid()
+    {
+        // Draft 4 accepts the tuple form of items — regression to ensure the
+        // 2020-12-only guard doesn't misfire on older drafts.
+        Expect(
+            """
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "items": [ { "type": "integer" }, { "type": "string" } ]
+            }
+            """,
+            [
+                ("[1, \"a\"]", true),
+                ("[\"x\", \"a\"]", false),
+                ("[1, 2]", false),
+                ("[]", true),
+            ]);
+    }
+
+    // Copilot review: empty pattern string is an invalid schema per the
+    // dynamic validator's stance; codegen should reject it.
+    [Fact]
+    public void Pattern_Empty_FailsCodegen()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""{ "pattern": "" }""").RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("empty \"pattern\"", result.Error);
+    }
+
+    // Copilot review: isInteger must not accept BigInt, since numeric-constraint
+    // emitters only handle `typeof v === "number"`. Accepting BigInt in the type
+    // check would let values silently skip minimum/maximum/multipleOf.
+    [Fact]
+    public void Integer_RejectsBigInt_SoNumericConstraintsApplyConsistently()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            { "type": "integer", "minimum": 1 }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, result.Error);
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-bigint-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            File.WriteAllText(
+                Path.Combine(tempDir, FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime.JsRuntime.FileName),
+                FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime.JsRuntime.GetSource());
+            File.WriteAllText(Path.Combine(tempDir, "validator.js"), result.GeneratedCode!);
+
+            var engine = new Jint.Engine(opts => opts.EnableModules(tempDir));
+            var module = engine.Modules.Import("./validator.js");
+            var validate = module.Get("validate");
+            var verdict = engine.Invoke(validate, engine.Evaluate("5n"));
+            Assert.True(verdict.IsBoolean());
+            // BigInt 5n would pass minimum=1 if isInteger returned true, but with
+            // the fix it's rejected at the type check.
+            Assert.False(verdict.AsBoolean());
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
+        }
     }
 }
