@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
@@ -20,6 +21,8 @@ public sealed class JsIfThenElseCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        // if/then/else were introduced in Draft 7; earlier drafts must ignore them.
+        if (context.DetectedDraft < SchemaDraft.Draft7) return string.Empty;
         var schema = context.CurrentSchema;
         if (!schema.TryGetProperty("if", out var ifElem))
         {

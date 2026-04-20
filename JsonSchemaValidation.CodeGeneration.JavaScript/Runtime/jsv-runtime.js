@@ -134,6 +134,8 @@ export function deepEquals(a, b) {
 function _nonString(v) { return typeof v !== "string"; }
 
 const _reDateFullDate = /^(\d{4})-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$/;
+// Time shape: HH:MM:SS[.fraction](Z|±HH:MM). Field ranges checked separately —
+// a shape-only regex lets "25:00:00Z" through. Range check in isValidTime.
 const _reTimePart = /^(\d{2}):(\d{2}):(\d{2})(\.\d+)?(Z|[+-]\d{2}:\d{2})$/i;
 const _reDuration = /^P(?!$)(\d+Y)?(\d+M)?(\d+W)?(\d+D)?(T(?=\d)(\d+H)?(\d+M)?(\d+(\.\d+)?S)?)?$/;
 const _reEmail = /^[^\s@"]+@[^\s@"]+\.[^\s@"]+$/;
@@ -160,7 +162,19 @@ export function isValidDate(v) {
 /** @type {(v: unknown) => boolean} */
 export function isValidTime(v) {
     if (_nonString(v)) return true;
-    return _reTimePart.test(v);
+    const m = _reTimePart.exec(v);
+    if (!m) return false;
+    const hour = +m[1], minute = +m[2], second = +m[3];
+    // RFC 3339: hour 00-23, minute 00-59, second 00-60 (leap second allowed).
+    if (hour > 23 || minute > 59 || second > 60) return false;
+    // Offsets: ±HH:MM with HH in 00-23 and MM in 00-59.
+    const offset = m[5];
+    if (offset && offset.toUpperCase() !== "Z") {
+        const offHour = +offset.slice(1, 3);
+        const offMin = +offset.slice(4, 6);
+        if (offHour > 23 || offMin > 59) return false;
+    }
+    return true;
 }
 
 /** @type {(v: unknown) => boolean} */

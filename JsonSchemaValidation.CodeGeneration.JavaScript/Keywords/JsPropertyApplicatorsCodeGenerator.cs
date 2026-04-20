@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
@@ -153,6 +154,8 @@ public sealed class JsPropertyNamesCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        // propertyNames was introduced in Draft 6; Draft 4 must ignore it.
+        if (context.DetectedDraft < SchemaDraft.Draft6) return string.Empty;
         if (!context.CurrentSchema.TryGetProperty("propertyNames", out var pn))
         {
             return string.Empty;

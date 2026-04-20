@@ -61,10 +61,24 @@ public sealed class JsCodeGenerationContext
     public required Func<JsonElement, string> GetSubschemaHash { get; init; }
 
     /// <summary>
-    /// Function to resolve a local $ref (e.g., "#/$defs/foo") to the target schema.
-    /// Returns null if the reference cannot be resolved.
+    /// Function to resolve a local $ref (e.g., "#/$defs/foo") to the target schema,
+    /// against the document root. Use ResolveLocalRefInResource when the current
+    /// subschema is inside a nested $id resource.
     /// </summary>
     public required Func<string, JsonElement?> ResolveLocalRef { get; init; }
+
+    /// <summary>
+    /// Function to resolve a local $ref within a specific schema resource.
+    /// Required for correct fragment resolution inside nested $id boundaries.
+    /// </summary>
+    public required Func<string, JsonElement, JsonElement?> ResolveLocalRefInResource { get; init; }
+
+    /// <summary>
+    /// The schema resource root for this subschema: the nearest ancestor with $id
+    /// (or id for Draft 4), or the document root if none. Used to scope local ref
+    /// resolution.
+    /// </summary>
+    public JsonElement? ResourceRoot { get; init; }
 
     /// <summary>
     /// Function to resolve subschema metadata by hash.

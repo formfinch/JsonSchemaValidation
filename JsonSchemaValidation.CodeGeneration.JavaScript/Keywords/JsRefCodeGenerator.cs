@@ -31,7 +31,11 @@ public sealed class JsRefCodeGenerator : IJsKeywordCodeGenerator
         if (string.IsNullOrEmpty(refValue)) return string.Empty;
 
         // Gate rejects non-'#' refs, so we only see local refs here.
-        var target = context.ResolveLocalRef(refValue);
+        // Resolve against the current resource root (the nearest ancestor with $id),
+        // falling back to document-root resolution only when no resource is in scope.
+        var target = context.ResourceRoot.HasValue
+            ? context.ResolveLocalRefInResource(refValue, context.ResourceRoot.Value)
+            : context.ResolveLocalRef(refValue);
         if (!target.HasValue)
         {
             return $"// WARNING: Could not resolve $ref: {refValue}\nreturn false;";

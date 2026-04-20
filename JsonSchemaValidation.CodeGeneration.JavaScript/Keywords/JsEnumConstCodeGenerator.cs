@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
@@ -77,6 +78,9 @@ public sealed class JsConstCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        // const was introduced in Draft 6; for Draft 4 it is an unknown keyword
+        // and must be ignored (annotation-only), not enforced.
+        if (context.DetectedDraft < SchemaDraft.Draft6) return string.Empty;
         if (!context.CurrentSchema.TryGetProperty("const", out var constElem))
         {
             return string.Empty;
@@ -87,6 +91,7 @@ public sealed class JsConstCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (context.DetectedDraft < SchemaDraft.Draft6) yield break;
         yield return "deepEquals";
     }
 }

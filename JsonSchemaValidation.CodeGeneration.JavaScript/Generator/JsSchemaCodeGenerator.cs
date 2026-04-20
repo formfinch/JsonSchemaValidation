@@ -212,6 +212,9 @@ public sealed class JsSchemaCodeGenerator
             CurrentHash = subschemaInfo.Hash,
             GetSubschemaHash = element => SchemaHasher.ComputeHash(element),
             ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue),
+            ResolveLocalRefInResource = (refValue, resourceRoot) =>
+                _extractor.ResolveLocalRefInResource(refValue, resourceRoot),
+            ResourceRoot = subschemaInfo.ResourceRoot,
             GetSubschemaInfo = hash => allSchemas.TryGetValue(hash, out var info) ? info : null,
             DetectedDraft = detectedDraft
         };
@@ -277,9 +280,13 @@ public sealed class JsSchemaCodeGenerator
 
     private static string DeriveFileName(string? schemaUri, string? sourcePath)
     {
-        if (!string.IsNullOrEmpty(schemaUri))
+        // Only derive from the URI when it's absolute and hierarchical; relative
+        // $ids like "person" or "schemas/person.json" are valid in JSON Schema but
+        // cannot be parsed as absolute URIs. Fall back to sourcePath in that case.
+        if (!string.IsNullOrEmpty(schemaUri) &&
+            Uri.TryCreate(schemaUri, UriKind.Absolute, out var uri) &&
+            uri.IsAbsoluteUri && !uri.IsFile)
         {
-            var uri = new Uri(schemaUri);
             var lastSegment = uri.Segments.LastOrDefault()?.TrimEnd('/');
             if (!string.IsNullOrEmpty(lastSegment))
             {
