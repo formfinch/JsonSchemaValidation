@@ -540,4 +540,21 @@ public class JsReviewFixesTests
         // the fix it's rejected at the type check before numeric constraints run.
         AssertVerdictForJsExpr("""{ "type": "integer", "minimum": 1 }""", "5n", false);
     }
+
+    // Copilot round 4: contentSchema is annotation-only in this codebase.
+    // Gate must not traverse into it and reject on nested deferred keywords.
+    [Fact]
+    public void Gate_DoesNotTraverseIntoContentSchema()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "contentSchema": { "unevaluatedProperties": false }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate wrongly rejected schema: {result.Error}");
+    }
 }

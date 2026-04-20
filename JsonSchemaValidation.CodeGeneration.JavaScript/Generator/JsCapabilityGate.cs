@@ -63,7 +63,9 @@ public static class JsCapabilityGate
             "propertyNames",
             "unevaluatedProperties",
             "unevaluatedItems",
-            "contentSchema",
+            // contentSchema is annotation-only in this codebase (and in the default
+            // 2020-12 content vocabulary), so recursing into it would falsely reject
+            // schemas that use deferred keywords inside content metadata.
         },
     };
 

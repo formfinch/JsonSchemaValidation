@@ -31,8 +31,8 @@ internal static class JsLiteral
                 case '\t': sb.Append("\\t"); break;
                 case '\f': sb.Append("\\f"); break;
                 case '\b': sb.Append("\\b"); break;
-                case '\u2028': sb.Append("\\u2028"); break; // LINE SEPARATOR — invalid in JS strings
-                case '\u2029': sb.Append("\\u2029"); break; // PARAGRAPH SEPARATOR — invalid in JS strings
+                case '\u2028': sb.Append("\\u2028"); break; // LINE SEPARATOR — legal in ES2019+ strings, escaped for toolchain/legacy safety
+                case '\u2029': sb.Append("\\u2029"); break; // PARAGRAPH SEPARATOR — legal in ES2019+ strings, escaped for toolchain/legacy safety
                 default:
                     if (c < 0x20)
                     {

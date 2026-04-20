@@ -184,11 +184,21 @@ internal static class Program
             {
                 case "-s":
                 case "--schema":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
                     schemaPath = nextArg;
                     i++;
                     break;
                 case "-o":
                 case "--output":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
                     outputPath = nextArg;
                     i++;
                     break;
@@ -240,6 +250,16 @@ internal static class Program
             Console.WriteLine($"Generated: {runtimePath}");
         }
         return 0;
+    }
+
+    /// <summary>
+    /// Returns true if the argument is present and doesn't look like another flag
+    /// (i.e. doesn't start with '-'), so option parsers can distinguish a missing
+    /// value from an actual value.
+    /// </summary>
+    private static bool IsOptionValue(string? arg)
+    {
+        return !string.IsNullOrEmpty(arg) && !arg.StartsWith('-');
     }
 
     private static int HandleGenerateMetaschemas(string[] args)
