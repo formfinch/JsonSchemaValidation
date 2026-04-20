@@ -1,0 +1,71 @@
+// Copyright (c) 2026 FormFinch VOF
+// Licensed under the PolyForm Noncommercial License 1.0.0.
+// See LICENSE file in the project root for full license information.
+using System.Text;
+using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
+
+/// <summary>
+/// Generates JavaScript code for the "contains" keyword with minContains/maxContains.
+/// contains was introduced in Draft 6; minContains/maxContains in Draft 2019-09.
+/// Draft 4 (MVP support) does not have this keyword — emitter no-ops for Draft 4.
+/// </summary>
+public sealed class JsContainsCodeGenerator : IJsKeywordCodeGenerator
+{
+    public string Keyword => "contains";
+    public int Priority => 35;
+
+    public bool CanGenerate(JsonElement schema) =>
+        schema.ValueKind == JsonValueKind.Object && schema.TryGetProperty("contains", out _);
+
+    public string GenerateCode(JsCodeGenerationContext context)
+    {
+        if (context.DetectedDraft < SchemaDraft.Draft6) return string.Empty;
+        if (!context.CurrentSchema.TryGetProperty("contains", out var containsElem))
+        {
+            return string.Empty;
+        }
+
+        var hash = context.GetSubschemaHash(containsElem);
+        long min = 1;
+        long max = long.MaxValue;
+        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        {
+            if (context.CurrentSchema.TryGetProperty("minContains", out var minElem) &&
+                TryGetIntegerValue(minElem, out var mn)) min = mn;
+            if (context.CurrentSchema.TryGetProperty("maxContains", out var maxElem) &&
+                TryGetIntegerValue(maxElem, out var mx)) max = mx;
+        }
+
+        var v = context.ElementExpr;
+        var sb = new StringBuilder();
+        sb.AppendLine($"if (Array.isArray({v})) {{");
+        sb.AppendLine("  let _count = 0;");
+        sb.AppendLine($"  for (let _i = 0; _i < {v}.length; _i++) {{");
+        sb.AppendLine($"    if ({context.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) {{");
+        sb.AppendLine("      _count++;");
+        if (max != long.MaxValue)
+        {
+            sb.AppendLine($"      if (_count > {max}) return false;");
+        }
+        sb.AppendLine("    }");
+        sb.AppendLine("  }");
+        sb.AppendLine($"  if (_count < {min}) return false;");
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+
+    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context) => [];
+
+    private static bool TryGetIntegerValue(JsonElement element, out long value)
+    {
+        value = 0;
+        if (element.ValueKind != JsonValueKind.Number) return false;
+        if (!element.TryGetDouble(out var d)) return false;
+        if (d < 0 || Math.Abs(d - Math.Floor(d)) > double.Epsilon) return false;
+        value = (long)d;
+        return true;
+    }
+}

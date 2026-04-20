@@ -78,6 +78,23 @@ This library is dual-licensed:
 
 See [COMMERCIAL.md](https://github.com/formfinch/JsonSchemaValidation/blob/main/COMMERCIAL.md) for details.
 
+## JavaScript Code-Gen (Preview)
+
+`jsv-codegen` can emit compiled JavaScript validators for use in browsers, Node, or bundlers — the same source-of-truth schema validates on both server (.NET) and client (JS).
+
+```bash
+jsv-codegen generate-js -s schema.json -o ./src/validators/
+```
+
+This writes `<schema>.js` (an ESM module exporting `validate(data): boolean`) and a sibling `jsv-runtime.js` (shared helpers and format validators). Import and use:
+
+```js
+import validator from "./src/validators/person.js";
+if (!validator.validate(data)) { /* reject */ }
+```
+
+MVP scope: Drafts 2020-12 and 4, self-contained schemas with local `$ref` only. See [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md#javascript-code-gen-target-jsv-codegen-generate-js) for the full list of deferred features and behavioral notes.
+
 ## Documentation
 
 - [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps

@@ -1,11 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <RootNamespace>FormFinch.JsonSchemaValidation.CodeGenerator</RootNamespace>
-    <AssemblyName>jsv-codegen</AssemblyName>
+    <RootNamespace>FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript</RootNamespace>
+    <AssemblyName>FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript</AssemblyName>
   </PropertyGroup>
   <PropertyGroup>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
@@ -13,6 +12,8 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration\JsonSchemaValidation.CodeGeneration.csproj" />
-    <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.JavaScript\JsonSchemaValidation.CodeGeneration.JavaScript.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Runtime\jsv-runtime.js" LogicalName="FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime.jsv-runtime.js" />
   </ItemGroup>
 </Project>
