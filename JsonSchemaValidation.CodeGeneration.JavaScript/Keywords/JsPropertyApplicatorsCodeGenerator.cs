@@ -22,14 +22,15 @@ public sealed class JsPatternPropertiesCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
-        if (!context.CurrentSchema.TryGetProperty("patternProperties", out var patterns) ||
-            patterns.ValueKind != JsonValueKind.Object ||
-            patterns.EnumerateObject().FirstOrDefault().Value.ValueKind == JsonValueKind.Undefined)
-        {
-            // If there are no entries, skip.
-        }
         if (!context.CurrentSchema.TryGetProperty("patternProperties", out var patternsElem) ||
             patternsElem.ValueKind != JsonValueKind.Object)
+        {
+            return string.Empty;
+        }
+
+        // Empty patternProperties {}: no pattern checks to emit.
+        var patternEnumerator = patternsElem.EnumerateObject();
+        if (!patternEnumerator.MoveNext())
         {
             return string.Empty;
         }
@@ -38,14 +39,16 @@ public sealed class JsPatternPropertiesCodeGenerator : IJsKeywordCodeGenerator
         var sb = new StringBuilder();
         sb.AppendLine($"if (typeof {v} === \"object\" && {v} !== null && !Array.isArray({v})) {{");
         sb.AppendLine($"  for (const _k of Object.keys({v})) {{");
-        foreach (var pattern in patternsElem.EnumerateObject())
+        do
         {
+            var pattern = patternEnumerator.Current;
             var regex = JsLiteral.RegexLiteral(pattern.Name);
             var hash = context.GetSubschemaHash(pattern.Value);
             sb.AppendLine($"    if ({regex}.test(_k)) {{");
             sb.AppendLine($"      if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_k]")}) return false;");
             sb.AppendLine("    }");
         }
+        while (patternEnumerator.MoveNext());
         sb.AppendLine("  }");
         sb.AppendLine("}");
         return sb.ToString();

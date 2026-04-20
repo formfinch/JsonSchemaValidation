@@ -27,9 +27,8 @@
 //   CompiledValidatorScope — $dynamicRef / $recursiveRef scope stack
 //   Registry              — external $ref resolution
 //
-// Format implementations land in Phase 4. Until then the exports throw a
-// clear not-implemented error so emitters referencing them surface the gap
-// loudly rather than silently returning a wrong verdict.
+// All format exports below are implemented in this runtime and are part of
+// the frozen MVP ABI that emitted validators consume.
 
 // ---- Helpers (frozen) -----------------------------------------------------
 

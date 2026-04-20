@@ -215,6 +215,8 @@ public class JsTestSuiteRunner
     private static string ToJsStringLiteral(string input)
     {
         return "\"" + input
+            .Replace("\u2028", "\\u2028")
+            .Replace("\u2029", "\\u2029")
             .Replace("\\", "\\\\")
             .Replace("\"", "\\\"")
             .Replace("\n", "\\n")

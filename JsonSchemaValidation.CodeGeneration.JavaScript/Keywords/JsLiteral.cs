@@ -50,6 +50,25 @@ internal static class JsLiteral
     }
 
     /// <summary>
+    /// Emits a JSON element as a JavaScript expression literal. Starts from the raw
+    /// JSON text (which is always valid JS grammar) and escapes U+2028/U+2029 inside
+    /// string literals — those code points are legal in JSON strings but were illegal
+    /// in JS string literals pre-ES2019, and some tooling still chokes on them.
+    /// Literal control characters inside strings are impossible (JSON forbids them).
+    /// </summary>
+    public static string JsonAsExpression(System.Text.Json.JsonElement element)
+    {
+        var raw = element.GetRawText();
+        if (raw.IndexOf('\u2028') < 0 && raw.IndexOf('\u2029') < 0)
+        {
+            return raw;
+        }
+        // Both escape sequences are valid in JSON and JS, so replacing the literal
+        // code points with their \uXXXX form preserves semantics in both grammars.
+        return raw.Replace("\u2028", "\\u2028").Replace("\u2029", "\\u2029");
+    }
+
+    /// <summary>
     /// Emits a JavaScript regex literal like /pattern/ with appropriate escaping of
     /// characters that would terminate the literal or be interpreted as line breaks.
     /// Does not rewrite the regex grammar — the pattern is assumed to be ECMAScript.

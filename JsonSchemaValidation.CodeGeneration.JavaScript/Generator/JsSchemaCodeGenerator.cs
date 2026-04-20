@@ -236,7 +236,7 @@ public sealed class JsSchemaCodeGenerator
         {
             sb.Append("import { ");
             sb.Append(string.Join(", ", runtimeImports));
-            sb.AppendLine($" }} from \"{EscapeString(RuntimeImportSpecifier)}\";");
+            sb.AppendLine($" }} from {JsLiteral.String(RuntimeImportSpecifier)};");
             sb.AppendLine();
         }
 
@@ -253,7 +253,7 @@ public sealed class JsSchemaCodeGenerator
 
         var schemaUriLiteral = string.IsNullOrEmpty(schemaUri)
             ? "null"
-            : $"\"{EscapeString(schemaUri)}\"";
+            : JsLiteral.String(schemaUri);
         sb.AppendLine($"export const schemaUri = {schemaUriLiteral};");
         sb.AppendLine();
 
@@ -308,10 +308,5 @@ public sealed class JsSchemaCodeGenerator
             sb.Append(char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_');
         }
         return sb.Length > 0 ? sb.ToString() : "validator";
-    }
-
-    private static string EscapeString(string s)
-    {
-        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 }

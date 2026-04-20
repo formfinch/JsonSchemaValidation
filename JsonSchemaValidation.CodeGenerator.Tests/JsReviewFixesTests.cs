@@ -363,4 +363,42 @@ public class JsReviewFixesTests
         Assert.False(result.Success);
         Assert.Contains("$dynamicRef", result.Error);
     }
+
+    // Copilot review: enum/const values with U+2028/U+2029 must be escaped when
+    // inlined into the emitted JS expression (legal in ES2019+ string literals
+    // but defensive escaping protects older tooling).
+    [Fact]
+    public void Enum_EscapesLineSeparator()
+    {
+        Expect(
+            "{ \"enum\": [\"a\u2028b\"] }",
+            [
+                ("\"a\u2028b\"", true),
+                ("\"ab\"", false),
+            ]);
+    }
+
+    [Fact]
+    public void Const_EscapesParagraphSeparator()
+    {
+        Expect(
+            "{ \"const\": \"x\u2029y\" }",
+            [
+                ("\"x\u2029y\"", true),
+                ("\"xy\"", false),
+            ]);
+    }
+
+    // Copilot review: empty patternProperties must not emit an object-keys loop.
+    [Fact]
+    public void PatternProperties_EmptyObject_EmitsNothing()
+    {
+        var result = _harness.Evaluate(
+            """{ "patternProperties": {} }""",
+            ["{\"anything\": 1}", "\"string\"", "42"]);
+        Assert.True(result.Success, result.Error);
+        Assert.All(result.Verdicts, v => Assert.True(v));
+        // The dead object-keys loop should not appear.
+        Assert.DoesNotContain("for (const _k of Object.keys", result.GeneratedSource);
+    }
 }

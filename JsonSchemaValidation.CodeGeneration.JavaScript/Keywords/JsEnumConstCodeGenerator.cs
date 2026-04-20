@@ -35,7 +35,7 @@ public sealed class JsEnumCodeGenerator : IJsKeywordCodeGenerator
         var checks = new List<string>();
         foreach (var item in enumElem.EnumerateArray())
         {
-            checks.Add($"deepEquals({v}, {item.GetRawText()})");
+            checks.Add($"deepEquals({v}, {JsLiteral.JsonAsExpression(item)})");
         }
         if (checks.Count == 0)
         {
@@ -86,7 +86,7 @@ public sealed class JsConstCodeGenerator : IJsKeywordCodeGenerator
             return string.Empty;
         }
         var v = context.ElementExpr;
-        return $"if (!deepEquals({v}, {constElem.GetRawText()})) return false;";
+        return $"if (!deepEquals({v}, {JsLiteral.JsonAsExpression(constElem)})) return false;";
     }
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)

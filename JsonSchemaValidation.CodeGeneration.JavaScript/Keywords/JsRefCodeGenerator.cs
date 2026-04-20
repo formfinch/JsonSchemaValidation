@@ -38,7 +38,9 @@ public sealed class JsRefCodeGenerator : IJsKeywordCodeGenerator
             : context.ResolveLocalRef(refValue);
         if (!target.HasValue)
         {
-            return $"// WARNING: Could not resolve $ref: {refValue}\nreturn false;";
+            // Don't embed refValue into the emitted source — a ref containing newlines
+            // or "*/" could break out of the comment / inject text into the module.
+            return "// WARNING: Could not resolve local $ref.\nreturn false;";
         }
         var hash = context.GetSubschemaHash(target.Value);
         return $"if (!{context.GenerateValidateCall(hash)}) return false;";

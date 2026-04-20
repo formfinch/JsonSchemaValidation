@@ -78,7 +78,14 @@ public sealed class JsValidatorHarness
 
     private static string ToJsStringLiteral(string input)
     {
+        // Two-level escaping: the result is a JS string literal whose decoded value
+        // is JSON text for JSON.parse. U+2028/U+2029 must reach JSON.parse as the
+        // JSON escape sequence \u2028 / \u2029 (Jint's JSON.parse rejects literal
+        // line terminators). So: replace U+2028 with "\u2028" first, then double
+        // all backslashes so the JS string decodes to a literal backslash for JSON.
         return "\"" + input
+            .Replace("\u2028", "\\u2028")
+            .Replace("\u2029", "\\u2029")
             .Replace("\\", "\\\\")
             .Replace("\"", "\\\"")
             .Replace("\n", "\\n")
