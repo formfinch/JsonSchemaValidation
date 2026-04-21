@@ -7,7 +7,11 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
 /// <summary>
 /// Generates JavaScript code for the "pattern" keyword.
-/// Emits a native RegExp literal — ECMAScript regex, matching JSON Schema intent.
+/// Emits a <c>new RegExp("...")</c> constructor expression (via JsLiteral.RegexLiteral)
+/// using the ECMAScript dialect required by JSON Schema. Constructor form is used
+/// instead of a <c>/.../</c> literal so schema-supplied text never participates in
+/// JS tokenisation — patterns starting with <c>*</c> or containing other tokenizer
+/// hazards no longer break module parsing.
 /// Regex timeouts don't exist in JS; pathological patterns are a known limitation
 /// inherited from the spec (documented in KNOWN_LIMITATIONS.md).
 /// </summary>

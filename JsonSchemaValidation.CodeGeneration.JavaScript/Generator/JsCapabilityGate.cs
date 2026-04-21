@@ -108,6 +108,11 @@ public static class JsCapabilityGate
             "properties",
             "patternProperties",
             "$defs",
+            // definitions: not a standard 2020-12 keyword, but the shared
+            // SubschemaExtractor still walks it and #/definitions/... refs
+            // are legal JSON Pointers. Include so the gate matches emission
+            // reachability and so extractor-collected subschemas get emitted.
+            "definitions",
             "dependentSchemas",
         },
     };

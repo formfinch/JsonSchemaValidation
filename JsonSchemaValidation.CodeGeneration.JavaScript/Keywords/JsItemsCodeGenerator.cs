@@ -10,7 +10,10 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 /// <summary>
 /// Generates JavaScript code for the "items" keyword.
 /// Draft 2020-12: items is a single schema applying to indices >= prefixItems count.
-/// Draft 4 + 2019-09 (MVP support): items is either a single schema or an array (tuple).
+/// Draft 4 (MVP's other supported draft): items is either a single schema or an
+/// array (tuple validation). The array-form branch also matches Draft 2019-09
+/// keyword semantics at the code level, but Draft 2019-09 is rejected by
+/// JsCapabilityGate for the JS target.
 /// </summary>
 public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
 {
@@ -135,7 +138,9 @@ public sealed class JsPrefixItemsCodeGenerator : IJsKeywordCodeGenerator
 }
 
 /// <summary>
-/// Generates JavaScript code for the "additionalItems" keyword (Draft 4 + 2019-09).
+/// Generates JavaScript code for the "additionalItems" keyword (Draft 4 in the JS
+/// target; also applies to Draft 2019-09 semantically but that draft is rejected
+/// by JsCapabilityGate, so this generator only fires for Draft 4 schemas here).
 /// Removed in Draft 2020-12. Only meaningful when items is an array (tuple validation).
 /// </summary>
 public sealed class JsAdditionalItemsCodeGenerator : IJsKeywordCodeGenerator

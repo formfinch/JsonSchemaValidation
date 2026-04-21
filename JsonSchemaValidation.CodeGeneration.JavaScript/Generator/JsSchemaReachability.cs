@@ -73,6 +73,7 @@ internal static class JsSchemaReachability
             "properties",
             "patternProperties",
             "$defs",
+            "definitions", // legacy keyword, still walked by SubschemaExtractor
             "dependentSchemas",
         },
     };

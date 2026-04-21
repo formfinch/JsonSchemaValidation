@@ -623,6 +623,28 @@ public class JsReviewFixesTests
         Assert.Contains("multiple nested $id resources", result.Error);
     }
 
+    // Copilot round 6: legacy "definitions" used under Draft 2020-12. The
+    // shared extractor walks it, so $ref targets under #/definitions must be
+    // emitted as validators. If they aren't, the generated JS calls a
+    // missing validate_<hash> at runtime.
+    [Fact]
+    public void Draft202012_LegacyDefinitions_WithRef_IsValidatedCorrectly()
+    {
+        Expect(
+            """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "definitions": { "nonnegInt": { "type": "integer", "minimum": 0 } },
+              "$ref": "#/definitions/nonnegInt"
+            }
+            """,
+            [
+                ("5", true),
+                ("-1", false),
+                ("\"x\"", false),
+            ]);
+    }
+
     // Copilot round 5: gate should mirror the emitter's $ref-siblings-masked
     // behavior for Draft 4-7 — any sibling keyword is ignored at emission, so
     // the gate shouldn't reject a schema because those ignored siblings contain
