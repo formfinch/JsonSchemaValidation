@@ -175,6 +175,15 @@ public sealed class JsAdditionalItemsCodeGenerator : IJsKeywordCodeGenerator
         {
             return string.Empty;
         }
+        if (additional.ValueKind != JsonValueKind.Object)
+        {
+            // Invalid schema: additionalItems must be object/boolean per spec.
+            // SubschemaExtractor skips non-schema values, so emitting a
+            // validate_<hash> call would be undefined at runtime.
+            throw new InvalidOperationException(
+                "Schema's \"additionalItems\" value must be an object or boolean; got " +
+                $"{additional.ValueKind}.");
+        }
         var hash = context.GetSubschemaHash(additional);
         var sb = new StringBuilder();
         sb.AppendLine($"if (Array.isArray({v})) {{");

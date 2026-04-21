@@ -623,6 +623,55 @@ public class JsReviewFixesTests
         Assert.Contains("multiple nested $id resources", result.Error);
     }
 
+    // Copilot round 11: invalid-schema-shape values for applicator keywords
+    // must fail codegen cleanly. Before the fix, a non-object/non-boolean
+    // value for additionalProperties / propertyNames / additionalItems passed
+    // through to hash-based dispatch, but SubschemaExtractor doesn't collect
+    // non-schema values, so the emitted module referenced an undefined
+    // validate_<hash> at runtime.
+    [Fact]
+    public void AdditionalProperties_NonSchemaValue_FailsCodegen()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            { "additionalProperties": 42 }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("additionalProperties", result.Error);
+    }
+
+    [Fact]
+    public void PropertyNames_NonSchemaValue_FailsCodegen()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "propertyNames": "not-a-schema"
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("propertyNames", result.Error);
+    }
+
+    [Fact]
+    public void AdditionalItems_NonSchemaValue_FailsCodegen()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "items": [ { "type": "string" } ],
+              "additionalItems": 99
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("additionalItems", result.Error);
+    }
+
     // Copilot round 10: empty-string $ref must not silently mask sibling
     // keywords in Draft 4-7. Pre-fix: refMasksSiblings triggered on any $ref
     // key (even ""), JsRefCodeGenerator emitted nothing, and the whole

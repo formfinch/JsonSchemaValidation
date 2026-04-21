@@ -54,7 +54,7 @@ JavaScript numbers are IEEE-754 doubles. Integer detection and `multipleOf` comp
 
 ### Regex Execution
 
-Patterns emit native JavaScript `RegExp` literals (ECMAScript flavor, matching the JSON Schema spec). JavaScript has no regex timeout — pathological patterns that would trip C#'s `matchTimeoutMilliseconds` safeguard can hang in JS. Treat validator input as untrusted at your own discretion.
+Patterns emit JavaScript `new RegExp("...")` constructor expressions (ECMAScript flavor, matching the JSON Schema spec). Constructor form is used instead of the `/pattern/` literal form so schema-supplied text never participates in JS tokenisation — patterns starting with `*` or containing other tokenizer hazards can no longer break module parsing. Invalid ECMAScript regex grammar surfaces at `RegExp` construction time rather than as a module parse error. JavaScript has no regex timeout — pathological patterns that would trip C#'s `matchTimeoutMilliseconds` safeguard can hang in JS. Treat validator input as untrusted at your own discretion.
 
 ### Format Validation
 

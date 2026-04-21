@@ -126,10 +126,21 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         {
             sb.AppendLine("    return false;");
         }
-        else
+        else if (addProps.ValueKind == JsonValueKind.Object)
         {
             var hash = context.GetSubschemaHash(addProps);
             sb.AppendLine($"    if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_k]")}) return false;");
+        }
+        else
+        {
+            // Invalid schema: additionalProperties must be object/boolean per
+            // spec. SubschemaExtractor doesn't collect non-schema values, so
+            // emitting a validate_<hash> call would reference an undefined
+            // function at runtime. Fail fast with an actionable message,
+            // matching how the gate treats other invalid-schema shapes.
+            throw new InvalidOperationException(
+                "Schema's \"additionalProperties\" value must be an object or boolean; got " +
+                $"{addProps.ValueKind}.");
         }
         sb.AppendLine("  }");
         sb.AppendLine("}");
@@ -186,6 +197,17 @@ public sealed class JsPropertyNamesCodeGenerator : IJsKeywordCodeGenerator
         if (!context.CurrentSchema.TryGetProperty("propertyNames", out var pn))
         {
             return string.Empty;
+        }
+        if (pn.ValueKind != JsonValueKind.Object &&
+            pn.ValueKind != JsonValueKind.True &&
+            pn.ValueKind != JsonValueKind.False)
+        {
+            // Invalid schema: propertyNames must be a schema (object or boolean).
+            // Non-schema values aren't extracted by SubschemaExtractor, so the
+            // emitted validate_<hash> call would be undefined at runtime.
+            throw new InvalidOperationException(
+                "Schema's \"propertyNames\" value must be an object or boolean; got " +
+                $"{pn.ValueKind}.");
         }
         var hash = context.GetSubschemaHash(pn);
         var v = context.ElementExpr;
