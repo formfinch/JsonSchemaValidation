@@ -557,4 +557,101 @@ public class JsReviewFixesTests
         var result = gen.Generate(schema);
         Assert.True(result.Success, $"Gate wrongly rejected schema: {result.Error}");
     }
+
+    // Codex review: contentSchema metadata must not produce emitter failures
+    // even when it contains keyword shapes that would be invalid as real
+    // subschemas (e.g., items-as-array in Draft 2020-12). The reachability
+    // walk skips annotation keywords, so no validator function is emitted for
+    // the contentSchema contents.
+    [Fact]
+    public void ContentSchema_NotEmitted_EvenIfItContainsInvalidShapes()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "contentSchema": { "items": [ { "type": "integer" } ] }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"contentSchema metadata should not cause codegen failure: {result.Error}");
+        Assert.DoesNotContain("validate_", result.GeneratedCode!.Replace($"validate_{SchemaHasher_ComputeRoot(schema)}", ""));
+    }
+
+    // Helper: hash of root schema (extractor keeps root under its own hash).
+    private static string SchemaHasher_ComputeRoot(JsonElement root) =>
+        FormFinch.JsonSchemaValidation.Common.SchemaHasher.ComputeHash(root);
+
+    // Codex review: when two nested $id resources each contain a text-identical
+    // $ref-only subschema, the shared analyzer collapses them to one hash and
+    // retains only the first resource root. Resolving the ref in the second
+    // context would then target the first resource's definition. The reachability
+    // pass detects this and rejects pre-emission.
+    [Fact]
+    public void AmbiguousResourceRef_IsRejected()
+    {
+        // Both A and B nest an identical {"$ref":"#/$defs/T"} subschema. Each
+        // resource defines its own T differently. The shared extractor collapses
+        // the two ref objects to a single SubschemaInfo keyed on the first
+        // resource, so the emitted validator would resolve "#/$defs/T" against
+        // the wrong resource at one of the two call sites. Detector must reject.
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$defs": {
+                "A": {
+                  "$id": "https://example.com/a",
+                  "$defs": { "T": { "type": "integer" } },
+                  "allOf": [ { "$ref": "#/$defs/T" } ]
+                },
+                "B": {
+                  "$id": "https://example.com/b",
+                  "$defs": { "T": { "type": "string" } },
+                  "allOf": [ { "$ref": "#/$defs/T" } ]
+                }
+              },
+              "allOf": [
+                { "$ref": "#/$defs/A" },
+                { "$ref": "#/$defs/B" }
+              ]
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.False(result.Success);
+        Assert.Contains("multiple nested $id resources", result.Error);
+    }
+
+    // Non-ambiguous case: two resources with different $ref text — not collapsed,
+    // and each resolves against its own resource. Regression guard that the
+    // ambiguity detector doesn't misfire on schemas that are actually fine.
+    [Fact]
+    public void DistinctRefsAcrossResources_AreAllowed()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$defs": {
+                "A": {
+                  "$id": "https://example.com/a",
+                  "$defs": { "Ta": { "type": "integer" } },
+                  "$ref": "#/$defs/Ta"
+                },
+                "B": {
+                  "$id": "https://example.com/b",
+                  "$defs": { "Tb": { "type": "string" } },
+                  "$ref": "#/$defs/Tb"
+                }
+              },
+              "allOf": [
+                { "$ref": "#/$defs/A" },
+                { "$ref": "#/$defs/B" }
+              ]
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, result.Error);
+    }
 }

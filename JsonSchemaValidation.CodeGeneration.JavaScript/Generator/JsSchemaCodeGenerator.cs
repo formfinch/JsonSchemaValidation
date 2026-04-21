@@ -113,10 +113,23 @@ public sealed class JsSchemaCodeGenerator
             var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema, baseUri, DefaultDraft);
             var rootHash = SchemaHasher.ComputeHash(schema);
 
+            // Reachability pass: filter out subschemas reached only through
+            // annotation-only keywords (contentSchema, default, examples, ...) so
+            // we don't emit validators for them — those would run JS emitters on
+            // metadata and can legitimately fail (e.g., items-as-array in 2020-12
+            // inside contentSchema). Also detects ambiguous-resource ref collapse
+            // and rejects pre-emission.
+            var reach = JsSchemaReachability.Analyze(schema, detectedDraft, uniqueSchemas);
+            if (reach.Rejection != null)
+            {
+                return GenerationResult.Failed(reach.Rejection);
+            }
+
             var methods = new StringBuilder();
             var runtimeImports = new SortedSet<string>(StringComparer.Ordinal);
-            foreach (var (_, subschemaInfo) in uniqueSchemas)
+            foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
+                if (!reach.ReachableHashes.Contains(hash)) continue;
                 methods.AppendLine(GenerateValidationFunction(subschemaInfo, uniqueSchemas, detectedDraft, runtimeImports));
                 methods.AppendLine();
             }
