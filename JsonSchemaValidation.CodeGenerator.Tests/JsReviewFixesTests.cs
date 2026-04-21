@@ -623,6 +623,24 @@ public class JsReviewFixesTests
         Assert.Contains("multiple nested $id resources", result.Error);
     }
 
+    // Copilot round 7: schema numeric values that exceed long.MaxValue must not
+    // silently cast to garbage longs. Out-of-range minLength/maxLength etc. are
+    // treated as "no valid integer" and the constraint is skipped.
+    [Fact]
+    public void MinLength_WithOutOfRangeValue_IsIgnored_NoGarbageEmitted()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        // 1e20 fits in a double but overflows long. Before the fix this cast
+        // produced an unspecified long and the emitted JS contained a bogus
+        // comparison. After the fix, the constraint is treated as unparseable
+        // and skipped entirely, so no length check appears in the output.
+        var schema = JsonDocument.Parse("""{ "minLength": 1e20 }""").RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, result.Error);
+        Assert.DoesNotContain("_len <", result.GeneratedCode);
+        Assert.DoesNotContain("graphemeLength", result.GeneratedCode);
+    }
+
     // Copilot round 6: legacy "definitions" used under Draft 2020-12. The
     // shared extractor walks it, so $ref targets under #/definitions must be
     // emitted as validators. If they aren't, the generated JS calls a

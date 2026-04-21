@@ -59,13 +59,6 @@ public sealed class JsContainsCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context) => [];
 
-    private static bool TryGetIntegerValue(JsonElement element, out long value)
-    {
-        value = 0;
-        if (element.ValueKind != JsonValueKind.Number) return false;
-        if (!element.TryGetDouble(out var d)) return false;
-        if (d < 0 || Math.Abs(d - Math.Floor(d)) > double.Epsilon) return false;
-        value = (long)d;
-        return true;
-    }
+    private static bool TryGetIntegerValue(JsonElement element, out long value) =>
+        JsSchemaNumeric.TryGetNonNegativeIntegerValue(element, out value);
 }
