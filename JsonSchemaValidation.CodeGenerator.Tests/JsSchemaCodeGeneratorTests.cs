@@ -41,13 +41,14 @@ public class JsSchemaCodeGeneratorTests
     }
 
     [Fact]
-    public void Generate_RejectsUnsupportedFeature_ViaGate()
+    public void Generate_SupportsUnevaluatedProperties()
     {
         var result = _generator.Generate(JsonDocument.Parse("""
             { "type": "object", "unevaluatedProperties": false }
             """).RootElement);
-        Assert.False(result.Success);
-        Assert.Contains("unevaluatedProperties", result.Error);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("EvaluatedState", result.GeneratedCode);
+        Assert.Contains("isPropertyEvaluated", result.GeneratedCode);
     }
 
     [Fact]

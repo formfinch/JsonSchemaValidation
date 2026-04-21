@@ -333,10 +333,10 @@ public class JsReviewFixesTests
         Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
     }
 
-    // Draft 2020-12 behavior is unchanged — must still reject real deferred
-    // features when the keyword exists in the detected draft.
+    // Draft 2020-12 unevaluated* support is now implemented; dynamic refs
+    // remain deferred.
     [Fact]
-    public void Gate_Draft202012_StillRejectsUnevaluatedProperties()
+    public void Gate_Draft202012_AcceptsUnevaluatedProperties()
     {
         var gen = new JsSchemaCodeGenerator();
         var schema = JsonDocument.Parse("""
@@ -346,8 +346,48 @@ public class JsReviewFixesTests
             }
             """).RootElement;
         var result = gen.Generate(schema);
-        Assert.False(result.Success);
-        Assert.Contains("unevaluatedProperties", result.Error);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("isPropertyEvaluated", result.GeneratedCode);
+    }
+
+    [Fact]
+    public void UnevaluatedProperties_RespectsPropertiesAndAllOfAnnotations()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "allOf": [
+                { "properties": { "a": { "type": "number" } } }
+              ],
+              "properties": {
+                "b": { "type": "string" }
+              },
+              "unevaluatedProperties": false
+            }
+            """,
+            [
+                ("""{ "a": 1, "b": "x" }""", true),
+                ("""{ "a": 1, "b": "x", "c": true }""", false),
+                ("""{ "a": "wrong", "b": "x" }""", false)
+            ]);
+    }
+
+    [Fact]
+    public void UnevaluatedItems_RespectsPrefixItemsItemsAndContainsAnnotations()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "prefixItems": [{ "type": "string" }],
+              "contains": { "const": 1 },
+              "unevaluatedItems": false
+            }
+            """,
+            [
+                ("""["a", 1]""", true),
+                ("""["a", 1, 2]""", false),
+                ("""["a", 2]""", false)
+            ]);
     }
 
     [Fact]

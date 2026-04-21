@@ -62,6 +62,8 @@ public sealed class JsSchemaCodeGenerator
             new JsNotCodeGenerator(),
             new JsIfThenElseCodeGenerator(),
             new JsFormatCodeGenerator(),
+            new JsUnevaluatedPropertiesCodeGenerator(),
+            new JsUnevaluatedItemsCodeGenerator(),
         ];
         _keywordGenerators.Sort((a, b) => b.Priority.CompareTo(a.Priority));
     }
@@ -112,6 +114,8 @@ public sealed class JsSchemaCodeGenerator
 
             var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema, baseUri, DefaultDraft);
             var rootHash = SchemaHasher.ComputeHash(schema);
+            var requiresPropertyAnnotations = _extractor.HasUnevaluatedProperties;
+            var requiresItemAnnotations = _extractor.HasUnevaluatedItems;
 
             // Reachability pass: filter out subschemas reached only through
             // annotation-only keywords (contentSchema, default, examples, ...) so
@@ -127,14 +131,30 @@ public sealed class JsSchemaCodeGenerator
 
             var methods = new StringBuilder();
             var runtimeImports = new SortedSet<string>(StringComparer.Ordinal);
+            if (requiresPropertyAnnotations || requiresItemAnnotations)
+            {
+                runtimeImports.Add("EvaluatedState");
+                runtimeImports.Add("escapeJsonPointer");
+            }
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
                 if (!reach.ReachableHashes.Contains(hash)) continue;
-                methods.AppendLine(GenerateValidationFunction(subschemaInfo, uniqueSchemas, detectedDraft, runtimeImports));
+                methods.AppendLine(GenerateValidationFunction(
+                    subschemaInfo,
+                    uniqueSchemas,
+                    detectedDraft,
+                    requiresPropertyAnnotations,
+                    requiresItemAnnotations,
+                    runtimeImports));
                 methods.AppendLine();
             }
 
-            var module = GenerateModule(schemaUri, rootHash, methods.ToString(), runtimeImports);
+            var module = GenerateModule(
+                schemaUri,
+                rootHash,
+                methods.ToString(),
+                runtimeImports,
+                requiresPropertyAnnotations || requiresItemAnnotations);
             var fileName = DeriveFileName(schemaUri, sourcePath);
             return GenerationResult.Succeeded(module, fileName);
         }
@@ -148,12 +168,22 @@ public sealed class JsSchemaCodeGenerator
         SubschemaInfo subschemaInfo,
         Dictionary<string, SubschemaInfo> allSchemas,
         SchemaDraft detectedDraft,
+        bool requiresPropertyAnnotations,
+        bool requiresItemAnnotations,
         SortedSet<string> runtimeImports)
     {
-        var context = CreateContext(subschemaInfo, allSchemas, detectedDraft);
+        var context = CreateContext(
+            subschemaInfo,
+            allSchemas,
+            detectedDraft,
+            requiresPropertyAnnotations,
+            requiresItemAnnotations);
         var sb = new StringBuilder();
 
-        sb.AppendLine($"function validate_{subschemaInfo.Hash}(v) {{");
+        var parameters = requiresPropertyAnnotations || requiresItemAnnotations
+            ? "v, _eval, _loc"
+            : "v";
+        sb.AppendLine($"function validate_{subschemaInfo.Hash}({parameters}) {{");
 
         if (subschemaInfo.Schema.ValueKind == JsonValueKind.True)
         {
@@ -222,7 +252,9 @@ public sealed class JsSchemaCodeGenerator
     private JsCodeGenerationContext CreateContext(
         SubschemaInfo subschemaInfo,
         Dictionary<string, SubschemaInfo> allSchemas,
-        SchemaDraft detectedDraft)
+        SchemaDraft detectedDraft,
+        bool requiresPropertyAnnotations,
+        bool requiresItemAnnotations)
     {
         return new JsCodeGenerationContext
         {
@@ -234,7 +266,9 @@ public sealed class JsSchemaCodeGenerator
                 _extractor.ResolveLocalRefInResource(refValue, resourceRoot),
             ResourceRoot = subschemaInfo.ResourceRoot,
             GetSubschemaInfo = hash => allSchemas.TryGetValue(hash, out var info) ? info : null,
-            DetectedDraft = detectedDraft
+            DetectedDraft = detectedDraft,
+            RequiresPropertyAnnotations = requiresPropertyAnnotations,
+            RequiresItemAnnotations = requiresItemAnnotations
         };
     }
 
@@ -242,7 +276,8 @@ public sealed class JsSchemaCodeGenerator
         string? schemaUri,
         string rootHash,
         string methods,
-        SortedSet<string> runtimeImports)
+        SortedSet<string> runtimeImports,
+        bool requiresAnnotationTracking)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// @ts-check");
@@ -266,7 +301,14 @@ public sealed class JsSchemaCodeGenerator
         sb.AppendLine(" * @param {unknown} data");
         sb.AppendLine(" * @returns {boolean}");
         sb.AppendLine(" */");
-        sb.AppendLine($"export function validate(data) {{ return validate_{rootHash}(data); }}");
+        if (requiresAnnotationTracking)
+        {
+            sb.AppendLine($"export function validate(data) {{ return validate_{rootHash}(data, new EvaluatedState(), \"\"); }}");
+        }
+        else
+        {
+            sb.AppendLine($"export function validate(data) {{ return validate_{rootHash}(data); }}");
+        }
         sb.AppendLine();
 
         var schemaUriLiteral = string.IsNullOrEmpty(schemaUri)

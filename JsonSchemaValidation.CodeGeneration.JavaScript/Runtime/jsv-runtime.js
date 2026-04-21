@@ -124,6 +124,110 @@ export function deepEquals(a, b) {
     return false;
 }
 
+// ---- Evaluation annotation state (provisional) ----------------------------
+
+/**
+ * Tracks evaluated object properties and array items by instance location for
+ * unevaluatedProperties / unevaluatedItems.
+ */
+export class EvaluatedState {
+    constructor() {
+        /** @type {Map<string, Set<string>>} */
+        this._properties = new Map();
+        /** @type {Map<string, number>} */
+        this._itemsUpTo = new Map();
+        /** @type {Map<string, Set<number>>} */
+        this._itemIndices = new Map();
+    }
+
+    /** @param {string} loc @param {string} propertyName */
+    markPropertyEvaluated(loc, propertyName) {
+        let set = this._properties.get(loc);
+        if (set === undefined) {
+            set = new Set();
+            this._properties.set(loc, set);
+        }
+        set.add(propertyName);
+    }
+
+    /** @param {string} loc @param {string} propertyName @returns {boolean} */
+    isPropertyEvaluated(loc, propertyName) {
+        return this._properties.get(loc)?.has(propertyName) === true;
+    }
+
+    /** @param {string} loc @param {number} index */
+    markItemEvaluated(loc, index) {
+        let set = this._itemIndices.get(loc);
+        if (set === undefined) {
+            set = new Set();
+            this._itemIndices.set(loc, set);
+        }
+        set.add(index);
+    }
+
+    /** @param {string} loc @param {number} count */
+    setEvaluatedItemsUpTo(loc, count) {
+        const current = this._itemsUpTo.get(loc) ?? 0;
+        if (count > current) this._itemsUpTo.set(loc, count);
+    }
+
+    /** @param {string} loc @param {number} index @returns {boolean} */
+    isItemEvaluated(loc, index) {
+        if (index < (this._itemsUpTo.get(loc) ?? 0)) return true;
+        return this._itemIndices.get(loc)?.has(index) === true;
+    }
+
+    reset() {
+        this._properties.clear();
+        this._itemsUpTo.clear();
+        this._itemIndices.clear();
+    }
+
+    /** @returns {EvaluatedState} */
+    clone() {
+        const clone = new EvaluatedState();
+        for (const [loc, props] of this._properties) {
+            clone._properties.set(loc, new Set(props));
+        }
+        for (const [loc, count] of this._itemsUpTo) {
+            clone._itemsUpTo.set(loc, count);
+        }
+        for (const [loc, indices] of this._itemIndices) {
+            clone._itemIndices.set(loc, new Set(indices));
+        }
+        return clone;
+    }
+
+    /** @param {EvaluatedState} other */
+    mergeFrom(other) {
+        for (const [loc, props] of other._properties) {
+            let target = this._properties.get(loc);
+            if (target === undefined) {
+                target = new Set();
+                this._properties.set(loc, target);
+            }
+            for (const prop of props) target.add(prop);
+        }
+        for (const [loc, count] of other._itemsUpTo) {
+            this.setEvaluatedItemsUpTo(loc, count);
+        }
+        for (const [loc, indices] of other._itemIndices) {
+            let target = this._itemIndices.get(loc);
+            if (target === undefined) {
+                target = new Set();
+                this._itemIndices.set(loc, target);
+            }
+            for (const index of indices) target.add(index);
+        }
+    }
+
+    /** @param {EvaluatedState} snapshot */
+    restoreFrom(snapshot) {
+        this.reset();
+        this.mergeFrom(snapshot);
+    }
+}
+
 // ---- Format validators (frozen signatures) --------------------------------
 //
 // Each validator returns true for non-string inputs (format applies only to

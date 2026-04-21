@@ -37,9 +37,13 @@ public sealed class JsPropertiesCodeGenerator : IJsKeywordCodeGenerator
         {
             var propHash = context.GetSubschemaHash(prop.Value);
             var nameLiteral = JsLiteral.String(prop.Name);
-            var call = context.GenerateValidateCallForExpr(propHash, $"{v}[{nameLiteral}]");
+            var call = context.GenerateValidateCallForProperty(propHash, $"{v}[{nameLiteral}]", nameLiteral);
             sb.AppendLine($"  if (Object.prototype.hasOwnProperty.call({v}, {nameLiteral})) {{");
             sb.AppendLine($"    if (!{call}) return false;");
+            if (context.RequiresPropertyAnnotations)
+            {
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.markPropertyEvaluated({context.LocationExpr}, {nameLiteral});");
+            }
             sb.AppendLine("  }");
         }
 

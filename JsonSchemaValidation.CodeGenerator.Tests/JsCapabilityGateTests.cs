@@ -36,19 +36,17 @@ public class JsCapabilityGateTests
     }
 
     [Fact]
-    public void Rejects_Unevaluated_Properties()
+    public void Accepts_Unevaluated_Properties()
     {
         var rejection = Check("""{ "type": "object", "unevaluatedProperties": false }""");
-        Assert.NotNull(rejection);
-        Assert.Contains("unevaluatedProperties", rejection);
+        Assert.Null(rejection);
     }
 
     [Fact]
-    public void Rejects_Unevaluated_Items()
+    public void Accepts_Unevaluated_Items()
     {
         var rejection = Check("""{ "type": "array", "unevaluatedItems": false }""");
-        Assert.NotNull(rejection);
-        Assert.Contains("unevaluatedItems", rejection);
+        Assert.Null(rejection);
     }
 
     [Fact]

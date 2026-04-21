@@ -44,6 +44,8 @@ internal static class JsSchemaReachability
             "contains",
             "additionalProperties",
             "propertyNames",
+            "unevaluatedProperties",
+            "unevaluatedItems",
         },
     };
 

@@ -32,8 +32,11 @@ public class JsTestSuiteRunner
         "type.json",
         "required.json",
         "properties.json",
+        "anchor.json",
         "enum.json",
         "const.json",
+        "content.json",
+        "default.json",
         "minLength.json",
         "maxLength.json",
         "pattern.json",
@@ -62,9 +65,15 @@ public class JsTestSuiteRunner
         "if-then-else.json",
         "dependentRequired.json",
         "dependentSchemas.json",
+        "dynamicRef.json",
         "boolean_schema.json",
         "ref.json",
+        "refRemote.json",
         "defs.json",
+        "infinite-loop-detection.json",
+        "unevaluatedItems.json",
+        "unevaluatedProperties.json",
+        "vocabulary.json",
         // format.json is deliberately excluded: the suite expects annotation-only
         // behavior by default (2020-12 spec), while our compiled path eager-validates
         // supported formats — same stance as the C# compiled tests. Explicit format
@@ -105,6 +114,7 @@ public class JsTestSuiteRunner
     [
         ("remote ref", "Gate rejects external refs — deferred feature."),
         ("base URI change", "Gate rejects cross-document refs — deferred feature."),
+        ("no validation vocabulary", "Compiled JS target does not enable/disable keywords via $vocabulary."),
     ];
 
     [Theory]

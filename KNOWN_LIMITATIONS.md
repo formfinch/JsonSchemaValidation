@@ -42,7 +42,9 @@ The JS target emits compiled validators for consumption by JavaScript/TypeScript
 
 - **Drafts:** 2020-12 and 4 only. Other drafts (3, 6, 7, 2019-09) are rejected pre-emission. Tracked as follow-up work.
 - **Self-contained schemas with local `$ref` only.** External `$ref` is rejected pre-emission. The registry/fragment subschema machinery that exists for C# has not been ported.
-- **Deferred features rejected in drafts that define them:** `unevaluatedProperties`, `unevaluatedItems`, `$dynamicRef`, `$dynamicAnchor`, `$recursiveRef`, `$recursiveAnchor`. The capability gate is draft-aware — under Draft 4 these names are not JSON Schema keywords, so the gate treats them as unknown annotations and ignores them (per spec). Under Draft 2020-12 they are real keywords, and the gate rejects pre-emission with a structured error naming the unsupported feature.
+- **Annotation tracking:** `unevaluatedProperties` and `unevaluatedItems` are supported for Draft 2020-12 through generated evaluated-state tracking.
+- **Deferred features rejected in drafts that define them:** `$dynamicRef`, `$dynamicAnchor`, `$recursiveRef`, `$recursiveAnchor`. The capability gate is draft-aware — under Draft 4 these names are not JSON Schema keywords, so the gate treats them as unknown annotations and ignores them (per spec). Under Draft 2020-12 they are real keywords, and the gate rejects pre-emission with a structured error naming the unsupported feature.
+- **Vocabulary-based keyword disabling is not implemented.** Like the C# compiled target, generated JS does not enable/disable validation keywords based on a custom metaschema's `$vocabulary` declarations.
 
 ### Numeric Precision
 

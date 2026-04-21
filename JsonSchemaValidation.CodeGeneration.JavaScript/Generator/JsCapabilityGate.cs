@@ -39,8 +39,6 @@ public static class JsCapabilityGate
         [SchemaDraft.Draft4] = new(StringComparer.Ordinal),
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
-            "unevaluatedProperties",
-            "unevaluatedItems",
             "$dynamicRef",
             "$dynamicAnchor",
             "$recursiveRef",
@@ -163,8 +161,7 @@ public static class JsCapabilityGate
             if (deferred.Contains(prop.Name))
             {
                 return $"JS target MVP does not support '{prop.Name}'. " +
-                       "Deferred to follow-up: unevaluated*, $dynamicRef/$dynamicAnchor, " +
-                       "$recursiveRef/$recursiveAnchor.";
+                       "Deferred to follow-up: $dynamicRef/$dynamicAnchor, $recursiveRef/$recursiveAnchor.";
             }
 
             if (prop.Name == "$ref" && prop.Value.ValueKind == JsonValueKind.String)

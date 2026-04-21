@@ -44,8 +44,12 @@ public sealed class JsContainsCodeGenerator : IJsKeywordCodeGenerator
         sb.AppendLine($"if (Array.isArray({v})) {{");
         sb.AppendLine("  let _count = 0;");
         sb.AppendLine($"  for (let _i = 0; _i < {v}.length; _i++) {{");
-        sb.AppendLine($"    if ({context.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) {{");
+        sb.AppendLine($"    if ({context.GenerateValidateCallForItem(hash, $"{v}[_i]", "_i")}) {{");
         sb.AppendLine("      _count++;");
+        if (context.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"      {context.EvaluatedStateExpr}.markItemEvaluated({context.LocationExpr}, _i);");
+        }
         if (max != long.MaxValue)
         {
             sb.AppendLine($"      if (_count > {max}) return false;");

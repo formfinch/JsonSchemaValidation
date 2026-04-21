@@ -57,8 +57,12 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
         var sb = new StringBuilder();
         sb.AppendLine($"if (Array.isArray({v})) {{");
         sb.AppendLine($"  for (let _i = {prefixCount}; _i < {v}.length; _i++) {{");
-        sb.AppendLine($"    if (!{ctx.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) return false;");
+        sb.AppendLine($"    if (!{ctx.GenerateValidateCallForItem(hash, $"{v}[_i]", "_i")}) return false;");
         sb.AppendLine("  }");
+        if (ctx.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"  {ctx.EvaluatedStateExpr}.setEvaluatedItemsUpTo({ctx.LocationExpr}, {v}.length);");
+        }
         sb.AppendLine("}");
         return sb.ToString();
     }
@@ -74,8 +78,12 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
             foreach (var sub in items.EnumerateArray())
             {
                 var hash = ctx.GetSubschemaHash(sub);
-                sb.AppendLine($"  if ({v}.length > {idx} && !{ctx.GenerateValidateCallForExpr(hash, $"{v}[{idx}]")}) return false;");
+                sb.AppendLine($"  if ({v}.length > {idx} && !{ctx.GenerateValidateCallForItem(hash, $"{v}[{idx}]", idx.ToString(System.Globalization.CultureInfo.InvariantCulture))}) return false;");
                 idx++;
+            }
+            if (ctx.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"  {ctx.EvaluatedStateExpr}.setEvaluatedItemsUpTo({ctx.LocationExpr}, Math.min({idx}, {v}.length));");
             }
             sb.AppendLine("}");
             return sb.ToString();
@@ -88,8 +96,12 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
             var sb = new StringBuilder();
             sb.AppendLine($"if (Array.isArray({v})) {{");
             sb.AppendLine($"  for (let _i = 0; _i < {v}.length; _i++) {{");
-            sb.AppendLine($"    if (!{ctx.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) return false;");
+            sb.AppendLine($"    if (!{ctx.GenerateValidateCallForItem(hash, $"{v}[_i]", "_i")}) return false;");
             sb.AppendLine("  }");
+            if (ctx.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"  {ctx.EvaluatedStateExpr}.setEvaluatedItemsUpTo({ctx.LocationExpr}, {v}.length);");
+            }
             sb.AppendLine("}");
             return sb.ToString();
         }
@@ -127,8 +139,12 @@ public sealed class JsPrefixItemsCodeGenerator : IJsKeywordCodeGenerator
         foreach (var sub in prefix.EnumerateArray())
         {
             var hash = context.GetSubschemaHash(sub);
-            sb.AppendLine($"  if ({v}.length > {idx} && !{context.GenerateValidateCallForExpr(hash, $"{v}[{idx}]")}) return false;");
+            sb.AppendLine($"  if ({v}.length > {idx} && !{context.GenerateValidateCallForItem(hash, $"{v}[{idx}]", idx.ToString(System.Globalization.CultureInfo.InvariantCulture))}) return false;");
             idx++;
+        }
+        if (context.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.setEvaluatedItemsUpTo({context.LocationExpr}, Math.min({idx}, {v}.length));");
         }
         sb.AppendLine("}");
         return sb.ToString();
@@ -188,8 +204,12 @@ public sealed class JsAdditionalItemsCodeGenerator : IJsKeywordCodeGenerator
         var sb = new StringBuilder();
         sb.AppendLine($"if (Array.isArray({v})) {{");
         sb.AppendLine($"  for (let _i = {tupleLen}; _i < {v}.length; _i++) {{");
-        sb.AppendLine($"    if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) return false;");
+        sb.AppendLine($"    if (!{context.GenerateValidateCallForItem(hash, $"{v}[_i]", "_i")}) return false;");
         sb.AppendLine("  }");
+        if (context.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.setEvaluatedItemsUpTo({context.LocationExpr}, {v}.length);");
+        }
         sb.AppendLine("}");
         return sb.ToString();
     }

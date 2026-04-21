@@ -92,6 +92,33 @@ public sealed class JsCodeGenerationContext
     public SchemaDraft DetectedDraft { get; init; } = SchemaDraft.Draft202012;
 
     /// <summary>
+    /// Whether the schema tree contains unevaluatedProperties.
+    /// When true, property evaluation must be tracked.
+    /// </summary>
+    public bool RequiresPropertyAnnotations { get; init; }
+
+    /// <summary>
+    /// Whether the schema tree contains unevaluatedItems.
+    /// When true, item evaluation must be tracked.
+    /// </summary>
+    public bool RequiresItemAnnotations { get; init; }
+
+    /// <summary>
+    /// Whether annotation tracking requires passing state/location through calls.
+    /// </summary>
+    public bool RequiresAnnotationTracking => RequiresPropertyAnnotations || RequiresItemAnnotations;
+
+    /// <summary>
+    /// The JS expression for the evaluated-state object.
+    /// </summary>
+    public string EvaluatedStateExpr { get; init; } = "_eval";
+
+    /// <summary>
+    /// The JS expression for the current instance location.
+    /// </summary>
+    public string LocationExpr { get; init; } = "_loc";
+
+    /// <summary>
     /// The JS expression for the element being validated (usually "v").
     /// </summary>
     public string ElementExpr { get; init; } = "v";
@@ -101,7 +128,9 @@ public sealed class JsCodeGenerationContext
     /// </summary>
     public string GenerateValidateCall(string hash)
     {
-        return $"validate_{hash}({ElementExpr})";
+        return RequiresAnnotationTracking
+            ? $"validate_{hash}({ElementExpr}, {EvaluatedStateExpr}, {LocationExpr})"
+            : $"validate_{hash}({ElementExpr})";
     }
 
     /// <summary>
@@ -109,6 +138,28 @@ public sealed class JsCodeGenerationContext
     /// </summary>
     public string GenerateValidateCallForExpr(string hash, string expr)
     {
-        return $"validate_{hash}({expr})";
+        return RequiresAnnotationTracking
+            ? $"validate_{hash}({expr}, {EvaluatedStateExpr}, {LocationExpr})"
+            : $"validate_{hash}({expr})";
+    }
+
+    /// <summary>
+    /// Generates a call to validate a property value and pushes the property onto the instance location.
+    /// </summary>
+    public string GenerateValidateCallForProperty(string hash, string expr, string propertyNameExpr)
+    {
+        return RequiresAnnotationTracking
+            ? $"validate_{hash}({expr}, {EvaluatedStateExpr}, {LocationExpr} + \"/\" + escapeJsonPointer({propertyNameExpr}))"
+            : $"validate_{hash}({expr})";
+    }
+
+    /// <summary>
+    /// Generates a call to validate an array item and pushes the index onto the instance location.
+    /// </summary>
+    public string GenerateValidateCallForItem(string hash, string expr, string indexExpr)
+    {
+        return RequiresAnnotationTracking
+            ? $"validate_{hash}({expr}, {EvaluatedStateExpr}, {LocationExpr} + \"/\" + {indexExpr})"
+            : $"validate_{hash}({expr})";
     }
 }
