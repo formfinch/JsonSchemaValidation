@@ -93,14 +93,8 @@ internal static class JsSchemaReachability
         // root AND contains a local $ref is the ambiguous case we reject.
         var resourceRootsByHash = new Dictionary<string, HashSet<string>>(StringComparer.Ordinal);
 
-        string? rejection = null;
         Walk(root, currentResourceRootHash: SchemaHasher.ComputeHash(root),
-            draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
-
-        if (rejection != null)
-        {
-            return new Result(reachable, rejection);
-        }
+            draft, reachable, resourceRootsByHash, uniqueSchemas);
 
         // Second pass: flag ambiguous-resource ref-containing subschemas.
         foreach (var (hash, resourceRoots) in resourceRootsByHash)
@@ -129,10 +123,8 @@ internal static class JsSchemaReachability
         SchemaDraft draft,
         HashSet<string> reachable,
         Dictionary<string, HashSet<string>> resourceRootsByHash,
-        ref string? rejection,
         IReadOnlyDictionary<string, SubschemaInfo> uniqueSchemas)
     {
-        if (rejection != null) return;
         if (node.ValueKind == JsonValueKind.True || node.ValueKind == JsonValueKind.False)
         {
             var boolHash = SchemaHasher.ComputeHash(node);
@@ -168,7 +160,7 @@ internal static class JsSchemaReachability
                 var target = ResolveLocalRef(refValue, uniqueSchemas);
                 if (target.HasValue)
                 {
-                    Walk(target.Value, currentResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                    Walk(target.Value, currentResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
                 }
             }
         }
@@ -189,12 +181,12 @@ internal static class JsSchemaReachability
                 {
                     foreach (var item in prop.Value.EnumerateArray())
                     {
-                        Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                        Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
                     }
                 }
                 else
                 {
-                    Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                    Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
                 }
                 continue;
             }
@@ -209,7 +201,7 @@ internal static class JsSchemaReachability
                         dep.Value.ValueKind == JsonValueKind.True ||
                         dep.Value.ValueKind == JsonValueKind.False)
                     {
-                        Walk(dep.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                        Walk(dep.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
                     }
                 }
                 continue;
@@ -217,20 +209,20 @@ internal static class JsSchemaReachability
 
             if (schemaValued.Contains(prop.Name))
             {
-                Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
             }
             else if (schemaArray.Contains(prop.Name) && prop.Value.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in prop.Value.EnumerateArray())
                 {
-                    Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                    Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
                 }
             }
             else if (schemaMap.Contains(prop.Name) && prop.Value.ValueKind == JsonValueKind.Object)
             {
                 foreach (var entry in prop.Value.EnumerateObject())
                 {
-                    Walk(entry.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                    Walk(entry.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, uniqueSchemas);
                 }
             }
             // Data / annotation keywords (contentSchema, default, examples, enum,

@@ -38,9 +38,13 @@ public sealed class JsRefCodeGenerator : IJsKeywordCodeGenerator
             : context.ResolveLocalRef(refValue);
         if (!target.HasValue)
         {
-            // Don't embed refValue into the emitted source — a ref containing newlines
-            // or "*/" could break out of the comment / inject text into the module.
-            return "// WARNING: Could not resolve local $ref.\nreturn false;";
+            // An unresolved local ref at this point means the shared extractor
+            // or the gate missed something — fail codegen loudly rather than
+            // silently emitting "return false" that makes every instance fail.
+            // The message deliberately omits refValue so a ref containing
+            // newlines or other source-injection bait can't leak into output.
+            throw new InvalidOperationException(
+                "Could not resolve local $ref during JavaScript code generation.");
         }
         var hash = context.GetSubschemaHash(target.Value);
         return $"if (!{context.GenerateValidateCall(hash)}) return false;";

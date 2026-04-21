@@ -714,15 +714,13 @@ public class JsReviewFixesTests
     }
 
     // Copilot round 5: regex literal form is brittle for patterns beginning
-    // with '*' because /*.../ parses as a block-comment token. The new
-    // RegexLiteral form uses new RegExp(...) which bypasses the issue.
+    // with '*' because /*.../ parses as a block-comment token. Generator now
+    // uses new RegExp("...") construction which sidesteps the hazard entirely.
+    // The emitted-source check covers ALL patterns, not just the leading-*
+    // case — any schema-supplied pattern is now kept out of JS tokenisation.
     [Fact]
-    public void Pattern_StartingWithAsterisk_StillCompiles()
+    public void PatternEmission_UsesConstructorFormNotLiteralSlash()
     {
-        // A bare "*" is not a valid ECMAScript regex, but the generator must
-        // produce SYNTACTICALLY VALID JS source regardless. If it emitted
-        // /*/ the module wouldn't even parse; with new RegExp("*") the module
-        // parses and the invalid pattern would only fail at RegExp construction.
         var gen = new JsSchemaCodeGenerator();
         var schema = JsonDocument.Parse("""
             { "patternProperties": { "^a": { "type": "integer" } } }
