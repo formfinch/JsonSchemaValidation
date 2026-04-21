@@ -36,19 +36,31 @@ public sealed class JsPatternPropertiesCodeGenerator : IJsKeywordCodeGenerator
         }
 
         var v = context.ElementExpr;
-        var sb = new StringBuilder();
-        sb.AppendLine($"if (typeof {v} === \"object\" && {v} !== null && !Array.isArray({v})) {{");
-        sb.AppendLine($"  for (const _k of Object.keys({v})) {{");
+        // Hoist each pattern's RegExp outside the key loop. Without this we'd
+        // allocate a new RegExp per property name on every validate call;
+        // hoisting gives one RegExp per validate invocation instead.
+        var hoists = new StringBuilder();
+        var checks = new StringBuilder();
+        var idx = 0;
         do
         {
             var pattern = patternEnumerator.Current;
             var regex = JsLiteral.RegexLiteral(pattern.Name);
+            var regexVar = $"_ppRe{idx}";
             var hash = context.GetSubschemaHash(pattern.Value);
-            sb.AppendLine($"    if ({regex}.test(_k)) {{");
-            sb.AppendLine($"      if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_k]")}) return false;");
-            sb.AppendLine("    }");
+            hoists.AppendLine($"  const {regexVar} = {regex};");
+            checks.AppendLine($"    if ({regexVar}.test(_k)) {{");
+            checks.AppendLine($"      if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_k]")}) return false;");
+            checks.AppendLine("    }");
+            idx++;
         }
         while (patternEnumerator.MoveNext());
+
+        var sb = new StringBuilder();
+        sb.AppendLine($"if (typeof {v} === \"object\" && {v} !== null && !Array.isArray({v})) {{");
+        sb.Append(hoists);
+        sb.AppendLine($"  for (const _k of Object.keys({v})) {{");
+        sb.Append(checks);
         sb.AppendLine("  }");
         sb.AppendLine("}");
         return sb.ToString();
@@ -85,17 +97,29 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         var patternRegexes = CollectPatternRegexes(context.CurrentSchema);
 
         var v = context.ElementExpr;
+        // Hoist pattern regexes outside the key loop (same reason as
+        // patternProperties — avoid one RegExp allocation per property).
+        var hoists = new StringBuilder();
+        var regexVars = new List<string>();
+        for (var i = 0; i < patternRegexes.Count; i++)
+        {
+            var rv = $"_apRe{i}";
+            hoists.AppendLine($"  const {rv} = {patternRegexes[i]};");
+            regexVars.Add(rv);
+        }
+
         var sb = new StringBuilder();
         sb.AppendLine($"if (typeof {v} === \"object\" && {v} !== null && !Array.isArray({v})) {{");
+        sb.Append(hoists);
         sb.AppendLine($"  for (const _k of Object.keys({v})) {{");
         if (definedNames.Count > 0)
         {
             var conds = definedNames.Select(n => $"_k === {JsLiteral.String(n)}");
             sb.AppendLine($"    if ({string.Join(" || ", conds)}) continue;");
         }
-        if (patternRegexes.Count > 0)
+        if (regexVars.Count > 0)
         {
-            var conds = patternRegexes.Select(r => $"{r}.test(_k)");
+            var conds = regexVars.Select(r => $"{r}.test(_k)");
             sb.AppendLine($"    if ({string.Join(" || ", conds)}) continue;");
         }
         if (addProps.ValueKind == JsonValueKind.False)

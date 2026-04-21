@@ -83,13 +83,17 @@ public sealed class JsNumericConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
         if (hasMul && mulElem.TryGetDouble(out var mul) && mul != 0)
         {
+            // Tolerance: C# compiled path uses double.Epsilon (~4.9e-324 — the
+            // smallest positive denormal). The JS equivalent is Number.MIN_VALUE,
+            // not Number.EPSILON (~2.22e-16). Using EPSILON would be much more
+            // lenient and diverge from C# verdicts on near-multiple edge cases.
             var divisor = Fmt(mul);
             sb.AppendLine($"  {{");
-            sb.AppendLine($"    if (Math.abs({v} % {divisor}) >= Number.EPSILON) {{");
+            sb.AppendLine($"    if (Math.abs({v} % {divisor}) >= Number.MIN_VALUE) {{");
             sb.AppendLine($"      let _q = {v} / {divisor};");
-            sb.AppendLine($"      if (!(!isFinite(_q) && Math.abs({v} % 1) < Number.EPSILON && Math.abs(1 % {divisor}) < Number.EPSILON)) {{");
+            sb.AppendLine($"      if (!(!isFinite(_q) && Math.abs({v} % 1) < Number.MIN_VALUE && Math.abs(1 % {divisor}) < Number.MIN_VALUE)) {{");
             sb.AppendLine($"        _q = Math.round((_q + 0.000001) * 100) / 100;");
-            sb.AppendLine($"        if (!(Math.abs(_q - Math.round(_q)) < Number.EPSILON)) return false;");
+            sb.AppendLine($"        if (!(Math.abs(_q - Math.round(_q)) < Number.MIN_VALUE)) return false;");
             sb.AppendLine($"      }}");
             sb.AppendLine($"    }}");
             sb.AppendLine($"  }}");

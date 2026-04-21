@@ -16,6 +16,13 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 /// </summary>
 public static class JsCapabilityGate
 {
+    /// <summary>
+    /// Stable prefix every gate-rejection message starts with. Callers (tests,
+    /// tooling) can pattern-match this constant to classify a codegen failure as
+    /// "gate rejection" without parsing free-form wording.
+    /// </summary>
+    public const string RejectionPrefix = "JS target MVP";
+
     private static readonly HashSet<SchemaDraft> SupportedDrafts = new()
     {
         SchemaDraft.Draft4,
@@ -131,8 +138,20 @@ public static class JsCapabilityGate
         var schemaArray = SchemaArrayPerDraft[draft];
         var schemaMap = SchemaMapPerDraft[draft];
 
+        // Draft 7 and earlier: $ref masks all sibling keywords at emission time
+        // (see JsSchemaCodeGenerator.refMasksSiblings). Mirror that here so the
+        // gate doesn't reject schemas based on keywords the emitter will ignore.
+        // We still check the $ref value itself for external-ref rejection.
+        var refMasksSiblings = draft <= SchemaDraft.Draft7 &&
+                               node.TryGetProperty("$ref", out var maskedRef) &&
+                               maskedRef.ValueKind == JsonValueKind.String;
+
         foreach (var prop in node.EnumerateObject())
         {
+            if (refMasksSiblings && prop.Name != "$ref")
+            {
+                continue;
+            }
             if (deferred.Contains(prop.Name))
             {
                 return $"JS target MVP does not support '{prop.Name}'. " +

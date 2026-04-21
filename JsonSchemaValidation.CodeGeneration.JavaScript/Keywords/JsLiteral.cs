@@ -12,6 +12,14 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 /// </summary>
 internal static class JsLiteral
 {
+    // U+2028 / U+2029 referenced via hex to keep them out of the C# source itself:
+    // both code points are line terminators in the C# lexer too, so embedding them
+    // inline breaks character-literal parsing.
+    private const char LineSeparator = (char)0x2028;
+    private const char ParagraphSeparator = (char)0x2029;
+    private const string LineSeparatorEscape = "\\u2028";
+    private const string ParagraphSeparatorEscape = "\\u2029";
+
     /// <summary>
     /// Emits a JavaScript double-quoted string literal, including delimiters.
     /// Escapes the characters needed for JS source safety.
@@ -31,8 +39,8 @@ internal static class JsLiteral
                 case '\t': sb.Append("\\t"); break;
                 case '\f': sb.Append("\\f"); break;
                 case '\b': sb.Append("\\b"); break;
-                case '\u2028': sb.Append("\\u2028"); break; // LINE SEPARATOR — legal in ES2019+ strings, escaped for toolchain/legacy safety
-                case '\u2029': sb.Append("\\u2029"); break; // PARAGRAPH SEPARATOR — legal in ES2019+ strings, escaped for toolchain/legacy safety
+                case LineSeparator: sb.Append(LineSeparatorEscape); break;
+                case ParagraphSeparator: sb.Append(ParagraphSeparatorEscape); break;
                 default:
                     if (c < 0x20)
                     {
@@ -52,67 +60,32 @@ internal static class JsLiteral
     /// <summary>
     /// Emits a JSON element as a JavaScript expression literal. Starts from the raw
     /// JSON text (which is always valid JS grammar) and escapes U+2028/U+2029 inside
-    /// string literals — those code points are legal in JSON strings but were illegal
+    /// string literals. Those code points are legal in JSON strings but were illegal
     /// in JS string literals pre-ES2019, and some tooling still chokes on them.
     /// Literal control characters inside strings are impossible (JSON forbids them).
     /// </summary>
     public static string JsonAsExpression(System.Text.Json.JsonElement element)
     {
         var raw = element.GetRawText();
-        if (raw.IndexOf('\u2028') < 0 && raw.IndexOf('\u2029') < 0)
+        if (raw.IndexOf(LineSeparator) < 0 && raw.IndexOf(ParagraphSeparator) < 0)
         {
             return raw;
         }
-        // Both escape sequences are valid in JSON and JS, so replacing the literal
-        // code points with their \uXXXX form preserves semantics in both grammars.
-        return raw.Replace("\u2028", "\\u2028").Replace("\u2029", "\\u2029");
+        return raw
+            .Replace(LineSeparator.ToString(), LineSeparatorEscape)
+            .Replace(ParagraphSeparator.ToString(), ParagraphSeparatorEscape);
     }
 
     /// <summary>
-    /// Emits a JavaScript regex literal like /pattern/ with appropriate escaping of
-    /// characters that would terminate the literal or be interpreted as line breaks.
-    /// Does not rewrite the regex grammar — the pattern is assumed to be ECMAScript.
+    /// Emits a JavaScript RegExp construction expression as <c>new RegExp("pattern")</c>.
+    /// Avoids the <c>/pattern/</c> literal form because certain pattern prefixes
+    /// (most famously a leading asterisk) tokenize as block-comment or other
+    /// invalid syntax and would break module parsing. Invalid ECMAScript regex
+    /// grammar surfaces at RegExp construction time rather than as a JS parse
+    /// error, which is a friendlier failure mode for consumers.
     /// </summary>
     public static string RegexLiteral(string pattern)
     {
-        var sb = new StringBuilder(pattern.Length + 2);
-        sb.Append('/');
-        var escapedNext = false;
-        foreach (var c in pattern)
-        {
-            if (escapedNext)
-            {
-                sb.Append(c);
-                escapedNext = false;
-                continue;
-            }
-            switch (c)
-            {
-                case '\\':
-                    sb.Append('\\');
-                    escapedNext = true;
-                    break;
-                case '/':
-                    sb.Append("\\/");
-                    break;
-                case '\n':
-                    sb.Append("\\n");
-                    break;
-                case '\r':
-                    sb.Append("\\r");
-                    break;
-                case '\u2028':
-                    sb.Append("\\u2028");
-                    break;
-                case '\u2029':
-                    sb.Append("\\u2029");
-                    break;
-                default:
-                    sb.Append(c);
-                    break;
-            }
-        }
-        sb.Append('/');
-        return sb.ToString();
+        return $"new RegExp({String(pattern)})";
     }
 }

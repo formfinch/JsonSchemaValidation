@@ -168,8 +168,9 @@ public class JsTestSuiteRunner
         var genResult = generator.Generate(schemaElement);
         if (!genResult.Success)
         {
-            // Gate rejection = legitimate skip for MVP.
-            if (genResult.Error!.Contains("JS target MVP") || genResult.Error.Contains("external $ref"))
+            // Gate rejection = legitimate skip for MVP. Use the stable prefix
+            // constant instead of substring-matching free-form wording.
+            if (genResult.Error!.StartsWith(JsCapabilityGate.RejectionPrefix, StringComparison.Ordinal))
             {
                 _output.WriteLine($"SKIP (gate): {tc} — {genResult.Error}");
                 return;
@@ -187,7 +188,7 @@ public class JsTestSuiteRunner
             var module = engine.Modules.Import("./validator.js");
             var validate = module.Get("validate");
 
-            var parsed = engine.Evaluate($"JSON.parse({ToJsStringLiteral(tc.DataJson)})");
+            var parsed = engine.Evaluate($"JSON.parse({JsTestHelpers.ToJsStringLiteral(tc.DataJson)})");
             var verdictRaw = engine.Invoke(validate, parsed);
             Assert.True(verdictRaw.IsBoolean(), $"Non-boolean verdict for {tc}");
             var actual = verdictRaw.AsBoolean();
@@ -212,16 +213,6 @@ public class JsTestSuiteRunner
         return null;
     }
 
-    private static string ToJsStringLiteral(string input)
-    {
-        return "\"" + input
-            .Replace("\u2028", "\\u2028")
-            .Replace("\u2029", "\\u2029")
-            .Replace("\\", "\\\\")
-            .Replace("\"", "\\\"")
-            .Replace("\n", "\\n")
-            .Replace("\r", "\\r") + "\"";
-    }
 
     public sealed record TestCase(
         SchemaDraft Draft,

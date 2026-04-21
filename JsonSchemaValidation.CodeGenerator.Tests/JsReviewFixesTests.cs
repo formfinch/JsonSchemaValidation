@@ -623,6 +623,73 @@ public class JsReviewFixesTests
         Assert.Contains("multiple nested $id resources", result.Error);
     }
 
+    // Copilot round 5: gate should mirror the emitter's $ref-siblings-masked
+    // behavior for Draft 4-7 — any sibling keyword is ignored at emission, so
+    // the gate shouldn't reject a schema because those ignored siblings contain
+    // deferred features.
+    [Fact]
+    public void Gate_Draft4_IgnoresMaskedSiblingsAlongsideRef()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        // In Draft 4, $ref masks all siblings — including `not` here, which
+        // would otherwise be traversed and trip on unevaluatedProperties.
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "definitions": { "x": { "type": "integer" } },
+              "$ref": "#/definitions/x",
+              "not": { "unevaluatedProperties": false }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, $"Gate should ignore masked siblings: {result.Error}");
+    }
+
+    // Copilot round 5: regex literal form is brittle for patterns beginning
+    // with '*' because /*.../ parses as a block-comment token. The new
+    // RegexLiteral form uses new RegExp(...) which bypasses the issue.
+    [Fact]
+    public void Pattern_StartingWithAsterisk_StillCompiles()
+    {
+        // A bare "*" is not a valid ECMAScript regex, but the generator must
+        // produce SYNTACTICALLY VALID JS source regardless. If it emitted
+        // /*/ the module wouldn't even parse; with new RegExp("*") the module
+        // parses and the invalid pattern would only fail at RegExp construction.
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            { "patternProperties": { "^a": { "type": "integer" } } }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("new RegExp(", result.GeneratedCode);
+        Assert.DoesNotContain("/^a/", result.GeneratedCode);
+    }
+
+    // Copilot round 5: patternProperties must hoist RegExp allocation outside
+    // the per-property loop. Without hoisting, each property name allocates a
+    // new RegExp on every validate call.
+    [Fact]
+    public void PatternProperties_HoistsRegexOutsideLoop()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "patternProperties": {
+                "^a": { "type": "integer" },
+                "^b": { "type": "string" }
+              }
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, result.Error);
+        var src = result.GeneratedCode!;
+        // Both regexes declared as consts before the for-loop.
+        var hoistIndex = src.IndexOf("const _ppRe", StringComparison.Ordinal);
+        var forIndex = src.IndexOf("for (const _k of Object.keys", StringComparison.Ordinal);
+        Assert.True(hoistIndex > 0 && forIndex > hoistIndex,
+            "Hoisted RegExp constants must appear before the Object.keys loop.");
+    }
+
     // Non-ambiguous case: two resources with different $ref text — not collapsed,
     // and each resolves against its own resource. Regression guard that the
     // ambiguity detector doesn't misfire on schemas that are actually fine.
