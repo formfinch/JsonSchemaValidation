@@ -146,10 +146,13 @@ public static class JsCapabilityGate
         // Draft 7 and earlier: $ref masks all sibling keywords at emission time
         // (see JsSchemaCodeGenerator.refMasksSiblings). Mirror that here so the
         // gate doesn't reject schemas based on keywords the emitter will ignore.
-        // We still check the $ref value itself for external-ref rejection.
+        // Match the emitter's "usable $ref" check — an empty or non-string $ref
+        // doesn't actually mask siblings in the emitter, so we don't mask here
+        // either.
         var refMasksSiblings = draft <= SchemaDraft.Draft7 &&
                                node.TryGetProperty("$ref", out var maskedRef) &&
-                               maskedRef.ValueKind == JsonValueKind.String;
+                               maskedRef.ValueKind == JsonValueKind.String &&
+                               !string.IsNullOrEmpty(maskedRef.GetString());
 
         foreach (var prop in node.EnumerateObject())
         {

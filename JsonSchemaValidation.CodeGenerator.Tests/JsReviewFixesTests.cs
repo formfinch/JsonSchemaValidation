@@ -623,6 +623,29 @@ public class JsReviewFixesTests
         Assert.Contains("multiple nested $id resources", result.Error);
     }
 
+    // Copilot round 10: empty-string $ref must not silently mask sibling
+    // keywords in Draft 4-7. Pre-fix: refMasksSiblings triggered on any $ref
+    // key (even ""), JsRefCodeGenerator emitted nothing, and the whole
+    // validator compiled to always-true. Now the mask only applies when $ref
+    // is a usable non-empty string, so siblings like type/required still run.
+    [Fact]
+    public void EmptyRef_DoesNotMaskSiblings_InDraft4()
+    {
+        Expect(
+            """
+            {
+              "$schema": "http://json-schema.org/draft-04/schema#",
+              "$ref": "",
+              "type": "integer"
+            }
+            """,
+            [
+                ("5", true),
+                ("\"not-int\"", false),
+                ("{}", false),
+            ]);
+    }
+
     // Copilot round 8: reachability must follow local $ref so a ref target under
     // a non-applicator container still ends up in the emitted module. Uses the
     // same "legacy definitions in 2020-12" shape as the round-6 test — the map

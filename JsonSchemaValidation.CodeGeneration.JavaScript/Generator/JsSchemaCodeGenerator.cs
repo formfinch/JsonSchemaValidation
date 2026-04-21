@@ -168,10 +168,15 @@ public sealed class JsSchemaCodeGenerator
             return sb.ToString();
         }
 
-        // Draft 7 and earlier: $ref overrides all sibling keywords.
+        // Draft 7 and earlier: $ref overrides all sibling keywords — but only
+        // when $ref is a USABLE string. A $ref: "" or $ref: {} would otherwise
+        // mask every sibling without JsRefCodeGenerator emitting anything,
+        // compiling to an always-true validator.
         var refMasksSiblings = detectedDraft <= SchemaDraft.Draft7
             && subschemaInfo.Schema.ValueKind == JsonValueKind.Object
-            && subschemaInfo.Schema.TryGetProperty("$ref", out _);
+            && subschemaInfo.Schema.TryGetProperty("$ref", out var maskingRef)
+            && maskingRef.ValueKind == JsonValueKind.String
+            && !string.IsNullOrEmpty(maskingRef.GetString());
 
         foreach (var generator in _keywordGenerators)
         {
