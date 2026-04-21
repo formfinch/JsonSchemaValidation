@@ -24,7 +24,10 @@ public sealed class JsValidatorHarness
     /// </summary>
     public HarnessResult Evaluate(string schemaJson, IEnumerable<string> dataJsonValues)
     {
-        var schemaElement = JsonDocument.Parse(schemaJson).RootElement;
+        // JsonElement is backed by JsonDocument's pooled buffers; dispose the
+        // document once we've lifted the schema into generator-owned form via Clone.
+        using var schemaDoc = JsonDocument.Parse(schemaJson);
+        var schemaElement = schemaDoc.RootElement.Clone();
         var genResult = _generator.Generate(schemaElement);
         if (!genResult.Success)
         {
