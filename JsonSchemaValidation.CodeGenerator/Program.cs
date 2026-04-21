@@ -4,6 +4,8 @@
 using System.Text;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
 using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGenerator;
@@ -24,6 +26,7 @@ internal static class Program
         return command switch
         {
             "generate" => HandleGenerate(remainingArgs),
+            "generate-js" => HandleGenerateJs(remainingArgs),
             "generate-metaschemas" => HandleGenerateMetaschemas(remainingArgs),
             "compile-test-schemas" => HandleCompileTestSchemas(remainingArgs),
             "analyze" => HandleAnalyze(remainingArgs),
@@ -40,7 +43,8 @@ internal static class Program
             Usage: jsv-codegen <command> [options]
 
             Commands:
-              generate              Generate compiled validator from schema file
+              generate              Generate compiled C# validator from schema file
+              generate-js           Generate compiled JavaScript (ESM) validator from schema file
               generate-metaschemas  Generate compiled validators for all metaschemas
               compile-test-schemas  Generate compiled validators for JSON-Schema-Test-Suite schemas
               analyze               Analyze schema for compilation compatibility
@@ -50,6 +54,20 @@ internal static class Program
               -o, --output <path>     Output directory for generated code (required)
               -n, --namespace <name>  Namespace for generated classes (default: JsonSchemaValidation.Generated)
               -c, --class <name>      Class name (defaults to derived from schema $id)
+
+            generate-js options:
+              -s, --schema <path>    Input schema file (required)
+              -o, --output <path>    Output directory (required). Emits <schema>.js and jsv-runtime.js.
+              --no-runtime           Skip writing jsv-runtime.js (useful when runtime is already present).
+
+            generate-js MVP scope:
+              - Drafts: 2020-12 and 4 (other drafts rejected pre-emission).
+              - Self-contained schemas with local $ref only. External $ref rejected.
+              - Deferred features (unevaluatedProperties/Items, $dynamicRef/$dynamicAnchor,
+                $recursiveRef/$recursiveAnchor) are rejected under drafts that define them —
+                that is, Draft 2020-12. Under Draft 4 these names are not JSON Schema
+                keywords and are ignored as unknown annotations per spec.
+              - Format: eager validation for draft-supported formats; others are annotation-only.
 
             generate-metaschemas options:
               -o, --output <path>     Output directory for generated code (required)
@@ -66,6 +84,7 @@ internal static class Program
 
             Examples:
               jsv-codegen generate -s schema.json -o ./Generated/
+              jsv-codegen generate-js -s schema.json -o ./src/validators/
               jsv-codegen generate-metaschemas -o ./Generated/ -l ../JsonSchemaValidation
               jsv-codegen compile-test-schemas -t ./submodules/JSON-Schema-Test-Suite -o ./Generated/
               jsv-codegen analyze -s schema.json
@@ -151,6 +170,101 @@ internal static class Program
 
         Console.Error.WriteLine($"Generation failed: {result.Error}");
         return 1;
+    }
+
+    private static int HandleGenerateJs(string[] args)
+    {
+        string? schemaPath = null;
+        string? outputPath = null;
+        var writeRuntime = true;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            var nextArg = i + 1 < args.Length ? args[i + 1] : null;
+            switch (arg)
+            {
+                case "-s":
+                case "--schema":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    schemaPath = nextArg;
+                    i++;
+                    break;
+                case "-o":
+                case "--output":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    outputPath = nextArg;
+                    i++;
+                    break;
+                case "--no-runtime":
+                    writeRuntime = false;
+                    break;
+            }
+        }
+
+        if (string.IsNullOrEmpty(schemaPath))
+        {
+            Console.Error.WriteLine("Error: Schema path is required (-s, --schema)");
+            return 1;
+        }
+        if (string.IsNullOrEmpty(outputPath))
+        {
+            Console.Error.WriteLine("Error: Output path is required (-o, --output)");
+            return 1;
+        }
+        if (!File.Exists(schemaPath))
+        {
+            Console.Error.WriteLine($"Error: Schema file not found: {schemaPath}");
+            return 1;
+        }
+        if (!Directory.Exists(outputPath))
+        {
+            Directory.CreateDirectory(outputPath);
+        }
+
+        Console.WriteLine($"Generating JS validator for: {schemaPath}");
+        Console.WriteLine($"Output directory: {outputPath}");
+
+        var generator = new JsSchemaCodeGenerator();
+        var result = generator.Generate(schemaPath);
+        if (!result.Success)
+        {
+            Console.Error.WriteLine($"Generation failed: {result.Error}");
+            return 1;
+        }
+
+        var validatorPath = Path.Combine(outputPath, result.FileName!);
+        File.WriteAllText(validatorPath, result.GeneratedCode!);
+        Console.WriteLine($"Generated: {validatorPath}");
+
+        if (writeRuntime)
+        {
+            var runtimePath = Path.Combine(outputPath, JsRuntime.FileName);
+            File.WriteAllText(runtimePath, JsRuntime.GetSource());
+            Console.WriteLine($"Generated: {runtimePath}");
+        }
+        return 0;
+    }
+
+    /// <summary>
+    /// Returns true if the argument is present (i.e., an option's value wasn't
+    /// elided from the end of argv). No leading-'-' check — that would reject
+    /// legitimate values like <c>-schema.json</c> and diverges from the existing
+    /// generate/generate-metaschemas/compile-test-schemas parsers. "--schema -o out"
+    /// will bind schemaPath="-o" and fail later with "schema file not found: -o",
+    /// which is adequate.
+    /// </summary>
+    private static bool IsOptionValue(string? arg)
+    {
+        return !string.IsNullOrEmpty(arg);
     }
 
     private static int HandleGenerateMetaschemas(string[] args)

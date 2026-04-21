@@ -8,5 +8,6 @@
   <Project Path="JsonSchemaValidation.CodeGenerator/JsonSchemaValidation.CodeGenerator.csproj" />
   <Project Path="JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj" />
   <Project Path="JsonSchemaValidation.CodeGeneration/JsonSchemaValidation.CodeGeneration.csproj" />
+  <Project Path="JsonSchemaValidation.CodeGeneration.JavaScript/JsonSchemaValidation.CodeGeneration.JavaScript.csproj" />
   <Project Path="JsonSchemaValidation.Compiler/JsonSchemaValidation.Compiler.csproj" />
 </Solution>
