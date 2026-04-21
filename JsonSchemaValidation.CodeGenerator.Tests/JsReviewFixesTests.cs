@@ -623,6 +623,34 @@ public class JsReviewFixesTests
         Assert.Contains("multiple nested $id resources", result.Error);
     }
 
+    // Copilot round 8: reachability must follow local $ref so a ref target under
+    // a non-applicator container still ends up in the emitted module. Uses the
+    // same "legacy definitions in 2020-12" shape as the round-6 test — the map
+    // fix alone covers the known keyword; the follow-ref fix is a belt-and-
+    // suspenders guarantee that the same pattern works even if the extractor
+    // places the target under a container we don't explicitly walk.
+    [Fact]
+    public void LocalRef_MarksTargetReachable_EvenThroughLegacyContainer()
+    {
+        // If my applicator set missed "definitions" (it does now, but this test
+        // exists to lock the follow-ref behavior regardless), the ref would still
+        // have to resolve and the target's validate_<hash> would still have to
+        // be emitted.
+        Expect(
+            """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "definitions": { "inner": { "type": "integer", "minimum": 0 } },
+              "allOf": [ { "$ref": "#/definitions/inner" } ]
+            }
+            """,
+            [
+                ("5", true),
+                ("-1", false),
+                ("\"no\"", false),
+            ]);
+    }
+
     // Copilot round 7: schema numeric values that exceed long.MaxValue must not
     // silently cast to garbage longs. Out-of-range minLength/maxLength etc. are
     // treated as "no valid integer" and the constraint is skipped.

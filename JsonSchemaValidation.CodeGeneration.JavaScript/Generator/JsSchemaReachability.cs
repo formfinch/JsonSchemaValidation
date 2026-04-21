@@ -95,7 +95,7 @@ internal static class JsSchemaReachability
 
         string? rejection = null;
         Walk(root, currentResourceRootHash: SchemaHasher.ComputeHash(root),
-            draft, reachable, resourceRootsByHash, ref rejection);
+            draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
 
         if (rejection != null)
         {
@@ -129,7 +129,8 @@ internal static class JsSchemaReachability
         SchemaDraft draft,
         HashSet<string> reachable,
         Dictionary<string, HashSet<string>> resourceRootsByHash,
-        ref string? rejection)
+        ref string? rejection,
+        IReadOnlyDictionary<string, SubschemaInfo> uniqueSchemas)
     {
         if (rejection != null) return;
         if (node.ValueKind == JsonValueKind.True || node.ValueKind == JsonValueKind.False)
@@ -142,8 +143,35 @@ internal static class JsSchemaReachability
         if (node.ValueKind != JsonValueKind.Object) return;
 
         var hash = SchemaHasher.ComputeHash(node);
-        reachable.Add(hash);
+        // Early-return on revisit to break ref cycles safely.
+        if (!reachable.Add(hash))
+        {
+            RecordResourceRoot(resourceRootsByHash, hash, currentResourceRootHash);
+            return;
+        }
         RecordResourceRoot(resourceRootsByHash, hash, currentResourceRootHash);
+
+        // Follow local $ref to mark the referenced subschema reachable. Without
+        // this step a ref that targets a subschema under a non-applicator
+        // keyword (extension keywords, annotations) would never have a
+        // validate_<hash> function emitted, and the generated JS would raise
+        // ReferenceError at runtime. External refs are rejected by the gate.
+        if (node.TryGetProperty("$ref", out var refElem) &&
+            refElem.ValueKind == JsonValueKind.String)
+        {
+            var refValue = refElem.GetString();
+            if (!string.IsNullOrEmpty(refValue) && refValue.StartsWith('#'))
+            {
+                // Any collected subschema whose JsonPointerPath matches the ref
+                // is considered the target. If the target's subschema is in
+                // uniqueSchemas, walk it so it and its dependencies get marked.
+                var target = ResolveLocalRef(refValue, uniqueSchemas);
+                if (target.HasValue)
+                {
+                    Walk(target.Value, currentResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
+                }
+            }
+        }
 
         // An $id on this object opens a new resource boundary.
         var nextResourceRootHash = DetectResourceRootHash(node, currentResourceRootHash, draft);
@@ -161,12 +189,12 @@ internal static class JsSchemaReachability
                 {
                     foreach (var item in prop.Value.EnumerateArray())
                     {
-                        Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection);
+                        Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
                     }
                 }
                 else
                 {
-                    Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection);
+                    Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
                 }
                 continue;
             }
@@ -181,7 +209,7 @@ internal static class JsSchemaReachability
                         dep.Value.ValueKind == JsonValueKind.True ||
                         dep.Value.ValueKind == JsonValueKind.False)
                     {
-                        Walk(dep.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection);
+                        Walk(dep.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
                     }
                 }
                 continue;
@@ -189,26 +217,48 @@ internal static class JsSchemaReachability
 
             if (schemaValued.Contains(prop.Name))
             {
-                Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection);
+                Walk(prop.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
             }
             else if (schemaArray.Contains(prop.Name) && prop.Value.ValueKind == JsonValueKind.Array)
             {
                 foreach (var item in prop.Value.EnumerateArray())
                 {
-                    Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection);
+                    Walk(item, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
                 }
             }
             else if (schemaMap.Contains(prop.Name) && prop.Value.ValueKind == JsonValueKind.Object)
             {
                 foreach (var entry in prop.Value.EnumerateObject())
                 {
-                    Walk(entry.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection);
+                    Walk(entry.Value, nextResourceRootHash, draft, reachable, resourceRootsByHash, ref rejection, uniqueSchemas);
                 }
             }
             // Data / annotation keywords (contentSchema, default, examples, enum,
             // const, etc.) intentionally not walked — any subschema-shaped text
             // inside them is annotation, not a validation applicator.
         }
+    }
+
+    /// <summary>
+    /// Resolves a local JSON Pointer ref ("#/foo/bar") against the set of
+    /// already-extracted subschemas. Returns the target JsonElement when a
+    /// subschema's JsonPointerPath matches the ref's fragment, else null.
+    /// </summary>
+    private static JsonElement? ResolveLocalRef(
+        string refValue,
+        IReadOnlyDictionary<string, SubschemaInfo> uniqueSchemas)
+    {
+        if (string.IsNullOrEmpty(refValue) || !refValue.StartsWith('#')) return null;
+        var fragment = refValue.Substring(1); // strip leading '#'; empty means root
+        foreach (var info in uniqueSchemas.Values)
+        {
+            var path = info.JsonPointerPath ?? string.Empty;
+            if (path == fragment)
+            {
+                return info.Schema;
+            }
+        }
+        return null;
     }
 
     private static string DetectResourceRootHash(JsonElement node, string currentRootHash, SchemaDraft draft)

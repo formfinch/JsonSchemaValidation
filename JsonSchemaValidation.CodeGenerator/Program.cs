@@ -253,13 +253,16 @@ internal static class Program
     }
 
     /// <summary>
-    /// Returns true if the argument is present and doesn't look like another flag
-    /// (i.e. doesn't start with '-'), so option parsers can distinguish a missing
-    /// value from an actual value.
+    /// Returns true if the argument is present (i.e., an option's value wasn't
+    /// elided from the end of argv). No leading-'-' check — that would reject
+    /// legitimate values like <c>-schema.json</c> and diverges from the existing
+    /// generate/generate-metaschemas/compile-test-schemas parsers. "--schema -o out"
+    /// will bind schemaPath="-o" and fail later with "schema file not found: -o",
+    /// which is adequate.
     /// </summary>
     private static bool IsOptionValue(string? arg)
     {
-        return !string.IsNullOrEmpty(arg) && !arg.StartsWith('-');
+        return !string.IsNullOrEmpty(arg);
     }
 
     private static int HandleGenerateMetaschemas(string[] args)

@@ -127,7 +127,13 @@ public class JsTestSuiteRunner
         SchemaDraft draft)
     {
         var suitePath = FindTestSuitePath();
-        if (suitePath == null) yield break;
+        if (suitePath == null)
+        {
+            // Surface missing submodule as a single failing case rather than
+            // silently running zero cases (which would mask CI misconfiguration).
+            yield return [TestCase.MissingSuite(draft)];
+            yield break;
+        }
 
         foreach (var file in files)
         {
@@ -153,6 +159,15 @@ public class JsTestSuiteRunner
 
     private void RunCase(TestCase tc)
     {
+        if (tc.IsMissingSuiteSentinel)
+        {
+            Assert.Fail(
+                "JSON-Schema-Test-Suite submodule is not available on this machine. " +
+                "Run 'git submodule update --init' (or ensure submodules/JSON-Schema-Test-Suite/tests/ " +
+                "exists) before running the JS suite runner — otherwise the Theory silently yields " +
+                "zero cases and masks broad-coverage regressions.");
+        }
+
         foreach (var (contains, why) in CaseSkips)
         {
             if (tc.GroupDescription.Contains(contains, StringComparison.OrdinalIgnoreCase) ||
@@ -223,6 +238,14 @@ public class JsTestSuiteRunner
         string DataJson,
         bool Expected)
     {
+        public bool IsMissingSuiteSentinel { get; init; }
+
+        public static TestCase MissingSuite(SchemaDraft draft) => new(
+            draft, "(missing submodule)", "JSON-Schema-Test-Suite submodule is not checked out",
+            "run 'git submodule update --init' before running tests",
+            "{}", "null", true)
+        { IsMissingSuiteSentinel = true };
+
         public override string ToString() =>
             $"[{Draft}/{File}] {GroupDescription} -> {TestDescription}";
     }
