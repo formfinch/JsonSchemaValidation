@@ -239,33 +239,30 @@ public sealed class JsDraft202012SuiteFixture : IDisposable
     {
         try
         {
-            using var doc = JsonDocument.Parse(content);
-            var root = doc.RootElement;
-            if (root.ValueKind != JsonValueKind.Object || root.TryGetProperty("$id", out _))
+            // Parse to a mutable JsonNode tree, add $id first (so it appears
+            // near the top in re-serialized form), and emit back. Avoids the
+            // regex-insertion-with-trailing-comma fragility of string splicing
+            // — in particular, schemas like {"$schema": "..."} with no other
+            // properties used to produce invalid "...,}" output.
+            var node = System.Text.Json.Nodes.JsonNode.Parse(content);
+            if (node is not System.Text.Json.Nodes.JsonObject obj || obj.ContainsKey("$id"))
             {
                 return content;
             }
 
-            var firstBrace = content.IndexOf('{');
-            if (firstBrace < 0)
+            var reordered = new System.Text.Json.Nodes.JsonObject();
+            if (obj.ContainsKey("$schema"))
             {
-                return content;
+                var schemaNode = obj["$schema"];
+                obj.Remove("$schema");
+                reordered["$schema"] = schemaNode?.DeepClone();
             }
-
-            var insertPos = firstBrace + 1;
-            if (root.TryGetProperty("$schema", out _))
+            reordered["$id"] = id;
+            foreach (var (key, value) in obj.ToList())
             {
-                var schemaMatch = Regex.Match(
-                    content[(firstBrace + 1)..],
-                    @"""?\$schema""?\s*:\s*(""[^""]*""|'[^']*')\s*,?");
-                if (schemaMatch.Success)
-                {
-                    insertPos = firstBrace + 1 + schemaMatch.Index + schemaMatch.Length;
-                }
+                reordered[key] = value?.DeepClone();
             }
-
-            var injection = $"\n  \"$id\": {JsonSerializer.Serialize(id)},";
-            return content.Insert(insertPos, injection);
+            return reordered.ToJsonString();
         }
         catch
         {
