@@ -425,9 +425,12 @@ public sealed class JsSchemaCodeGenerator
                 ? "https://json-schema.org/draft/2019-09/vocab/format"
                 : "https://json-schema.org/draft/2020-12/vocab/format-assertion";
 
+            // Spec §8.1: a $vocabulary entry's true/false value indicates whether
+            // support is required (true) or optional (false). Presence in the map
+            // is what declares the vocabulary as "in use" by the metaschema.
+            // Consistent with how we handle the format-assertion vocabulary below.
             var validationVocabularyEnabled =
-                vocabularyElement.TryGetProperty(validationVocabularyUri, out var validationElement) &&
-                validationElement.ValueKind == JsonValueKind.True;
+                vocabularyElement.TryGetProperty(validationVocabularyUri, out _);
             var declaresFormatAssertionVocabulary =
                 vocabularyElement.TryGetProperty(formatAssertionVocabularyUri, out _);
 

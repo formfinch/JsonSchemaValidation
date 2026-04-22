@@ -61,15 +61,15 @@ internal static class Program
               --assert-format       Assert supported format values for Draft 2020-12.
               --no-runtime           Skip writing jsv-runtime.js (useful when runtime is already present).
 
-            generate-js MVP scope:
-              - Drafts: 2020-12 and 4 (other drafts rejected pre-emission).
+            generate-js supported scope:
+              - Drafts: 2020-12, 2019-09, and 4 (other drafts rejected pre-emission).
               - Local $ref is inlined; external $ref resolves through an optional JS registry
                 passed to validate(data, registry). Missing registry or missing entries fail validation.
-              - Annotation tracking: unevaluatedProperties/items are supported under Draft 2020-12.
-              - Deferred features ($dynamicRef/$dynamicAnchor, $recursiveRef/$recursiveAnchor)
-                are rejected under drafts that define them — that is, Draft 2020-12. Under
-                Draft 4 these names are not JSON Schema keywords and are ignored as unknown
-                annotations per spec.
+              - Annotation tracking: unevaluatedProperties/items are supported under Drafts
+                2020-12 and 2019-09 via generated evaluated-state tracking.
+              - Dynamic refs: $dynamicRef/$dynamicAnchor are supported under Draft 2020-12.
+                $recursiveRef/$recursiveAnchor (Draft 2019-09) are still deferred and are
+                rejected pre-emission in drafts that define them.
               - Format: Draft 4 asserts supported formats by default; Draft 2020-12 is
                 annotation-only unless --assert-format is set.
 

@@ -18,16 +18,26 @@
 //              isValidJsonPointer, isValidRelativeJsonPointer, isValidRegex,
 //              isValidUuid
 //   Validator module shape (what emitted modules export):
-//              default export: { validate, schemaUri }
-//              named exports:  validate(data): boolean, schemaUri: string | null
-//                              validateWithState(data, evaluatedState, location[, registry])
-//                              when annotation tracking is required
+//              default export: { validate, schemaUri [, validateWithScope]
+//                                [, validateWithState] [, fragmentValidators] }
+//              named exports:
+//                validate(data [, registry]): boolean
+//                schemaUri: string | null
+//                fragmentValidators: Record<uri, { validate, ... }>
+//                                    — emitted when the schema declares $id/$anchor/$dynamicAnchor
+//                validateWithState(data, evaluatedState, location [, registry])
+//                                    — annotation-tracking only
+//                validateWithScope(data, scope, location [, registry])
+//                                    — $dynamicRef scope-tracking only
+//                validateWithScope(data, scope, location [, registry])
+//                validateWithState(data, scope, evaluatedState, location [, registry])
+//                                    — both scope and annotation tracking
 //
 // PROVISIONAL (reserved names for deferred features; shape subject to change
 // when the owning phase lands — do not depend on these in MVP consumers):
-//   EvaluatedState        — unevaluatedProperties / unevaluatedItems tracking
-//   CompiledValidatorScope — $dynamicRef / $recursiveRef scope stack
-//   Registry              — external $ref resolution
+//   Registry / CompiledValidatorScope / EvaluatedState exports below implement
+//   the ABI described above; $recursiveRef / $recursiveAnchor scope behavior
+//   is not yet covered.
 //
 // All format exports below are implemented in this runtime and are part of
 // the frozen MVP ABI that emitted validators consume.
