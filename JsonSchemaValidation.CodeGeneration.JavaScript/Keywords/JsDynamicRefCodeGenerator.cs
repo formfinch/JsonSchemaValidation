@@ -103,31 +103,7 @@ public sealed class JsDynamicRefCodeGenerator : IJsKeywordCodeGenerator
         sb.AppendLine("  } else {");
         sb.AppendLine($"    const _refValidator = {context.RegistryExpr}?.tryGetValidator?.({uriLiteral}) ?? null;");
         sb.AppendLine("    if (_refValidator === null) return false;");
-        if (context.RequiresAnnotationTracking)
-        {
-            sb.AppendLine("    const _refValidateWithState = typeof _refValidator === \"function\" ? null : _refValidator.validateWithState;");
-            sb.AppendLine("    const _refValidateWithScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
-            sb.AppendLine("    if (typeof _refValidateWithState === \"function\") {");
-            sb.AppendLine($"      if (!_refValidateWithState({context.ElementExpr}, {context.ScopeExpr}, {context.EvaluatedStateExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("    } else if (typeof _refValidateWithScope === \"function\") {");
-            sb.AppendLine($"      if (!_refValidateWithScope({context.ElementExpr}, {context.ScopeExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("    } else {");
-            sb.AppendLine("      const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("      if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"      if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("    }");
-        }
-        else
-        {
-            sb.AppendLine("    const _refValidateWithScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
-            sb.AppendLine("    if (typeof _refValidateWithScope === \"function\") {");
-            sb.AppendLine($"      if (!_refValidateWithScope({context.ElementExpr}, {context.ScopeExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("    } else {");
-            sb.AppendLine("      const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("      if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"      if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("    }");
-        }
+        JsRefCodeGenerator.EmitExternalDispatch(sb, context, "    ");
         sb.AppendLine("  }");
         sb.AppendLine("}");
         return sb.ToString();
@@ -177,31 +153,7 @@ public sealed class JsDynamicRefCodeGenerator : IJsKeywordCodeGenerator
         sb.AppendLine("{");
         sb.AppendLine($"  const _refValidator = {context.RegistryExpr}?.tryGetValidator?.({uriLiteral}) ?? null;");
         sb.AppendLine("  if (_refValidator === null) return false;");
-        if (context.RequiresAnnotationTracking)
-        {
-            sb.AppendLine("  const _refValidateWithState = typeof _refValidator === \"function\" ? null : _refValidator.validateWithState;");
-            sb.AppendLine("  const _refValidateWithScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
-            sb.AppendLine("  if (typeof _refValidateWithState === \"function\") {");
-            sb.AppendLine($"    if (!_refValidateWithState({context.ElementExpr}, {context.ScopeExpr}, {context.EvaluatedStateExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  } else if (typeof _refValidateWithScope === \"function\") {");
-            sb.AppendLine($"    if (!_refValidateWithScope({context.ElementExpr}, {context.ScopeExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  } else {");
-            sb.AppendLine("    const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("    if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"    if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  }");
-        }
-        else
-        {
-            sb.AppendLine("  const _refValidateWithScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
-            sb.AppendLine("  if (typeof _refValidateWithScope === \"function\") {");
-            sb.AppendLine($"    if (!_refValidateWithScope({context.ElementExpr}, {context.ScopeExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  } else {");
-            sb.AppendLine("    const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("    if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"    if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  }");
-        }
+        JsRefCodeGenerator.EmitExternalDispatch(sb, context, "  ");
         sb.AppendLine("}");
         return sb.ToString();
     }

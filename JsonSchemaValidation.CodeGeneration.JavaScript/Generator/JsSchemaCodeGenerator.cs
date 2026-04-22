@@ -476,22 +476,34 @@ public sealed class JsSchemaCodeGenerator
         sb.AppendLine("/**");
         sb.AppendLine(" * Validates a JSON value against the compiled schema.");
         sb.AppendLine(" * @param {unknown} data");
+        if (requiresRegistry)
+        {
+            sb.AppendLine(" * @param {{ tryGetValidator(uri: string): unknown } | null} [registry]");
+        }
         sb.AppendLine(" * @returns {boolean}");
         sb.AppendLine(" */");
         var exportParameters = requiresRegistry ? "data, registry = null" : "data";
+        // Stable named-export signatures (keep each method's shape unambiguous
+        // across modules so cross-module registry composition is safe):
+        //   validate(data [, registry])
+        //   validateWithScope(data, scope, location [, registry])
+        //   validateWithState(data, evaluatedState, location [, registry])
+        //   validateWithScopeAndState(data, scope, evaluatedState, location [, registry])
         if (requiresScopeTracking && requiresAnnotationTracking)
         {
             if (requiresRegistry)
             {
                 sb.AppendLine($"export function validateWithScope(data, scope, location = \"\", registry = null) {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location, registry); }}");
-                sb.AppendLine($"export function validateWithState(data, scope, evaluatedState, location = \"\", registry = null) {{ return validate_{rootHash}(data, scope, evaluatedState, location, registry); }}");
-                sb.AppendLine($"export function validate({exportParameters}) {{ return validateWithState(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\", registry); }}");
+                sb.AppendLine($"export function validateWithState(data, evaluatedState, location = \"\", registry = null) {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validateWithScopeAndState(data, scope, evaluatedState, location = \"\", registry = null) {{ return validate_{rootHash}(data, scope, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\", registry); }}");
             }
             else
             {
                 sb.AppendLine($"export function validateWithScope(data, scope, location = \"\") {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location); }}");
-                sb.AppendLine($"export function validateWithState(data, scope, evaluatedState, location = \"\") {{ return validate_{rootHash}(data, scope, evaluatedState, location); }}");
-                sb.AppendLine($"export function validate({exportParameters}) {{ return validateWithState(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\"); }}");
+                sb.AppendLine($"export function validateWithState(data, evaluatedState, location = \"\") {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location); }}");
+                sb.AppendLine($"export function validateWithScopeAndState(data, scope, evaluatedState, location = \"\") {{ return validate_{rootHash}(data, scope, evaluatedState, location); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\"); }}");
             }
         }
         else if (requiresScopeTracking)
@@ -544,13 +556,15 @@ public sealed class JsSchemaCodeGenerator
             {
                 sb.AppendLine($"    validate(data, registry = null) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\", registry); }},");
                 sb.AppendLine($"    validateWithScope(data, scope, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, scope, new EvaluatedState(), location, registry); }},");
-                sb.AppendLine($"    validateWithState(data, scope, evaluatedState, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, scope, evaluatedState, location, registry); }}");
+                sb.AppendLine($"    validateWithState(data, evaluatedState, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, evaluatedState, location, registry); }},");
+                sb.AppendLine($"    validateWithScopeAndState(data, scope, evaluatedState, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, scope, evaluatedState, location, registry); }}");
             }
             else if (requiresScopeTracking && requiresAnnotationTracking)
             {
                 sb.AppendLine($"    validate(data) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\"); }},");
                 sb.AppendLine($"    validateWithScope(data, scope, location = \"\") {{ return validate_{fragment.Hash}(data, scope, new EvaluatedState(), location); }},");
-                sb.AppendLine($"    validateWithState(data, scope, evaluatedState, location = \"\") {{ return validate_{fragment.Hash}(data, scope, evaluatedState, location); }}");
+                sb.AppendLine($"    validateWithState(data, evaluatedState, location = \"\") {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, evaluatedState, location); }},");
+                sb.AppendLine($"    validateWithScopeAndState(data, scope, evaluatedState, location = \"\") {{ return validate_{fragment.Hash}(data, scope, evaluatedState, location); }}");
             }
             else if (requiresScopeTracking && requiresRegistry)
             {
@@ -588,6 +602,7 @@ public sealed class JsSchemaCodeGenerator
         var defaultExportMembers = new List<string> { "validate" };
         if (requiresScopeTracking) defaultExportMembers.Add("validateWithScope");
         if (requiresAnnotationTracking) defaultExportMembers.Add("validateWithState");
+        if (requiresScopeTracking && requiresAnnotationTracking) defaultExportMembers.Add("validateWithScopeAndState");
         defaultExportMembers.Add("schemaUri");
         if (fragmentValidators.Count > 0) defaultExportMembers.Add("fragmentValidators");
         sb.AppendLine($"export default {{ {string.Join(", ", defaultExportMembers)} }};");

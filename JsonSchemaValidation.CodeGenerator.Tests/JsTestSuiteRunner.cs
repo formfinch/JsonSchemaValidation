@@ -495,12 +495,10 @@ public class JsTestSuiteRunner : IClassFixture<JsDraft202012SuiteFixture>
 
     public static IEnumerable<object[]> Draft202012Cases() =>
         EnumerateKeywordCases("draft2020-12", Draft202012Keywords, SchemaDraft.Draft202012, formatAssertionEnabled: false)
-            .Where(tc => GetSkipReason(tc) == null)
             .Select(tc => new object[] { tc });
 
     public static IEnumerable<object[]> Draft202012FormatAssertionCases() =>
         EnumerateKeywordCases("draft2020-12", Draft202012FormatAssertionKeywords, SchemaDraft.Draft202012, formatAssertionEnabled: true)
-            .Where(tc => GetSkipReason(tc) == null)
             .Select(tc => new object[] { tc });
 
     public static IEnumerable<object[]> Draft4Cases() =>
@@ -609,11 +607,6 @@ public class JsTestSuiteRunner : IClassFixture<JsDraft202012SuiteFixture>
                 }
             }
         }
-    }
-
-    private static string? GetSkipReason(TestCase tc)
-    {
-        return null;
     }
 
     private static string NormalizeKeyword(string keyword)

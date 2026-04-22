@@ -103,53 +103,78 @@ public sealed class JsRefCodeGenerator : IJsKeywordCodeGenerator
         sb.AppendLine("{");
         sb.AppendLine($"  const _refValidator = {context.RegistryExpr}?.tryGetValidator?.({uriLiteral}) ?? null;");
         sb.AppendLine("  if (_refValidator === null) return false;");
-        if (context.RequiresAnnotationTracking)
+        EmitExternalDispatch(sb, context, "  ");
+        sb.AppendLine("}");
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Emits a runtime dispatch over a resolved external _refValidator that
+    /// picks the best stable method on the target validator based on the
+    /// CALLER's feature needs. Method names on targets have fixed signatures:
+    ///   validateWithScopeAndState(data, scope, evaluatedState, location [, registry])
+    ///   validateWithState        (data, evaluatedState, location [, registry])
+    ///   validateWithScope        (data, scope, location [, registry])
+    ///   validate                 (data [, registry])
+    /// The caller falls through to the simpler method when the target doesn't
+    /// expose the richer form. Choices that drop scope or state leave the
+    /// caller's _scope / _eval unchanged for that branch — which is
+    /// spec-acceptable because the downgraded target can't produce the info
+    /// we'd otherwise merge.
+    /// </summary>
+    internal static void EmitExternalDispatch(System.Text.StringBuilder sb, JsCodeGenerationContext context, string indent)
+    {
+        var v = context.ElementExpr;
+        var scope = context.ScopeExpr;
+        var state = context.EvaluatedStateExpr;
+        var loc = context.LocationExpr;
+        var reg = context.RegistryExpr;
+
+        if (context.RequiresScopeTracking && context.RequiresAnnotationTracking)
         {
-            sb.AppendLine("  const _refValidateWithState = typeof _refValidator === \"function\" ? null : _refValidator.validateWithState;");
-            sb.AppendLine("  const _refValidateWithScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
-            sb.AppendLine("  if (typeof _refValidateWithState === \"function\") {");
-            if (context.RequiresScopeTracking)
-            {
-                sb.AppendLine($"    if (!_refValidateWithState({context.ElementExpr}, {context.ScopeExpr}, {context.EvaluatedStateExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            }
-            else
-            {
-                sb.AppendLine($"    if (!_refValidateWithState({context.ElementExpr}, {context.EvaluatedStateExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            }
-            sb.AppendLine("  } else if (typeof _refValidateWithScope === \"function\") {");
-            if (context.RequiresScopeTracking)
-            {
-                sb.AppendLine($"    if (!_refValidateWithScope({context.ElementExpr}, {context.ScopeExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            }
-            else
-            {
-                sb.AppendLine($"    if (!_refValidateWithScope({context.ElementExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            }
-            sb.AppendLine("  } else {");
-            sb.AppendLine("    const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("    if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"    if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  }");
+            sb.AppendLine($"{indent}const _refScopeAndState = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScopeAndState;");
+            sb.AppendLine($"{indent}const _refState = typeof _refValidator === \"function\" ? null : _refValidator.validateWithState;");
+            sb.AppendLine($"{indent}const _refScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
+            sb.AppendLine($"{indent}if (typeof _refScopeAndState === \"function\") {{");
+            sb.AppendLine($"{indent}  if (!_refScopeAndState({v}, {scope}, {state}, {loc}, {reg})) return false;");
+            sb.AppendLine($"{indent}}} else if (typeof _refState === \"function\") {{");
+            sb.AppendLine($"{indent}  if (!_refState({v}, {state}, {loc}, {reg})) return false;");
+            sb.AppendLine($"{indent}}} else if (typeof _refScope === \"function\") {{");
+            sb.AppendLine($"{indent}  if (!_refScope({v}, {scope}, {loc}, {reg})) return false;");
+            sb.AppendLine($"{indent}}} else {{");
+            sb.AppendLine($"{indent}  const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
+            sb.AppendLine($"{indent}  if (typeof _refValidate !== \"function\") return false;");
+            sb.AppendLine($"{indent}  if (!_refValidate({v}, {reg})) return false;");
+            sb.AppendLine($"{indent}}}");
+        }
+        else if (context.RequiresAnnotationTracking)
+        {
+            sb.AppendLine($"{indent}const _refState = typeof _refValidator === \"function\" ? null : _refValidator.validateWithState;");
+            sb.AppendLine($"{indent}if (typeof _refState === \"function\") {{");
+            sb.AppendLine($"{indent}  if (!_refState({v}, {state}, {loc}, {reg})) return false;");
+            sb.AppendLine($"{indent}}} else {{");
+            sb.AppendLine($"{indent}  const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
+            sb.AppendLine($"{indent}  if (typeof _refValidate !== \"function\") return false;");
+            sb.AppendLine($"{indent}  if (!_refValidate({v}, {reg})) return false;");
+            sb.AppendLine($"{indent}}}");
         }
         else if (context.RequiresScopeTracking)
         {
-            sb.AppendLine("  const _refValidateWithScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
-            sb.AppendLine("  if (typeof _refValidateWithScope === \"function\") {");
-            sb.AppendLine($"    if (!_refValidateWithScope({context.ElementExpr}, {context.ScopeExpr}, {context.LocationExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  } else {");
-            sb.AppendLine("    const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("    if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"    if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
-            sb.AppendLine("  }");
+            sb.AppendLine($"{indent}const _refScope = typeof _refValidator === \"function\" ? null : _refValidator.validateWithScope;");
+            sb.AppendLine($"{indent}if (typeof _refScope === \"function\") {{");
+            sb.AppendLine($"{indent}  if (!_refScope({v}, {scope}, {loc}, {reg})) return false;");
+            sb.AppendLine($"{indent}}} else {{");
+            sb.AppendLine($"{indent}  const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
+            sb.AppendLine($"{indent}  if (typeof _refValidate !== \"function\") return false;");
+            sb.AppendLine($"{indent}  if (!_refValidate({v}, {reg})) return false;");
+            sb.AppendLine($"{indent}}}");
         }
         else
         {
-            sb.AppendLine("  const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
-            sb.AppendLine("  if (typeof _refValidate !== \"function\") return false;");
-            sb.AppendLine($"  if (!_refValidate({context.ElementExpr}, {context.RegistryExpr})) return false;");
+            sb.AppendLine($"{indent}const _refValidate = typeof _refValidator === \"function\" ? _refValidator : _refValidator.validate;");
+            sb.AppendLine($"{indent}if (typeof _refValidate !== \"function\") return false;");
+            sb.AppendLine($"{indent}if (!_refValidate({v}, {reg})) return false;");
         }
-        sb.AppendLine("}");
-        return sb.ToString();
     }
 
     private static bool TryResolveUri(JsCodeGenerationContext context, string refValue, out Uri targetUri)

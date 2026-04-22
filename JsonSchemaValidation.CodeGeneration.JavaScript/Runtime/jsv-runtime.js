@@ -18,22 +18,22 @@
 //              isValidJsonPointer, isValidRelativeJsonPointer, isValidRegex,
 //              isValidUuid
 //   Validator module shape (what emitted modules export):
-//              default export: the same object as the named exports below
-//                              (validate is always present; validateWithScope,
-//                              validateWithState, and fragmentValidators are
-//                              included when the respective features are needed).
-//              named exports:
+//              Each named export has a stable signature so cross-module
+//              registry composition is safe. A module emits a subset of these
+//              based on the features its schema requires; the default export
+//              mirrors the set of named exports.
 //                validate(data [, registry]): boolean
+//                  — always emitted
+//                validateWithState(data, evaluatedState, location [, registry])
+//                  — emitted when the schema tracks unevaluated* annotations
+//                validateWithScope(data, scope, location [, registry])
+//                  — emitted when the schema tracks $dynamicRef scope
+//                validateWithScopeAndState(data, scope, evaluatedState, location [, registry])
+//                  — emitted when both are tracked
 //                schemaUri: string | null
 //                fragmentValidators: Record<uri, { validate, ... }>
-//                                    — emitted when the schema declares
-//                                      $id / $anchor / $dynamicAnchor fragments
-//                validateWithState(data, evaluatedState, location [, registry])
-//                                    — annotation-tracking only
-//                validateWithScope(data, scope, location [, registry])
-//                                    — $dynamicRef scope-tracking only
-//                validateWithState(data, scope, evaluatedState, location [, registry])
-//                                    — both scope and annotation tracking
+//                  — emitted when the schema declares reachable $id / $anchor
+//                    / $dynamicAnchor fragments
 //
 // PROVISIONAL (reserved names for deferred features; shape subject to change
 // when the owning phase lands — do not depend on these in MVP consumers):

@@ -62,7 +62,7 @@ Patterns emit JavaScript `new RegExp("...")` constructor expressions (ECMAScript
 
 ### Format Validation
 
-Draft 4 continues to assert supported formats by default. Draft 2020-12 is annotation-only by default; set `FormatAssertionEnabled` on the JS generator or pass `--assert-format` to `jsv-codegen generate-js` to emit eager validation for supported Draft 2020-12 formats. For `idn-email`, `idn-hostname`, `iri`, and `iri-reference`, the runtime aliases to the ASCII counterpart — IDN-specific validation is deferred.
+Drafts 4 and 2019-09 continue to assert supported formats by default (matches the C# compiled path). Draft 2020-12 is annotation-only by default; set `FormatAssertionEnabled` on the JS generator or pass `--assert-format` to `jsv-codegen generate-js` to emit eager validation for supported Draft 2020-12 formats. When the enclosing metaschema declares the format-assertion vocabulary in `$vocabulary` (and is preloaded via `ExternalSchemaDocuments`), eager format validation is also enabled automatically. For `idn-email`, `idn-hostname`, `iri`, and `iri-reference`, the runtime aliases to the ASCII counterpart — IDN-specific validation is deferred.
 
 ### Shared Runtime Module
 
