@@ -22,6 +22,11 @@ public sealed class JsTypeCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("type", out var typeElement))
         {
             return string.Empty;
@@ -44,6 +49,11 @@ public sealed class JsTypeCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            yield break;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("type", out var typeElement))
         {
             yield break;

@@ -50,19 +50,17 @@ public class JsCapabilityGateTests
     }
 
     [Fact]
-    public void Rejects_Dynamic_Ref()
+    public void Accepts_Dynamic_Ref()
     {
         var rejection = Check("""{ "$dynamicRef": "#meta" }""");
-        Assert.NotNull(rejection);
-        Assert.Contains("$dynamicRef", rejection);
+        Assert.Null(rejection);
     }
 
     [Fact]
-    public void Rejects_Dynamic_Anchor()
+    public void Accepts_Dynamic_Anchor()
     {
         var rejection = Check("""{ "$dynamicAnchor": "meta" }""");
-        Assert.NotNull(rejection);
-        Assert.Contains("$dynamicAnchor", rejection);
+        Assert.Null(rejection);
     }
 
     [Fact]
@@ -74,15 +72,14 @@ public class JsCapabilityGateTests
     }
 
     [Fact]
-    public void Rejects_External_Ref()
+    public void Accepts_External_Ref()
     {
         var rejection = Check("""{ "$ref": "https://example.com/other.json" }""");
-        Assert.NotNull(rejection);
-        Assert.Contains("external $ref", rejection);
+        Assert.Null(rejection);
     }
 
     [Fact]
-    public void Rejects_External_Ref_Nested()
+    public void Accepts_External_Ref_Nested()
     {
         var rejection = Check("""
             {
@@ -92,8 +89,7 @@ public class JsCapabilityGateTests
               }
             }
             """);
-        Assert.NotNull(rejection);
-        Assert.Contains("external $ref", rejection);
+        Assert.Null(rejection);
     }
 
     [Fact]
@@ -101,13 +97,20 @@ public class JsCapabilityGateTests
     {
         var rejection = Check("""{ "type": "string" }""", SchemaDraft.Draft7);
         Assert.NotNull(rejection);
-        Assert.Contains("Draft 4 and Draft 2020-12", rejection);
+        Assert.Contains("Draft 4, Draft 2019-09, and Draft 2020-12", rejection);
     }
 
     [Fact]
     public void Accepts_Draft_4()
     {
         var rejection = Check("""{ "type": "string" }""", SchemaDraft.Draft4);
+        Assert.Null(rejection);
+    }
+
+    [Fact]
+    public void Accepts_Draft_2019_09()
+    {
+        var rejection = Check("""{ "type": "string" }""", SchemaDraft.Draft201909);
         Assert.Null(rejection);
     }
 }

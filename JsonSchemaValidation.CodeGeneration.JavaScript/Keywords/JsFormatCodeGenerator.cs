@@ -8,9 +8,8 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
 /// <summary>
 /// Generates JavaScript code for the "format" keyword.
-/// Matches the C# compiled path: eager validation for formats supported by the
-/// detected draft. Unsupported formats for a draft are treated as annotations
-/// (no validation emitted) per spec.
+/// Emits eager validation for legacy drafts that treated format as asserting.
+/// For Draft 2020-12, format stays annotation-only unless assertion is enabled.
 /// </summary>
 public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
 {
@@ -22,6 +21,17 @@ public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
         [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
         {
             "date-time", "email", "hostname", "ipv4", "ipv6", "uri",
+        },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "date-time", "date", "time",
+            "email", "idn-email",
+            "hostname", "idn-hostname",
+            "ipv4", "ipv6",
+            "uri", "uri-reference", "uri-template",
+            "iri", "iri-reference",
+            "json-pointer", "relative-json-pointer",
+            "regex", "uuid",
         },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
@@ -45,6 +55,7 @@ public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!ShouldAssertFormat(context)) return string.Empty;
         if (!context.CurrentSchema.TryGetProperty("format", out var formatElem)) return string.Empty;
         var format = formatElem.GetString();
         if (string.IsNullOrEmpty(format)) return string.Empty;
@@ -63,6 +74,7 @@ public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (!ShouldAssertFormat(context)) yield break;
         if (!context.CurrentSchema.TryGetProperty("format", out var formatElem) ||
             formatElem.ValueKind != JsonValueKind.String)
         {
@@ -78,6 +90,15 @@ public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
         }
         var importName = MapFormatToImport(format);
         if (importName != null) yield return importName;
+    }
+
+    private static bool ShouldAssertFormat(JsCodeGenerationContext context)
+    {
+        return context.DetectedDraft switch
+        {
+            SchemaDraft.Draft202012 => context.FormatAssertionEnabled,
+            _ => true,
+        };
     }
 
     private static string? MapFormatToImport(string format) => format switch

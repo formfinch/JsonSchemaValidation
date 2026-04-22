@@ -22,6 +22,7 @@ public sealed class JsDependentRequiredCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled) return string.Empty;
         if (context.DetectedDraft < SchemaDraft.Draft201909) return string.Empty;
         if (!context.CurrentSchema.TryGetProperty("dependentRequired", out var depElem) ||
             depElem.ValueKind != JsonValueKind.Object)
@@ -99,9 +100,10 @@ public sealed class JsDependentSchemasCodeGenerator : IJsKeywordCodeGenerator
 }
 
 /// <summary>
-/// Generates JavaScript code for the "dependencies" keyword (Draft 4-7).
+/// Generates JavaScript code for the "dependencies" keyword.
 /// In Draft 4-7, each dependency value can be an array of required property names
 /// or a schema — the combined form later split into dependentRequired/dependentSchemas.
+/// Draft 2019-09+ still exercises this through optional compatibility tests.
 /// </summary>
 public sealed class JsDependenciesCodeGenerator : IJsKeywordCodeGenerator
 {
@@ -115,7 +117,11 @@ public sealed class JsDependenciesCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
-        if (context.DetectedDraft > SchemaDraft.Draft7) return string.Empty;
+        if (!context.ValidationVocabularyEnabled && context.DetectedDraft >= SchemaDraft.Draft201909)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("dependencies", out var depElem) ||
             depElem.ValueKind != JsonValueKind.Object)
         {

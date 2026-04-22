@@ -25,6 +25,11 @@ public sealed class JsEnumCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("enum", out var enumElem) ||
             enumElem.ValueKind != JsonValueKind.Array)
         {
@@ -52,6 +57,11 @@ public sealed class JsEnumCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            yield break;
+        }
+
         if (context.CurrentSchema.ValueKind == JsonValueKind.Object &&
             context.CurrentSchema.TryGetProperty("enum", out var e) &&
             e.ValueKind == JsonValueKind.Array &&
@@ -78,6 +88,11 @@ public sealed class JsConstCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         // const was introduced in Draft 6; for Draft 4 it is an unknown keyword
         // and must be ignored (annotation-only), not enforced.
         if (context.DetectedDraft < SchemaDraft.Draft6) return string.Empty;
@@ -91,6 +106,7 @@ public sealed class JsConstCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled) yield break;
         if (context.DetectedDraft < SchemaDraft.Draft6) yield break;
         yield return "deepEquals";
     }

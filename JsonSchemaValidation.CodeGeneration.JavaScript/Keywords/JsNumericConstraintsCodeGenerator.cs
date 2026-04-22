@@ -31,6 +31,11 @@ public sealed class JsNumericConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         var schema = context.CurrentSchema;
         var hasMin = schema.TryGetProperty("minimum", out var minElem);
         var hasMax = schema.TryGetProperty("maximum", out var maxElem);

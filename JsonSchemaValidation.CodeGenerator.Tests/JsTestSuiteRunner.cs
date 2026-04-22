@@ -1,7 +1,9 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
+using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
@@ -12,221 +14,32 @@ using Xunit.Abstractions;
 namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 
 /// <summary>
-/// Runs the MVP-relevant subset of the official JSON Schema Test Suite against
-/// the JS emitter + Jint runtime. Supplements the explicit-verdict tests by
-/// confirming the emitter tracks spec behavior on a wide range of real schemas.
-///
-/// Schemas that trip the JS capability gate (deferred features like external
-/// $ref or unevaluated*) are counted as legitimate skips, not failures — the
-/// gate is doing its job.
+/// Shared fixture for the JS Draft 2020-12 suite runner. It precompiles the
+/// JSON-Schema-Test-Suite remotes that the JS generator can currently emit and
+/// writes a registry module that each test imports.
 /// </summary>
-public class JsTestSuiteRunner
+public sealed class JsDraft202012SuiteFixture : IDisposable
 {
-    private readonly ITestOutputHelper _output;
-    public JsTestSuiteRunner(ITestOutputHelper output) => _output = output;
+    private readonly string _moduleRoot;
+    private readonly Dictionary<string, string> _externalSchemaDocuments = new(StringComparer.Ordinal);
 
-    // MVP keyword coverage: one file per keyword family. Drives enough breadth
-    // to catch emitter regressions without turning this into a whole-suite run.
-    private static readonly string[] Draft202012Files =
-    [
-        "type.json",
-        "required.json",
-        "properties.json",
-        "anchor.json",
-        "enum.json",
-        "const.json",
-        "content.json",
-        "default.json",
-        "minLength.json",
-        "maxLength.json",
-        "pattern.json",
-        "minimum.json",
-        "maximum.json",
-        "exclusiveMinimum.json",
-        "exclusiveMaximum.json",
-        "multipleOf.json",
-        "minItems.json",
-        "maxItems.json",
-        "uniqueItems.json",
-        "minProperties.json",
-        "maxProperties.json",
-        "minContains.json",
-        "maxContains.json",
-        "items.json",
-        "prefixItems.json",
-        "contains.json",
-        "patternProperties.json",
-        "additionalProperties.json",
-        "propertyNames.json",
-        "allOf.json",
-        "anyOf.json",
-        "oneOf.json",
-        "not.json",
-        "if-then-else.json",
-        "dependentRequired.json",
-        "dependentSchemas.json",
-        "dynamicRef.json",
-        "boolean_schema.json",
-        "ref.json",
-        "refRemote.json",
-        "defs.json",
-        "infinite-loop-detection.json",
-        "unevaluatedItems.json",
-        "unevaluatedProperties.json",
-        "vocabulary.json",
-        // format.json is deliberately excluded: the suite expects annotation-only
-        // behavior by default (2020-12 spec), while our compiled path eager-validates
-        // supported formats — same stance as the C# compiled tests. Explicit format
-        // coverage lives in JsFormatTests.
-    ];
-
-    private static readonly string[] Draft4Files =
-    [
-        "type.json",
-        "required.json",
-        "properties.json",
-        "enum.json",
-        "minLength.json",
-        "maxLength.json",
-        "pattern.json",
-        "minimum.json",
-        "maximum.json",
-        "multipleOf.json",
-        "minItems.json",
-        "maxItems.json",
-        "uniqueItems.json",
-        "minProperties.json",
-        "maxProperties.json",
-        "items.json",
-        "patternProperties.json",
-        "additionalProperties.json",
-        "allOf.json",
-        "anyOf.json",
-        "oneOf.json",
-        "not.json",
-        "dependencies.json",
-    ];
-
-    // Test-description substrings whose cases we intentionally bypass — each
-    // reason is called out so future-me knows what a bypass covers. Anything
-    // listed here is material worth reviewing when expanding scope.
-    private static readonly (string Contains, string Why)[] CaseSkips =
-    [
-        ("remote ref", "Gate rejects external refs — deferred feature."),
-        ("base URI change", "Gate rejects cross-document refs — deferred feature."),
-        ("no validation vocabulary", "Compiled JS target does not enable/disable keywords via $vocabulary."),
-    ];
-
-    [Theory]
-    [MemberData(nameof(Draft202012Cases))]
-    public void Draft202012(TestCase tc) => RunCase(tc);
-
-    [Theory]
-    [MemberData(nameof(Draft4Cases))]
-    public void Draft4(TestCase tc) => RunCase(tc);
-
-    public static IEnumerable<object[]> Draft202012Cases() =>
-        EnumerateCases("draft2020-12", Draft202012Files, SchemaDraft.Draft202012);
-
-    public static IEnumerable<object[]> Draft4Cases() =>
-        EnumerateCases("draft4", Draft4Files, SchemaDraft.Draft4);
-
-    private static IEnumerable<object[]> EnumerateCases(
-        string draftFolder,
-        string[] files,
-        SchemaDraft draft)
+    public JsDraft202012SuiteFixture()
     {
-        var suitePath = FindTestSuitePath();
-        if (suitePath == null)
-        {
-            // Surface missing submodule as a single failing case rather than
-            // silently running zero cases (which would mask CI misconfiguration).
-            yield return [TestCase.MissingSuite(draft)];
-            yield break;
-        }
-
-        foreach (var file in files)
-        {
-            var full = Path.Combine(suitePath, "tests", draftFolder, file);
-            if (!File.Exists(full)) continue;
-
-            var json = File.ReadAllText(full);
-            using var doc = JsonDocument.Parse(json);
-            foreach (var group in doc.RootElement.EnumerateArray())
-            {
-                var groupDesc = group.GetProperty("description").GetString() ?? "";
-                var schema = group.GetProperty("schema").GetRawText();
-                foreach (var test in group.GetProperty("tests").EnumerateArray())
-                {
-                    var testDesc = test.GetProperty("description").GetString() ?? "";
-                    var data = test.GetProperty("data").GetRawText();
-                    var valid = test.GetProperty("valid").GetBoolean();
-                    yield return [new TestCase(draft, file, groupDesc, testDesc, schema, data, valid)];
-                }
-            }
-        }
+        _moduleRoot = Path.Combine(Path.GetTempPath(), "jsv-suite-fixture-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_moduleRoot);
+        File.WriteAllText(Path.Combine(_moduleRoot, JsRuntime.FileName), JsRuntime.GetSource());
+        WriteRegistryModule();
     }
 
-    private void RunCase(TestCase tc)
+    public string ModuleRoot => _moduleRoot;
+    public IReadOnlyDictionary<string, string> ExternalSchemaDocuments => _externalSchemaDocuments;
+
+    public void Dispose()
     {
-        if (tc.IsMissingSuiteSentinel)
-        {
-            Assert.Fail(
-                "JSON-Schema-Test-Suite submodule is not available on this machine. " +
-                "Run 'git submodule update --init' (or ensure submodules/JSON-Schema-Test-Suite/tests/ " +
-                "exists) before running the JS suite runner — otherwise the Theory silently yields " +
-                "zero cases and masks broad-coverage regressions.");
-        }
-
-        foreach (var (contains, why) in CaseSkips)
-        {
-            if (tc.GroupDescription.Contains(contains, StringComparison.OrdinalIgnoreCase) ||
-                tc.TestDescription.Contains(contains, StringComparison.OrdinalIgnoreCase))
-            {
-                _output.WriteLine($"SKIP: {tc} — {why}");
-                return;
-            }
-        }
-
-        var generator = new JsSchemaCodeGenerator { DefaultDraft = tc.Draft };
-        var schemaElement = JsonDocument.Parse(tc.SchemaJson).RootElement;
-        var genResult = generator.Generate(schemaElement);
-        if (!genResult.Success)
-        {
-            // Gate rejection = legitimate skip for MVP. Use the stable prefix
-            // constant instead of substring-matching free-form wording.
-            if (genResult.Error!.StartsWith(JsCapabilityGate.RejectionPrefix, StringComparison.Ordinal))
-            {
-                _output.WriteLine($"SKIP (gate): {tc} — {genResult.Error}");
-                return;
-            }
-            Assert.Fail($"Codegen failed for {tc}: {genResult.Error}");
-        }
-
-        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-suite-" + Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(tempDir);
-        try
-        {
-            File.WriteAllText(Path.Combine(tempDir, JsRuntime.FileName), JsRuntime.GetSource());
-            File.WriteAllText(Path.Combine(tempDir, "validator.js"), genResult.GeneratedCode!);
-            var engine = new Engine(opts => opts.EnableModules(tempDir));
-            var module = engine.Modules.Import("./validator.js");
-            var validate = module.Get("validate");
-
-            var parsed = engine.Evaluate($"JSON.parse({JsTestHelpers.ToJsStringLiteral(tc.DataJson)})");
-            var verdictRaw = engine.Invoke(validate, parsed);
-            Assert.True(verdictRaw.IsBoolean(), $"Non-boolean verdict for {tc}");
-            var actual = verdictRaw.AsBoolean();
-            Assert.True(actual == tc.Expected,
-                $"{tc}\nExpected: {tc.Expected}, Got: {actual}\nSchema: {tc.SchemaJson}\nData: {tc.DataJson}\nSource:\n{genResult.GeneratedCode}");
-        }
-        finally
-        {
-            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
-        }
+        try { Directory.Delete(_moduleRoot, recursive: true); } catch { /* best effort */ }
     }
 
-    private static string? FindTestSuitePath()
+    public static string? FindTestSuitePath()
     {
         var dir = AppContext.BaseDirectory;
         for (var i = 0; i < 8 && dir != null; i++)
@@ -238,22 +51,602 @@ public class JsTestSuiteRunner
         return null;
     }
 
+    private void WriteRegistryModule()
+    {
+        var registrations = BuildRemoteRegistrations();
+        var sb = new StringBuilder();
+        sb.AppendLine("// Auto-generated by JsDraft202012SuiteFixture.");
+        sb.AppendLine("import { Registry } from \"./jsv-runtime.js\";");
+
+        for (var i = 0; i < registrations.Count; i++)
+        {
+            sb.AppendLine($"import remote_{i}, {{ fragmentValidators as remoteFragments_{i} }} from \"./remote_{i}.js\";");
+        }
+
+        sb.AppendLine();
+        sb.AppendLine("const registry = new Registry();");
+        for (var i = 0; i < registrations.Count; i++)
+        {
+            sb.AppendLine($"registry.registerForUri({JsonSerializer.Serialize(registrations[i].Uri)}, remote_{i});");
+            sb.AppendLine($"for (const [uri, validator] of Object.entries(remoteFragments_{i})) registry.registerForUri(uri, validator);");
+        }
+        sb.AppendLine();
+        sb.AppendLine("export default registry;");
+
+        File.WriteAllText(Path.Combine(_moduleRoot, "registry.js"), sb.ToString());
+    }
+
+    private List<RemoteRegistration> BuildRemoteRegistrations()
+    {
+        var suitePath = FindTestSuitePath();
+        if (suitePath == null)
+        {
+            return [];
+        }
+
+        var remotesPath = Path.Combine(suitePath, "remotes");
+        if (!Directory.Exists(remotesPath))
+        {
+            return [];
+        }
+
+        var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
+        CollectRemotesFromPath(
+            pendingSchemas,
+            Path.Combine(remotesPath, "draft2020-12"),
+            "http://localhost:1234/draft2020-12/");
+        CollectRemotesFromPath(
+            pendingSchemas,
+            Path.Combine(remotesPath, "draft2019-09"),
+            "http://localhost:1234/draft2019-09/");
+        CollectRemotesFromPath(
+            pendingSchemas,
+            remotesPath,
+            "http://localhost:1234/",
+            topLevelOnly: true);
+        CollectBundledDraft202012Schemas(pendingSchemas);
+
+        foreach (var (schemaUri, content) in pendingSchemas)
+        {
+            _externalSchemaDocuments[schemaUri.AbsoluteUri] = content;
+        }
+
+        var generator = new JsSchemaCodeGenerator
+        {
+            AlwaysTrackAnnotations = true,
+            ExternalSchemaDocuments = _externalSchemaDocuments
+        };
+        var registrations = new List<RemoteRegistration>();
+        var seenUris = new HashSet<string>(StringComparer.Ordinal);
+        var index = 0;
+
+        foreach (var (schemaUri, content) in pendingSchemas)
+        {
+            if (!seenUris.Add(schemaUri.AbsoluteUri))
+            {
+                continue;
+            }
+
+            try
+            {
+                using var doc = JsonDocument.Parse(content);
+                var schema = doc.RootElement.Clone();
+                var result = generator.Generate(schema, sourcePath: $"remote_{index}.json");
+                if (!result.Success)
+                {
+                    continue;
+                }
+
+                var moduleName = $"remote_{index}.js";
+                File.WriteAllText(Path.Combine(_moduleRoot, moduleName), result.GeneratedCode!);
+                registrations.Add(new RemoteRegistration(schemaUri.AbsoluteUri, moduleName));
+                index++;
+            }
+            catch
+            {
+                // Remote preload is best effort. Unsupported drafts / deferred
+                // features remain visible through the test cases that rely on them.
+            }
+        }
+
+        return registrations;
+    }
+
+    private static void CollectRemotesFromPath(
+        List<(Uri SchemaUri, string Content)> schemas,
+        string path,
+        string baseUrl,
+        bool topLevelOnly = false)
+    {
+        if (!Directory.Exists(path))
+        {
+            return;
+        }
+
+        var searchOption = topLevelOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories;
+        foreach (var file in Directory.GetFiles(path, "*.json", searchOption))
+        {
+            try
+            {
+                var content = File.ReadAllText(file);
+                var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
+                var schemaUri = new Uri(baseUrl + relativePath);
+                content = InjectIdIfMissing(content, schemaUri.AbsoluteUri);
+                schemas.Add((schemaUri, content));
+                ExtractSelfContainedSubschemas(schemas, schemaUri, content);
+            }
+            catch
+            {
+                // Ignore malformed or unreadable remotes here; the suite cases
+                // that depend on them will still surface failures if needed.
+            }
+        }
+    }
+
+    private static void CollectBundledDraft202012Schemas(List<(Uri SchemaUri, string Content)> schemas)
+    {
+        var repoRoot = FindRepoRoot();
+        if (repoRoot == null)
+        {
+            return;
+        }
+
+        var dataPath = Path.Combine(repoRoot, "JsonSchemaValidation", "Draft202012", "Data");
+        if (!Directory.Exists(dataPath))
+        {
+            return;
+        }
+
+        foreach (var file in Directory.GetFiles(dataPath, "*.json", SearchOption.TopDirectoryOnly))
+        {
+            try
+            {
+                var content = File.ReadAllText(file);
+                using var doc = JsonDocument.Parse(content);
+                if (!doc.RootElement.TryGetProperty("$id", out var idElement) ||
+                    idElement.ValueKind != JsonValueKind.String ||
+                    string.IsNullOrEmpty(idElement.GetString()) ||
+                    !Uri.TryCreate(idElement.GetString(), UriKind.Absolute, out var schemaUri))
+                {
+                    continue;
+                }
+
+                schemas.Add((schemaUri, content));
+            }
+            catch
+            {
+                // Best effort preload; suite failures remain visible if this misses something.
+            }
+        }
+    }
+
+    private static string? FindRepoRoot()
+    {
+        var dir = AppContext.BaseDirectory;
+        for (var i = 0; i < 8 && dir != null; i++)
+        {
+            if (Directory.Exists(Path.Combine(dir, "JsonSchemaValidation")) &&
+                Directory.Exists(Path.Combine(dir, "JsonSchemaValidation.CodeGenerator.Tests")))
+            {
+                return dir;
+            }
+            dir = Path.GetDirectoryName(dir);
+        }
+        return null;
+    }
+
+    private static string InjectIdIfMissing(string content, string id)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(content);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || root.TryGetProperty("$id", out _))
+            {
+                return content;
+            }
+
+            var firstBrace = content.IndexOf('{');
+            if (firstBrace < 0)
+            {
+                return content;
+            }
+
+            var insertPos = firstBrace + 1;
+            if (root.TryGetProperty("$schema", out _))
+            {
+                var schemaMatch = Regex.Match(
+                    content[(firstBrace + 1)..],
+                    @"""?\$schema""?\s*:\s*(""[^""]*""|'[^']*')\s*,?");
+                if (schemaMatch.Success)
+                {
+                    insertPos = firstBrace + 1 + schemaMatch.Index + schemaMatch.Length;
+                }
+            }
+
+            var injection = $"\n  \"$id\": {JsonSerializer.Serialize(id)},";
+            return content.Insert(insertPos, injection);
+        }
+        catch
+        {
+            return content;
+        }
+    }
+
+    private static void ExtractSelfContainedSubschemas(
+        List<(Uri SchemaUri, string Content)> schemas,
+        Uri baseUri,
+        string content)
+    {
+        try
+        {
+            using var doc = JsonDocument.Parse(content);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return;
+            }
+
+            if (root.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
+            {
+                foreach (var def in defs.EnumerateObject())
+                {
+                    var subschemaContent = def.Value.GetRawText();
+                    if (!subschemaContent.Contains("\"$ref\"", StringComparison.Ordinal) &&
+                        !subschemaContent.Contains("\"$dynamicRef\"", StringComparison.Ordinal))
+                    {
+                        schemas.Add((new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/$defs/{def.Name}"), subschemaContent));
+                    }
+                }
+            }
+
+            ExtractSelfContainedAnchors(schemas, baseUri, root);
+        }
+        catch
+        {
+            // Ignore parse failures during best-effort fragment extraction.
+        }
+    }
+
+    private static void ExtractSelfContainedAnchors(
+        List<(Uri SchemaUri, string Content)> schemas,
+        Uri baseUri,
+        JsonElement element)
+    {
+        if (element.ValueKind != JsonValueKind.Object)
+        {
+            return;
+        }
+
+        var content = element.GetRawText();
+        if (!content.Contains("\"$ref\"", StringComparison.Ordinal) &&
+            !content.Contains("\"$dynamicRef\"", StringComparison.Ordinal))
+        {
+            if (element.TryGetProperty("$anchor", out var anchor) &&
+                anchor.ValueKind == JsonValueKind.String &&
+                !string.IsNullOrEmpty(anchor.GetString()))
+            {
+                schemas.Add((new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchor.GetString()}"), content));
+            }
+
+            if (element.TryGetProperty("$dynamicAnchor", out var dynamicAnchor) &&
+                dynamicAnchor.ValueKind == JsonValueKind.String &&
+                !string.IsNullOrEmpty(dynamicAnchor.GetString()))
+            {
+                schemas.Add((new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{dynamicAnchor.GetString()}"), content));
+            }
+        }
+
+        if (element.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var def in defs.EnumerateObject())
+            {
+                ExtractSelfContainedAnchors(schemas, baseUri, def.Value);
+            }
+        }
+    }
+
+    private sealed record RemoteRegistration(string Uri, string ModuleName);
+}
+
+/// <summary>
+/// Runs the JS codegen target against the official JSON-Schema-Test-Suite.
+/// Coverage is driven by the suite itself: root Draft 2020-12 files, selected
+/// optional Draft 2020-12 files, and Draft 2020-12 format-assertion cases run
+/// with format assertion enabled.
+/// </summary>
+public class JsTestSuiteRunner : IClassFixture<JsDraft202012SuiteFixture>
+{
+    private readonly JsDraft202012SuiteFixture _fixture;
+
+    public JsTestSuiteRunner(JsDraft202012SuiteFixture fixture, ITestOutputHelper output)
+    {
+        _fixture = fixture;
+    }
+
+    private static readonly string[] Draft202012Keywords =
+    [
+        "additionalProperties",
+        "allOf",
+        "anchor",
+        "anyOf",
+        "boolean_schema",
+        "const",
+        "contains",
+        "content",
+        "default",
+        "defs",
+        "dependentRequired",
+        "dependentSchemas",
+        "dynamicRef",
+        "enum",
+        "exclusiveMaximum",
+        "exclusiveMinimum",
+        "format",
+        "id",
+        "if-then-else",
+        "infinite-loop-detection",
+        "items",
+        "maxContains",
+        "maximum",
+        "maxItems",
+        "maxLength",
+        "maxProperties",
+        "minContains",
+        "minimum",
+        "minItems",
+        "minLength",
+        "minProperties",
+        "multipleOf",
+        "not",
+        "oneOf",
+        "pattern",
+        "patternProperties",
+        "prefixItems",
+        "properties",
+        "propertyNames",
+        "ref",
+        "refRemote",
+        "required",
+        "type",
+        "unevaluatedItems",
+        "unevaluatedProperties",
+        "uniqueItems",
+        "unknownKeyword",
+        "vocabulary",
+        "optional/anchor",
+        "optional/bignum",
+        "optional/cross-draft",
+        "optional/dependencies-compatibility",
+        "optional/dynamicRef",
+        "optional/float-overflow",
+        "optional/format-assertion",
+        "optional/id",
+        "optional/no-schema",
+        "optional/non-bmp-regex",
+        "optional/refOfUnknownKeyword",
+        "optional/unknownKeyword",
+    ];
+
+    private static readonly string[] Draft202012FormatAssertionKeywords =
+    [
+        "optional/ecmascript-regex",
+        "optional/format/date-time",
+        "optional/format/date",
+        "optional/format/duration",
+        "optional/format/ecmascript-regex",
+        "optional/format/email",
+        "optional/format/hostname",
+        "optional/format/idn-email",
+        "optional/format/idn-hostname",
+        "optional/format/ipv4",
+        "optional/format/ipv6",
+        "optional/format/iri",
+        "optional/format/iri-reference",
+        "optional/format/json-pointer",
+        "optional/format/regex",
+        "optional/format/relative-json-pointer",
+        "optional/format/time",
+        "optional/format/unknown",
+        "optional/format/uri",
+        "optional/format/uri-reference",
+        "optional/format/uri-template",
+        "optional/format/uuid",
+    ];
+
+    private static readonly string[] Draft4Keywords =
+    [
+        "type",
+        "required",
+        "properties",
+        "enum",
+        "minLength",
+        "maxLength",
+        "pattern",
+        "minimum",
+        "maximum",
+        "multipleOf",
+        "minItems",
+        "maxItems",
+        "uniqueItems",
+        "minProperties",
+        "maxProperties",
+        "items",
+        "patternProperties",
+        "additionalProperties",
+        "allOf",
+        "anyOf",
+        "oneOf",
+        "not",
+        "dependencies",
+    ];
+
+    [Theory]
+    [MemberData(nameof(Draft202012Cases))]
+    public void Draft202012(TestCase tc) => RunCase(tc);
+
+    [Theory]
+    [MemberData(nameof(Draft202012FormatAssertionCases))]
+    public void Draft202012FormatAssertion(TestCase tc) => RunCase(tc);
+
+    [Theory]
+    [MemberData(nameof(Draft4Cases))]
+    public void Draft4(TestCase tc) => RunCase(tc);
+
+    public static IEnumerable<object[]> Draft202012Cases() =>
+        EnumerateKeywordCases("draft2020-12", Draft202012Keywords, SchemaDraft.Draft202012, formatAssertionEnabled: false)
+            .Where(tc => GetSkipReason(tc) == null)
+            .Select(tc => new object[] { tc });
+
+    public static IEnumerable<object[]> Draft202012FormatAssertionCases() =>
+        EnumerateKeywordCases("draft2020-12", Draft202012FormatAssertionKeywords, SchemaDraft.Draft202012, formatAssertionEnabled: true)
+            .Where(tc => GetSkipReason(tc) == null)
+            .Select(tc => new object[] { tc });
+
+    public static IEnumerable<object[]> Draft4Cases() =>
+        EnumerateKeywordCases("draft4", Draft4Keywords, SchemaDraft.Draft4, formatAssertionEnabled: false)
+            .Select(tc => new object[] { tc });
+
+    private void RunCase(TestCase tc)
+    {
+        if (tc.IsMissingSuiteSentinel)
+        {
+            Assert.Fail(
+                "JSON-Schema-Test-Suite submodule is not available on this machine. " +
+                "Run 'git submodule update --init' (or ensure submodules/JSON-Schema-Test-Suite/tests/ exists) " +
+                "before running the JS suite runner.");
+        }
+
+        var generator = new JsSchemaCodeGenerator
+        {
+            DefaultDraft = tc.Draft,
+            FormatAssertionEnabled = tc.FormatAssertionEnabled,
+            ExternalSchemaDocuments = _fixture.ExternalSchemaDocuments
+        };
+
+        using var schemaDoc = JsonDocument.Parse(tc.SchemaJson);
+        var schemaElement = schemaDoc.RootElement.Clone();
+        var genResult = generator.Generate(schemaElement);
+        if (!genResult.Success)
+        {
+            Assert.Fail($"Codegen failed for {tc}: {genResult.Error}");
+        }
+
+        var validatorFile = $"validator_{Guid.NewGuid():N}.js";
+        var validatorPath = Path.Combine(_fixture.ModuleRoot, validatorFile);
+        try
+        {
+            File.WriteAllText(validatorPath, genResult.GeneratedCode!);
+
+            var engine = new Engine(opts => opts.EnableModules(_fixture.ModuleRoot));
+            var registry = engine.Modules.Import("./registry.js").Get("default");
+            var module = engine.Modules.Import("./" + validatorFile);
+            var validate = module.Get("validate");
+
+            var parsed = engine.Evaluate($"JSON.parse({JsTestHelpers.ToJsStringLiteral(tc.DataJson)})");
+            var verdictRaw = engine.Invoke(validate, parsed, registry);
+            Assert.True(verdictRaw.IsBoolean(), $"Non-boolean verdict for {tc}");
+            var actual = verdictRaw.AsBoolean();
+            Assert.True(actual == tc.Expected,
+                $"{tc}\nExpected: {tc.Expected}, Got: {actual}\nSchema: {tc.SchemaJson}\nData: {tc.DataJson}\nSource:\n{genResult.GeneratedCode}");
+        }
+        finally
+        {
+            try { File.Delete(validatorPath); } catch { /* best effort */ }
+        }
+    }
+
+    private static IEnumerable<TestCase> EnumerateKeywordCases(
+        string draftFolder,
+        IEnumerable<string> keywords,
+        SchemaDraft draft,
+        bool formatAssertionEnabled)
+    {
+        var suitePath = JsDraft202012SuiteFixture.FindTestSuitePath();
+        if (suitePath == null)
+        {
+            yield return TestCase.MissingSuite(draft, formatAssertionEnabled);
+            yield break;
+        }
+
+        var root = Path.Combine(suitePath, "tests", draftFolder);
+        if (!Directory.Exists(root))
+        {
+            yield break;
+        }
+
+        var wanted = keywords
+            .Select(NormalizeKeyword)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var file in Directory.GetFiles(root, "*.json", SearchOption.AllDirectories))
+        {
+            var relative = Path.GetRelativePath(root, file).Replace("\\", "/");
+            var relativeNoExt = NormalizeKeyword(relative);
+            if (!wanted.Contains(relativeNoExt))
+            {
+                continue;
+            }
+
+            var json = File.ReadAllText(file);
+            using var doc = JsonDocument.Parse(json);
+            foreach (var group in doc.RootElement.EnumerateArray())
+            {
+                var groupDesc = group.GetProperty("description").GetString() ?? string.Empty;
+                var schema = group.GetProperty("schema").GetRawText();
+                foreach (var test in group.GetProperty("tests").EnumerateArray())
+                {
+                    yield return new TestCase(
+                        draft,
+                        relative,
+                        relativeNoExt,
+                        groupDesc,
+                        test.GetProperty("description").GetString() ?? string.Empty,
+                        schema,
+                        test.GetProperty("data").GetRawText(),
+                        test.GetProperty("valid").GetBoolean(),
+                        formatAssertionEnabled);
+                }
+            }
+        }
+    }
+
+    private static string? GetSkipReason(TestCase tc)
+    {
+        return null;
+    }
+
+    private static string NormalizeKeyword(string keyword)
+    {
+        var normalized = keyword.Replace("\\", "/").TrimStart('/');
+        return normalized.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            ? normalized[..^5]
+            : normalized;
+    }
 
     public sealed record TestCase(
         SchemaDraft Draft,
         string File,
+        string RelativePath,
         string GroupDescription,
         string TestDescription,
         string SchemaJson,
         string DataJson,
-        bool Expected)
+        bool Expected,
+        bool FormatAssertionEnabled)
     {
         public bool IsMissingSuiteSentinel { get; init; }
 
-        public static TestCase MissingSuite(SchemaDraft draft) => new(
-            draft, "(missing submodule)", "JSON-Schema-Test-Suite submodule is not checked out",
+        public static TestCase MissingSuite(SchemaDraft draft, bool formatAssertionEnabled) => new(
+            draft,
+            "(missing submodule)",
+            "(missing submodule)",
+            "JSON-Schema-Test-Suite submodule is not checked out",
             "run 'git submodule update --init' before running tests",
-            "{}", "null", true)
+            "{}",
+            "null",
+            true,
+            formatAssertionEnabled)
         { IsMissingSuiteSentinel = true };
 
         public override string ToString() =>

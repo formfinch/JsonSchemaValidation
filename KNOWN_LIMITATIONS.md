@@ -41,8 +41,9 @@ The JS target emits compiled validators for consumption by JavaScript/TypeScript
 ### MVP Scope
 
 - **Drafts:** 2020-12 and 4 only. Other drafts (3, 6, 7, 2019-09) are rejected pre-emission. Tracked as follow-up work.
-- **Self-contained schemas with local `$ref` only.** External `$ref` is rejected pre-emission. The registry/fragment subschema machinery that exists for C# has not been ported.
+- **External `$ref`:** generated validators can resolve external refs through a JS registry passed to `validate(data, registry)`. In practice that registry is required for schemas with external refs; missing registry or missing entries fail validation. The JS test-suite runner does not yet preload the official remote schemas or register fragment subschema validators, so some remote-ref suite cases remain skipped.
 - **Annotation tracking:** `unevaluatedProperties` and `unevaluatedItems` are supported for Draft 2020-12 through generated evaluated-state tracking.
+- **External-ref annotation propagation depends on the registry entry shape:** generated validators export `validateWithState(...)` and preserve `unevaluated*` annotations across external refs when the registry entry exposes that method. Plain function validators and `{ validate(...) }` objects still validate correctly but do not propagate evaluated-state annotations back to the caller.
 - **Deferred features rejected in drafts that define them:** `$dynamicRef`, `$dynamicAnchor`, `$recursiveRef`, `$recursiveAnchor`. The capability gate is draft-aware — under Draft 4 these names are not JSON Schema keywords, so the gate treats them as unknown annotations and ignores them (per spec). Under Draft 2020-12 they are real keywords, and the gate rejects pre-emission with a structured error naming the unsupported feature.
 - **Vocabulary-based keyword disabling is not implemented.** Like the C# compiled target, generated JS does not enable/disable validation keywords based on a custom metaschema's `$vocabulary` declarations.
 - **Annotation tracking clone cost:** schemas that combine `unevaluated*` with deeply nested or high-fanout `allOf`/`anyOf`/`oneOf` conditionals clone evaluated-state maps while validating. This is correct but can add overhead for large object/array instances.
@@ -61,7 +62,7 @@ Patterns emit JavaScript `new RegExp("...")` constructor expressions (ECMAScript
 
 ### Format Validation
 
-Supported formats are eager-validated (same stance as the C# compiled path). This intentionally diverges from the 2020-12 suite's "annotation-only by default" expectation; suite cases asserting annotation-only behavior are excluded from our test runner. For `idn-email`, `idn-hostname`, `iri`, and `iri-reference`, the runtime aliases to the ASCII counterpart — IDN-specific validation is deferred.
+Draft 4 continues to assert supported formats by default. Draft 2020-12 is annotation-only by default; set `FormatAssertionEnabled` on the JS generator or pass `--assert-format` to `jsv-codegen generate-js` to emit eager validation for supported Draft 2020-12 formats. For `idn-email`, `idn-hostname`, `iri`, and `iri-reference`, the runtime aliases to the ASCII counterpart — IDN-specific validation is deferred.
 
 ### Shared Runtime Module
 

@@ -52,13 +52,14 @@ public class JsSchemaCodeGeneratorTests
     }
 
     [Fact]
-    public void Generate_RejectsExternalRef_ViaGate()
+    public void Generate_ExternalRef_EmitsRegistryAwareValidator()
     {
         var result = _generator.Generate(JsonDocument.Parse("""
             { "$ref": "https://example.com/other.json" }
             """).RootElement);
-        Assert.False(result.Success);
-        Assert.Contains("external $ref", result.Error);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("registry = null", result.GeneratedCode);
+        Assert.Contains("tryGetValidator", result.GeneratedCode);
     }
 
     [Fact]

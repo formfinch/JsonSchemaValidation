@@ -17,12 +17,26 @@ namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 /// </summary>
 public sealed class JsValidatorHarness
 {
-    private readonly JsSchemaCodeGenerator _generator = new();
+    private readonly JsSchemaCodeGenerator _generator;
+
+    public JsValidatorHarness(
+        bool formatAssertionEnabled = false,
+        IReadOnlyDictionary<string, string>? externalSchemaDocuments = null)
+    {
+        _generator = new JsSchemaCodeGenerator
+        {
+            FormatAssertionEnabled = formatAssertionEnabled,
+            ExternalSchemaDocuments = externalSchemaDocuments
+        };
+    }
 
     /// <summary>
     /// Generates JS for the schema and executes it against each data value.
     /// </summary>
-    public HarnessResult Evaluate(string schemaJson, IEnumerable<string> dataJsonValues)
+    public HarnessResult Evaluate(
+        string schemaJson,
+        IEnumerable<string> dataJsonValues,
+        string? registryExpression = null)
     {
         // JsonElement is backed by JsonDocument's pooled buffers; dispose the
         // document once we've lifted the schema into generator-owned form via Clone.
@@ -46,12 +60,15 @@ public sealed class JsValidatorHarness
             var engine = new Engine(opts => opts.EnableModules(tempDir));
             var module = engine.Modules.Import("./validator.js");
             var validate = module.Get("validate");
+            var registry = registryExpression == null ? null : engine.Evaluate(registryExpression);
 
             var verdicts = new List<bool>();
             foreach (var dataJson in dataJsonValues)
             {
                 var parsed = engine.Evaluate($"JSON.parse({JsTestHelpers.ToJsStringLiteral(dataJson)})");
-                var verdictRaw = engine.Invoke(validate, parsed);
+                var verdictRaw = registry == null
+                    ? engine.Invoke(validate, parsed)
+                    : engine.Invoke(validate, parsed, registry);
                 if (!verdictRaw.IsBoolean())
                 {
                     return new HarnessResult(false,

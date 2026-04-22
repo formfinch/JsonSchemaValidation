@@ -31,7 +31,7 @@ public sealed class JsContainsCodeGenerator : IJsKeywordCodeGenerator
         var hash = context.GetSubschemaHash(containsElem);
         long min = 1;
         long max = long.MaxValue;
-        if (context.DetectedDraft >= SchemaDraft.Draft201909)
+        if (context.DetectedDraft >= SchemaDraft.Draft201909 && context.ValidationVocabularyEnabled)
         {
             if (context.CurrentSchema.TryGetProperty("minContains", out var minElem) &&
                 TryGetIntegerValue(minElem, out var mn)) min = mn;

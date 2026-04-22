@@ -23,6 +23,11 @@ public sealed class JsRequiredCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("required", out var required) ||
             required.ValueKind != JsonValueKind.Array)
         {
