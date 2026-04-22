@@ -42,6 +42,12 @@ public static class JsCapabilityGate
         {
             "$recursiveRef",
             "$recursiveAnchor",
+            // $dynamicRef / $dynamicAnchor are core keywords in Draft 2019-09
+            // but JsDynamicRefCodeGenerator only emits scope-aware dispatch
+            // under Draft 2020-12; reject pre-emission to avoid silently
+            // ignoring them. Remove when 2019-09 scope tracking lands.
+            "$dynamicRef",
+            "$dynamicAnchor",
         },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {

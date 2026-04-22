@@ -3,7 +3,6 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
