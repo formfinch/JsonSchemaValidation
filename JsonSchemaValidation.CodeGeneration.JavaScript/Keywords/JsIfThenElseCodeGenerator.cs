@@ -66,13 +66,11 @@ public sealed class JsIfThenElseCodeGenerator : IJsKeywordCodeGenerator
                 sb.AppendLine($"    if (!{context.GenerateValidateCall(elseHash)}) return false;");
                 sb.AppendLine($"    const _elseAnn = {context.EvaluatedStateExpr}.clone();");
                 sb.AppendLine($"    {context.EvaluatedStateExpr}.restoreFrom(_ifteBase);");
-                sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_ifAnn);");
                 sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_elseAnn);");
             }
             else
             {
                 sb.AppendLine($"    {context.EvaluatedStateExpr}.restoreFrom(_ifteBase);");
-                sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_ifAnn);");
             }
             sb.AppendLine("  }");
             sb.AppendLine("}");

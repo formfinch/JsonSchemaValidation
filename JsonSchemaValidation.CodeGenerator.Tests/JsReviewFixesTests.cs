@@ -391,6 +391,59 @@ public class JsReviewFixesTests
     }
 
     [Fact]
+    public void IfThenElse_DoesNotPropagateAnnotationsFromFailingIfSubschema()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "if": {
+                "properties": {
+                  "x": true,
+                  "flag": true
+                },
+                "required": ["flag"]
+              },
+              "then": true,
+              "else": true,
+              "unevaluatedProperties": false
+            }
+            """,
+            [
+                ("""{ "x": 1, "flag": true }""", true),
+                ("""{ "x": 1 }""", false)
+            ]);
+    }
+
+    [Fact]
+    public void UnevaluatedProperties_HandlesNestedCombinatorAnnotationState()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "allOf": [
+                {
+                  "oneOf": [
+                    {
+                      "allOf": [
+                        { "properties": { "a": true } }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "properties": {
+                "b": true
+              },
+              "unevaluatedProperties": false
+            }
+            """,
+            [
+                ("""{ "a": 1, "b": 2 }""", true),
+                ("""{ "a": 1, "b": 2, "c": 3 }""", false)
+            ]);
+    }
+
+    [Fact]
     public void Gate_Draft202012_StillRejectsDynamicRef()
     {
         var gen = new JsSchemaCodeGenerator();

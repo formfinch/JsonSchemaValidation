@@ -15,6 +15,8 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 ///    via JS-emittable keywords. Subschemas under annotation-only keywords
 ///    like contentSchema, default, examples are excluded so they do not get
 ///    turned into dead — and sometimes invalid — validator functions.
+///    Annotation-dependent applicators such as unevaluatedProperties and
+///    unevaluatedItems are included because they emit real validation code.
 ///
 /// 2. A resource-root identity per hash, so we can detect when two text-
 ///    identical ref-containing subschemas appear under different resource

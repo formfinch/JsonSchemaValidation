@@ -63,10 +63,11 @@ internal static class Program
             generate-js MVP scope:
               - Drafts: 2020-12 and 4 (other drafts rejected pre-emission).
               - Self-contained schemas with local $ref only. External $ref rejected.
-              - Deferred features (unevaluatedProperties/Items, $dynamicRef/$dynamicAnchor,
-                $recursiveRef/$recursiveAnchor) are rejected under drafts that define them —
-                that is, Draft 2020-12. Under Draft 4 these names are not JSON Schema
-                keywords and are ignored as unknown annotations per spec.
+              - Annotation tracking: unevaluatedProperties/items are supported under Draft 2020-12.
+              - Deferred features ($dynamicRef/$dynamicAnchor, $recursiveRef/$recursiveAnchor)
+                are rejected under drafts that define them — that is, Draft 2020-12. Under
+                Draft 4 these names are not JSON Schema keywords and are ignored as unknown
+                annotations per spec.
               - Format: eager validation for draft-supported formats; others are annotation-only.
 
             generate-metaschemas options:
