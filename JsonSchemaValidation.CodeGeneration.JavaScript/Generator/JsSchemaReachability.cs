@@ -15,6 +15,8 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 ///    via JS-emittable keywords. Subschemas under annotation-only keywords
 ///    like contentSchema, default, examples are excluded so they do not get
 ///    turned into dead — and sometimes invalid — validator functions.
+///    Annotation-dependent applicators such as unevaluatedProperties and
+///    unevaluatedItems are included because they emit real validation code.
 ///
 /// 2. A resource-root identity per hash, so we can detect when two text-
 ///    identical ref-containing subschemas appear under different resource
@@ -37,6 +39,16 @@ internal static class JsSchemaReachability
             "additionalProperties",
             "additionalItems",
         },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "not",
+            "if", "then", "else",
+            "contains",
+            "additionalProperties",
+            "propertyNames",
+            "unevaluatedProperties",
+            "unevaluatedItems",
+        },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
             "not",
@@ -44,12 +56,18 @@ internal static class JsSchemaReachability
             "contains",
             "additionalProperties",
             "propertyNames",
+            "unevaluatedProperties",
+            "unevaluatedItems",
         },
     };
 
     private static readonly Dictionary<SchemaDraft, HashSet<string>> SchemaArrayPerDraft = new()
     {
         [SchemaDraft.Draft4] = new(StringComparer.Ordinal)
+        {
+            "allOf", "anyOf", "oneOf",
+        },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
         {
             "allOf", "anyOf", "oneOf",
         },
@@ -67,6 +85,14 @@ internal static class JsSchemaReachability
             "properties",
             "patternProperties",
             "definitions",
+        },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "properties",
+            "patternProperties",
+            "$defs",
+            "definitions",
+            "dependentSchemas",
         },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
@@ -102,11 +128,15 @@ internal static class JsSchemaReachability
             if (resourceRoots.Count <= 1) continue;
             if (!uniqueSchemas.TryGetValue(hash, out var info)) continue;
             if (info.Schema.ValueKind == JsonValueKind.Object &&
-                info.Schema.TryGetProperty("$ref", out var refElem) &&
-                refElem.ValueKind == JsonValueKind.String)
+                ((info.Schema.TryGetProperty("$ref", out var refElem) &&
+                  refElem.ValueKind == JsonValueKind.String &&
+                  !IsInlineableBareRefSchema(info.Schema)) ||
+                 (info.Schema.TryGetProperty("$dynamicRef", out var dynamicRefElem) &&
+                  dynamicRefElem.ValueKind == JsonValueKind.String &&
+                  !IsInlineableBareRefSchema(info.Schema))))
             {
                 return new Result(reachable,
-                    "JS target MVP cannot safely compile a schema where an identical $ref-containing " +
+                    "JS target MVP cannot safely compile a schema where an identical ref-containing " +
                     "subschema appears under multiple nested $id resources: the shared analyzer " +
                     "collapses them by content hash, so the emitted validator would resolve the ref " +
                     "against the wrong resource. Differentiate the subschemas (e.g., include the $id " +
@@ -115,6 +145,33 @@ internal static class JsSchemaReachability
         }
 
         return new Result(reachable, null);
+    }
+
+    private static bool IsInlineableBareRefSchema(JsonElement schema)
+    {
+        if (schema.ValueKind != JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        var count = 0;
+        foreach (var property in schema.EnumerateObject())
+        {
+            count++;
+            if (count > 1)
+            {
+                return false;
+            }
+
+            if ((property.Name != "$ref" && property.Name != "$dynamicRef") ||
+                property.Value.ValueKind != JsonValueKind.String ||
+                string.IsNullOrEmpty(property.Value.GetString()))
+            {
+                return false;
+            }
+        }
+
+        return count == 1;
     }
 
     private static void Walk(
@@ -191,8 +248,10 @@ internal static class JsSchemaReachability
                 continue;
             }
 
-            // Draft 4 dependencies: schema-valued entries only.
-            if (prop.Name == "dependencies" && draft == SchemaDraft.Draft4 &&
+            // Legacy dependencies compatibility: in Draft 4-7 this is a real
+            // keyword, and in 2019-09+/2020-12 the optional compatibility tests
+            // still expect schema-valued entries to behave like dependentSchemas.
+            if (prop.Name == "dependencies" &&
                 prop.Value.ValueKind == JsonValueKind.Object)
             {
                 foreach (var dep in prop.Value.EnumerateObject())

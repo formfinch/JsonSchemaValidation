@@ -58,16 +58,20 @@ internal static class Program
             generate-js options:
               -s, --schema <path>    Input schema file (required)
               -o, --output <path>    Output directory (required). Emits <schema>.js and jsv-runtime.js.
+              --assert-format       Assert supported format values for Draft 2020-12.
               --no-runtime           Skip writing jsv-runtime.js (useful when runtime is already present).
 
-            generate-js MVP scope:
-              - Drafts: 2020-12 and 4 (other drafts rejected pre-emission).
-              - Self-contained schemas with local $ref only. External $ref rejected.
-              - Deferred features (unevaluatedProperties/Items, $dynamicRef/$dynamicAnchor,
-                $recursiveRef/$recursiveAnchor) are rejected under drafts that define them —
-                that is, Draft 2020-12. Under Draft 4 these names are not JSON Schema
-                keywords and are ignored as unknown annotations per spec.
-              - Format: eager validation for draft-supported formats; others are annotation-only.
+            generate-js supported scope:
+              - Drafts: 2020-12, 2019-09, and 4 (other drafts rejected pre-emission).
+              - Local $ref is inlined; external $ref resolves through an optional JS registry
+                passed to validate(data, registry). Missing registry or missing entries fail validation.
+              - Annotation tracking: unevaluatedProperties/items are supported under Drafts
+                2020-12 and 2019-09 via generated evaluated-state tracking.
+              - Dynamic refs: $dynamicRef/$dynamicAnchor are supported under Draft 2020-12.
+                $recursiveRef/$recursiveAnchor (Draft 2019-09) are still deferred and are
+                rejected pre-emission in drafts that define them.
+              - Format: Draft 4 asserts supported formats by default; Draft 2020-12 is
+                annotation-only unless --assert-format is set.
 
             generate-metaschemas options:
               -o, --output <path>     Output directory for generated code (required)
@@ -177,6 +181,7 @@ internal static class Program
         string? schemaPath = null;
         string? outputPath = null;
         var writeRuntime = true;
+        var formatAssertionEnabled = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -207,6 +212,9 @@ internal static class Program
                 case "--no-runtime":
                     writeRuntime = false;
                     break;
+                case "--assert-format":
+                    formatAssertionEnabled = true;
+                    break;
             }
         }
 
@@ -233,7 +241,10 @@ internal static class Program
         Console.WriteLine($"Generating JS validator for: {schemaPath}");
         Console.WriteLine($"Output directory: {outputPath}");
 
-        var generator = new JsSchemaCodeGenerator();
+        var generator = new JsSchemaCodeGenerator
+        {
+            FormatAssertionEnabled = formatAssertionEnabled
+        };
         var result = generator.Generate(schemaPath);
         if (!result.Success)
         {

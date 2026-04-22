@@ -26,6 +26,7 @@ public static class JsCapabilityGate
     private static readonly HashSet<SchemaDraft> SupportedDrafts = new()
     {
         SchemaDraft.Draft4,
+        SchemaDraft.Draft201909,
         SchemaDraft.Draft202012,
     };
 
@@ -37,12 +38,19 @@ public static class JsCapabilityGate
     private static readonly Dictionary<SchemaDraft, HashSet<string>> DeferredPerDraft = new()
     {
         [SchemaDraft.Draft4] = new(StringComparer.Ordinal),
-        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
         {
-            "unevaluatedProperties",
-            "unevaluatedItems",
+            "$recursiveRef",
+            "$recursiveAnchor",
+            // $dynamicRef / $dynamicAnchor are core keywords in Draft 2019-09
+            // but JsDynamicRefCodeGenerator only emits scope-aware dispatch
+            // under Draft 2020-12; reject pre-emission to avoid silently
+            // ignoring them. Remove when 2019-09 scope tracking lands.
             "$dynamicRef",
             "$dynamicAnchor",
+        },
+        [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
+        {
             "$recursiveRef",
             "$recursiveAnchor",
         },
@@ -60,6 +68,16 @@ public static class JsCapabilityGate
             "not",
             "additionalProperties",
             "additionalItems",
+        },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "not",
+            "if", "then", "else",
+            "contains",
+            "additionalProperties",
+            "propertyNames",
+            "unevaluatedProperties",
+            "unevaluatedItems",
         },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
@@ -85,6 +103,10 @@ public static class JsCapabilityGate
         {
             "allOf", "anyOf", "oneOf",
         },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "allOf", "anyOf", "oneOf",
+        },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
             "allOf", "anyOf", "oneOf",
@@ -102,6 +124,14 @@ public static class JsCapabilityGate
             "properties",
             "patternProperties",
             "definitions",
+        },
+        [SchemaDraft.Draft201909] = new(StringComparer.Ordinal)
+        {
+            "properties",
+            "patternProperties",
+            "$defs",
+            "definitions",
+            "dependentSchemas",
         },
         [SchemaDraft.Draft202012] = new(StringComparer.Ordinal)
         {
@@ -125,7 +155,7 @@ public static class JsCapabilityGate
     {
         if (!SupportedDrafts.Contains(detectedDraft))
         {
-            return $"JS target MVP supports Draft 4 and Draft 2020-12 only; detected {detectedDraft}. " +
+            return $"JS target MVP supports Draft 4, Draft 2019-09, and Draft 2020-12 only; detected {detectedDraft}. " +
                    "Other drafts are tracked as follow-up work.";
         }
         return Walk(root, detectedDraft);
@@ -163,18 +193,7 @@ public static class JsCapabilityGate
             if (deferred.Contains(prop.Name))
             {
                 return $"JS target MVP does not support '{prop.Name}'. " +
-                       "Deferred to follow-up: unevaluated*, $dynamicRef/$dynamicAnchor, " +
-                       "$recursiveRef/$recursiveAnchor.";
-            }
-
-            if (prop.Name == "$ref" && prop.Value.ValueKind == JsonValueKind.String)
-            {
-                var refValue = prop.Value.GetString();
-                if (!string.IsNullOrEmpty(refValue) && IsExternalRef(refValue))
-                {
-                    return $"JS target MVP does not support external $ref '{refValue}'. " +
-                           "Local refs (starting with '#') are supported; external refs are deferred.";
-                }
+                       "Deferred to follow-up: $recursiveRef/$recursiveAnchor.";
             }
 
             // Draft-specific "items": single schema in 2020-12; single or array in Draft 4.
@@ -258,12 +277,4 @@ public static class JsCapabilityGate
         return null;
     }
 
-    /// <summary>
-    /// A $ref is "external" from the MVP's perspective when it targets something
-    /// other than a fragment within the current document (anything not starting with '#').
-    /// </summary>
-    private static bool IsExternalRef(string refValue)
-    {
-        return !refValue.StartsWith('#');
-    }
 }

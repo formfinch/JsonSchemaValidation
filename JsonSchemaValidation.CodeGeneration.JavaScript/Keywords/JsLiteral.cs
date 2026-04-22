@@ -86,6 +86,6 @@ internal static class JsLiteral
     /// </summary>
     public static string RegexLiteral(string pattern)
     {
-        return $"new RegExp({String(pattern)})";
+        return $"new RegExp({String(pattern)}, \"u\")";
     }
 }

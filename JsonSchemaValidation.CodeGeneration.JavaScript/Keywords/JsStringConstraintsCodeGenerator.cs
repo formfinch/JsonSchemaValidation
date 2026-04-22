@@ -25,6 +25,11 @@ public sealed class JsStringConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         var schema = context.CurrentSchema;
         var hasMin = schema.TryGetProperty("minLength", out var minElem) &&
                      TryGetIntegerValue(minElem, out var min);
@@ -47,6 +52,11 @@ public sealed class JsStringConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            yield break;
+        }
+
         // Only yield the import when GenerateCode will actually emit a
         // graphemeLength call — skip for non-integer minLength/maxLength values
         // that GenerateCode ignores, so unused imports don't creep into the

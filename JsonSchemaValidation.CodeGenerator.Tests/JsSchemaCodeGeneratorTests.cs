@@ -41,23 +41,25 @@ public class JsSchemaCodeGeneratorTests
     }
 
     [Fact]
-    public void Generate_RejectsUnsupportedFeature_ViaGate()
+    public void Generate_SupportsUnevaluatedProperties()
     {
         var result = _generator.Generate(JsonDocument.Parse("""
             { "type": "object", "unevaluatedProperties": false }
             """).RootElement);
-        Assert.False(result.Success);
-        Assert.Contains("unevaluatedProperties", result.Error);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("EvaluatedState", result.GeneratedCode);
+        Assert.Contains("isPropertyEvaluated", result.GeneratedCode);
     }
 
     [Fact]
-    public void Generate_RejectsExternalRef_ViaGate()
+    public void Generate_ExternalRef_EmitsRegistryAwareValidator()
     {
         var result = _generator.Generate(JsonDocument.Parse("""
             { "$ref": "https://example.com/other.json" }
             """).RootElement);
-        Assert.False(result.Success);
-        Assert.Contains("external $ref", result.Error);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("registry = null", result.GeneratedCode);
+        Assert.Contains("tryGetValidator", result.GeneratedCode);
     }
 
     [Fact]

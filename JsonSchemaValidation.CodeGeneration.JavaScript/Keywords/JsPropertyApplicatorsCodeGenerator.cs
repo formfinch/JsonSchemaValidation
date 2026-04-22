@@ -50,7 +50,11 @@ public sealed class JsPatternPropertiesCodeGenerator : IJsKeywordCodeGenerator
             var hash = context.GetSubschemaHash(pattern.Value);
             hoists.AppendLine($"  const {regexVar} = {regex};");
             checks.AppendLine($"    if ({regexVar}.test(_k)) {{");
-            checks.AppendLine($"      if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_k]")}) return false;");
+            checks.AppendLine($"      if (!{context.GenerateValidateCallForProperty(hash, $"{v}[_k]", "_k")}) return false;");
+            if (context.RequiresPropertyAnnotations)
+            {
+                checks.AppendLine($"      {context.EvaluatedStateExpr}.markPropertyEvaluated({context.LocationExpr}, _k);");
+            }
             checks.AppendLine("    }");
             idx++;
         }
@@ -90,7 +94,10 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         }
         if (addProps.ValueKind == JsonValueKind.True)
         {
-            return string.Empty;
+            if (!context.RequiresPropertyAnnotations)
+            {
+                return string.Empty;
+            }
         }
 
         var definedNames = CollectDefinedNames(context.CurrentSchema);
@@ -126,10 +133,18 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         {
             sb.AppendLine("    return false;");
         }
+        else if (addProps.ValueKind == JsonValueKind.True)
+        {
+            sb.AppendLine($"    {context.EvaluatedStateExpr}.markPropertyEvaluated({context.LocationExpr}, _k);");
+        }
         else if (addProps.ValueKind == JsonValueKind.Object)
         {
             var hash = context.GetSubschemaHash(addProps);
-            sb.AppendLine($"    if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_k]")}) return false;");
+            sb.AppendLine($"    if (!{context.GenerateValidateCallForProperty(hash, $"{v}[_k]", "_k")}) return false;");
+            if (context.RequiresPropertyAnnotations)
+            {
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.markPropertyEvaluated({context.LocationExpr}, _k);");
+            }
         }
         else
         {

@@ -16,6 +16,11 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 /// </summary>
 public sealed class JsSchemaCodeGenerator
 {
+    private sealed record FragmentValidatorInfo(string Hash, string Uri);
+    private sealed record MetaSchemaBehavior(
+        bool ValidationVocabularyEnabled,
+        bool MetaSchemaDeclaresFormatAssertionVocabulary);
+
     private readonly List<IJsKeywordCodeGenerator> _keywordGenerators;
     private readonly SubschemaExtractor _extractor = new();
 
@@ -26,16 +31,37 @@ public sealed class JsSchemaCodeGenerator
     public SchemaDraft? DefaultDraft { get; set; }
 
     /// <summary>
+    /// Whether to assert supported "format" values for Draft 2020-12. Earlier
+    /// supported drafts still assert format by default. Defaults to false for
+    /// spec-conformant Draft 2020-12 output; tests and consumers can opt in.
+    /// </summary>
+    public bool FormatAssertionEnabled { get; set; }
+
+    /// <summary>
+    /// Forces property/item annotation tracking even when the schema itself does
+    /// not contain unevaluated* keywords. Useful for registry-preloaded validators
+    /// that may be referenced by a caller that does track unevaluated annotations.
+    /// </summary>
+    public bool AlwaysTrackAnnotations { get; set; }
+
+    /// <summary>
     /// The import specifier used for the shared JS runtime module.
     /// Defaults to a relative ESM import sibling to the emitted validator.
     /// </summary>
     public string RuntimeImportSpecifier { get; set; } = "./jsv-runtime.js";
+
+    /// <summary>
+    /// Optional preloaded schemas keyed by absolute URI. Used for metaschema-aware
+    /// generation decisions such as $vocabulary handling.
+    /// </summary>
+    public IReadOnlyDictionary<string, string>? ExternalSchemaDocuments { get; set; }
 
     public JsSchemaCodeGenerator()
     {
         _keywordGenerators =
         [
             new JsRefCodeGenerator(),
+            new JsDynamicRefCodeGenerator(),
             new JsTypeCodeGenerator(),
             new JsRequiredCodeGenerator(),
             new JsEnumCodeGenerator(),
@@ -62,6 +88,8 @@ public sealed class JsSchemaCodeGenerator
             new JsNotCodeGenerator(),
             new JsIfThenElseCodeGenerator(),
             new JsFormatCodeGenerator(),
+            new JsUnevaluatedPropertiesCodeGenerator(),
+            new JsUnevaluatedItemsCodeGenerator(),
         ];
         _keywordGenerators.Sort((a, b) => b.Priority.CompareTo(a.Priority));
     }
@@ -112,6 +140,18 @@ public sealed class JsSchemaCodeGenerator
 
             var uniqueSchemas = _extractor.ExtractUniqueSubschemas(schema, baseUri, DefaultDraft);
             var rootHash = SchemaHasher.ComputeHash(schema);
+            var metaSchemaBehavior = DetermineMetaSchemaBehavior(schema, detectedDraft);
+            var effectiveFormatAssertionEnabled = detectedDraft == SchemaDraft.Draft202012 &&
+                                                 (FormatAssertionEnabled ||
+                                                  metaSchemaBehavior.MetaSchemaDeclaresFormatAssertionVocabulary);
+            var requiresPropertyAnnotations = AlwaysTrackAnnotations || _extractor.HasUnevaluatedProperties;
+            var requiresItemAnnotations = AlwaysTrackAnnotations || _extractor.HasUnevaluatedItems;
+            var rootBaseUri = uniqueSchemas.Values.FirstOrDefault(i => i.JsonPointerPath == string.Empty)?.EffectiveBaseUri;
+            var requiresScopeTracking = detectedDraft == SchemaDraft.Draft202012 &&
+                uniqueSchemas.Values.Any(s =>
+                    (s.Schema.ValueKind == JsonValueKind.Object && s.Schema.TryGetProperty("$dynamicRef", out _)) ||
+                    s.DynamicAnchors.Count > 0 ||
+                    s.ResourceAnchors.Count > 0);
 
             // Reachability pass: filter out subschemas reached only through
             // annotation-only keywords (contentSchema, default, examples, ...) so
@@ -124,17 +164,50 @@ public sealed class JsSchemaCodeGenerator
             {
                 return GenerationResult.Failed(reach.Rejection);
             }
+            var fragmentValidators = CollectFragmentValidators(uniqueSchemas, rootBaseUri, reach.ReachableHashes);
+            var requiresRegistryLookup = uniqueSchemas
+                .Where(kvp => reach.ReachableHashes.Contains(kvp.Key))
+                .Any(kvp => ContainsExternalRef(kvp.Value.Schema));
+            var requiresRegistryParameter = requiresRegistryLookup || requiresScopeTracking;
 
             var methods = new StringBuilder();
             var runtimeImports = new SortedSet<string>(StringComparer.Ordinal);
+            if (requiresPropertyAnnotations || requiresItemAnnotations)
+            {
+                runtimeImports.Add("EvaluatedState");
+                runtimeImports.Add("escapeJsonPointer");
+            }
+            if (requiresScopeTracking)
+            {
+                runtimeImports.Add("CompiledValidatorScope");
+            }
             foreach (var (hash, subschemaInfo) in uniqueSchemas)
             {
                 if (!reach.ReachableHashes.Contains(hash)) continue;
-                methods.AppendLine(GenerateValidationFunction(subschemaInfo, uniqueSchemas, detectedDraft, runtimeImports));
+                methods.AppendLine(GenerateValidationFunction(
+                    subschemaInfo,
+                    uniqueSchemas,
+                    detectedDraft,
+                    metaSchemaBehavior.ValidationVocabularyEnabled,
+                    effectiveFormatAssertionEnabled,
+                    requiresPropertyAnnotations,
+                    requiresItemAnnotations,
+                    rootBaseUri,
+                    requiresScopeTracking,
+                    requiresRegistryParameter,
+                    runtimeImports));
                 methods.AppendLine();
             }
 
-            var module = GenerateModule(schemaUri, rootHash, methods.ToString(), runtimeImports);
+            var module = GenerateModule(
+                schemaUri,
+                rootHash,
+                methods.ToString(),
+                runtimeImports,
+                requiresPropertyAnnotations || requiresItemAnnotations,
+                requiresScopeTracking,
+                requiresRegistryParameter,
+                fragmentValidators);
             var fileName = DeriveFileName(schemaUri, sourcePath);
             return GenerationResult.Succeeded(module, fileName);
         }
@@ -148,18 +221,72 @@ public sealed class JsSchemaCodeGenerator
         SubschemaInfo subschemaInfo,
         Dictionary<string, SubschemaInfo> allSchemas,
         SchemaDraft detectedDraft,
+        bool validationVocabularyEnabled,
+        bool effectiveFormatAssertionEnabled,
+        bool requiresPropertyAnnotations,
+        bool requiresItemAnnotations,
+        Uri? rootBaseUri,
+        bool requiresScopeTracking,
+        bool requiresRegistryParameter,
         SortedSet<string> runtimeImports)
     {
-        var context = CreateContext(subschemaInfo, allSchemas, detectedDraft);
+        var context = CreateContext(
+            subschemaInfo,
+            allSchemas,
+            detectedDraft,
+            validationVocabularyEnabled,
+            effectiveFormatAssertionEnabled,
+            requiresPropertyAnnotations,
+            requiresItemAnnotations,
+            rootBaseUri,
+            requiresScopeTracking,
+            requiresRegistryParameter);
         var sb = new StringBuilder();
 
-        sb.AppendLine($"function validate_{subschemaInfo.Hash}(v) {{");
+        var parameterParts = new List<string> { "v" };
+        if (requiresScopeTracking)
+        {
+            parameterParts.Add("_scope");
+        }
+        if (requiresPropertyAnnotations || requiresItemAnnotations)
+        {
+            parameterParts.Add("_eval");
+        }
+        if (requiresScopeTracking || requiresPropertyAnnotations || requiresItemAnnotations)
+        {
+            parameterParts.Add("_loc");
+        }
+        if (requiresRegistryParameter)
+        {
+            parameterParts.Add("_registry");
+        }
+        var parameters = string.Join(", ", parameterParts);
+        sb.AppendLine($"function validate_{subschemaInfo.Hash}({parameters}) {{");
 
         if (subschemaInfo.Schema.ValueKind == JsonValueKind.True)
         {
             sb.AppendLine("  return true;");
             sb.AppendLine("}");
             return sb.ToString();
+        }
+
+        if (requiresScopeTracking)
+        {
+            var scopeEntry = BuildScopePushCode(subschemaInfo, requiresPropertyAnnotations || requiresItemAnnotations, requiresRegistryParameter);
+            if (!string.IsNullOrWhiteSpace(scopeEntry))
+            {
+                foreach (var line in scopeEntry.Split('\n'))
+                {
+                    if (string.IsNullOrWhiteSpace(line))
+                    {
+                        sb.AppendLine();
+                    }
+                    else
+                    {
+                        sb.AppendLine($"  {line.TrimEnd()}");
+                    }
+                }
+            }
         }
         if (subschemaInfo.Schema.ValueKind == JsonValueKind.False)
         {
@@ -222,27 +349,112 @@ public sealed class JsSchemaCodeGenerator
     private JsCodeGenerationContext CreateContext(
         SubschemaInfo subschemaInfo,
         Dictionary<string, SubschemaInfo> allSchemas,
-        SchemaDraft detectedDraft)
+        SchemaDraft detectedDraft,
+        bool validationVocabularyEnabled,
+        bool effectiveFormatAssertionEnabled,
+        bool requiresPropertyAnnotations,
+        bool requiresItemAnnotations,
+        Uri? rootBaseUri,
+        bool requiresScopeTracking,
+        bool requiresRegistryParameter)
     {
+        var effectiveBaseUri = subschemaInfo.EffectiveBaseUri ?? rootBaseUri;
         return new JsCodeGenerationContext
         {
             CurrentSchema = subschemaInfo.Schema,
             CurrentHash = subschemaInfo.Hash,
+            CurrentResourceRootHash = subschemaInfo.ResourceRootHash,
             GetSubschemaHash = element => SchemaHasher.ComputeHash(element),
             ResolveLocalRef = refValue => _extractor.ResolveLocalRef(refValue),
+            ResolveInternalId = uri => _extractor.ResolveInternalId(uri),
             ResolveLocalRefInResource = (refValue, resourceRoot) =>
                 _extractor.ResolveLocalRefInResource(refValue, resourceRoot),
             ResourceRoot = subschemaInfo.ResourceRoot,
+            BaseUri = effectiveBaseUri,
+            RootBaseUri = rootBaseUri,
             GetSubschemaInfo = hash => allSchemas.TryGetValue(hash, out var info) ? info : null,
-            DetectedDraft = detectedDraft
+            DetectedDraft = detectedDraft,
+            RequiresPropertyAnnotations = requiresPropertyAnnotations,
+            RequiresItemAnnotations = requiresItemAnnotations,
+            FormatAssertionEnabled = effectiveFormatAssertionEnabled,
+            ValidationVocabularyEnabled = validationVocabularyEnabled,
+            RequiresScopeTracking = requiresScopeTracking,
+            RequiresRegistry = requiresRegistryParameter
         };
+    }
+
+    private MetaSchemaBehavior DetermineMetaSchemaBehavior(JsonElement schema, SchemaDraft detectedDraft)
+    {
+        if ((detectedDraft != SchemaDraft.Draft201909 && detectedDraft != SchemaDraft.Draft202012) ||
+            schema.ValueKind != JsonValueKind.Object ||
+            !schema.TryGetProperty("$schema", out var schemaProperty) ||
+            schemaProperty.ValueKind != JsonValueKind.String)
+        {
+            return new MetaSchemaBehavior(
+                ValidationVocabularyEnabled: true,
+                MetaSchemaDeclaresFormatAssertionVocabulary: false);
+        }
+
+        var schemaUri = schemaProperty.GetString();
+        if (string.IsNullOrEmpty(schemaUri) ||
+            ExternalSchemaDocuments == null ||
+            !ExternalSchemaDocuments.TryGetValue(schemaUri, out var metaSchemaJson))
+        {
+            return new MetaSchemaBehavior(
+                ValidationVocabularyEnabled: true,
+                MetaSchemaDeclaresFormatAssertionVocabulary: false);
+        }
+
+        try
+        {
+            using var metaSchemaDoc = JsonDocument.Parse(metaSchemaJson);
+            var metaSchemaRoot = metaSchemaDoc.RootElement;
+            if (metaSchemaRoot.ValueKind != JsonValueKind.Object ||
+                !metaSchemaRoot.TryGetProperty("$vocabulary", out var vocabularyElement) ||
+                vocabularyElement.ValueKind != JsonValueKind.Object)
+            {
+                return new MetaSchemaBehavior(
+                    ValidationVocabularyEnabled: true,
+                    MetaSchemaDeclaresFormatAssertionVocabulary: false);
+            }
+
+            var validationVocabularyUri = detectedDraft == SchemaDraft.Draft201909
+                ? "https://json-schema.org/draft/2019-09/vocab/validation"
+                : "https://json-schema.org/draft/2020-12/vocab/validation";
+            var formatAssertionVocabularyUri = detectedDraft == SchemaDraft.Draft201909
+                ? "https://json-schema.org/draft/2019-09/vocab/format"
+                : "https://json-schema.org/draft/2020-12/vocab/format-assertion";
+
+            // Spec §8.1: a $vocabulary entry's true/false value indicates whether
+            // support is required (true) or optional (false). Presence in the map
+            // is what declares the vocabulary as "in use" by the metaschema.
+            // Consistent with how we handle the format-assertion vocabulary below.
+            var validationVocabularyEnabled =
+                vocabularyElement.TryGetProperty(validationVocabularyUri, out _);
+            var declaresFormatAssertionVocabulary =
+                vocabularyElement.TryGetProperty(formatAssertionVocabularyUri, out _);
+
+            return new MetaSchemaBehavior(
+                ValidationVocabularyEnabled: validationVocabularyEnabled,
+                MetaSchemaDeclaresFormatAssertionVocabulary: declaresFormatAssertionVocabulary);
+        }
+        catch
+        {
+            return new MetaSchemaBehavior(
+                ValidationVocabularyEnabled: true,
+                MetaSchemaDeclaresFormatAssertionVocabulary: false);
+        }
     }
 
     private string GenerateModule(
         string? schemaUri,
         string rootHash,
         string methods,
-        SortedSet<string> runtimeImports)
+        SortedSet<string> runtimeImports,
+        bool requiresAnnotationTracking,
+        bool requiresScopeTracking,
+        bool requiresRegistry,
+        IReadOnlyList<FragmentValidatorInfo> fragmentValidators)
     {
         var sb = new StringBuilder();
         sb.AppendLine("// @ts-check");
@@ -264,9 +476,70 @@ public sealed class JsSchemaCodeGenerator
         sb.AppendLine("/**");
         sb.AppendLine(" * Validates a JSON value against the compiled schema.");
         sb.AppendLine(" * @param {unknown} data");
+        if (requiresRegistry)
+        {
+            sb.AppendLine(" * @param {{ tryGetValidator(uri: string): unknown } | null} [registry]");
+        }
         sb.AppendLine(" * @returns {boolean}");
         sb.AppendLine(" */");
-        sb.AppendLine($"export function validate(data) {{ return validate_{rootHash}(data); }}");
+        var exportParameters = requiresRegistry ? "data, registry = null" : "data";
+        // Stable named-export signatures (keep each method's shape unambiguous
+        // across modules so cross-module registry composition is safe):
+        //   validate(data [, registry])
+        //   validateWithScope(data, scope, location [, registry])
+        //   validateWithState(data, evaluatedState, location [, registry])
+        //   validateWithScopeAndState(data, scope, evaluatedState, location [, registry])
+        if (requiresScopeTracking && requiresAnnotationTracking)
+        {
+            if (requiresRegistry)
+            {
+                sb.AppendLine($"export function validateWithScope(data, scope, location = \"\", registry = null) {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location, registry); }}");
+                sb.AppendLine($"export function validateWithState(data, evaluatedState, location = \"\", registry = null) {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validateWithScopeAndState(data, scope, evaluatedState, location = \"\", registry = null) {{ return validate_{rootHash}(data, scope, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\", registry); }}");
+            }
+            else
+            {
+                sb.AppendLine($"export function validateWithScope(data, scope, location = \"\") {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location); }}");
+                sb.AppendLine($"export function validateWithState(data, evaluatedState, location = \"\") {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location); }}");
+                sb.AppendLine($"export function validateWithScopeAndState(data, scope, evaluatedState, location = \"\") {{ return validate_{rootHash}(data, scope, evaluatedState, location); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\"); }}");
+            }
+        }
+        else if (requiresScopeTracking)
+        {
+            if (requiresRegistry)
+            {
+                sb.AppendLine($"export function validateWithScope(data, scope, location = \"\", registry = null) {{ return validate_{rootHash}(data, scope, location, registry); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validateWithScope(data, CompiledValidatorScope.empty, \"\", registry); }}");
+            }
+            else
+            {
+                sb.AppendLine($"export function validateWithScope(data, scope, location = \"\") {{ return validate_{rootHash}(data, scope, location); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validateWithScope(data, CompiledValidatorScope.empty, \"\"); }}");
+            }
+        }
+        else if (requiresAnnotationTracking)
+        {
+            if (requiresRegistry)
+            {
+                sb.AppendLine($"export function validateWithState(data, evaluatedState, location = \"\", registry = null) {{ return validate_{rootHash}(data, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validateWithState(data, new EvaluatedState(), \"\", registry); }}");
+            }
+            else
+            {
+                sb.AppendLine($"export function validateWithState(data, evaluatedState, location = \"\") {{ return validate_{rootHash}(data, evaluatedState, location); }}");
+                sb.AppendLine($"export function validate({exportParameters}) {{ return validateWithState(data, new EvaluatedState(), \"\"); }}");
+            }
+        }
+        else if (requiresRegistry)
+        {
+            sb.AppendLine($"export function validate({exportParameters}) {{ return validate_{rootHash}(data, registry); }}");
+        }
+        else
+        {
+            sb.AppendLine($"export function validate({exportParameters}) {{ return validate_{rootHash}(data); }}");
+        }
         sb.AppendLine();
 
         var schemaUriLiteral = string.IsNullOrEmpty(schemaUri)
@@ -275,8 +548,152 @@ public sealed class JsSchemaCodeGenerator
         sb.AppendLine($"export const schemaUri = {schemaUriLiteral};");
         sb.AppendLine();
 
-        sb.AppendLine("export default { validate, schemaUri };");
+        sb.AppendLine("export const fragmentValidators = {");
+        foreach (var fragment in fragmentValidators)
+        {
+            sb.AppendLine($"  {JsLiteral.String(fragment.Uri)}: {{");
+            if (requiresScopeTracking && requiresAnnotationTracking && requiresRegistry)
+            {
+                sb.AppendLine($"    validate(data, registry = null) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\", registry); }},");
+                sb.AppendLine($"    validateWithScope(data, scope, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, scope, new EvaluatedState(), location, registry); }},");
+                sb.AppendLine($"    validateWithState(data, evaluatedState, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, evaluatedState, location, registry); }},");
+                sb.AppendLine($"    validateWithScopeAndState(data, scope, evaluatedState, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, scope, evaluatedState, location, registry); }}");
+            }
+            else if (requiresScopeTracking && requiresAnnotationTracking)
+            {
+                sb.AppendLine($"    validate(data) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\"); }},");
+                sb.AppendLine($"    validateWithScope(data, scope, location = \"\") {{ return validate_{fragment.Hash}(data, scope, new EvaluatedState(), location); }},");
+                sb.AppendLine($"    validateWithState(data, evaluatedState, location = \"\") {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, evaluatedState, location); }},");
+                sb.AppendLine($"    validateWithScopeAndState(data, scope, evaluatedState, location = \"\") {{ return validate_{fragment.Hash}(data, scope, evaluatedState, location); }}");
+            }
+            else if (requiresScopeTracking && requiresRegistry)
+            {
+                sb.AppendLine($"    validate(data, registry = null) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, \"\", registry); }},");
+                sb.AppendLine($"    validateWithScope(data, scope, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, scope, location, registry); }}");
+            }
+            else if (requiresScopeTracking)
+            {
+                sb.AppendLine($"    validate(data) {{ return validate_{fragment.Hash}(data, CompiledValidatorScope.empty, \"\"); }},");
+                sb.AppendLine($"    validateWithScope(data, scope, location = \"\") {{ return validate_{fragment.Hash}(data, scope, location); }}");
+            }
+            else if (requiresAnnotationTracking && requiresRegistry)
+            {
+                sb.AppendLine($"    validate(data, registry = null) {{ return validate_{fragment.Hash}(data, new EvaluatedState(), \"\", registry); }},");
+                sb.AppendLine($"    validateWithState(data, evaluatedState, location = \"\", registry = null) {{ return validate_{fragment.Hash}(data, evaluatedState, location, registry); }}");
+            }
+            else if (requiresAnnotationTracking)
+            {
+                sb.AppendLine($"    validate(data) {{ return validate_{fragment.Hash}(data, new EvaluatedState(), \"\"); }},");
+                sb.AppendLine($"    validateWithState(data, evaluatedState, location = \"\") {{ return validate_{fragment.Hash}(data, evaluatedState, location); }}");
+            }
+            else if (requiresRegistry)
+            {
+                sb.AppendLine($"    validate(data, registry = null) {{ return validate_{fragment.Hash}(data, registry); }}");
+            }
+            else
+            {
+                sb.AppendLine($"    validate(data) {{ return validate_{fragment.Hash}(data); }}");
+            }
+            sb.AppendLine("  },");
+        }
+        sb.AppendLine("};");
+        sb.AppendLine();
+
+        var defaultExportMembers = new List<string> { "validate" };
+        if (requiresScopeTracking) defaultExportMembers.Add("validateWithScope");
+        if (requiresAnnotationTracking) defaultExportMembers.Add("validateWithState");
+        if (requiresScopeTracking && requiresAnnotationTracking) defaultExportMembers.Add("validateWithScopeAndState");
+        defaultExportMembers.Add("schemaUri");
+        if (fragmentValidators.Count > 0) defaultExportMembers.Add("fragmentValidators");
+        sb.AppendLine($"export default {{ {string.Join(", ", defaultExportMembers)} }};");
         return sb.ToString();
+    }
+
+    private static string BuildScopePushCode(
+        SubschemaInfo subschemaInfo,
+        bool requiresAnnotationTracking,
+        bool requiresRegistry)
+    {
+        var anchorsToInclude = subschemaInfo.IsResourceRoot
+            ? subschemaInfo.ResourceAnchors
+            : subschemaInfo.DynamicAnchors.Select(name => (name, subschemaInfo.Hash)).ToList();
+        if (anchorsToInclude.Count == 0)
+        {
+            return string.Empty;
+        }
+
+        var sb = new StringBuilder();
+        sb.AppendLine("_scope = _scope.push({");
+        sb.AppendLine("  dynamicAnchors: {");
+        foreach (var (anchorName, schemaHash) in anchorsToInclude)
+        {
+            var delegateExpr = requiresAnnotationTracking
+                ? requiresRegistry
+                    ? $"(data, scope, evaluatedState, location = \"\", registry = null) => validate_{schemaHash}(data, scope, evaluatedState, location, registry)"
+                    : $"(data, scope, evaluatedState, location = \"\") => validate_{schemaHash}(data, scope, evaluatedState, location)"
+                : requiresRegistry
+                    ? $"(data, scope, location = \"\", registry = null) => validate_{schemaHash}(data, scope, location, registry)"
+                    : $"(data, scope, location = \"\") => validate_{schemaHash}(data, scope, location)";
+            sb.AppendLine($"    {JsLiteral.String(anchorName)}: {delegateExpr},");
+        }
+        sb.AppendLine("  }");
+        sb.AppendLine("});");
+        sb.AppendLine();
+        return sb.ToString();
+    }
+
+    private static IReadOnlyList<FragmentValidatorInfo> CollectFragmentValidators(
+        Dictionary<string, SubschemaInfo> uniqueSchemas,
+        Uri? rootBaseUri,
+        ISet<string> reachableHashes)
+    {
+        var result = new Dictionary<string, FragmentValidatorInfo>(StringComparer.Ordinal);
+        foreach (var (hash, subschemaInfo) in uniqueSchemas)
+        {
+            // Unreachable hashes don't get a validate_<hash> emitted, so any
+            // fragment URI pointing to them would reference an undefined
+            // function at runtime. Skip the whole registration for those.
+            if (!reachableHashes.Contains(hash))
+            {
+                continue;
+            }
+
+            if (rootBaseUri != null && !string.IsNullOrEmpty(subschemaInfo.JsonPointerPath))
+            {
+                var pointerUri = $"{rootBaseUri.AbsoluteUri}#{subschemaInfo.JsonPointerPath}";
+                result.TryAdd(pointerUri, new FragmentValidatorInfo(hash, pointerUri));
+            }
+
+            if (subschemaInfo.Schema.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            var anchorBaseUri = subschemaInfo.EffectiveBaseUri;
+            if (anchorBaseUri == null)
+            {
+                continue;
+            }
+
+            anchorBaseUri = new Uri(anchorBaseUri.GetLeftPart(UriPartial.Query));
+            if (subschemaInfo.Schema.TryGetProperty("$anchor", out var anchorElement) &&
+                anchorElement.ValueKind == JsonValueKind.String &&
+                !string.IsNullOrEmpty(anchorElement.GetString()))
+            {
+                var anchorUri = $"{anchorBaseUri.AbsoluteUri}#{anchorElement.GetString()}";
+                result.TryAdd(anchorUri, new FragmentValidatorInfo(hash, anchorUri));
+            }
+
+            if (subschemaInfo.Schema.TryGetProperty("$dynamicAnchor", out var dynamicAnchorElement) &&
+                dynamicAnchorElement.ValueKind == JsonValueKind.String &&
+                !string.IsNullOrEmpty(dynamicAnchorElement.GetString()))
+            {
+                var dynamicAnchorUri = $"{anchorBaseUri.AbsoluteUri}#{dynamicAnchorElement.GetString()}";
+                result.TryAdd(dynamicAnchorUri, new FragmentValidatorInfo(hash, dynamicAnchorUri));
+            }
+        }
+
+        return result.Values.ToList();
     }
 
     private static string? ExtractSchemaUri(JsonElement schema)
@@ -326,5 +743,14 @@ public sealed class JsSchemaCodeGenerator
             sb.Append(char.IsLetterOrDigit(c) || c == '-' || c == '_' ? c : '_');
         }
         return sb.Length > 0 ? sb.ToString() : "validator";
+    }
+
+    private static bool ContainsExternalRef(JsonElement schema)
+    {
+        return schema.ValueKind == JsonValueKind.Object &&
+               schema.TryGetProperty("$ref", out var refElem) &&
+               refElem.ValueKind == JsonValueKind.String &&
+               !string.IsNullOrEmpty(refElem.GetString()) &&
+               !refElem.GetString()!.StartsWith('#');
     }
 }

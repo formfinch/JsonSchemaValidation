@@ -24,6 +24,11 @@ public sealed class JsArrayConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         var schema = context.CurrentSchema;
         var hasMin = schema.TryGetProperty("minItems", out var minElem) &&
                      TryGetIntegerValue(minElem, out var min);
@@ -56,6 +61,11 @@ public sealed class JsArrayConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            yield break;
+        }
+
         if (context.CurrentSchema.ValueKind == JsonValueKind.Object &&
             context.CurrentSchema.TryGetProperty("uniqueItems", out var u) &&
             u.ValueKind == JsonValueKind.True)

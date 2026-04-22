@@ -4,6 +4,7 @@
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
 using Jint;
 using Xunit;
 
@@ -16,10 +17,19 @@ namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 public class JsReviewFixesTests
 {
     private readonly JsValidatorHarness _harness = new();
+    private readonly JsValidatorHarness _formatHarness = new(formatAssertionEnabled: true);
 
     private void Expect(string schema, (string data, bool expected)[] cases)
     {
-        var result = _harness.Evaluate(schema, cases.Select(c => c.data));
+        ExpectWithHarness(_harness, schema, cases);
+    }
+
+    private static void ExpectWithHarness(
+        JsValidatorHarness harness,
+        string schema,
+        (string data, bool expected)[] cases)
+    {
+        var result = harness.Evaluate(schema, cases.Select(c => c.data));
         Assert.True(result.Success, result.Error);
         for (var i = 0; i < cases.Length; i++)
         {
@@ -215,7 +225,8 @@ public class JsReviewFixesTests
     [Fact]
     public void Time_RejectsOutOfRangeComponents()
     {
-        Expect(
+        ExpectWithHarness(
+            _formatHarness,
             """{ "format": "time" }""",
             [
                 ("\"12:34:56Z\"", true),
@@ -232,7 +243,8 @@ public class JsReviewFixesTests
     [Fact]
     public void DateTime_RejectsOutOfRangeTimeComponents()
     {
-        Expect(
+        ExpectWithHarness(
+            _formatHarness,
             """{ "format": "date-time" }""",
             [
                 ("\"2023-01-15T12:00:00Z\"", true),
@@ -333,10 +345,10 @@ public class JsReviewFixesTests
         Assert.True(result.Success, $"Gate wrongly rejected Draft 4 schema: {result.Error}");
     }
 
-    // Draft 2020-12 behavior is unchanged — must still reject real deferred
-    // features when the keyword exists in the detected draft.
+    // Draft 2020-12 unevaluated* support is now implemented; dynamic refs
+    // remain deferred.
     [Fact]
-    public void Gate_Draft202012_StillRejectsUnevaluatedProperties()
+    public void Gate_Draft202012_AcceptsUnevaluatedProperties()
     {
         var gen = new JsSchemaCodeGenerator();
         var schema = JsonDocument.Parse("""
@@ -346,23 +358,247 @@ public class JsReviewFixesTests
             }
             """).RootElement;
         var result = gen.Generate(schema);
-        Assert.False(result.Success);
-        Assert.Contains("unevaluatedProperties", result.Error);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("isPropertyEvaluated", result.GeneratedCode);
     }
 
     [Fact]
-    public void Gate_Draft202012_StillRejectsDynamicRef()
+    public void UnevaluatedProperties_RespectsPropertiesAndAllOfAnnotations()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "allOf": [
+                { "properties": { "a": { "type": "number" } } }
+              ],
+              "properties": {
+                "b": { "type": "string" }
+              },
+              "unevaluatedProperties": false
+            }
+            """,
+            [
+                ("""{ "a": 1, "b": "x" }""", true),
+                ("""{ "a": 1, "b": "x", "c": true }""", false),
+                ("""{ "a": "wrong", "b": "x" }""", false)
+            ]);
+    }
+
+    [Fact]
+    public void UnevaluatedItems_RespectsPrefixItemsItemsAndContainsAnnotations()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "prefixItems": [{ "type": "string" }],
+              "contains": { "const": 1 },
+              "unevaluatedItems": false
+            }
+            """,
+            [
+                ("""["a", 1]""", true),
+                ("""["a", 1, 2]""", false),
+                ("""["a", 2]""", false)
+            ]);
+    }
+
+    [Fact]
+    public void IfThenElse_DoesNotPropagateAnnotationsFromFailingIfSubschema()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "if": {
+                "properties": {
+                  "x": true,
+                  "flag": true
+                },
+                "required": ["flag"]
+              },
+              "then": true,
+              "else": true,
+              "unevaluatedProperties": false
+            }
+            """,
+            [
+                ("""{ "x": 1, "flag": true }""", true),
+                ("""{ "x": 1 }""", false)
+            ]);
+    }
+
+    [Fact]
+    public void UnevaluatedProperties_HandlesNestedCombinatorAnnotationState()
+    {
+        Expect("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "allOf": [
+                {
+                  "oneOf": [
+                    {
+                      "allOf": [
+                        { "properties": { "a": true } }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "properties": {
+                "b": true
+              },
+              "unevaluatedProperties": false
+            }
+            """,
+            [
+                ("""{ "a": 1, "b": 2 }""", true),
+                ("""{ "a": 1, "b": 2, "c": 3 }""", false)
+            ]);
+    }
+
+    [Fact]
+    public void Gate_Draft202012_AcceptsDynamicRef()
     {
         var gen = new JsSchemaCodeGenerator();
         var schema = JsonDocument.Parse("""
             {
               "$schema": "https://json-schema.org/draft/2020-12/schema",
-              "$dynamicRef": "#meta"
+              "$dynamicRef": "#meta",
+              "$defs": {
+                "meta": {
+                  "$dynamicAnchor": "meta"
+                }
+              }
             }
             """).RootElement;
         var result = gen.Generate(schema);
-        Assert.False(result.Success);
-        Assert.Contains("$dynamicRef", result.Error);
+        Assert.True(result.Success, result.Error);
+    }
+
+    [Fact]
+    public void ExternalRef_UsesRuntimeRegistry()
+    {
+        var result = _harness.Evaluate(
+            """{ "$ref": "https://example.com/string-schema" }""",
+            ["\"ok\"", "1"],
+            """
+            ({
+              tryGetValidator(uri) {
+                if (uri !== "https://example.com/string-schema") return null;
+                return { validate(v) { return typeof v === "string"; } };
+              }
+            })
+            """);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Equal([true, false], result.Verdicts);
+    }
+
+    [Fact]
+    public void ExternalRef_ValidateWithState_PropagatesUnevaluatedAnnotations()
+    {
+        var result = _harness.Evaluate(
+            """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "allOf": [
+                { "$ref": "https://example.com/object-with-a" }
+              ],
+              "unevaluatedProperties": false
+            }
+            """,
+            ["""{"a": 1}""", """{"a": 1, "b": 2}"""],
+            """
+            ({
+              tryGetValidator(uri) {
+                if (uri !== "https://example.com/object-with-a") return null;
+                return {
+                  validateWithState(v, evalState, loc) {
+                    if (v === null || Array.isArray(v) || typeof v !== "object") return false;
+                    if (Object.prototype.hasOwnProperty.call(v, "a")) {
+                      evalState.markPropertyEvaluated(loc, "a");
+                    }
+                    return true;
+                  }
+                };
+              }
+            })
+            """);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Equal([true, false], result.Verdicts);
+    }
+
+    [Fact]
+    public void ExternalRef_DynamicRef_WithUnevaluatedProperties_UsesSharedEvaluatedState()
+    {
+        const string rootSchema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "http://localhost:1234/draft2020-12/strict-tree.json",
+              "$dynamicAnchor": "node",
+              "$ref": "tree.json",
+              "unevaluatedProperties": false
+            }
+            """;
+
+        const string remoteSchema = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "http://localhost:1234/draft2020-12/tree.json",
+              "$dynamicAnchor": "node",
+              "type": "object",
+              "properties": {
+                "data": true,
+                "children": {
+                  "type": "array",
+                  "items": { "$dynamicRef": "#node" }
+                }
+              }
+            }
+            """;
+
+        using var rootDoc = JsonDocument.Parse(rootSchema);
+        using var remoteDoc = JsonDocument.Parse(remoteSchema);
+        var rootGenerator = new JsSchemaCodeGenerator();
+        var remoteGenerator = new JsSchemaCodeGenerator { AlwaysTrackAnnotations = true };
+        var rootResult = rootGenerator.Generate(rootDoc.RootElement.Clone(), "strict-tree.json");
+        var remoteResult = remoteGenerator.Generate(remoteDoc.RootElement.Clone(), "tree.json");
+        Assert.True(rootResult.Success, rootResult.Error);
+        Assert.True(remoteResult.Success, remoteResult.Error);
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-strict-tree-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            File.WriteAllText(Path.Combine(tempDir, JsRuntime.FileName), JsRuntime.GetSource());
+            File.WriteAllText(Path.Combine(tempDir, "validator.js"), rootResult.GeneratedCode!);
+            File.WriteAllText(Path.Combine(tempDir, "tree.js"), remoteResult.GeneratedCode!);
+            File.WriteAllText(
+                Path.Combine(tempDir, "registry.js"),
+                """
+                import tree from "./tree.js";
+                const registry = {
+                  tryGetValidator(uri) {
+                    return uri === "http://localhost:1234/draft2020-12/tree.json" ? tree : null;
+                  }
+                };
+                export default registry;
+                """);
+
+            var engine = new Engine(opts => opts.EnableModules(tempDir));
+            var module = engine.Modules.Import("./validator.js");
+            var validate = module.Get("validate");
+            var registry = engine.Modules.Import("./registry.js").Get("default");
+            var data = engine.Evaluate("""JSON.parse('{"children":[{"data":1}]}')""");
+            var verdict = engine.Invoke(validate, data, registry);
+            Assert.True(
+                verdict.IsBoolean() && verdict.AsBoolean(),
+                "Root source:\n" + rootResult.GeneratedCode + "\nRemote source:\n" + remoteResult.GeneratedCode);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
+        }
     }
 
     // Copilot review: enum/const values with U+2028/U+2029 must be escaped when
@@ -589,7 +825,7 @@ public class JsReviewFixesTests
     // context would then target the first resource's definition. The reachability
     // pass detects this and rejects pre-emission.
     [Fact]
-    public void AmbiguousResourceRef_IsRejected()
+    public void AmbiguousResourceRef_InlineBareRefSchemas_Compiles()
     {
         // Both A and B nest an identical {"$ref":"#/$defs/T"} subschema. Each
         // resource defines its own T differently. The shared extractor collapses
@@ -619,8 +855,7 @@ public class JsReviewFixesTests
             }
             """).RootElement;
         var result = gen.Generate(schema);
-        Assert.False(result.Success);
-        Assert.Contains("multiple nested $id resources", result.Error);
+        Assert.True(result.Success, result.Error);
     }
 
     // Copilot round 11: invalid-schema-shape values for applicator keywords
@@ -761,6 +996,36 @@ public class JsReviewFixesTests
                 ("-1", false),
                 ("\"x\"", false),
             ]);
+    }
+
+    [Fact]
+    public void CrossResourceRef_DoesNotMutateCallerScopeBinding()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$defs": {
+                "outer": {
+                  "$id": "https://example.com/outer",
+                  "$defs": {
+                    "x": { "$dynamicAnchor": "x", "type": "string" }
+                  }
+                },
+                "use-ref": {
+                  "$id": "https://example.com/use-ref",
+                  "allOf": [
+                    { "$ref": "https://example.com/outer#/$defs/x" }
+                  ]
+                }
+              },
+              "$ref": "#/$defs/use-ref"
+            }
+            """).RootElement;
+        var result = gen.Generate(schema);
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("const _targetScope = _scope.push({", result.GeneratedCode);
+        Assert.Contains("_targetScope", result.GeneratedCode);
     }
 
     // Copilot round 5: gate should mirror the emitter's $ref-siblings-masked

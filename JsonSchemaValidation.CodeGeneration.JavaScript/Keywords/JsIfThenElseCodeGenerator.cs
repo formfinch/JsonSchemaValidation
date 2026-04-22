@@ -30,10 +30,52 @@ public sealed class JsIfThenElseCodeGenerator : IJsKeywordCodeGenerator
         }
         var hasThen = schema.TryGetProperty("then", out var thenElem);
         var hasElse = schema.TryGetProperty("else", out var elseElem);
-        if (!hasThen && !hasElse) return string.Empty;
+        if (!hasThen && !hasElse && !context.RequiresAnnotationTracking) return string.Empty;
 
         var ifHash = context.GetSubschemaHash(ifElem);
         var sb = new StringBuilder();
+        if (context.RequiresAnnotationTracking)
+        {
+            sb.AppendLine("{");
+            sb.AppendLine($"  const _ifteBase = {context.EvaluatedStateExpr}.clone();");
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.reset();");
+            sb.AppendLine($"  const _ifResult = {context.GenerateValidateCall(ifHash)};");
+            sb.AppendLine($"  const _ifAnn = {context.EvaluatedStateExpr}.clone();");
+
+            sb.AppendLine("  if (_ifResult) {");
+            if (hasThen)
+            {
+                var thenHash = context.GetSubschemaHash(thenElem);
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.reset();");
+                sb.AppendLine($"    if (!{context.GenerateValidateCall(thenHash)}) return false;");
+                sb.AppendLine($"    const _thenAnn = {context.EvaluatedStateExpr}.clone();");
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.restoreFrom(_ifteBase);");
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_ifAnn);");
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_thenAnn);");
+            }
+            else
+            {
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.restoreFrom(_ifteBase);");
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_ifAnn);");
+            }
+            sb.AppendLine("  } else {");
+            if (hasElse)
+            {
+                var elseHash = context.GetSubschemaHash(elseElem);
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.reset();");
+                sb.AppendLine($"    if (!{context.GenerateValidateCall(elseHash)}) return false;");
+                sb.AppendLine($"    const _elseAnn = {context.EvaluatedStateExpr}.clone();");
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.restoreFrom(_ifteBase);");
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.mergeFrom(_elseAnn);");
+            }
+            else
+            {
+                sb.AppendLine($"    {context.EvaluatedStateExpr}.restoreFrom(_ifteBase);");
+            }
+            sb.AppendLine("  }");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
         sb.AppendLine($"if ({context.GenerateValidateCall(ifHash)}) {{");
         if (hasThen)
         {

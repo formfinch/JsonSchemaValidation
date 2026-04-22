@@ -6,17 +6,25 @@ using Xunit;
 namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 
 /// <summary>
-/// Eager-format tests. These verify the compiled path's "supported formats are
-/// validated" behavior, matching the C# compiled path. Suite's annotation-only
-/// expectation is explicitly out of scope (excluded from the suite runner).
+/// Eager-format tests. These opt into the format assertion vocabulary; the
+/// default JS codegen behavior is annotation-only for Draft 2020-12.
 /// </summary>
 public class JsFormatTests
 {
-    private readonly JsValidatorHarness _harness = new();
+    private readonly JsValidatorHarness _defaultHarness = new();
+    private readonly JsValidatorHarness _harness = new(formatAssertionEnabled: true);
 
     private void Expect(string schema, (string data, bool expected)[] cases)
     {
-        var result = _harness.Evaluate(schema, cases.Select(c => c.data));
+        ExpectWithHarness(_harness, schema, cases);
+    }
+
+    private static void ExpectWithHarness(
+        JsValidatorHarness harness,
+        string schema,
+        (string data, bool expected)[] cases)
+    {
+        var result = harness.Evaluate(schema, cases.Select(c => c.data));
         Assert.True(result.Success, result.Error);
         for (var i = 0; i < cases.Length; i++)
         {
@@ -25,6 +33,31 @@ public class JsFormatTests
                 $"Data {cases[i].data}: expected {cases[i].expected}, got {result.Verdicts[i]}.\n" +
                 $"Emitted:\n{result.GeneratedSource}");
         }
+    }
+
+    [Fact]
+    public void Draft202012_Format_IsAnnotationOnlyByDefault()
+    {
+        ExpectWithHarness(
+            _defaultHarness,
+            """{ "$schema": "https://json-schema.org/draft/2020-12/schema", "format": "email" }""",
+            [
+                ("\"not-an-email\"", true),
+                ("42", true),
+            ]);
+    }
+
+    [Fact]
+    public void Draft4_Format_IsAssertedByDefault()
+    {
+        ExpectWithHarness(
+            _defaultHarness,
+            """{ "$schema": "http://json-schema.org/draft-04/schema#", "format": "email" }""",
+            [
+                ("\"a@b.co\"", true),
+                ("\"not-an-email\"", false),
+                ("42", true),
+            ]);
     }
 
     [Fact]
@@ -97,6 +130,7 @@ public class JsFormatTests
             [
                 ("\"^[a-z]+$\"", true),
                 ("\"[unclosed\"", false),
+                ("\"\\\\a\"", false),
             ]);
     }
 

@@ -26,6 +26,27 @@ public sealed class JsAllOfCodeGenerator : IJsKeywordCodeGenerator
         {
             return string.Empty;
         }
+        if (context.RequiresAnnotationTracking)
+        {
+            var branches = allOf.EnumerateArray().ToArray();
+            var sbTracked = new StringBuilder();
+            sbTracked.AppendLine("{");
+            sbTracked.AppendLine($"  const _allOfBase = {context.EvaluatedStateExpr}.clone();");
+            for (var i = 0; i < branches.Length; i++)
+            {
+                var hash = context.GetSubschemaHash(branches[i]);
+                sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.reset();");
+                sbTracked.AppendLine($"  if (!{context.GenerateValidateCall(hash)}) return false;");
+                sbTracked.AppendLine($"  const _allOfBranch{i} = {context.EvaluatedStateExpr}.clone();");
+            }
+            sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.restoreFrom(_allOfBase);");
+            for (var i = 0; i < branches.Length; i++)
+            {
+                sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.mergeFrom(_allOfBranch{i});");
+            }
+            sbTracked.AppendLine("}");
+            return sbTracked.ToString();
+        }
         var sb = new StringBuilder();
         foreach (var sub in allOf.EnumerateArray())
         {
@@ -57,6 +78,25 @@ public sealed class JsAnyOfCodeGenerator : IJsKeywordCodeGenerator
             anyOf.ValueKind != JsonValueKind.Array)
         {
             return string.Empty;
+        }
+        if (context.RequiresAnnotationTracking)
+        {
+            var branches = anyOf.EnumerateArray().ToArray();
+            var sbTracked = new StringBuilder();
+            sbTracked.AppendLine("{");
+            sbTracked.AppendLine($"  const _anyOfBase = {context.EvaluatedStateExpr}.clone();");
+            sbTracked.AppendLine("  const _anyOfMatches = [];");
+            foreach (var branch in branches)
+            {
+                var hash = context.GetSubschemaHash(branch);
+                sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.reset();");
+                sbTracked.AppendLine($"  if ({context.GenerateValidateCall(hash)}) _anyOfMatches.push({context.EvaluatedStateExpr}.clone());");
+            }
+            sbTracked.AppendLine("  if (_anyOfMatches.length === 0) return false;");
+            sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.restoreFrom(_anyOfBase);");
+            sbTracked.AppendLine($"  for (const _m of _anyOfMatches) {context.EvaluatedStateExpr}.mergeFrom(_m);");
+            sbTracked.AppendLine("}");
+            return sbTracked.ToString();
         }
         var checks = new List<string>();
         foreach (var sub in anyOf.EnumerateArray())
@@ -90,6 +130,30 @@ public sealed class JsOneOfCodeGenerator : IJsKeywordCodeGenerator
             oneOf.ValueKind != JsonValueKind.Array)
         {
             return string.Empty;
+        }
+        if (context.RequiresAnnotationTracking)
+        {
+            var branches = oneOf.EnumerateArray().ToArray();
+            var sbTracked = new StringBuilder();
+            sbTracked.AppendLine("{");
+            sbTracked.AppendLine($"  const _oneOfBase = {context.EvaluatedStateExpr}.clone();");
+            sbTracked.AppendLine("  let _oneOfMatch = null;");
+            sbTracked.AppendLine("  let _matches = 0;");
+            foreach (var branch in branches)
+            {
+                var hash = context.GetSubschemaHash(branch);
+                sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.reset();");
+                sbTracked.AppendLine($"  if ({context.GenerateValidateCall(hash)}) {{");
+                sbTracked.AppendLine("    _matches++;");
+                sbTracked.AppendLine("    if (_matches > 1) return false;");
+                sbTracked.AppendLine($"    _oneOfMatch = {context.EvaluatedStateExpr}.clone();");
+                sbTracked.AppendLine("  }");
+            }
+            sbTracked.AppendLine("  if (_matches !== 1) return false;");
+            sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.restoreFrom(_oneOfBase);");
+            sbTracked.AppendLine($"  {context.EvaluatedStateExpr}.mergeFrom(_oneOfMatch);");
+            sbTracked.AppendLine("}");
+            return sbTracked.ToString();
         }
         var sb = new StringBuilder();
         sb.AppendLine("{");
@@ -127,6 +191,18 @@ public sealed class JsNotCodeGenerator : IJsKeywordCodeGenerator
             return string.Empty;
         }
         var hash = context.GetSubschemaHash(notElem);
+        if (context.RequiresAnnotationTracking)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("{");
+            sb.AppendLine($"  const _notSnapshot = {context.EvaluatedStateExpr}.clone();");
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.reset();");
+            sb.AppendLine($"  const _notResult = {context.GenerateValidateCall(hash)};");
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.restoreFrom(_notSnapshot);");
+            sb.AppendLine("  if (_notResult) return false;");
+            sb.AppendLine("}");
+            return sb.ToString();
+        }
         return $"if ({context.GenerateValidateCall(hash)}) return false;";
     }
 

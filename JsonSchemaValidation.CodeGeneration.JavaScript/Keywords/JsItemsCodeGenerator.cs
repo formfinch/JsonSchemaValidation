@@ -45,7 +45,6 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
                 "Schema uses array-form \"items\" under Draft 2020-12. " +
                 "Use \"prefixItems\" for tuple validation in 2020-12; \"items\" must be a single schema.");
         }
-        var hash = ctx.GetSubschemaHash(items);
         var v = ctx.ElementExpr;
         var prefixCount = 0;
         if (ctx.CurrentSchema.TryGetProperty("prefixItems", out var prefixItems) &&
@@ -57,8 +56,12 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
         var sb = new StringBuilder();
         sb.AppendLine($"if (Array.isArray({v})) {{");
         sb.AppendLine($"  for (let _i = {prefixCount}; _i < {v}.length; _i++) {{");
-        sb.AppendLine($"    if (!{ctx.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) return false;");
+        sb.AppendLine($"    if (!{ctx.GenerateValidateCallForItem(items, $"{v}[_i]", "_i")}) return false;");
         sb.AppendLine("  }");
+        if (ctx.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"  {ctx.EvaluatedStateExpr}.setEvaluatedItemsUpTo({ctx.LocationExpr}, {v}.length);");
+        }
         sb.AppendLine("}");
         return sb.ToString();
     }
@@ -73,9 +76,12 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
             var idx = 0;
             foreach (var sub in items.EnumerateArray())
             {
-                var hash = ctx.GetSubschemaHash(sub);
-                sb.AppendLine($"  if ({v}.length > {idx} && !{ctx.GenerateValidateCallForExpr(hash, $"{v}[{idx}]")}) return false;");
+                sb.AppendLine($"  if ({v}.length > {idx} && !{ctx.GenerateValidateCallForItem(sub, $"{v}[{idx}]", idx.ToString(System.Globalization.CultureInfo.InvariantCulture))}) return false;");
                 idx++;
+            }
+            if (ctx.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"  {ctx.EvaluatedStateExpr}.setEvaluatedItemsUpTo({ctx.LocationExpr}, Math.min({idx}, {v}.length));");
             }
             sb.AppendLine("}");
             return sb.ToString();
@@ -84,12 +90,15 @@ public sealed class JsItemsCodeGenerator : IJsKeywordCodeGenerator
             items.ValueKind == JsonValueKind.True ||
             items.ValueKind == JsonValueKind.False)
         {
-            var hash = ctx.GetSubschemaHash(items);
             var sb = new StringBuilder();
             sb.AppendLine($"if (Array.isArray({v})) {{");
             sb.AppendLine($"  for (let _i = 0; _i < {v}.length; _i++) {{");
-            sb.AppendLine($"    if (!{ctx.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) return false;");
+            sb.AppendLine($"    if (!{ctx.GenerateValidateCallForItem(items, $"{v}[_i]", "_i")}) return false;");
             sb.AppendLine("  }");
+            if (ctx.RequiresItemAnnotations)
+            {
+                sb.AppendLine($"  {ctx.EvaluatedStateExpr}.setEvaluatedItemsUpTo({ctx.LocationExpr}, {v}.length);");
+            }
             sb.AppendLine("}");
             return sb.ToString();
         }
@@ -126,9 +135,12 @@ public sealed class JsPrefixItemsCodeGenerator : IJsKeywordCodeGenerator
         var idx = 0;
         foreach (var sub in prefix.EnumerateArray())
         {
-            var hash = context.GetSubschemaHash(sub);
-            sb.AppendLine($"  if ({v}.length > {idx} && !{context.GenerateValidateCallForExpr(hash, $"{v}[{idx}]")}) return false;");
+            sb.AppendLine($"  if ({v}.length > {idx} && !{context.GenerateValidateCallForItem(sub, $"{v}[{idx}]", idx.ToString(System.Globalization.CultureInfo.InvariantCulture))}) return false;");
             idx++;
+        }
+        if (context.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.setEvaluatedItemsUpTo({context.LocationExpr}, Math.min({idx}, {v}.length));");
         }
         sb.AppendLine("}");
         return sb.ToString();
@@ -184,12 +196,15 @@ public sealed class JsAdditionalItemsCodeGenerator : IJsKeywordCodeGenerator
                 "Schema's \"additionalItems\" value must be an object or boolean; got " +
                 $"{additional.ValueKind}.");
         }
-        var hash = context.GetSubschemaHash(additional);
         var sb = new StringBuilder();
         sb.AppendLine($"if (Array.isArray({v})) {{");
         sb.AppendLine($"  for (let _i = {tupleLen}; _i < {v}.length; _i++) {{");
-        sb.AppendLine($"    if (!{context.GenerateValidateCallForExpr(hash, $"{v}[_i]")}) return false;");
+        sb.AppendLine($"    if (!{context.GenerateValidateCallForItem(additional, $"{v}[_i]", "_i")}) return false;");
         sb.AppendLine("  }");
+        if (context.RequiresItemAnnotations)
+        {
+            sb.AppendLine($"  {context.EvaluatedStateExpr}.setEvaluatedItemsUpTo({context.LocationExpr}, {v}.length);");
+        }
         sb.AppendLine("}");
         return sb.ToString();
     }

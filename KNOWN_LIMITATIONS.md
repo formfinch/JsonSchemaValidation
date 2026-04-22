@@ -40,9 +40,13 @@ The JS target emits compiled validators for consumption by JavaScript/TypeScript
 
 ### MVP Scope
 
-- **Drafts:** 2020-12 and 4 only. Other drafts (3, 6, 7, 2019-09) are rejected pre-emission. Tracked as follow-up work.
-- **Self-contained schemas with local `$ref` only.** External `$ref` is rejected pre-emission. The registry/fragment subschema machinery that exists for C# has not been ported.
-- **Deferred features rejected in drafts that define them:** `unevaluatedProperties`, `unevaluatedItems`, `$dynamicRef`, `$dynamicAnchor`, `$recursiveRef`, `$recursiveAnchor`. The capability gate is draft-aware — under Draft 4 these names are not JSON Schema keywords, so the gate treats them as unknown annotations and ignores them (per spec). Under Draft 2020-12 they are real keywords, and the gate rejects pre-emission with a structured error naming the unsupported feature.
+- **Drafts:** 2020-12, 2019-09, and 4 are supported by the capability gate. Drafts 3, 6, and 7 are still rejected pre-emission and tracked as follow-up work.
+- **External `$ref`:** generated validators can resolve external refs through a JS registry passed to `validate(data, registry)`. In practice that registry is required for schemas with external refs; missing registry or missing entries fail validation. The JS test-suite fixture preloads the official remote schemas plus the bundled Draft 2020-12 metaschemas; a handful of suite cases (notably cross-draft `$schema`-aware ref resolution and metaschema preloading of dynamic-ref behavior) remain skipped.
+- **Annotation tracking:** `unevaluatedProperties` and `unevaluatedItems` are supported under Draft 2020-12 and Draft 2019-09 through generated evaluated-state tracking.
+- **External-ref annotation propagation depends on the registry entry shape:** generated validators export `validateWithState(...)` and preserve `unevaluated*` annotations across external refs when the registry entry exposes that method. Plain function validators and `{ validate(...) }` objects still validate correctly but do not propagate evaluated-state annotations back to the caller.
+- **Dynamic-scope refs:** `$dynamicRef` / `$dynamicAnchor` are supported under Draft 2020-12 via an immutable scope stack (`CompiledValidatorScope`). `$recursiveRef` / `$recursiveAnchor` (Draft 2019-09) are still rejected pre-emission.
+- **Vocabulary-aware keyword emission:** the JS generator inspects the enclosing schema's metaschema (when preloaded via `ExternalSchemaDocuments`) and short-circuits validation-vocabulary keywords (`type`, `enum`, `const`, numeric/string/array/object length constraints, `pattern`, `minContains`/`maxContains`) to no-op emission when the metaschema does not include the validation vocabulary. This differs from the C# compiled target, which does not gate on `$vocabulary`. Format-assertion is handled separately via `FormatAssertionEnabled` / `$vocabulary: format-assertion`.
+- **Annotation tracking clone cost:** schemas that combine `unevaluated*` with deeply nested or high-fanout `allOf`/`anyOf`/`oneOf` conditionals clone evaluated-state maps while validating. This is correct but can add overhead for large object/array instances.
 
 ### Numeric Precision
 
@@ -58,7 +62,7 @@ Patterns emit JavaScript `new RegExp("...")` constructor expressions (ECMAScript
 
 ### Format Validation
 
-Supported formats are eager-validated (same stance as the C# compiled path). This intentionally diverges from the 2020-12 suite's "annotation-only by default" expectation; suite cases asserting annotation-only behavior are excluded from our test runner. For `idn-email`, `idn-hostname`, `iri`, and `iri-reference`, the runtime aliases to the ASCII counterpart — IDN-specific validation is deferred.
+Drafts 4 and 2019-09 continue to assert supported formats by default (matches the C# compiled path). Draft 2020-12 is annotation-only by default; set `FormatAssertionEnabled` on the JS generator or pass `--assert-format` to `jsv-codegen generate-js` to emit eager validation for supported Draft 2020-12 formats. When the enclosing metaschema declares the format-assertion vocabulary in `$vocabulary` (and is preloaded via `ExternalSchemaDocuments`), eager format validation is also enabled automatically. `idn-email`, `idn-hostname`, `iri`, and `iri-reference` each have dedicated validators: punycode-decoded Unicode hostname rules (including IDN contextual-rule checks — virama, Greek/Hebrew adjacency, katakana middle dot, Arabic/extended-Arabic-Indic digit mixing), and IRI authority parsing that recognises international character classes.
 
 ### Shared Runtime Module
 

@@ -29,6 +29,11 @@ public sealed class JsPatternCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         if (!context.CurrentSchema.TryGetProperty("pattern", out var patternElement))
         {
             return string.Empty;

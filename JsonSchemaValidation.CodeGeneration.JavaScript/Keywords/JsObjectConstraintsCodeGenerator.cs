@@ -23,6 +23,11 @@ public sealed class JsObjectConstraintsCodeGenerator : IJsKeywordCodeGenerator
 
     public string GenerateCode(JsCodeGenerationContext context)
     {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            return string.Empty;
+        }
+
         var schema = context.CurrentSchema;
         var hasMin = schema.TryGetProperty("minProperties", out var minElem) &&
                      TryGetIntegerValue(minElem, out var min);
