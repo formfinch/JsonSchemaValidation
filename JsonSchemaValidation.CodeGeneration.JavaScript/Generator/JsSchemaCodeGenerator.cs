@@ -585,13 +585,12 @@ public sealed class JsSchemaCodeGenerator
         sb.AppendLine("};");
         sb.AppendLine();
 
-        sb.AppendLine(requiresScopeTracking && requiresAnnotationTracking
-            ? "export default { validate, validateWithScope, validateWithState, schemaUri };"
-            : requiresAnnotationTracking
-                ? "export default { validate, validateWithState, schemaUri };"
-                : requiresScopeTracking
-                    ? "export default { validate, validateWithScope, schemaUri };"
-                    : "export default { validate, schemaUri };");
+        var defaultExportMembers = new List<string> { "validate" };
+        if (requiresScopeTracking) defaultExportMembers.Add("validateWithScope");
+        if (requiresAnnotationTracking) defaultExportMembers.Add("validateWithState");
+        defaultExportMembers.Add("schemaUri");
+        if (fragmentValidators.Count > 0) defaultExportMembers.Add("fragmentValidators");
+        sb.AppendLine($"export default {{ {string.Join(", ", defaultExportMembers)} }};");
         return sb.ToString();
     }
 
@@ -636,18 +635,20 @@ public sealed class JsSchemaCodeGenerator
         var result = new Dictionary<string, FragmentValidatorInfo>(StringComparer.Ordinal);
         foreach (var (hash, subschemaInfo) in uniqueSchemas)
         {
-            if (!reachableHashes.Contains(hash) || string.IsNullOrEmpty(subschemaInfo.JsonPointerPath))
+            // Unreachable hashes don't get a validate_<hash> emitted, so any
+            // fragment URI pointing to them would reference an undefined
+            // function at runtime. Skip the whole registration for those.
+            if (!reachableHashes.Contains(hash))
             {
-                goto AnchorRegistration;
+                continue;
             }
 
-            if (rootBaseUri != null)
+            if (rootBaseUri != null && !string.IsNullOrEmpty(subschemaInfo.JsonPointerPath))
             {
                 var pointerUri = $"{rootBaseUri.AbsoluteUri}#{subschemaInfo.JsonPointerPath}";
                 result.TryAdd(pointerUri, new FragmentValidatorInfo(hash, pointerUri));
             }
 
-        AnchorRegistration:
             if (subschemaInfo.Schema.ValueKind != JsonValueKind.Object)
             {
                 continue;

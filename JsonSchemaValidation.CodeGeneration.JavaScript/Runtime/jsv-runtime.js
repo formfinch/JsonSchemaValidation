@@ -18,18 +18,20 @@
 //              isValidJsonPointer, isValidRelativeJsonPointer, isValidRegex,
 //              isValidUuid
 //   Validator module shape (what emitted modules export):
-//              default export: { validate, schemaUri [, validateWithScope]
-//                                [, validateWithState] [, fragmentValidators] }
+//              default export: the same object as the named exports below
+//                              (validate is always present; validateWithScope,
+//                              validateWithState, and fragmentValidators are
+//                              included when the respective features are needed).
 //              named exports:
 //                validate(data [, registry]): boolean
 //                schemaUri: string | null
 //                fragmentValidators: Record<uri, { validate, ... }>
-//                                    — emitted when the schema declares $id/$anchor/$dynamicAnchor
+//                                    — emitted when the schema declares
+//                                      $id / $anchor / $dynamicAnchor fragments
 //                validateWithState(data, evaluatedState, location [, registry])
 //                                    — annotation-tracking only
 //                validateWithScope(data, scope, location [, registry])
 //                                    — $dynamicRef scope-tracking only
-//                validateWithScope(data, scope, location [, registry])
 //                validateWithState(data, scope, evaluatedState, location [, registry])
 //                                    — both scope and annotation tracking
 //
