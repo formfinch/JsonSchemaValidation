@@ -4,6 +4,7 @@
 using System.Text;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using System.Linq;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
@@ -45,10 +46,9 @@ public sealed class JsPatternPropertiesCodeGenerator : IJsKeywordCodeGenerator
         do
         {
             var pattern = patternEnumerator.Current;
-            var regex = JsLiteral.RegexLiteral(pattern.Name);
             var regexVar = $"_ppRe{idx}";
             var hash = context.GetSubschemaHash(pattern.Value);
-            hoists.AppendLine($"  const {regexVar} = {regex};");
+            hoists.AppendLine($"  const {regexVar} = getCachedRegex({JsLiteral.String(pattern.Name)});");
             checks.AppendLine($"    if ({regexVar}.test(_k)) {{");
             checks.AppendLine($"      if (!{context.GenerateValidateCallForProperty(hash, $"{v}[_k]", "_k")}) return false;");
             if (context.RequiresPropertyAnnotations)
@@ -70,7 +70,15 @@ public sealed class JsPatternPropertiesCodeGenerator : IJsKeywordCodeGenerator
         return sb.ToString();
     }
 
-    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context) => [];
+    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
+    {
+        if (context.CurrentSchema.TryGetProperty("patternProperties", out var patternsElem) &&
+            patternsElem.ValueKind == JsonValueKind.Object &&
+            patternsElem.EnumerateObject().Any())
+        {
+            yield return "getCachedRegex";
+        }
+    }
 }
 
 /// <summary>
@@ -101,7 +109,7 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         }
 
         var definedNames = CollectDefinedNames(context.CurrentSchema);
-        var patternRegexes = CollectPatternRegexes(context.CurrentSchema);
+        var patternRegexes = CollectPatternPatterns(context.CurrentSchema);
 
         var v = context.ElementExpr;
         // Hoist pattern regexes outside the key loop (same reason as
@@ -111,7 +119,7 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         for (var i = 0; i < patternRegexes.Count; i++)
         {
             var rv = $"_apRe{i}";
-            hoists.AppendLine($"  const {rv} = {patternRegexes[i]};");
+            hoists.AppendLine($"  const {rv} = getCachedRegex({JsLiteral.String(patternRegexes[i])});");
             regexVars.Add(rv);
         }
 
@@ -162,7 +170,13 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         return sb.ToString();
     }
 
-    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context) => [];
+    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
+    {
+        if (CollectPatternPatterns(context.CurrentSchema).Count > 0)
+        {
+            yield return "getCachedRegex";
+        }
+    }
 
     private static List<string> CollectDefinedNames(JsonElement schema)
     {
@@ -178,18 +192,18 @@ public sealed class JsAdditionalPropertiesCodeGenerator : IJsKeywordCodeGenerato
         return names;
     }
 
-    private static List<string> CollectPatternRegexes(JsonElement schema)
+    private static List<string> CollectPatternPatterns(JsonElement schema)
     {
-        var regexes = new List<string>();
-        if (schema.TryGetProperty("patternProperties", out var patterns) &&
-            patterns.ValueKind == JsonValueKind.Object)
+        var patternNames = new List<string>();
+        if (schema.TryGetProperty("patternProperties", out var patternsElement) &&
+            patternsElement.ValueKind == JsonValueKind.Object)
         {
-            foreach (var p in patterns.EnumerateObject())
+            foreach (var p in patternsElement.EnumerateObject())
             {
-                regexes.Add(JsLiteral.RegexLiteral(p.Name));
+                patternNames.Add(p.Name);
             }
         }
-        return regexes;
+        return patternNames;
     }
 }
 
