@@ -76,16 +76,4 @@ internal static class JsLiteral
             .Replace(ParagraphSeparator.ToString(), ParagraphSeparatorEscape);
     }
 
-    /// <summary>
-    /// Emits a JavaScript RegExp construction expression as <c>new RegExp("pattern")</c>.
-    /// Avoids the <c>/pattern/</c> literal form because certain pattern prefixes
-    /// (most famously a leading asterisk) tokenize as block-comment or other
-    /// invalid syntax and would break module parsing. Invalid ECMAScript regex
-    /// grammar surfaces at RegExp construction time rather than as a JS parse
-    /// error, which is a friendlier failure mode for consumers.
-    /// </summary>
-    public static string RegexLiteral(string pattern)
-    {
-        return $"new RegExp({String(pattern)}, \"u\")";
-    }
 }

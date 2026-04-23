@@ -10,7 +10,7 @@
 // ABI VERSION: mvp-0
 //
 // FROZEN (stable across MVP; breaking changes require ABI version bump):
-//   Helpers:   deepEquals, escapeJsonPointer, graphemeLength, isInteger
+//   Helpers:   deepEquals, escapeJsonPointer, getCachedRegex, graphemeLength, isInteger
 //   Formats:   isValidDateTime, isValidDate, isValidTime, isValidDuration,
 //              isValidEmail, isValidIdnEmail, isValidHostname, isValidIdnHostname,
 //              isValidIpv4, isValidIpv6, isValidUri, isValidUriReference,
@@ -60,6 +60,11 @@ export function escapeJsonPointer(segment) {
 // The gap is documented in KNOWN_LIMITATIONS.md and is acceptable for MVP.
 let _segmenter = null;
 let _segmenterProbed = false;
+/** @type {Map<string, RegExp>} */
+// Process-global within a loaded runtime module. This grows with distinct
+// schema patterns and intentionally does not evict to keep hot-path lookups
+// trivial for generated validators and benchmark runs.
+const _regexCache = new Map();
 function _getSegmenter() {
     if (_segmenterProbed) return _segmenter;
     _segmenterProbed = true;
@@ -74,11 +79,37 @@ function _getSegmenter() {
 }
 
 /**
+ * Returns a cached ECMAScript-unicode RegExp instance for a schema pattern.
+ * Generated validators call through this helper so regex compilation happens
+ * once per module load instead of once per validation.
+ * @param {string} pattern
+ * @returns {RegExp}
+ */
+export function getCachedRegex(pattern) {
+    let regex = _regexCache.get(pattern);
+    if (regex === undefined) {
+        regex = new RegExp(pattern, "u");
+        _regexCache.set(pattern, regex);
+    }
+    return regex;
+}
+
+/**
  * Counts grapheme clusters in a string. Mirrors C# StringInfo.LengthInTextElements.
  * @param {string} str
  * @returns {number}
  */
 export function graphemeLength(str) {
+    if (str.length === 0) return 0;
+    let asciiOnly = true;
+    for (let i = 0; i < str.length; i++) {
+        if (str.charCodeAt(i) > 0x7F) {
+            asciiOnly = false;
+            break;
+        }
+    }
+    if (asciiOnly) return str.length;
+
     const seg = _getSegmenter();
     if (seg !== null) {
         let count = 0;

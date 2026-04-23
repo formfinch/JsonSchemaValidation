@@ -7,11 +7,9 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 
 /// <summary>
 /// Generates JavaScript code for the "pattern" keyword.
-/// Emits a <c>new RegExp("...")</c> constructor expression (via JsLiteral.RegexLiteral)
-/// using the ECMAScript dialect required by JSON Schema. Constructor form is used
-/// instead of a <c>/.../</c> literal so schema-supplied text never participates in
-/// JS tokenisation — patterns starting with <c>*</c> or containing other tokenizer
-/// hazards no longer break module parsing.
+/// Uses the runtime's cached-regex helper so schema patterns are compiled once
+/// and then reused across validations. Constructor form remains hidden behind
+/// the helper so schema-supplied text never participates in JS tokenisation.
 /// Regex timeouts don't exist in JS; pathological patterns are a known limitation
 /// inherited from the spec (documented in KNOWN_LIMITATIONS.md).
 /// </summary>
@@ -50,9 +48,27 @@ public sealed class JsPatternCodeGenerator : IJsKeywordCodeGenerator
         }
 
         var v = context.ElementExpr;
-        var literal = JsLiteral.RegexLiteral(pattern);
-        return $"if (typeof {v} === \"string\" && !{literal}.test({v})) return false;";
+        var patternLiteral = JsLiteral.String(pattern);
+        return $$"""
+            if (typeof {{v}} === "string") {
+              const _patternRe = getCachedRegex({{patternLiteral}});
+              if (!_patternRe.test({{v}})) return false;
+            }
+            """;
     }
 
-    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context) => [];
+    public IEnumerable<string> GetRuntimeImports(JsCodeGenerationContext context)
+    {
+        if (!context.ValidationVocabularyEnabled)
+        {
+            yield break;
+        }
+
+        if (context.CurrentSchema.TryGetProperty("pattern", out var patternElement) &&
+            patternElement.ValueKind == JsonValueKind.String &&
+            !string.IsNullOrEmpty(patternElement.GetString()))
+        {
+            yield return "getCachedRegex";
+        }
+    }
 }

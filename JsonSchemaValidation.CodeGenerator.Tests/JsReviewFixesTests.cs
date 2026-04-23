@@ -1064,7 +1064,7 @@ public class JsReviewFixesTests
             """).RootElement;
         var result = gen.Generate(schema);
         Assert.True(result.Success, result.Error);
-        Assert.Contains("new RegExp(", result.GeneratedCode);
+        Assert.Contains("getCachedRegex(", result.GeneratedCode);
         Assert.DoesNotContain("/^a/", result.GeneratedCode);
     }
 
@@ -1091,6 +1091,19 @@ public class JsReviewFixesTests
         var forIndex = src.IndexOf("for (const _k of Object.keys", StringComparison.Ordinal);
         Assert.True(hoistIndex > 0 && forIndex > hoistIndex,
             "Hoisted RegExp constants must appear before the Object.keys loop.");
+    }
+
+    [Fact]
+    public void Pattern_UsesCachedRegexHelper()
+    {
+        var gen = new JsSchemaCodeGenerator();
+        var schema = JsonDocument.Parse("""{ "pattern": "^[a-z]+$" }""").RootElement;
+
+        var result = gen.Generate(schema);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("getCachedRegex(", result.GeneratedCode);
+        Assert.DoesNotContain("new RegExp(", result.GeneratedCode);
     }
 
     // Non-ambiguous case: two resources with different $ref text — not collapsed,

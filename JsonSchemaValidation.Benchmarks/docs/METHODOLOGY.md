@@ -42,6 +42,12 @@ Compare FormFinch against other .NET JSON Schema validators:
 - JsonSchema.Net
 - LateApexEarlySpeed.Json.Schema
 
+### 6. JavaScript Competitor Benchmarks
+
+Compare Draft 2020-12 JavaScript validators through a shared Node.js host:
+- Ajv 2020-12
+- FormFinch generated JS validator
+
 ## Test Data
 
 All benchmark data is embedded in the assembly and verified via SHA-256 checksums at startup. This ensures:
@@ -83,16 +89,30 @@ All benchmark data is embedded in the assembly and verified via SHA-256 checksum
 
 ## Running Benchmarks
 
-```bash
+```powershell
+# Preferred on Windows: build once, then run the benchmark assembly directly.
+# This avoids file-lock failures from dotnet run when an earlier benchmark process
+# is still alive.
+
 # Run all benchmarks
-dotnet run -c Release --project JsonSchemaValidation.Benchmarks
+.\JsonSchemaValidation.Benchmarks\run-benchmarks.ps1
 
 # Run specific benchmark class
-dotnet run -c Release --project JsonSchemaValidation.Benchmarks -- --filter *Simple*
+.\JsonSchemaValidation.Benchmarks\run-benchmarks.ps1 --filter *Simple*
 
 # Dry run (verification only)
-dotnet run -c Release --project JsonSchemaValidation.Benchmarks -- --filter *Simple* --job dry
+.\JsonSchemaValidation.Benchmarks\run-benchmarks.ps1 --filter *Simple* --job dry
 ```
+
+```bash
+# Cross-platform equivalent
+dotnet build JsonSchemaValidation.Benchmarks/JsonSchemaValidation.Benchmarks.csproj -c Release -f net10.0
+./JsonSchemaValidation.Benchmarks/bin/Release/net10.0/JsonSchemaValidation.Benchmarks --filter '*Simple*' --job dry
+```
+
+If you use `dotnet run`, BenchmarkDotNet still works, but rerunning while an earlier
+`JsonSchemaValidation.Benchmarks` process is alive can fail on Windows because MSBuild
+cannot overwrite locked output assemblies.
 
 ## Interpreting Results
 
@@ -109,3 +129,4 @@ BenchmarkDotNet provides several statistics:
 1. **FormFinch Dynamic vs Compiled**: Dynamic uses the interpreter; Compiled generates native code at runtime
 2. **Memory**: Lower allocations typically indicate better performance for high-throughput scenarios
 3. **.NET Only**: Benchmarks compare .NET JSON Schema validators only
+4. **Node-hosted JS comparisons**: Ajv and FormFinch JS codegen are measured through the same persistent Node.js adapter. Batch operations are used so transport overhead is amortized across many validations.
