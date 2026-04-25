@@ -7,6 +7,7 @@ using BenchmarkDotNet.Attributes;
 using FormFinch.JsonSchemaValidation.Benchmarks.Config;
 using FormFinch.JsonSchemaValidation.Benchmarks.Infrastructure;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.TypeScript;

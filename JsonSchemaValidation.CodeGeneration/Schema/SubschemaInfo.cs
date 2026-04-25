@@ -3,7 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
 
-namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 
 /// <summary>
 /// Information about a unique subschema identified during schema analysis.

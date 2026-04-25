@@ -4,6 +4,7 @@
 using System.Collections.Generic;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;

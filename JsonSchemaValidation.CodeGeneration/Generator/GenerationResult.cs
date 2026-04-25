@@ -6,6 +6,7 @@ namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 /// <summary>
 /// Result of code generation.
 /// </summary>
+[Obsolete("Use FormFinch.JsonSchemaValidation.CodeGeneration.Abstractions.CodeGenerationResult; will be removed in #38.")]
 public sealed class GenerationResult
 {
     public bool Success { get; init; }

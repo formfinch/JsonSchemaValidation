@@ -4,6 +4,7 @@
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidationTests.Common;

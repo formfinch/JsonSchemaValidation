@@ -4,10 +4,13 @@
 using System.Text;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
+
+#pragma warning disable CS0618 // Transitional legacy generator result until the JavaScript target adapter is added in #40.
 
 /// <summary>
 /// Orchestrates JavaScript (ESM) validator emission for a JSON Schema.
@@ -754,3 +757,5 @@ public sealed class JsSchemaCodeGenerator
                !refElem.GetString()!.StartsWith('#');
     }
 }
+
+#pragma warning restore CS0618

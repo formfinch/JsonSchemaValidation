@@ -4,11 +4,14 @@
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 using static FormFinch.JsonSchemaValidation.CodeGeneration.Keywords.BooleanSchemaCodeGenerator;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+
+#pragma warning disable CS0618 // Transitional legacy generator result until the C# target split in #38.
 
 /// <summary>
 /// Main code generator that orchestrates the generation of compiled validators.
@@ -1250,3 +1253,5 @@ public sealed class SchemaCodeGenerator
         return $"{prefix}Validate_{hash}";
     }
 }
+
+#pragma warning restore CS0618

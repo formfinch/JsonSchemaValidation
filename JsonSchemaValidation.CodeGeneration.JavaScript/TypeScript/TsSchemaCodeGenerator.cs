@@ -4,10 +4,13 @@
 using System.Text;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.TypeScript.Keywords;
 using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.TypeScript;
+
+#pragma warning disable CS0618 // Transitional legacy generator result until the TypeScript target adapter is added in #39.
 
 /// <summary>
 /// Orchestrates TypeScript (ESM) validator emission for a JSON Schema.
@@ -762,3 +765,5 @@ public sealed class TsSchemaCodeGenerator
                !refElem.GetString()!.StartsWith('#');
     }
 }
+
+#pragma warning restore CS0618

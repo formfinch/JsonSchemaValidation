@@ -6,13 +6,14 @@ using System.Runtime.Loader;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 
 // Re-export SchemaDraft for consumers of RuntimeValidatorFactory
-using SchemaDraft = FormFinch.JsonSchemaValidation.CodeGeneration.Generator.SchemaDraft;
+using SchemaDraft = FormFinch.JsonSchemaValidation.CodeGeneration.Schema.SchemaDraft;
 
 namespace FormFinch.JsonSchemaValidation.Compiler;
 
