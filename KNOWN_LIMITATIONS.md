@@ -67,3 +67,15 @@ Drafts 4 and 2019-09 continue to assert supported formats by default (matches th
 ### Shared Runtime Module
 
 Emitted validators import from a sibling `jsv-runtime.js`. The CLI writes both files by default; pass `--no-runtime` to suppress the runtime write if your build already provides one. The runtime ABI is versioned (`ABI VERSION: mvp-0`); bumping the version signals a breaking change to emitted validator expectations.
+
+### TypeScript-First Migration Path
+
+Issue #32 introduces a parallel TypeScript-first path without removing the direct JS generator. `jsv-codegen generate-ts` emits TypeScript source, and `jsv-codegen generate-js --pipeline typescript --ecmascript-target <target>` compiles that source with `tsc` to produce JavaScript for an explicit TypeScript compiler target. The direct JS path remains the default and should be kept available for performance comparison until the TypeScript path has proven parity.
+
+Current migration constraints:
+
+- The TS generator has its own orchestration and keyword emitter classes. The first implementation intentionally keeps emitted validator semantics aligned with the direct JS emitter so parity and performance comparisons remain meaningful.
+- `jsv-runtime.ts` is currently derived from the stable `jsv-runtime.js` ABI and marked `// @ts-nocheck`; converting the runtime to fully typed, TS-authored source is still follow-up work.
+- The package invokes an external `tsc` executable for JS-from-TS output. Install TypeScript separately or pass `--tsc <path>` to the CLI.
+- Draft 2020-12 TS-derived JS is tested through the JSON-Schema-Test-Suite against the same enabled case set as the direct JS target. This is parity coverage for the current JS capability gate, not a claim that deferred JS-target capabilities are complete.
+- Browser-query targeting and polyfill management remain out of scope. The exposed target is the `tsc` ECMAScript target, and consumers can apply their own downstream bundling or browser compatibility tooling.

@@ -6,6 +6,7 @@ using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.TypeScript;
 using FormFinch.JsonSchemaValidation.Common;
 
 namespace FormFinch.JsonSchemaValidation.CodeGenerator;
@@ -27,6 +28,7 @@ internal static class Program
         {
             "generate" => HandleGenerate(remainingArgs),
             "generate-js" => HandleGenerateJs(remainingArgs),
+            "generate-ts" => HandleGenerateTs(remainingArgs),
             "generate-metaschemas" => HandleGenerateMetaschemas(remainingArgs),
             "compile-test-schemas" => HandleCompileTestSchemas(remainingArgs),
             "analyze" => HandleAnalyze(remainingArgs),
@@ -45,6 +47,7 @@ internal static class Program
             Commands:
               generate              Generate compiled C# validator from schema file
               generate-js           Generate compiled JavaScript (ESM) validator from schema file
+              generate-ts           Generate compiled TypeScript (ESM) validator from schema file
               generate-metaschemas  Generate compiled validators for all metaschemas
               compile-test-schemas  Generate compiled validators for JSON-Schema-Test-Suite schemas
               analyze               Analyze schema for compilation compatibility
@@ -58,8 +61,18 @@ internal static class Program
             generate-js options:
               -s, --schema <path>    Input schema file (required)
               -o, --output <path>    Output directory (required). Emits <schema>.js and jsv-runtime.js.
+              --pipeline <mode>      JS emission pipeline: direct (default) or typescript.
+              --ecmascript-target <target>
+                                     tsc target for --pipeline typescript (default: ES2020).
+              --tsc <path>           TypeScript compiler executable for --pipeline typescript (default: tsc).
               --assert-format       Assert supported format values for Draft 2020-12.
               --no-runtime           Skip writing jsv-runtime.js (useful when runtime is already present).
+
+            generate-ts options:
+              -s, --schema <path>    Input schema file (required)
+              -o, --output <path>    Output directory (required). Emits <schema>.ts and jsv-runtime.ts.
+              --assert-format        Assert supported format values for Draft 2020-12.
+              --no-runtime           Skip writing jsv-runtime.ts.
 
             generate-js supported scope:
               - Drafts: 2020-12, 2019-09, and 4 (other drafts rejected pre-emission).
@@ -89,6 +102,8 @@ internal static class Program
             Examples:
               jsv-codegen generate -s schema.json -o ./Generated/
               jsv-codegen generate-js -s schema.json -o ./src/validators/
+              jsv-codegen generate-js -s schema.json -o ./src/validators/ --pipeline typescript --ecmascript-target ES2020
+              jsv-codegen generate-ts -s schema.json -o ./src/validators/
               jsv-codegen generate-metaschemas -o ./Generated/ -l ../JsonSchemaValidation
               jsv-codegen compile-test-schemas -t ./submodules/JSON-Schema-Test-Suite -o ./Generated/
               jsv-codegen analyze -s schema.json
@@ -182,6 +197,232 @@ internal static class Program
         string? outputPath = null;
         var writeRuntime = true;
         var formatAssertionEnabled = false;
+        var pipeline = "direct";
+        var ecmaScriptTarget = "ES2020";
+        var tscExecutable = "tsc";
+        var ecmaScriptTargetSpecified = false;
+        var tscSpecified = false;
+
+        for (var i = 0; i < args.Length; i++)
+        {
+            var arg = args[i];
+            var nextArg = i + 1 < args.Length ? args[i + 1] : null;
+            switch (arg)
+            {
+                case "-s":
+                case "--schema":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    schemaPath = nextArg;
+                    i++;
+                    break;
+                case "-o":
+                case "--output":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    outputPath = nextArg;
+                    i++;
+                    break;
+                case "--no-runtime":
+                    writeRuntime = false;
+                    break;
+                case "--assert-format":
+                    formatAssertionEnabled = true;
+                    break;
+                case "--pipeline":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    pipeline = nextArg!;
+                    i++;
+                    break;
+                case "--ecmascript-target":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    ecmaScriptTarget = nextArg!;
+                    ecmaScriptTargetSpecified = true;
+                    i++;
+                    break;
+                case "--tsc":
+                    if (!IsOptionValue(nextArg))
+                    {
+                        Console.Error.WriteLine($"Error: Option {arg} requires a value.");
+                        return 1;
+                    }
+                    tscExecutable = nextArg!;
+                    tscSpecified = true;
+                    i++;
+                    break;
+            }
+        }
+
+        if (string.IsNullOrEmpty(schemaPath))
+        {
+            Console.Error.WriteLine("Error: Schema path is required (-s, --schema)");
+            return 1;
+        }
+        if (string.IsNullOrEmpty(outputPath))
+        {
+            Console.Error.WriteLine("Error: Output path is required (-o, --output)");
+            return 1;
+        }
+        if (!File.Exists(schemaPath))
+        {
+            Console.Error.WriteLine($"Error: Schema file not found: {schemaPath}");
+            return 1;
+        }
+        if (!Directory.Exists(outputPath))
+        {
+            Directory.CreateDirectory(outputPath);
+        }
+
+        Console.WriteLine($"Generating JS validator for: {schemaPath}");
+        Console.WriteLine($"Output directory: {outputPath}");
+
+        if (string.Equals(pipeline, "typescript", StringComparison.OrdinalIgnoreCase))
+        {
+            return HandleGenerateJsFromTypeScript(
+                schemaPath,
+                outputPath,
+                writeRuntime,
+                formatAssertionEnabled,
+                ecmaScriptTarget,
+                tscExecutable);
+        }
+
+        if (!string.Equals(pipeline, "direct", StringComparison.OrdinalIgnoreCase))
+        {
+            Console.Error.WriteLine($"Error: Unsupported JS generation pipeline: {pipeline}. Expected 'direct' or 'typescript'.");
+            return 1;
+        }
+
+        if (ecmaScriptTargetSpecified || tscSpecified)
+        {
+            var optionNames = new List<string>();
+            if (ecmaScriptTargetSpecified) optionNames.Add("--ecmascript-target");
+            if (tscSpecified) optionNames.Add("--tsc");
+            var verb = optionNames.Count == 1 ? "requires" : "require";
+            Console.Error.WriteLine($"Error: {string.Join(" and ", optionNames)} {verb} --pipeline typescript.");
+            return 1;
+        }
+
+        var generator = new JsSchemaCodeGenerator
+        {
+            FormatAssertionEnabled = formatAssertionEnabled
+        };
+        var result = generator.Generate(schemaPath);
+        if (!result.Success)
+        {
+            Console.Error.WriteLine($"Generation failed: {result.Error}");
+            return 1;
+        }
+
+        var validatorPath = Path.Combine(outputPath, result.FileName!);
+        File.WriteAllText(validatorPath, result.GeneratedCode!);
+        Console.WriteLine($"Generated: {validatorPath}");
+
+        if (writeRuntime)
+        {
+            var runtimePath = Path.Combine(outputPath, JsRuntime.FileName);
+            File.WriteAllText(runtimePath, JsRuntime.GetSource());
+            Console.WriteLine($"Generated: {runtimePath}");
+        }
+        return 0;
+    }
+
+    private static int HandleGenerateJsFromTypeScript(
+        string schemaPath,
+        string outputPath,
+        bool writeRuntime,
+        bool formatAssertionEnabled,
+        string ecmaScriptTarget,
+        string tscExecutable)
+    {
+        Console.WriteLine("Pipeline: TypeScript-first via tsc");
+        Console.WriteLine($"ECMAScript target: {ecmaScriptTarget}");
+
+        var generator = new TsSchemaCodeGenerator
+        {
+            FormatAssertionEnabled = formatAssertionEnabled
+        };
+        var result = generator.Generate(schemaPath);
+        if (!result.Success)
+        {
+            Console.Error.WriteLine($"Generation failed: {result.Error}");
+            return 1;
+        }
+
+        var tempPath = Path.Combine(Path.GetTempPath(), "jsv-tsgen-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempPath);
+        try
+        {
+            var validatorTsPath = Path.Combine(tempPath, result.FileName!);
+            var runtimeTsPath = Path.Combine(tempPath, TsRuntime.FileName);
+            var runtimeDeclarationPath = Path.Combine(tempPath, TsRuntime.DeclarationFileName);
+            File.WriteAllText(validatorTsPath, result.GeneratedCode!);
+            if (writeRuntime)
+            {
+                File.WriteAllText(runtimeTsPath, TsRuntime.GetSource());
+            }
+            else
+            {
+                File.WriteAllText(runtimeDeclarationPath, TsRuntime.GetDeclarationSource());
+            }
+
+            IReadOnlyList<string> sourcePaths = writeRuntime
+                ? [validatorTsPath, runtimeTsPath]
+                : [validatorTsPath, runtimeDeclarationPath];
+
+            var compilationResult = TypeScriptCompiler.Compile(
+                sourcePaths,
+                outputPath,
+                ecmaScriptTarget,
+                tscExecutable);
+            if (!compilationResult.Success)
+            {
+                Console.Error.WriteLine($"TypeScript compilation failed: {compilationResult.Error}");
+                if (!string.IsNullOrWhiteSpace(compilationResult.StandardError))
+                {
+                    Console.Error.WriteLine(compilationResult.StandardError);
+                }
+                if (!string.IsNullOrWhiteSpace(compilationResult.StandardOutput))
+                {
+                    Console.Error.WriteLine(compilationResult.StandardOutput);
+                }
+                return 1;
+            }
+
+            var validatorJsPath = Path.Combine(outputPath, Path.ChangeExtension(result.FileName!, ".js"));
+            Console.WriteLine($"Generated: {validatorJsPath}");
+            if (writeRuntime)
+            {
+                Console.WriteLine($"Generated: {Path.Combine(outputPath, JsRuntime.FileName)}");
+            }
+            return 0;
+        }
+        finally
+        {
+            try { Directory.Delete(tempPath, recursive: true); } catch { /* best effort */ }
+        }
+    }
+
+    private static int HandleGenerateTs(string[] args)
+    {
+        string? schemaPath = null;
+        string? outputPath = null;
+        var writeRuntime = true;
+        var formatAssertionEnabled = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -238,10 +479,10 @@ internal static class Program
             Directory.CreateDirectory(outputPath);
         }
 
-        Console.WriteLine($"Generating JS validator for: {schemaPath}");
+        Console.WriteLine($"Generating TS validator for: {schemaPath}");
         Console.WriteLine($"Output directory: {outputPath}");
 
-        var generator = new JsSchemaCodeGenerator
+        var generator = new TsSchemaCodeGenerator
         {
             FormatAssertionEnabled = formatAssertionEnabled
         };
@@ -258,8 +499,8 @@ internal static class Program
 
         if (writeRuntime)
         {
-            var runtimePath = Path.Combine(outputPath, JsRuntime.FileName);
-            File.WriteAllText(runtimePath, JsRuntime.GetSource());
+            var runtimePath = Path.Combine(outputPath, TsRuntime.FileName);
+            File.WriteAllText(runtimePath, TsRuntime.GetSource());
             Console.WriteLine($"Generated: {runtimePath}");
         }
         return 0;
