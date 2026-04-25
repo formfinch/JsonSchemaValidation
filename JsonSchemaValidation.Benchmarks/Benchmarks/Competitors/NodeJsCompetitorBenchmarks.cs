@@ -9,6 +9,7 @@ using FormFinch.JsonSchemaValidation.Benchmarks.Infrastructure;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.TypeScript;
 
 namespace FormFinch.JsonSchemaValidation.Benchmarks.Benchmarks.Competitors;
 
@@ -24,6 +25,7 @@ public class NodeJsCompetitorBenchmarks
 
     private NodeBenchmarkHost _ajvHost = null!;
     private NodeBenchmarkHost _formFinchJsHost = null!;
+    private NodeBenchmarkHost _formFinchTsDerivedJsHost = null!;
     private string _generatedModuleDirectory = null!;
 
     [Params(SchemaComplexity.Simple, SchemaComplexity.Medium, SchemaComplexity.Complex, SchemaComplexity.Production)]
@@ -45,16 +47,26 @@ public class NodeJsCompetitorBenchmarks
             "ff-js-bench-" + Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(_generatedModuleDirectory);
 
-        File.WriteAllText(Path.Combine(_generatedModuleDirectory, JsRuntime.FileName), JsRuntime.GetSource());
-        File.WriteAllText(Path.Combine(_generatedModuleDirectory, "validator.js"), GenerateValidatorSource(schemaJson));
+        var directDirectory = Path.Combine(_generatedModuleDirectory, "direct");
+        Directory.CreateDirectory(directDirectory);
+        File.WriteAllText(Path.Combine(directDirectory, JsRuntime.FileName), JsRuntime.GetSource());
+        File.WriteAllText(Path.Combine(directDirectory, "validator.js"), GenerateValidatorSource(schemaJson));
+
+        var typeScriptDerivedDirectory = Path.Combine(_generatedModuleDirectory, "typescript");
+        Directory.CreateDirectory(typeScriptDerivedDirectory);
+        var typeScriptDerivedModulePath = GenerateTypeScriptDerivedJavaScript(schemaJson, typeScriptDerivedDirectory);
 
         _ajvHost = new NodeBenchmarkHost();
         _ajvHost.PrepareAjv(schemaJson);
         _ajvHost.PrepareData(instanceJson);
 
         _formFinchJsHost = new NodeBenchmarkHost();
-        _formFinchJsHost.PrepareGeneratedValidator(Path.Combine(_generatedModuleDirectory, "validator.js"));
+        _formFinchJsHost.PrepareGeneratedValidator(Path.Combine(directDirectory, "validator.js"));
         _formFinchJsHost.PrepareData(instanceJson);
+
+        _formFinchTsDerivedJsHost = new NodeBenchmarkHost();
+        _formFinchTsDerivedJsHost.PrepareGeneratedValidator(typeScriptDerivedModulePath);
+        _formFinchTsDerivedJsHost.PrepareData(instanceJson);
     }
 
     [GlobalCleanup]
@@ -62,6 +74,7 @@ public class NodeJsCompetitorBenchmarks
     {
         _ajvHost?.Dispose();
         _formFinchJsHost?.Dispose();
+        _formFinchTsDerivedJsHost?.Dispose();
 
         if (!string.IsNullOrEmpty(_generatedModuleDirectory))
         {
@@ -88,6 +101,12 @@ public class NodeJsCompetitorBenchmarks
         return _formFinchJsHost.ValidatePreparedBatch(BatchSize);
     }
 
+    [Benchmark(OperationsPerInvoke = BatchSize, Description = "FormFinch TS-derived JS codegen")]
+    public int FormFinchTypeScriptDerivedJsCodegen()
+    {
+        return _formFinchTsDerivedJsHost.ValidatePreparedBatch(BatchSize);
+    }
+
     private static string GenerateValidatorSource(string schemaJson)
     {
         using var schemaDoc = JsonDocument.Parse(schemaJson);
@@ -104,5 +123,47 @@ public class NodeJsCompetitorBenchmarks
         }
 
         return result.GeneratedCode;
+    }
+
+    private static string GenerateTypeScriptDerivedJavaScript(string schemaJson, string outputDirectory)
+    {
+        using var schemaDoc = JsonDocument.Parse(schemaJson);
+        var generator = new TsSchemaCodeGenerator
+        {
+            DefaultDraft = SchemaDraft.Draft202012
+        };
+
+        var result = generator.Generate(schemaDoc.RootElement.Clone(), sourcePath: "validator.json");
+        if (!result.Success || string.IsNullOrEmpty(result.GeneratedCode))
+        {
+            throw new InvalidOperationException(
+                $"Failed to generate TS benchmark validator: {result.Error ?? "Unknown error"}");
+        }
+
+        var sourceDirectory = Path.Combine(outputDirectory, "ts-src");
+        Directory.CreateDirectory(sourceDirectory);
+        var validatorPath = Path.Combine(sourceDirectory, result.FileName!);
+        var runtimePath = Path.Combine(sourceDirectory, TsRuntime.FileName);
+        File.WriteAllText(validatorPath, result.GeneratedCode);
+        File.WriteAllText(runtimePath, TsRuntime.GetSource());
+
+        var compilationResult = TypeScriptCompiler.Compile(
+            [validatorPath, runtimePath],
+            outputDirectory,
+            ecmaScriptTarget: "ES2020");
+        if (!compilationResult.Success)
+        {
+            throw new InvalidOperationException(
+                $"Failed to compile TS benchmark validator: {compilationResult.Error}\n{compilationResult.StandardError}\n{compilationResult.StandardOutput}");
+        }
+
+        var modulePath = Path.Combine(outputDirectory, Path.ChangeExtension(result.FileName!, ".js"));
+        if (!File.Exists(modulePath))
+        {
+            throw new InvalidOperationException(
+                $"TS benchmark validator compiled successfully, but the expected module was not produced: {modulePath}");
+        }
+
+        return modulePath;
     }
 }

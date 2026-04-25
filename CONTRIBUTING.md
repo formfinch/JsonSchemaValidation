@@ -62,6 +62,15 @@ dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --filter 
 dotnet test JsonSchemaValidationTests.Stress/JsonSchemaValidationTests.Stress.csproj
 ```
 
+The optional TypeScript-first JS pipeline uses the TypeScript compiler when emitting JS from TS:
+
+```bash
+# Requires TypeScript on PATH as `tsc`, or pass --tsc <path>
+jsv-codegen generate-js -s schema.json -o ./out --pipeline typescript --ecmascript-target ES2020
+```
+
+Keep the default direct JS generator available when working on this path; it is the parity and benchmark baseline.
+
 ### Code Coverage
 
 ```bash

@@ -38,18 +38,6 @@ public sealed class JsDraft202012SuiteFixture : IDisposable
         try { Directory.Delete(_moduleRoot, recursive: true); } catch { /* best effort */ }
     }
 
-    public static string? FindTestSuitePath()
-    {
-        var dir = AppContext.BaseDirectory;
-        for (var i = 0; i < 8 && dir != null; i++)
-        {
-            var candidate = Path.Combine(dir, "submodules", "JSON-Schema-Test-Suite");
-            if (Directory.Exists(Path.Combine(candidate, "tests"))) return candidate;
-            dir = Path.GetDirectoryName(dir);
-        }
-        return null;
-    }
-
     private void WriteRegistryModule()
     {
         var registrations = BuildRemoteRegistrations();
@@ -77,7 +65,7 @@ public sealed class JsDraft202012SuiteFixture : IDisposable
 
     private List<RemoteRegistration> BuildRemoteRegistrations()
     {
-        var suitePath = FindTestSuitePath();
+        var suitePath = JsonSchemaTestSuiteHelpers.FindTestSuitePath();
         if (suitePath == null)
         {
             return [];
@@ -90,20 +78,20 @@ public sealed class JsDraft202012SuiteFixture : IDisposable
         }
 
         var pendingSchemas = new List<(Uri SchemaUri, string Content)>();
-        CollectRemotesFromPath(
+        JsonSchemaTestSuiteHelpers.CollectRemotesFromPath(
             pendingSchemas,
             Path.Combine(remotesPath, "draft2020-12"),
             "http://localhost:1234/draft2020-12/");
-        CollectRemotesFromPath(
+        JsonSchemaTestSuiteHelpers.CollectRemotesFromPath(
             pendingSchemas,
             Path.Combine(remotesPath, "draft2019-09"),
             "http://localhost:1234/draft2019-09/");
-        CollectRemotesFromPath(
+        JsonSchemaTestSuiteHelpers.CollectRemotesFromPath(
             pendingSchemas,
             remotesPath,
             "http://localhost:1234/",
             topLevelOnly: true);
-        CollectBundledDraft202012Schemas(pendingSchemas);
+        JsonSchemaTestSuiteHelpers.CollectBundledDraft202012Schemas(pendingSchemas);
 
         foreach (var (schemaUri, content) in pendingSchemas)
         {
@@ -149,197 +137,6 @@ public sealed class JsDraft202012SuiteFixture : IDisposable
         }
 
         return registrations;
-    }
-
-    private static void CollectRemotesFromPath(
-        List<(Uri SchemaUri, string Content)> schemas,
-        string path,
-        string baseUrl,
-        bool topLevelOnly = false)
-    {
-        if (!Directory.Exists(path))
-        {
-            return;
-        }
-
-        var searchOption = topLevelOnly ? SearchOption.TopDirectoryOnly : SearchOption.AllDirectories;
-        foreach (var file in Directory.GetFiles(path, "*.json", searchOption))
-        {
-            try
-            {
-                var content = File.ReadAllText(file);
-                var relativePath = Path.GetRelativePath(path, file).Replace("\\", "/");
-                var schemaUri = new Uri(baseUrl + relativePath);
-                content = InjectIdIfMissing(content, schemaUri.AbsoluteUri);
-                schemas.Add((schemaUri, content));
-                ExtractSelfContainedSubschemas(schemas, schemaUri, content);
-            }
-            catch
-            {
-                // Ignore malformed or unreadable remotes here; the suite cases
-                // that depend on them will still surface failures if needed.
-            }
-        }
-    }
-
-    private static void CollectBundledDraft202012Schemas(List<(Uri SchemaUri, string Content)> schemas)
-    {
-        var repoRoot = FindRepoRoot();
-        if (repoRoot == null)
-        {
-            return;
-        }
-
-        var dataPath = Path.Combine(repoRoot, "JsonSchemaValidation", "Draft202012", "Data");
-        if (!Directory.Exists(dataPath))
-        {
-            return;
-        }
-
-        foreach (var file in Directory.GetFiles(dataPath, "*.json", SearchOption.TopDirectoryOnly))
-        {
-            try
-            {
-                var content = File.ReadAllText(file);
-                using var doc = JsonDocument.Parse(content);
-                if (!doc.RootElement.TryGetProperty("$id", out var idElement) ||
-                    idElement.ValueKind != JsonValueKind.String ||
-                    string.IsNullOrEmpty(idElement.GetString()) ||
-                    !Uri.TryCreate(idElement.GetString(), UriKind.Absolute, out var schemaUri))
-                {
-                    continue;
-                }
-
-                schemas.Add((schemaUri, content));
-            }
-            catch
-            {
-                // Best effort preload; suite failures remain visible if this misses something.
-            }
-        }
-    }
-
-    private static string? FindRepoRoot()
-    {
-        var dir = AppContext.BaseDirectory;
-        for (var i = 0; i < 8 && dir != null; i++)
-        {
-            if (Directory.Exists(Path.Combine(dir, "JsonSchemaValidation")) &&
-                Directory.Exists(Path.Combine(dir, "JsonSchemaValidation.CodeGenerator.Tests")))
-            {
-                return dir;
-            }
-            dir = Path.GetDirectoryName(dir);
-        }
-        return null;
-    }
-
-    private static string InjectIdIfMissing(string content, string id)
-    {
-        try
-        {
-            // Parse to a mutable JsonNode tree, add $id first (so it appears
-            // near the top in re-serialized form), and emit back. Avoids the
-            // regex-insertion-with-trailing-comma fragility of string splicing
-            // — in particular, schemas like {"$schema": "..."} with no other
-            // properties used to produce invalid "...,}" output.
-            var node = System.Text.Json.Nodes.JsonNode.Parse(content);
-            if (node is not System.Text.Json.Nodes.JsonObject obj || obj.ContainsKey("$id"))
-            {
-                return content;
-            }
-
-            var reordered = new System.Text.Json.Nodes.JsonObject();
-            if (obj.ContainsKey("$schema"))
-            {
-                var schemaNode = obj["$schema"];
-                obj.Remove("$schema");
-                reordered["$schema"] = schemaNode?.DeepClone();
-            }
-            reordered["$id"] = id;
-            foreach (var (key, value) in obj.ToList())
-            {
-                reordered[key] = value?.DeepClone();
-            }
-            return reordered.ToJsonString();
-        }
-        catch
-        {
-            return content;
-        }
-    }
-
-    private static void ExtractSelfContainedSubschemas(
-        List<(Uri SchemaUri, string Content)> schemas,
-        Uri baseUri,
-        string content)
-    {
-        try
-        {
-            using var doc = JsonDocument.Parse(content);
-            var root = doc.RootElement;
-            if (root.ValueKind != JsonValueKind.Object)
-            {
-                return;
-            }
-
-            if (root.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
-            {
-                foreach (var def in defs.EnumerateObject())
-                {
-                    var subschemaContent = def.Value.GetRawText();
-                    if (!subschemaContent.Contains("\"$ref\"", StringComparison.Ordinal) &&
-                        !subschemaContent.Contains("\"$dynamicRef\"", StringComparison.Ordinal))
-                    {
-                        schemas.Add((new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#/$defs/{def.Name}"), subschemaContent));
-                    }
-                }
-            }
-
-            ExtractSelfContainedAnchors(schemas, baseUri, root);
-        }
-        catch
-        {
-            // Ignore parse failures during best-effort fragment extraction.
-        }
-    }
-
-    private static void ExtractSelfContainedAnchors(
-        List<(Uri SchemaUri, string Content)> schemas,
-        Uri baseUri,
-        JsonElement element)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-        {
-            return;
-        }
-
-        var content = element.GetRawText();
-        if (!content.Contains("\"$ref\"", StringComparison.Ordinal) &&
-            !content.Contains("\"$dynamicRef\"", StringComparison.Ordinal))
-        {
-            if (element.TryGetProperty("$anchor", out var anchor) &&
-                anchor.ValueKind == JsonValueKind.String &&
-                !string.IsNullOrEmpty(anchor.GetString()))
-            {
-                schemas.Add((new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{anchor.GetString()}"), content));
-            }
-
-            if (element.TryGetProperty("$dynamicAnchor", out var dynamicAnchor) &&
-                dynamicAnchor.ValueKind == JsonValueKind.String &&
-                !string.IsNullOrEmpty(dynamicAnchor.GetString()))
-            {
-                schemas.Add((new Uri($"{baseUri.GetLeftPart(UriPartial.Query)}#{dynamicAnchor.GetString()}"), content));
-            }
-        }
-
-        if (element.TryGetProperty("$defs", out var defs) && defs.ValueKind == JsonValueKind.Object)
-        {
-            foreach (var def in defs.EnumerateObject())
-            {
-                ExtractSelfContainedAnchors(schemas, baseUri, def.Value);
-            }
-        }
     }
 
     private sealed record RemoteRegistration(string Uri, string ModuleName);
@@ -490,15 +287,15 @@ public class JsTestSuiteRunner : IClassFixture<JsDraft202012SuiteFixture>
     public void Draft4(TestCase tc) => RunCase(tc);
 
     public static IEnumerable<object[]> Draft202012Cases() =>
-        EnumerateKeywordCases("draft2020-12", Draft202012Keywords, SchemaDraft.Draft202012, formatAssertionEnabled: false)
+        JsonSchemaTestSuiteHelpers.EnumerateKeywordCases("draft2020-12", Draft202012Keywords, SchemaDraft.Draft202012, formatAssertionEnabled: false)
             .Select(tc => new object[] { tc });
 
     public static IEnumerable<object[]> Draft202012FormatAssertionCases() =>
-        EnumerateKeywordCases("draft2020-12", Draft202012FormatAssertionKeywords, SchemaDraft.Draft202012, formatAssertionEnabled: true)
+        JsonSchemaTestSuiteHelpers.EnumerateKeywordCases("draft2020-12", Draft202012FormatAssertionKeywords, SchemaDraft.Draft202012, formatAssertionEnabled: true)
             .Select(tc => new object[] { tc });
 
     public static IEnumerable<object[]> Draft4Cases() =>
-        EnumerateKeywordCases("draft4", Draft4Keywords, SchemaDraft.Draft4, formatAssertionEnabled: false)
+        JsonSchemaTestSuiteHelpers.EnumerateKeywordCases("draft4", Draft4Keywords, SchemaDraft.Draft4, formatAssertionEnabled: false)
             .Select(tc => new object[] { tc });
 
     private void RunCase(TestCase tc)
@@ -548,69 +345,6 @@ public class JsTestSuiteRunner : IClassFixture<JsDraft202012SuiteFixture>
         {
             try { File.Delete(validatorPath); } catch { /* best effort */ }
         }
-    }
-
-    private static IEnumerable<TestCase> EnumerateKeywordCases(
-        string draftFolder,
-        IEnumerable<string> keywords,
-        SchemaDraft draft,
-        bool formatAssertionEnabled)
-    {
-        var suitePath = JsDraft202012SuiteFixture.FindTestSuitePath();
-        if (suitePath == null)
-        {
-            yield return TestCase.MissingSuite(draft, formatAssertionEnabled);
-            yield break;
-        }
-
-        var root = Path.Combine(suitePath, "tests", draftFolder);
-        if (!Directory.Exists(root))
-        {
-            yield break;
-        }
-
-        var wanted = keywords
-            .Select(NormalizeKeyword)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var file in Directory.GetFiles(root, "*.json", SearchOption.AllDirectories))
-        {
-            var relative = Path.GetRelativePath(root, file).Replace("\\", "/");
-            var relativeNoExt = NormalizeKeyword(relative);
-            if (!wanted.Contains(relativeNoExt))
-            {
-                continue;
-            }
-
-            var json = File.ReadAllText(file);
-            using var doc = JsonDocument.Parse(json);
-            foreach (var group in doc.RootElement.EnumerateArray())
-            {
-                var groupDesc = group.GetProperty("description").GetString() ?? string.Empty;
-                var schema = group.GetProperty("schema").GetRawText();
-                foreach (var test in group.GetProperty("tests").EnumerateArray())
-                {
-                    yield return new TestCase(
-                        draft,
-                        relative,
-                        relativeNoExt,
-                        groupDesc,
-                        test.GetProperty("description").GetString() ?? string.Empty,
-                        schema,
-                        test.GetProperty("data").GetRawText(),
-                        test.GetProperty("valid").GetBoolean(),
-                        formatAssertionEnabled);
-                }
-            }
-        }
-    }
-
-    private static string NormalizeKeyword(string keyword)
-    {
-        var normalized = keyword.Replace("\\", "/").TrimStart('/');
-        return normalized.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
-            ? normalized[..^5]
-            : normalized;
     }
 
     public sealed record TestCase(
