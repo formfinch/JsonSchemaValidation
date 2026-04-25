@@ -21,6 +21,7 @@
     </PackageReference>
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.CSharp\JsonSchemaValidation.CodeGeneration.CSharp.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration\JsonSchemaValidation.CodeGeneration.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.JavaScript\JsonSchemaValidation.CodeGeneration.JavaScript.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />

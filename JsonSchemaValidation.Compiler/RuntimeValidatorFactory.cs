@@ -5,7 +5,7 @@ using System.Reflection;
 using System.Runtime.Loader;
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions;
-using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.Common;
 using FormFinch.JsonSchemaValidation.CompiledValidators;
@@ -22,7 +22,7 @@ namespace FormFinch.JsonSchemaValidation.Compiler;
 /// </summary>
 internal sealed class RuntimeValidatorFactory : IDisposable
 {
-    private readonly SchemaCodeGenerator _codeGenerator = new() { UseGeneratedRegex = false };
+    private readonly CSharpSchemaCodeGenerator _codeGenerator = new() { UseGeneratedRegex = false };
     private readonly Dictionary<string, ICompiledValidator> _cache = new(StringComparer.Ordinal);
     private readonly List<AssemblyLoadContext> _loadContexts = [];
     private readonly object _lock = new();

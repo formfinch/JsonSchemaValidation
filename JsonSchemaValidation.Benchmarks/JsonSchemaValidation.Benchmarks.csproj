@@ -13,6 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation.Compiler\JsonSchemaValidation.Compiler.csproj" />
+    <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.CSharp\JsonSchemaValidation.CodeGeneration.CSharp.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.JavaScript\JsonSchemaValidation.CodeGeneration.JavaScript.csproj" />
   </ItemGroup>
 

@@ -19,6 +19,16 @@ public enum SchemaDraft
 }
 
 /// <summary>
+/// Describes how a schema draft was selected during draft detection.
+/// </summary>
+public enum DraftDetectionSource
+{
+    ExplicitSchemaUri,
+    DefaultDraft,
+    InferredSchemaUri
+}
+
+/// <summary>
 /// Result of draft detection.
 /// </summary>
 public readonly struct DraftDetectionResult
@@ -43,19 +53,31 @@ public readonly struct DraftDetectionResult
     /// </summary>
     public string? SchemaUri { get; }
 
-    private DraftDetectionResult(bool success, SchemaDraft draft, string? errorMessage, string? schemaUri)
+    /// <summary>
+    /// How the detected draft was selected.
+    /// </summary>
+    public DraftDetectionSource Source { get; }
+
+    private DraftDetectionResult(bool success, SchemaDraft draft, string? errorMessage, string? schemaUri, DraftDetectionSource source)
     {
         Success = success;
         Draft = draft;
         ErrorMessage = errorMessage;
         SchemaUri = schemaUri;
+        Source = source;
     }
 
+    public static DraftDetectionResult Detected(
+        SchemaDraft draft,
+        string? schemaUri,
+        DraftDetectionSource source)
+        => new(true, draft, null, schemaUri, source);
+
     public static DraftDetectionResult Detected(SchemaDraft draft, string schemaUri)
-        => new(true, draft, null, schemaUri);
+        => Detected(draft, schemaUri, DraftDetectionSource.ExplicitSchemaUri);
 
     public static DraftDetectionResult Error(string message, string? schemaUri = null)
-        => new(false, default, message, schemaUri);
+        => new(false, default, message, schemaUri, default);
 }
 
 /// <summary>
@@ -106,7 +128,7 @@ public static class SchemaDraftDetector
         if (schema.ValueKind == JsonValueKind.True || schema.ValueKind == JsonValueKind.False)
         {
             // Boolean schemas without $schema - use fallback (defaults to Draft 2020-12)
-            return DraftDetectionResult.Detected(fallbackDraft, "(boolean schema)");
+            return DraftDetectionResult.Detected(fallbackDraft, null, DraftDetectionSource.DefaultDraft);
         }
 
         if (schema.ValueKind != JsonValueKind.Object)
@@ -117,7 +139,7 @@ public static class SchemaDraftDetector
         if (!schema.TryGetProperty("$schema", out var schemaProperty))
         {
             // Missing $schema uses fallback draft
-            return DraftDetectionResult.Detected(fallbackDraft, "(default - no $schema)");
+            return DraftDetectionResult.Detected(fallbackDraft, null, DraftDetectionSource.DefaultDraft);
         }
 
         if (schemaProperty.ValueKind != JsonValueKind.String)
@@ -130,19 +152,19 @@ public static class SchemaDraftDetector
         if (string.IsNullOrEmpty(schemaUri))
         {
             // Empty $schema uses fallback draft
-            return DraftDetectionResult.Detected(fallbackDraft, "(default - empty $schema)");
+            return DraftDetectionResult.Detected(fallbackDraft, null, DraftDetectionSource.DefaultDraft);
         }
 
         if (SchemaUriToVersion.TryGetValue(schemaUri, out var draft))
         {
-            return DraftDetectionResult.Detected(draft, schemaUri);
+            return DraftDetectionResult.Detected(draft, schemaUri, DraftDetectionSource.ExplicitSchemaUri);
         }
 
         // Try to infer draft from URI patterns (for custom metaschemas that extend standard drafts)
         var inferredDraft = InferDraftFromUri(schemaUri);
         if (inferredDraft.HasValue)
         {
-            return DraftDetectionResult.Detected(inferredDraft.Value, schemaUri);
+            return DraftDetectionResult.Detected(inferredDraft.Value, schemaUri, DraftDetectionSource.InferredSchemaUri);
         }
 
         return DraftDetectionResult.Error(

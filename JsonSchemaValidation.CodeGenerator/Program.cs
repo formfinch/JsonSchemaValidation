@@ -3,7 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
-using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
@@ -177,7 +177,7 @@ internal static class Program
         Console.WriteLine($"Namespace: {namespaceName}");
 
         // Use GeneratedRegex for AOT compilation - source generator will provide implementations
-        var generator = new SchemaCodeGenerator { UseGeneratedRegex = true };
+        var generator = new CSharpSchemaCodeGenerator { UseGeneratedRegex = true };
         var result = generator.Generate(schemaPath, namespaceName, className);
 
         if (result.Success)
@@ -574,7 +574,7 @@ internal static class Program
         Console.WriteLine();
 
         // Use GeneratedRegex for AOT compilation - source generator will provide implementations
-        var generator = new SchemaCodeGenerator { UseGeneratedRegex = true };
+        var generator = new CSharpSchemaCodeGenerator { UseGeneratedRegex = true };
         var successCount = 0;
         var failCount = 0;
 
@@ -718,7 +718,7 @@ internal static class Program
         }
 
         // Use GeneratedRegex for AOT compilation - source generator will provide implementations
-        var generator = new SchemaCodeGenerator { UseGeneratedRegex = true };
+        var generator = new CSharpSchemaCodeGenerator { UseGeneratedRegex = true };
         var uniqueSchemas = new Dictionary<string, (JsonElement Schema, string DraftName)>(StringComparer.Ordinal);
         var successCount = 0;
         var failCount = 0;

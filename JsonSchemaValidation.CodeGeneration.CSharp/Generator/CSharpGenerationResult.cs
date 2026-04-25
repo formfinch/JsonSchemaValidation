@@ -1,22 +1,24 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
-namespace FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+namespace FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Generator;
 
 /// <summary>
-/// Result of code generation.
+/// Single-source result returned by the C# schema generator facade.
 /// </summary>
-[Obsolete("Use FormFinch.JsonSchemaValidation.CodeGeneration.Abstractions.CodeGenerationResult; retained only for the JS/TS target migrations.")]
-public sealed class GenerationResult
+public sealed class CSharpGenerationResult
 {
     public bool Success { get; init; }
+
     public string? GeneratedCode { get; init; }
+
     public string? FileName { get; init; }
+
     public string? Error { get; init; }
 
-    public static GenerationResult Succeeded(string generatedCode, string fileName)
+    public static CSharpGenerationResult Succeeded(string generatedCode, string fileName)
     {
-        return new GenerationResult
+        return new CSharpGenerationResult
         {
             Success = true,
             GeneratedCode = generatedCode,
@@ -24,9 +26,9 @@ public sealed class GenerationResult
         };
     }
 
-    public static GenerationResult Failed(string error)
+    public static CSharpGenerationResult Failed(string error)
     {
-        return new GenerationResult
+        return new CSharpGenerationResult
         {
             Success = false,
             Error = error

@@ -72,6 +72,7 @@
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests" />
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Tests.Stress" />
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.CodeGeneration" />
+    <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.CodeGeneration.CSharp" />
     <InternalsVisibleTo Include="FormFinch.JsonSchemaValidation.Compiler" />
     <InternalsVisibleTo Include="JsonSchemaValidation.Benchmarks" />
   </ItemGroup>
