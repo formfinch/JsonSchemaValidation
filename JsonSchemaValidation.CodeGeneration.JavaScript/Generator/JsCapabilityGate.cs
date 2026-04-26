@@ -154,20 +154,33 @@ public static class JsCapabilityGate
     /// </summary>
     public static string? CheckSupported(JsonElement root, SchemaDraft detectedDraft)
     {
+        return CheckSupport(root, detectedDraft)?.Reason;
+    }
+
+    /// <summary>
+    /// Returns structured rejection details if the schema uses deferred features,
+    /// or null if the schema is emit-safe for the MVP JS target.
+    /// </summary>
+    public static JsCapabilityGateRejection? CheckSupport(JsonElement root, SchemaDraft detectedDraft)
+    {
         if (!SupportedDrafts.Contains(detectedDraft))
         {
-            return $"JS target MVP supports Draft 4, Draft 2019-09, and Draft 2020-12 only; detected {detectedDraft}. " +
-                   "Other drafts are tracked as follow-up work.";
+            return new JsCapabilityGateRejection
+            {
+                FeatureName = "$schema",
+                Reason = $"JS target MVP supports Draft 4, Draft 2019-09, and Draft 2020-12 only; detected {detectedDraft}. " +
+                         "Other drafts are tracked as follow-up work."
+            };
         }
-        return Walk(root, detectedDraft);
+        return Walk(root, detectedDraft, string.Empty);
     }
 
-    private static string? Walk(JsonElement node, SchemaDraft draft)
+    private static JsCapabilityGateRejection? Walk(JsonElement node, SchemaDraft draft, string pointer)
     {
-        return node.ValueKind == JsonValueKind.Object ? WalkObject(node, draft) : null;
+        return node.ValueKind == JsonValueKind.Object ? WalkObject(node, draft, pointer) : null;
     }
 
-    private static string? WalkObject(JsonElement node, SchemaDraft draft)
+    private static JsCapabilityGateRejection? WalkObject(JsonElement node, SchemaDraft draft, string pointer)
     {
         var deferred = DeferredPerDraft[draft];
         var schemaValued = SchemaValuedPerDraft[draft];
@@ -193,8 +206,13 @@ public static class JsCapabilityGate
             }
             if (deferred.Contains(prop.Name))
             {
-                return $"JS target MVP does not support '{prop.Name}'. " +
-                       "Deferred to follow-up: $recursiveRef/$recursiveAnchor.";
+                return new JsCapabilityGateRejection
+                {
+                    FeatureName = prop.Name,
+                    JsonPointer = AppendPointer(pointer, prop.Name),
+                    Reason = $"JS target MVP does not support '{prop.Name}'. " +
+                             "Deferred to follow-up: $recursiveRef/$recursiveAnchor."
+                };
             }
 
             // Draft-specific "items": single schema in 2020-12; single or array in Draft 4.
@@ -204,12 +222,12 @@ public static class JsCapabilityGate
             {
                 if (draft == SchemaDraft.Draft4 && prop.Value.ValueKind == JsonValueKind.Array)
                 {
-                    var rejection = WalkSchemaArray(prop.Value, draft);
+                    var rejection = WalkSchemaArray(prop.Value, draft, AppendPointer(pointer, prop.Name));
                     if (rejection != null) return rejection;
                 }
                 else
                 {
-                    var rejection = Walk(prop.Value, draft);
+                    var rejection = Walk(prop.Value, draft, AppendPointer(pointer, prop.Name));
                     if (rejection != null) return rejection;
                 }
                 continue;
@@ -228,7 +246,7 @@ public static class JsCapabilityGate
                         dep.Value.ValueKind == JsonValueKind.True ||
                         dep.Value.ValueKind == JsonValueKind.False)
                     {
-                        var rejection = Walk(dep.Value, draft);
+                        var rejection = Walk(dep.Value, draft, AppendPointer(AppendPointer(pointer, prop.Name), dep.Name));
                         if (rejection != null) return rejection;
                     }
                 }
@@ -237,19 +255,19 @@ public static class JsCapabilityGate
 
             if (schemaValued.Contains(prop.Name))
             {
-                var rejection = Walk(prop.Value, draft);
+                var rejection = Walk(prop.Value, draft, AppendPointer(pointer, prop.Name));
                 if (rejection != null) return rejection;
             }
             else if (schemaArray.Contains(prop.Name) &&
                      prop.Value.ValueKind == JsonValueKind.Array)
             {
-                var rejection = WalkSchemaArray(prop.Value, draft);
+                var rejection = WalkSchemaArray(prop.Value, draft, AppendPointer(pointer, prop.Name));
                 if (rejection != null) return rejection;
             }
             else if (schemaMap.Contains(prop.Name) &&
                      prop.Value.ValueKind == JsonValueKind.Object)
             {
-                var rejection = WalkSchemaMap(prop.Value, draft);
+                var rejection = WalkSchemaMap(prop.Value, draft, AppendPointer(pointer, prop.Name));
                 if (rejection != null) return rejection;
             }
             // All other property values (data, annotations, unknown-in-this-draft
@@ -258,24 +276,48 @@ public static class JsCapabilityGate
         return null;
     }
 
-    private static string? WalkSchemaArray(JsonElement array, SchemaDraft draft)
+    private static JsCapabilityGateRejection? WalkSchemaArray(JsonElement array, SchemaDraft draft, string pointer)
     {
+        var index = 0;
         foreach (var item in array.EnumerateArray())
         {
-            var rejection = Walk(item, draft);
+            var rejection = Walk(item, draft, AppendPointer(pointer, index.ToString(System.Globalization.CultureInfo.InvariantCulture)));
             if (rejection != null) return rejection;
+            index++;
         }
         return null;
     }
 
-    private static string? WalkSchemaMap(JsonElement map, SchemaDraft draft)
+    private static JsCapabilityGateRejection? WalkSchemaMap(JsonElement map, SchemaDraft draft, string pointer)
     {
         foreach (var entry in map.EnumerateObject())
         {
-            var rejection = Walk(entry.Value, draft);
+            var rejection = Walk(entry.Value, draft, AppendPointer(pointer, entry.Name));
             if (rejection != null) return rejection;
         }
         return null;
     }
 
+    private static string AppendPointer(string pointer, string segment)
+    {
+        return $"{pointer}/{EscapePointerSegment(segment)}";
+    }
+
+    private static string EscapePointerSegment(string segment)
+    {
+        return segment.Replace("~", "~0", StringComparison.Ordinal).Replace("/", "~1", StringComparison.Ordinal);
+    }
+
+}
+
+/// <summary>
+/// Structured details for a JavaScript capability gate rejection.
+/// </summary>
+public sealed class JsCapabilityGateRejection
+{
+    public required string FeatureName { get; init; }
+
+    public string? JsonPointer { get; init; }
+
+    public required string Reason { get; init; }
 }
