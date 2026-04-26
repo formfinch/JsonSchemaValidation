@@ -6,10 +6,9 @@ using System.Text.Json;
 using BenchmarkDotNet.Attributes;
 using FormFinch.JsonSchemaValidation.Benchmarks.Config;
 using FormFinch.JsonSchemaValidation.Benchmarks.Infrastructure;
-using FormFinch.JsonSchemaValidation.CodeGeneration.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Abstractions;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
-using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
-using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript;
 using FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript;
 
 namespace FormFinch.JsonSchemaValidation.Benchmarks.Benchmarks.Competitors;
@@ -50,8 +49,10 @@ public class NodeJsCompetitorBenchmarks
 
         var directDirectory = Path.Combine(_generatedModuleDirectory, "direct");
         Directory.CreateDirectory(directDirectory);
-        File.WriteAllText(Path.Combine(directDirectory, JsRuntime.FileName), JsRuntime.GetSource());
-        File.WriteAllText(Path.Combine(directDirectory, "validator.js"), GenerateValidatorSource(schemaJson));
+        foreach (var artifact in GenerateDirectJavaScriptArtifacts(schemaJson))
+        {
+            File.WriteAllText(Path.Combine(directDirectory, artifact.RelativePath), artifact.Content);
+        }
 
         var typeScriptDerivedDirectory = Path.Combine(_generatedModuleDirectory, "typescript");
         Directory.CreateDirectory(typeScriptDerivedDirectory);
@@ -108,22 +109,33 @@ public class NodeJsCompetitorBenchmarks
         return _formFinchTsDerivedJsHost.ValidatePreparedBatch(BatchSize);
     }
 
-    private static string GenerateValidatorSource(string schemaJson)
+    private static IReadOnlyList<GeneratedArtifact> GenerateDirectJavaScriptArtifacts(string schemaJson)
     {
         using var schemaDoc = JsonDocument.Parse(schemaJson);
-        var generator = new JsSchemaCodeGenerator
+        var target = new JavaScriptCodeGenerationTarget();
+        var result = target.GenerateAsync(new CodeGenerationRequest
         {
-            DefaultDraft = SchemaDraft.Draft202012
-        };
-
-        var result = generator.Generate(schemaDoc.RootElement.Clone(), sourcePath: "benchmark-schema.json");
-        if (!result.Success || string.IsNullOrEmpty(result.GeneratedCode))
+            Schema = schemaDoc.RootElement.Clone(),
+            Options = new JavaScriptCodeGenerationOptions
+            {
+                DefaultDraft = SchemaDraft.Draft202012,
+                SourcePath = "benchmark-schema.json",
+                OutputHints = new CodeGenerationOutputHints
+                {
+                    BaseFileName = "validator"
+                }
+            }
+        }).GetAwaiter().GetResult();
+        if (!result.Success)
         {
+            var message = result.Diagnostics.Count > 0
+                ? string.Join(Environment.NewLine, result.Diagnostics.Select(diagnostic => diagnostic.Message))
+                : "Unknown error";
             throw new InvalidOperationException(
-                $"Failed to generate JS benchmark validator: {result.Error ?? "Unknown error"}");
+                $"Failed to generate JS benchmark validator: {message}");
         }
 
-        return result.GeneratedCode;
+        return result.Artifacts;
     }
 
     private static string GenerateTypeScriptDerivedJavaScript(string schemaJson, string outputDirectory)
