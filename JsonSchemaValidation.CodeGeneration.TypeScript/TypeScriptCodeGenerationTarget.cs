@@ -139,10 +139,26 @@ public sealed class TypeScriptCodeGenerationTarget : CodeGenerationTarget<TypeSc
 
         if (options.EmitSupportArtifacts)
         {
+            string runtimeSource;
+            try
+            {
+                runtimeSource = TsRuntime.GetSource();
+            }
+            catch (Exception ex)
+            {
+                return ValueTask.FromResult(CodeGenerationResult.Failed(new CodeGenerationDiagnostic
+                {
+                    Severity = CodeGenerationDiagnosticSeverity.Error,
+                    Code = "typescript.runtime-generation-failed",
+                    Message = $"TypeScript runtime artifact generation failed: {ex.Message}",
+                    TargetId = Descriptor.Id
+                }));
+            }
+
             artifacts.Add(new GeneratedArtifact
             {
                 RelativePath = TsRuntime.FileName,
-                Content = TsRuntime.GetSource(),
+                Content = runtimeSource,
                 Kind = GeneratedArtifactKind.Runtime,
                 Role = GeneratedArtifactRole.Support,
                 MediaType = "text/typescript"
