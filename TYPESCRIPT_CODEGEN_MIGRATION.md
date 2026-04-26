@@ -17,6 +17,8 @@ jsv-codegen generate-js -s schema.json -o ./out --pipeline typescript --ecmascri
 
 The TypeScript path has its own orchestration, capability gate, reachability pass, context, literal helper, and keyword generator classes. The first implementation deliberately keeps generated validator semantics comparable with the direct JavaScript emitter so parity and performance comparisons remain meaningful.
 
+The TypeScript generator now lives in the peer target assembly `FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript`. The JavaScript target assembly no longer contains the TypeScript generator namespace or source folder.
+
 ## Source Of Truth
 
 Short term, the canonical source remains the current schema analysis and the TS keyword emitter set. The TS path emits TypeScript-compatible ESM source with typed exported validator signatures.
@@ -31,6 +33,8 @@ The IR option is cleaner long term, but larger. The current implementation prese
 ## Runtime
 
 `jsv-runtime.ts` is currently derived from `jsv-runtime.js` and marked `// @ts-nocheck`. This keeps the stable JS runtime ABI intact and allows `tsc` to produce `jsv-runtime.js` for the requested ECMAScript target.
+
+Because of that transitional runtime projection, the TypeScript target assembly still references `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript`. This dependency is limited to `TsRuntime` and should be revisited with the runtime ownership work tracked for #42.
 
 Follow-up work should convert the runtime to TS-authored source with explicit class fields, exported interfaces for registry/scope/evaluated-state shapes, and generated `.d.ts` coverage.
 

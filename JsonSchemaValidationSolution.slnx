@@ -10,5 +10,6 @@
   <Project Path="JsonSchemaValidation.CodeGeneration/JsonSchemaValidation.CodeGeneration.csproj" />
   <Project Path="JsonSchemaValidation.CodeGeneration.CSharp/JsonSchemaValidation.CodeGeneration.CSharp.csproj" />
   <Project Path="JsonSchemaValidation.CodeGeneration.JavaScript/JsonSchemaValidation.CodeGeneration.JavaScript.csproj" />
+  <Project Path="JsonSchemaValidation.CodeGeneration.TypeScript/JsonSchemaValidation.CodeGeneration.TypeScript.csproj" />
   <Project Path="JsonSchemaValidation.Compiler/JsonSchemaValidation.Compiler.csproj" />
 </Solution>
