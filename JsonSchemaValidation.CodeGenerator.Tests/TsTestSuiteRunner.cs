@@ -4,7 +4,7 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.TypeScript;
+using FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript;
 using Jint;
 using Xunit;
 
