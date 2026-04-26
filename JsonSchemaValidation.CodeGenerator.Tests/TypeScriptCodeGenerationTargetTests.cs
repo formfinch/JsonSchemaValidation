@@ -122,6 +122,31 @@ public sealed class TypeScriptCodeGenerationTargetTests
     }
 
     [Fact]
+    public async Task GenerateAsync_OutputHintWithPathSegments_SanitizesPrimaryArtifactName()
+    {
+        using var doc = JsonDocument.Parse("""{"type":"string"}""");
+        var target = new TypeScriptCodeGenerationTarget();
+        var request = new CodeGenerationRequest
+        {
+            Schema = doc.RootElement,
+            Options = new TypeScriptCodeGenerationOptions
+            {
+                EmitSupportArtifacts = false,
+                OutputHints = new CodeGenerationOutputHints
+                {
+                    BaseFileName = "../nested/bad:name.js"
+                }
+            }
+        };
+
+        var result = await target.GenerateAsync(request);
+
+        Assert.True(result.Success);
+        var artifact = Assert.Single(result.Artifacts);
+        Assert.Equal("bad_name.ts", artifact.RelativePath);
+    }
+
+    [Fact]
     public async Task GenerateAsync_InvalidSchema_ReturnsGenerationDiagnostic()
     {
         using var doc = JsonDocument.Parse("42");

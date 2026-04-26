@@ -197,6 +197,23 @@ public sealed class TypeScriptCodeGenerationTarget : CodeGenerationTarget<TypeSc
             return generatedFileName ?? "validator.ts";
         }
 
-        return Path.HasExtension(baseName) ? baseName : $"{baseName}.ts";
+        var fileName = Path.GetFileName(baseName);
+        if (string.IsNullOrWhiteSpace(fileName) || fileName is "." or "..")
+        {
+            fileName = "validator";
+        }
+
+        var invalidCharacters = Path.GetInvalidFileNameChars();
+        var sanitizedCharacters = fileName.Select(c =>
+            invalidCharacters.Contains(c) || c is '/' or '\\' or ':' ? '_' : c);
+        fileName = new string(sanitizedCharacters.ToArray()).Trim('.', ' ');
+        if (string.IsNullOrWhiteSpace(fileName) || fileName is "." or "..")
+        {
+            fileName = "validator";
+        }
+
+        return string.Equals(Path.GetExtension(fileName), ".ts", StringComparison.OrdinalIgnoreCase)
+            ? fileName
+            : Path.ChangeExtension(fileName, ".ts");
     }
 }
