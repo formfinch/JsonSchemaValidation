@@ -3,10 +3,10 @@
 // See LICENSE file in the project root for full license information.
 using System.Text;
 using System.Text.Json;
-using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Generator;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Abstractions;
+using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp;
+using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
-using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Generator;
-using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
 using FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript;
 using FormFinch.JsonSchemaValidation.Common;
 
@@ -14,7 +14,16 @@ namespace FormFinch.JsonSchemaValidation.CodeGenerator;
 
 internal static class Program
 {
-    private static int Main(string[] args)
+    private const string CSharpTargetId = "csharp";
+    private const string JavaScriptTargetId = "javascript";
+    private const string TypeScriptTargetId = "typescript";
+
+    private static async Task<int> Main(string[] args)
+    {
+        return await RunAsync(args);
+    }
+
+    internal static async Task<int> RunAsync(string[] args)
     {
         if (args.Length == 0)
         {
@@ -22,20 +31,21 @@ internal static class Program
             return 1;
         }
 
+        var targets = CreateTargetRegistry();
         var command = args[0].ToLowerInvariant();
         var remainingArgs = args.Skip(1).ToArray();
 
-        return command switch
+        return await (command switch
         {
-            "generate" => HandleGenerate(remainingArgs),
-            "generate-js" => HandleGenerateJs(remainingArgs),
-            "generate-ts" => HandleGenerateTs(remainingArgs),
-            "generate-metaschemas" => HandleGenerateMetaschemas(remainingArgs),
-            "compile-test-schemas" => HandleCompileTestSchemas(remainingArgs),
-            "analyze" => HandleAnalyze(remainingArgs),
-            "--help" or "-h" or "help" => PrintUsage(),
-            _ => PrintUsage()
-        };
+            "generate" => HandleGenerateAsync(remainingArgs, targets),
+            "generate-js" => HandleGenerateJsAsync(remainingArgs, targets),
+            "generate-ts" => HandleGenerateTsAsync(remainingArgs, targets),
+            "generate-metaschemas" => HandleGenerateMetaschemasAsync(remainingArgs, targets),
+            "compile-test-schemas" => HandleCompileTestSchemasAsync(remainingArgs, targets),
+            "analyze" => Task.FromResult(HandleAnalyze(remainingArgs)),
+            "--help" or "-h" or "help" => Task.FromResult(PrintUsage()),
+            _ => Task.FromResult(PrintUsage())
+        });
     }
 
     private static int PrintUsage()
@@ -112,7 +122,9 @@ internal static class Program
         return 1;
     }
 
-    private static int HandleGenerate(string[] args)
+    private static async Task<int> HandleGenerateAsync(
+        string[] args,
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets)
     {
         string? schemaPath = null;
         string? outputPath = null;
@@ -176,23 +188,23 @@ internal static class Program
         Console.WriteLine($"Output directory: {outputPath}");
         Console.WriteLine($"Namespace: {namespaceName}");
 
-        // Use GeneratedRegex for AOT compilation - source generator will provide implementations
-        var generator = new CSharpSchemaCodeGenerator { UseGeneratedRegex = true };
-        var result = generator.Generate(schemaPath, namespaceName, className);
-
-        if (result.Success)
+        var options = new CSharpCodeGenerationOptions
         {
-            var fullOutputPath = Path.Combine(outputPath, result.FileName!);
-            File.WriteAllText(fullOutputPath, result.GeneratedCode);
-            Console.WriteLine($"Generated: {fullOutputPath}");
-            return 0;
-        }
+            SourcePath = schemaPath,
+            UseGeneratedRegex = true,
+            OutputHints = new CodeGenerationOutputHints
+            {
+                NamespaceName = namespaceName,
+                TypeName = className
+            }
+        };
 
-        Console.Error.WriteLine($"Generation failed: {result.Error}");
-        return 1;
+        return await GenerateWithTargetAsync(targets, CSharpTargetId, schemaPath, outputPath, options);
     }
 
-    private static int HandleGenerateJs(string[] args)
+    private static async Task<int> HandleGenerateJsAsync(
+        string[] args,
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets)
     {
         string? schemaPath = null;
         string? outputPath = null;
@@ -293,7 +305,8 @@ internal static class Program
 
         if (string.Equals(pipeline, "typescript", StringComparison.OrdinalIgnoreCase))
         {
-            return HandleGenerateJsFromTypeScript(
+            return await HandleGenerateJsFromTypeScriptAsync(
+                targets,
                 schemaPath,
                 outputPath,
                 writeRuntime,
@@ -318,31 +331,18 @@ internal static class Program
             return 1;
         }
 
-        var generator = new JsSchemaCodeGenerator
+        var options = new JavaScriptCodeGenerationOptions
         {
+            SourcePath = schemaPath,
+            EmitSupportArtifacts = writeRuntime,
             FormatAssertionEnabled = formatAssertionEnabled
         };
-        var result = generator.Generate(schemaPath);
-        if (!result.Success)
-        {
-            Console.Error.WriteLine($"Generation failed: {result.Error}");
-            return 1;
-        }
 
-        var validatorPath = Path.Combine(outputPath, result.FileName!);
-        File.WriteAllText(validatorPath, result.GeneratedCode!);
-        Console.WriteLine($"Generated: {validatorPath}");
-
-        if (writeRuntime)
-        {
-            var runtimePath = Path.Combine(outputPath, JsRuntime.FileName);
-            File.WriteAllText(runtimePath, JsRuntime.GetSource());
-            Console.WriteLine($"Generated: {runtimePath}");
-        }
-        return 0;
+        return await GenerateWithTargetAsync(targets, JavaScriptTargetId, schemaPath, outputPath, options);
     }
 
-    private static int HandleGenerateJsFromTypeScript(
+    private static async Task<int> HandleGenerateJsFromTypeScriptAsync(
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets,
         string schemaPath,
         string outputPath,
         bool writeRuntime,
@@ -353,14 +353,25 @@ internal static class Program
         Console.WriteLine("Pipeline: TypeScript-first via tsc");
         Console.WriteLine($"ECMAScript target: {ecmaScriptTarget}");
 
-        var generator = new TsSchemaCodeGenerator
+        var options = new TypeScriptCodeGenerationOptions
         {
+            SourcePath = schemaPath,
+            EmitSupportArtifacts = writeRuntime,
             FormatAssertionEnabled = formatAssertionEnabled
         };
-        var result = generator.Generate(schemaPath);
+
+        var request = CreateGenerationRequest(schemaPath, options);
+        var capabilityResult = await GetTarget(targets, TypeScriptTargetId).GetCapabilitiesAsync(request);
+        if (!capabilityResult.CanGenerate)
+        {
+            PrintDiagnostics(capabilityResult.Diagnostics);
+            return 1;
+        }
+
+        var result = await GetTarget(targets, TypeScriptTargetId).GenerateAsync(request);
         if (!result.Success)
         {
-            Console.Error.WriteLine($"Generation failed: {result.Error}");
+            PrintGenerationFailure(result.Diagnostics);
             return 1;
         }
 
@@ -368,21 +379,25 @@ internal static class Program
         Directory.CreateDirectory(tempPath);
         try
         {
-            var validatorTsPath = Path.Combine(tempPath, result.FileName!);
-            var runtimeTsPath = Path.Combine(tempPath, TsRuntime.FileName);
-            var runtimeDeclarationPath = Path.Combine(tempPath, TsRuntime.DeclarationFileName);
-            File.WriteAllText(validatorTsPath, result.GeneratedCode!);
-            if (writeRuntime)
+            if (!TryGetSinglePrimaryArtifact(result.Artifacts, out var primaryArtifact, out var primaryArtifactError))
             {
-                File.WriteAllText(runtimeTsPath, TsRuntime.GetSource());
+                Console.Error.WriteLine($"Generation failed: {primaryArtifactError}");
+                return 1;
             }
-            else
+
+            var artifactPaths = WriteArtifacts(tempPath, result.Artifacts, announce: false);
+            var validatorTsPath = Path.GetFullPath(Path.Combine(tempPath, primaryArtifact.RelativePath));
+            var runtimeDeclarationPath = Path.Combine(tempPath, TsRuntime.DeclarationFileName);
+
+            if (!writeRuntime)
             {
                 File.WriteAllText(runtimeDeclarationPath, TsRuntime.GetDeclarationSource());
             }
 
             IReadOnlyList<string> sourcePaths = writeRuntime
-                ? [validatorTsPath, runtimeTsPath]
+                ? artifactPaths
+                    .Where(path => string.Equals(Path.GetExtension(path), ".ts", StringComparison.OrdinalIgnoreCase))
+                    .ToArray()
                 : [validatorTsPath, runtimeDeclarationPath];
 
             var compilationResult = TypeScriptCompiler.Compile(
@@ -404,11 +419,11 @@ internal static class Program
                 return 1;
             }
 
-            var validatorJsPath = Path.Combine(outputPath, Path.ChangeExtension(result.FileName!, ".js"));
+            var validatorJsPath = Path.Combine(outputPath, Path.ChangeExtension(primaryArtifact.RelativePath, ".js"));
             Console.WriteLine($"Generated: {validatorJsPath}");
             if (writeRuntime)
             {
-                Console.WriteLine($"Generated: {Path.Combine(outputPath, JsRuntime.FileName)}");
+                Console.WriteLine($"Generated: {Path.Combine(outputPath, "jsv-runtime.js")}");
             }
             return 0;
         }
@@ -418,7 +433,9 @@ internal static class Program
         }
     }
 
-    private static int HandleGenerateTs(string[] args)
+    private static async Task<int> HandleGenerateTsAsync(
+        string[] args,
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets)
     {
         string? schemaPath = null;
         string? outputPath = null;
@@ -483,28 +500,14 @@ internal static class Program
         Console.WriteLine($"Generating TS validator for: {schemaPath}");
         Console.WriteLine($"Output directory: {outputPath}");
 
-        var generator = new TsSchemaCodeGenerator
+        var options = new TypeScriptCodeGenerationOptions
         {
+            SourcePath = schemaPath,
+            EmitSupportArtifacts = writeRuntime,
             FormatAssertionEnabled = formatAssertionEnabled
         };
-        var result = generator.Generate(schemaPath);
-        if (!result.Success)
-        {
-            Console.Error.WriteLine($"Generation failed: {result.Error}");
-            return 1;
-        }
 
-        var validatorPath = Path.Combine(outputPath, result.FileName!);
-        File.WriteAllText(validatorPath, result.GeneratedCode!);
-        Console.WriteLine($"Generated: {validatorPath}");
-
-        if (writeRuntime)
-        {
-            var runtimePath = Path.Combine(outputPath, TsRuntime.FileName);
-            File.WriteAllText(runtimePath, TsRuntime.GetSource());
-            Console.WriteLine($"Generated: {runtimePath}");
-        }
-        return 0;
+        return await GenerateWithTargetAsync(targets, TypeScriptTargetId, schemaPath, outputPath, options);
     }
 
     /// <summary>
@@ -520,7 +523,179 @@ internal static class Program
         return !string.IsNullOrEmpty(arg);
     }
 
-    private static int HandleGenerateMetaschemas(string[] args)
+    private static IReadOnlyDictionary<string, ICodeGenerationTarget> CreateTargetRegistry()
+    {
+        ICodeGenerationTarget[] targets =
+        [
+            new CSharpCodeGenerationTarget(),
+            new JavaScriptCodeGenerationTarget(),
+            new TypeScriptCodeGenerationTarget()
+        ];
+
+        return targets.ToDictionary(target => target.Descriptor.Id, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static ICodeGenerationTarget GetTarget(
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets,
+        string targetId)
+    {
+        if (targets.TryGetValue(targetId, out var target))
+        {
+            return target;
+        }
+
+        throw new InvalidOperationException($"Code generation target '{targetId}' is not registered.");
+    }
+
+    private static async Task<int> GenerateWithTargetAsync(
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets,
+        string targetId,
+        string schemaPath,
+        string outputPath,
+        CodeGenerationOptions options)
+    {
+        var target = GetTarget(targets, targetId);
+        var request = CreateGenerationRequest(schemaPath, options);
+        var capabilityResult = await target.GetCapabilitiesAsync(request);
+        if (!capabilityResult.CanGenerate)
+        {
+            PrintDiagnostics(capabilityResult.Diagnostics);
+            return 1;
+        }
+
+        var result = await target.GenerateAsync(request);
+        if (!result.Success)
+        {
+            PrintGenerationFailure(result.Diagnostics);
+            return 1;
+        }
+
+        WriteArtifacts(outputPath, result.Artifacts, announce: true);
+        return 0;
+    }
+
+    private static CodeGenerationRequest CreateGenerationRequest(
+        string schemaPath,
+        CodeGenerationOptions options)
+    {
+        using var schemaDocument = JsonDocument.Parse(File.ReadAllText(schemaPath));
+        return new CodeGenerationRequest
+        {
+            Schema = schemaDocument.RootElement.Clone(),
+            Options = options
+        };
+    }
+
+    private static IReadOnlyList<string> WriteArtifacts(
+        string outputDirectory,
+        IReadOnlyList<GeneratedArtifact> artifacts,
+        bool announce)
+    {
+        var outputRoot = Path.GetFullPath(outputDirectory);
+        var outputRootWithSeparator = EnsureTrailingDirectorySeparator(outputRoot);
+        var writtenPaths = new List<string>(artifacts.Count);
+
+        foreach (var artifact in artifacts)
+        {
+            if (string.IsNullOrWhiteSpace(artifact.RelativePath))
+            {
+                throw new InvalidOperationException("Generated artifact has no relative path.");
+            }
+
+            if (Path.IsPathRooted(artifact.RelativePath))
+            {
+                throw new InvalidOperationException(
+                    $"Generated artifact path must be relative: {artifact.RelativePath}");
+            }
+
+            var artifactPath = Path.GetFullPath(Path.Combine(outputRoot, artifact.RelativePath));
+            if (!artifactPath.StartsWith(outputRootWithSeparator, GetPathComparison()))
+            {
+                throw new InvalidOperationException(
+                    $"Generated artifact path escapes the output directory: {artifact.RelativePath}");
+            }
+
+            var artifactDirectory = Path.GetDirectoryName(artifactPath);
+            if (!string.IsNullOrEmpty(artifactDirectory))
+            {
+                Directory.CreateDirectory(artifactDirectory);
+            }
+
+            File.WriteAllText(artifactPath, artifact.Content);
+            writtenPaths.Add(artifactPath);
+            if (announce)
+            {
+                Console.WriteLine($"Generated: {artifactPath}");
+            }
+        }
+
+        return writtenPaths;
+    }
+
+    private static string EnsureTrailingDirectorySeparator(string path)
+    {
+        return Path.EndsInDirectorySeparator(path)
+            ? path
+            : path + Path.DirectorySeparatorChar;
+    }
+
+    private static StringComparison GetPathComparison()
+    {
+        return OperatingSystem.IsWindows()
+            ? StringComparison.OrdinalIgnoreCase
+            : StringComparison.Ordinal;
+    }
+
+    private static void PrintGenerationFailure(IReadOnlyList<CodeGenerationDiagnostic> diagnostics)
+    {
+        Console.Error.WriteLine($"Generation failed: {FormatDiagnostics(diagnostics)}");
+    }
+
+    private static void PrintDiagnostics(IReadOnlyList<CodeGenerationDiagnostic> diagnostics)
+    {
+        if (diagnostics.Count == 0)
+        {
+            Console.Error.WriteLine("Generation failed: target reported that the schema is unsupported.");
+            return;
+        }
+
+        foreach (var diagnostic in diagnostics)
+        {
+            Console.Error.WriteLine($"{diagnostic.Code}: {diagnostic.Message}");
+        }
+    }
+
+    private static string FormatDiagnostics(IReadOnlyList<CodeGenerationDiagnostic> diagnostics)
+    {
+        return diagnostics.Count == 0
+            ? "Unknown error."
+            : string.Join("; ", diagnostics.Select(diagnostic => diagnostic.Message));
+    }
+
+    private static bool TryGetSinglePrimaryArtifact(
+        IReadOnlyList<GeneratedArtifact> artifacts,
+        out GeneratedArtifact primaryArtifact,
+        out string error)
+    {
+        var primaryArtifacts = artifacts
+            .Where(artifact => artifact.Role == GeneratedArtifactRole.Primary)
+            .ToArray();
+
+        if (primaryArtifacts.Length == 1)
+        {
+            primaryArtifact = primaryArtifacts[0];
+            error = string.Empty;
+            return true;
+        }
+
+        primaryArtifact = null!;
+        error = $"Expected exactly one primary generated artifact, but target emitted {primaryArtifacts.Length}.";
+        return false;
+    }
+
+    private static async Task<int> HandleGenerateMetaschemasAsync(
+        string[] args,
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets)
     {
         string? outputPath = null;
         string? libPath = null;
@@ -573,8 +748,7 @@ internal static class Program
         Console.WriteLine($"Output directory: {outputPath}");
         Console.WriteLine();
 
-        // Use GeneratedRegex for AOT compilation - source generator will provide implementations
-        var generator = new CSharpSchemaCodeGenerator { UseGeneratedRegex = true };
+        var target = GetTarget(targets, CSharpTargetId);
         var successCount = 0;
         var failCount = 0;
 
@@ -595,21 +769,43 @@ internal static class Program
                 Directory.CreateDirectory(draftOutputPath);
             }
 
-            var result = generator.Generate(
-                schemaPath,
-                "FormFinch.JsonSchemaValidation.CompiledValidators.Generated",
-                $"CompiledValidator_{schema.ClassName}");
+            var options = new CSharpCodeGenerationOptions
+            {
+                SourcePath = schemaPath,
+                UseGeneratedRegex = true,
+                OutputHints = new CodeGenerationOutputHints
+                {
+                    NamespaceName = "FormFinch.JsonSchemaValidation.CompiledValidators.Generated",
+                    TypeName = $"CompiledValidator_{schema.ClassName}"
+                }
+            };
+            var request = CreateGenerationRequest(schemaPath, options);
+            var capabilityResult = await target.GetCapabilitiesAsync(request);
+            if (!capabilityResult.CanGenerate)
+            {
+                Console.Error.WriteLine($"  FAIL: {schema.FileName} - {FormatDiagnostics(capabilityResult.Diagnostics)}");
+                failCount++;
+                continue;
+            }
+
+            var result = await target.GenerateAsync(request);
 
             if (result.Success)
             {
-                var fullOutputPath = Path.Combine(draftOutputPath, result.FileName!);
-                File.WriteAllText(fullOutputPath, result.GeneratedCode);
-                Console.WriteLine($"  OK: {schema.DraftFolder}/{result.FileName}");
+                if (!TryGetSinglePrimaryArtifact(result.Artifacts, out var primaryArtifact, out var primaryArtifactError))
+                {
+                    Console.Error.WriteLine($"  FAIL: {schema.FileName} - {primaryArtifactError}");
+                    failCount++;
+                    continue;
+                }
+
+                WriteArtifacts(draftOutputPath, result.Artifacts, announce: false);
+                Console.WriteLine($"  OK: {schema.DraftFolder}/{Path.GetFileName(primaryArtifact.RelativePath)}");
                 successCount++;
             }
             else
             {
-                Console.Error.WriteLine($"  FAIL: {schema.FileName} - {result.Error}");
+                Console.Error.WriteLine($"  FAIL: {schema.FileName} - {FormatDiagnostics(result.Diagnostics)}");
                 failCount++;
             }
         }
@@ -620,7 +816,9 @@ internal static class Program
         return failCount > 0 ? 1 : 0;
     }
 
-    private static int HandleCompileTestSchemas(string[] args)
+    private static async Task<int> HandleCompileTestSchemasAsync(
+        string[] args,
+        IReadOnlyDictionary<string, ICodeGenerationTarget> targets)
     {
         string? testSuitePath = null;
         string? outputPath = null;
@@ -717,8 +915,7 @@ internal static class Program
             draftDirs.Add(dir);
         }
 
-        // Use GeneratedRegex for AOT compilation - source generator will provide implementations
-        var generator = new CSharpSchemaCodeGenerator { UseGeneratedRegex = true };
+        var target = GetTarget(targets, CSharpTargetId);
         var uniqueSchemas = new Dictionary<string, (JsonElement Schema, string DraftName)>(StringComparer.Ordinal);
         var successCount = 0;
         var failCount = 0;
@@ -778,24 +975,38 @@ internal static class Program
         Console.WriteLine("Phase 2: Generating compiled validators...");
         var generatedValidators = new List<(string Hash, string ClassName)>();
 
-        foreach (var (hash, (schema, draftName)) in uniqueSchemas)
+        foreach (var (hash, (schema, _)) in uniqueSchemas)
         {
             var className = $"CompiledTestSchema_{hash}";
 
             try
             {
-                // Write schema to temp file for generator
-                var tempSchemaPath = Path.Combine(Path.GetTempPath(), $"schema_{hash}.json");
-                File.WriteAllText(tempSchemaPath, schema.GetRawText());
+                var request = new CodeGenerationRequest
+                {
+                    Schema = schema,
+                    Options = new CSharpCodeGenerationOptions
+                    {
+                        SourcePath = $"{className}.json",
+                        UseGeneratedRegex = true,
+                        OutputHints = new CodeGenerationOutputHints
+                        {
+                            NamespaceName = namespaceName,
+                            TypeName = className
+                        }
+                    }
+                };
+                var capabilityResult = await target.GetCapabilitiesAsync(request);
+                if (!capabilityResult.CanGenerate)
+                {
+                    skippedCount++;
+                    continue;
+                }
 
-                var result = generator.Generate(tempSchemaPath, namespaceName, className);
-
-                File.Delete(tempSchemaPath);
+                var result = await target.GenerateAsync(request);
 
                 if (result.Success)
                 {
-                    var fullOutputPath = Path.Combine(outputPath, $"{className}.cs");
-                    File.WriteAllText(fullOutputPath, result.GeneratedCode);
+                    WriteArtifacts(outputPath, result.Artifacts, announce: false);
                     generatedValidators.Add((hash, className));
                     successCount++;
                 }
