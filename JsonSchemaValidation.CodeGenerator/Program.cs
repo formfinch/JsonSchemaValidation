@@ -360,7 +360,12 @@ internal static class Program
             FormatAssertionEnabled = formatAssertionEnabled
         };
 
-        var request = CreateGenerationRequest(schemaPath, options);
+        if (!TryCreateGenerationRequest(schemaPath, options, out var request, out var requestError))
+        {
+            Console.Error.WriteLine($"Generation failed: {requestError}");
+            return 1;
+        }
+
         var capabilityResult = await GetTarget(targets, TypeScriptTargetId).GetCapabilitiesAsync(request);
         if (!capabilityResult.CanGenerate)
         {
@@ -555,7 +560,12 @@ internal static class Program
         CodeGenerationOptions options)
     {
         var target = GetTarget(targets, targetId);
-        var request = CreateGenerationRequest(schemaPath, options);
+        if (!TryCreateGenerationRequest(schemaPath, options, out var request, out var requestError))
+        {
+            Console.Error.WriteLine($"Generation failed: {requestError}");
+            return 1;
+        }
+
         var capabilityResult = await target.GetCapabilitiesAsync(request);
         if (!capabilityResult.CanGenerate)
         {
@@ -574,16 +584,41 @@ internal static class Program
         return 0;
     }
 
-    private static CodeGenerationRequest CreateGenerationRequest(
+    private static bool TryCreateGenerationRequest(
         string schemaPath,
-        CodeGenerationOptions options)
+        CodeGenerationOptions options,
+        out CodeGenerationRequest request,
+        out string error)
     {
-        using var schemaDocument = JsonDocument.Parse(File.ReadAllText(schemaPath));
-        return new CodeGenerationRequest
+        try
         {
-            Schema = schemaDocument.RootElement.Clone(),
-            Options = options
-        };
+            using var schemaDocument = JsonDocument.Parse(File.ReadAllText(schemaPath));
+            request = new CodeGenerationRequest
+            {
+                Schema = schemaDocument.RootElement.Clone(),
+                Options = options
+            };
+            error = string.Empty;
+            return true;
+        }
+        catch (JsonException ex)
+        {
+            request = null!;
+            error = $"Failed to parse schema JSON '{schemaPath}': {ex.Message}";
+            return false;
+        }
+        catch (IOException ex)
+        {
+            request = null!;
+            error = $"Failed to read schema file '{schemaPath}': {ex.Message}";
+            return false;
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            request = null!;
+            error = $"Failed to read schema file '{schemaPath}': {ex.Message}";
+            return false;
+        }
     }
 
     private static IReadOnlyList<string> WriteArtifacts(
@@ -779,7 +814,13 @@ internal static class Program
                     TypeName = $"CompiledValidator_{schema.ClassName}"
                 }
             };
-            var request = CreateGenerationRequest(schemaPath, options);
+            if (!TryCreateGenerationRequest(schemaPath, options, out var request, out var requestError))
+            {
+                Console.Error.WriteLine($"  FAIL: {schema.FileName} - {requestError}");
+                failCount++;
+                continue;
+            }
+
             var capabilityResult = await target.GetCapabilitiesAsync(request);
             if (!capabilityResult.CanGenerate)
             {

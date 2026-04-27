@@ -75,7 +75,29 @@ public sealed class CodeGeneratorCliTests
         Assert.Contains("export function validate(data: JsonValue): boolean", File.ReadAllText(validatorPath));
     }
 
+    [Fact]
+    public async Task Generate_InvalidJson_ReturnsFailure()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var schemaPath = workspace.WriteSchema("{");
+        var outputPath = workspace.CreateDirectory("invalid");
+
+        var result = await RunCliWithOutputAsync(
+            "generate",
+            "-s", schemaPath,
+            "-o", outputPath);
+
+        Assert.Equal(1, result.ExitCode);
+        Assert.Contains("Failed to parse schema JSON", result.StandardError);
+    }
+
     private static async Task<int> RunCliAsync(params string[] args)
+    {
+        var result = await RunCliWithOutputAsync(args);
+        return result.ExitCode;
+    }
+
+    private static async Task<(int ExitCode, string StandardOutput, string StandardError)> RunCliWithOutputAsync(params string[] args)
     {
         var originalOut = Console.Out;
         var originalError = Console.Error;
@@ -86,7 +108,8 @@ public sealed class CodeGeneratorCliTests
         {
             Console.SetOut(output);
             Console.SetError(error);
-            return await Program.RunAsync(args);
+            var exitCode = await Program.RunAsync(args);
+            return (exitCode, output.ToString(), error.ToString());
         }
         finally
         {
