@@ -108,7 +108,7 @@ public sealed class CodeGeneratorCliTests
         {
             Console.SetOut(output);
             Console.SetError(error);
-            var exitCode = await Program.RunAsync(args);
+            var exitCode = await FormFinch.JsonSchemaValidation.CodeGenerator.Program.RunAsync(args);
             return (exitCode, output.ToString(), error.ToString());
         }
         finally
