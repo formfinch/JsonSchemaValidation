@@ -423,7 +423,7 @@ internal static class Program
             Console.WriteLine($"Generated: {validatorJsPath}");
             if (writeRuntime)
             {
-                Console.WriteLine($"Generated: {Path.Combine(outputPath, "jsv-runtime.js")}");
+                Console.WriteLine($"Generated: {Path.Combine(outputPath, Path.ChangeExtension(TsRuntime.FileName, ".js"))}");
             }
             return 0;
         }

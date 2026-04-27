@@ -7,7 +7,9 @@ using Xunit;
 namespace FormFinch.JsonSchemaValidation.CodeGenerator.Tests;
 
 [CollectionDefinition(nameof(CodeGeneratorCliCollection), DisableParallelization = true)]
-public sealed class CodeGeneratorCliCollection;
+public sealed class CodeGeneratorCliCollection
+{
+}
 
 [Collection(nameof(CodeGeneratorCliCollection))]
 public sealed class CodeGeneratorCliTests
