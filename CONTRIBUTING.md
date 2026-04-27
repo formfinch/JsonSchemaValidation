@@ -71,6 +71,20 @@ jsv-codegen generate-js -s schema.json -o ./out --pipeline typescript --ecmascri
 
 Keep the default direct JS generator available when working on this path; it is the parity and benchmark baseline.
 
+## Code Generation Architecture
+
+The central `FormFinch.JsonSchemaValidation.CodeGeneration` assembly owns target-neutral schema analysis and the shared `ICodeGenerationTarget` contract. It must not reference C#, JavaScript, or TypeScript emitters.
+
+Target-specific generation lives in peer assemblies:
+
+- `FormFinch.JsonSchemaValidation.CodeGeneration.CSharp`
+- `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript`
+- `FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript`
+
+The `jsv-codegen` CLI is the composition root. It explicitly registers those targets, keeps the compatibility aliases `generate`, `generate-js`, and `generate-ts`, maps CLI arguments into strongly typed target options, and writes returned `GeneratedArtifact` values consistently. Do not add reflection-based target discovery to the central package.
+
+The split target assemblies are project-referenced in this repository. When preparing NuGet publishing, keep package ids aligned with the assembly names above and version them together with `FormFinch.JsonSchemaValidation` until a separate package-versioning policy is agreed.
+
 ### Code Coverage
 
 ```bash
