@@ -32,11 +32,9 @@ The IR option is cleaner long term, but larger. The current implementation prese
 
 ## Runtime
 
-`jsv-runtime.ts` is currently derived from `jsv-runtime.js` and marked `// @ts-nocheck`. This keeps the stable JS runtime ABI intact and allows `tsc` to produce `jsv-runtime.js` for the requested ECMAScript target.
+`jsv-runtime.ts` is authored TypeScript. It exports the shared runtime helpers plus concrete ABI types for JSON values, validator modules, registry handles, dynamic scope, and evaluated-state tracking. The runtime source must not contain `// @ts-nocheck`.
 
-Because of that transitional runtime projection, the TypeScript target assembly still references `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript`. This dependency is limited to `TsRuntime` and should be revisited with the runtime ownership work tracked for #42.
-
-Follow-up work should convert the runtime to TS-authored source with explicit class fields, exported interfaces for registry/scope/evaluated-state shapes, and generated `.d.ts` coverage.
+The TypeScript target assembly no longer depends on `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript` for runtime projection. Focused tests compile the runtime with `strict: true` and `noImplicitAny: true`; generated validator modules still use the broader migration compiler settings until the remaining internal `any` state/scope/registry signatures are replaced.
 
 ## Toolchain
 
@@ -50,6 +48,7 @@ Current behavior:
 
 - `generate-ts`: development and inspection path; writes `.ts` source and `jsv-runtime.ts`.
 - `generate-js --pipeline typescript`: packaging/output path; writes temporary `.ts` source, invokes `tsc`, and emits `.js`.
+- `tsc` is invoked with `--downlevelIteration` so lower ECMAScript targets can compile runtime iteration over `Map`, `Set`, and `Intl.Segmenter` results. This can add TypeScript helper code to downlevel output and should be considered in benchmark and delivery-size reviews. Lowering syntax does not provide runtime polyfills; consumers targeting older engines still need implementations for APIs such as `Map` and `Set`.
 - tests: focused smoke coverage compiles and executes generated TS validators, and `TsTestSuiteRunner` runs Draft 2020-12 JSON-Schema-Test-Suite cases through TS-derived JS.
 - benchmarks: `NodeJsCompetitorBenchmarks` now compares Ajv, direct JS codegen, and TS-derived JS codegen.
 
@@ -70,6 +69,6 @@ Direct JS generation rejects `--ecmascript-target` to avoid implying that the di
 
 - Track unsupported or divergent cases separately instead of masking them as migration blockers.
 - By 2026-05-15, choose the deduplication strategy for the JS-family emitters: either introduce a target-neutral validation IR or promote the TS emitter to the canonical JS-family source and retire duplicated direct-JS keyword bodies behind benchmark gates.
-- Convert `jsv-runtime.ts` from no-check JS-compatible source into typed TS.
 - Replace internal `any` state/scope/registry signatures with typed TS contracts.
+- Enable strict generated-validator compiler gates once those internal signatures are typed.
 - Add benchmark acceptance thresholds once enough TS-derived JS scenarios are stable.

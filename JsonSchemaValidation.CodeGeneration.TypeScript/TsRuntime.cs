@@ -1,18 +1,17 @@
 // Copyright (c) 2026 FormFinch VOF
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
-using FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript.Runtime;
+using System.Reflection;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript;
 
 /// <summary>
-/// Accessor for the TypeScript migration runtime source.
-/// In this phase the runtime is valid TypeScript derived from the stable JS ABI,
-/// keeping JS and TS paths byte-for-byte comparable after tsc erases comments.
+/// Accessor for the authored TypeScript runtime source.
 /// </summary>
 public static class TsRuntime
 {
-    private const string JavaScriptRuntimeHeader = "// jsv-runtime.js";
+    private const string ResourceName =
+        "FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript.Runtime.jsv-runtime.ts";
 
     /// <summary>
     /// The filename used for the TypeScript runtime source.
@@ -30,16 +29,13 @@ public static class TsRuntime
     /// </summary>
     public static string GetSource()
     {
-        var source = JsRuntime.GetSource();
-        if (!source.Contains(JavaScriptRuntimeHeader, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException(
-                $"The JS runtime header marker '{JavaScriptRuntimeHeader}' was not found. " +
-                "Update the TypeScript runtime projection instead of silently omitting @ts-nocheck.");
-        }
-
-        return "// @ts-nocheck" + Environment.NewLine +
-            source.Replace(JavaScriptRuntimeHeader, "// jsv-runtime.ts", StringComparison.Ordinal);
+        var assembly = typeof(TsRuntime).GetTypeInfo().Assembly;
+        using var stream = assembly.GetManifestResourceStream(ResourceName)
+            ?? throw new InvalidOperationException(
+                $"Embedded TypeScript runtime resource not found: {ResourceName}. " +
+                "Build configuration issue - confirm Runtime/jsv-runtime.ts is listed as EmbeddedResource.");
+        using var reader = new StreamReader(stream);
+        return reader.ReadToEnd();
     }
 
     /// <summary>
@@ -49,7 +45,30 @@ public static class TsRuntime
     public static string GetDeclarationSource()
     {
         return """
-            export function escapeJsonPointer(segment: unknown): string;
+            export type JsonObject = { [key: string]: JsonValue };
+            export type JsonArray = JsonValue[];
+            export type JsonValue = null | boolean | number | string | JsonArray | JsonObject;
+            export type JsonPointer = string;
+            export type ValidatorFn = (data: JsonValue, registry?: ValidatorRegistry) => boolean;
+            export interface FragmentValidator {
+              validate(data: JsonValue, registry?: ValidatorRegistry): boolean;
+              validateWithState?(data: JsonValue, evaluatedState: EvaluatedState, location?: JsonPointer, registry?: ValidatorRegistry): boolean;
+              validateWithScope?(data: JsonValue, scope: CompiledValidatorScope, location?: JsonPointer, registry?: ValidatorRegistry): boolean;
+              validateWithScopeAndState?(data: JsonValue, scope: CompiledValidatorScope, evaluatedState: EvaluatedState, location?: JsonPointer, registry?: ValidatorRegistry): boolean;
+            }
+            export interface ValidatorModule extends FragmentValidator {
+              schemaUri: string | null;
+              fragmentValidators: Record<string, FragmentValidator>;
+            }
+            export type ValidatorHandle = ValidatorFn | FragmentValidator | ValidatorModule;
+            export type ValidatorRegistry = { tryGetValidator(uri: string): ValidatorHandle | null } | null;
+            export type DynamicAnchorValidator = (data: JsonValue, scope: CompiledValidatorScope, evaluatedStateOrLocation?: EvaluatedState | JsonPointer, locationOrRegistry?: JsonPointer | ValidatorRegistry, registry?: ValidatorRegistry) => boolean;
+            export type CompiledScopeEntry = {
+              dynamicAnchors?: Record<string, DynamicAnchorValidator> | null;
+              hasRecursiveAnchor?: boolean;
+              rootValidator?: DynamicAnchorValidator | null;
+            };
+            export function escapeJsonPointer(segment: string): string;
             export function getCachedRegex(pattern: string): RegExp;
             export function graphemeLength(value: string): number;
             export function isInteger(value: unknown): boolean;
@@ -60,35 +79,39 @@ public static class TsRuntime
               restoreFrom(other: EvaluatedState): void;
               mergeFrom(other: EvaluatedState): void;
               markPropertyEvaluated(location: string, name: string): void;
+              isPropertyEvaluated(location: string, name: string): boolean;
               markItemEvaluated(location: string, index: number): void;
+              isItemEvaluated(location: string, index: number): boolean;
               setEvaluatedItemsUpTo(location: string, count: number): void;
             }
             export class Registry {
-              registerForUri(uri: string, validator: unknown): void;
-              tryGetValidator(uri: string): unknown;
+              registerForUri(uri: string, validator: ValidatorHandle): void;
+              tryGetValidator(uri: string): ValidatorHandle | null;
             }
             export class CompiledValidatorScope {
               static empty: CompiledValidatorScope;
+              push(entry: CompiledScopeEntry | null): CompiledValidatorScope;
+              tryResolveDynamicAnchor(anchorName: string): DynamicAnchorValidator | null;
             }
-            export function isValidDate(value: string): boolean;
-            export function isValidTime(value: string): boolean;
-            export function isValidDateTime(value: string): boolean;
-            export function isValidDuration(value: string): boolean;
-            export function isValidEmail(value: string): boolean;
-            export function isValidIdnEmail(value: string): boolean;
-            export function isValidHostname(value: string): boolean;
-            export function isValidIdnHostname(value: string): boolean;
-            export function isValidIpv4(value: string): boolean;
-            export function isValidIpv6(value: string): boolean;
-            export function isValidUri(value: string): boolean;
-            export function isValidUriReference(value: string): boolean;
-            export function isValidIri(value: string): boolean;
-            export function isValidIriReference(value: string): boolean;
-            export function isValidUriTemplate(value: string): boolean;
-            export function isValidJsonPointer(value: string): boolean;
-            export function isValidRelativeJsonPointer(value: string): boolean;
-            export function isValidRegex(value: string): boolean;
-            export function isValidUuid(value: string): boolean;
+            export function isValidDate(value: unknown): boolean;
+            export function isValidTime(value: unknown): boolean;
+            export function isValidDateTime(value: unknown): boolean;
+            export function isValidDuration(value: unknown): boolean;
+            export function isValidEmail(value: unknown): boolean;
+            export function isValidIdnEmail(value: unknown): boolean;
+            export function isValidHostname(value: unknown): boolean;
+            export function isValidIdnHostname(value: unknown): boolean;
+            export function isValidIpv4(value: unknown): boolean;
+            export function isValidIpv6(value: unknown): boolean;
+            export function isValidUri(value: unknown): boolean;
+            export function isValidUriReference(value: unknown): boolean;
+            export function isValidIri(value: unknown): boolean;
+            export function isValidIriReference(value: unknown): boolean;
+            export function isValidUriTemplate(value: unknown): boolean;
+            export function isValidJsonPointer(value: unknown): boolean;
+            export function isValidRelativeJsonPointer(value: unknown): boolean;
+            export function isValidRegex(value: unknown): boolean;
+            export function isValidUuid(value: unknown): boolean;
             """;
     }
 }
