@@ -48,7 +48,7 @@ Current behavior:
 
 - `generate-ts`: development and inspection path; writes `.ts` source and `jsv-runtime.ts`.
 - `generate-js --pipeline typescript`: packaging/output path; writes temporary `.ts` source, invokes `tsc`, and emits `.js`.
-- `tsc` is invoked with `--downlevelIteration` so lower ECMAScript targets can compile runtime iteration over `Map`, `Set`, and `Intl.Segmenter` results. This can add TypeScript helper code to downlevel output and should be considered in benchmark and delivery-size reviews.
+- `tsc` is invoked with `--downlevelIteration` so lower ECMAScript targets can compile runtime iteration over `Map`, `Set`, and `Intl.Segmenter` results. This can add TypeScript helper code to downlevel output and should be considered in benchmark and delivery-size reviews. Lowering syntax does not provide runtime polyfills; consumers targeting older engines still need implementations for APIs such as `Map` and `Set`.
 - tests: focused smoke coverage compiles and executes generated TS validators, and `TsTestSuiteRunner` runs Draft 2020-12 JSON-Schema-Test-Suite cases through TS-derived JS.
 - benchmarks: `NodeJsCompetitorBenchmarks` now compares Ajv, direct JS codegen, and TS-derived JS codegen.
 

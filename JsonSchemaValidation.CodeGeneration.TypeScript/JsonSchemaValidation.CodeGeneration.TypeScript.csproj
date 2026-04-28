@@ -13,4 +13,7 @@
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration\JsonSchemaValidation.CodeGeneration.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Runtime\jsv-runtime.ts" LogicalName="FormFinch.JsonSchemaValidation.CodeGeneration.TypeScript.Runtime.jsv-runtime.ts" />
+  </ItemGroup>
 </Project>
