@@ -44,7 +44,9 @@ public static partial class TypeScriptCompiler
         string outputDirectory,
         string ecmaScriptTarget,
         string tscExecutable = "tsc",
-        int timeoutMilliseconds = 60_000)
+        int timeoutMilliseconds = 60_000,
+        bool strict = false,
+        bool noImplicitAny = false)
     {
         if (sourcePaths.Count == 0)
         {
@@ -70,13 +72,14 @@ public static partial class TypeScriptCompiler
             "--target", ecmaScriptTarget,
             "--module", "ES2020",
             "--moduleResolution", "Bundler",
-            "--lib", "ES2022,DOM",
+            "--lib", "es2022,dom",
             "--outDir", outputDirectory,
-            "--noImplicitAny", "false",
-            "--strict", "false",
+            "--noImplicitAny", noImplicitAny ? "true" : "false",
+            "--strict", strict ? "true" : "false",
             "--skipLibCheck", "true",
             "--declaration", "false",
             "--sourceMap", "false",
+            "--downlevelIteration", "true",
             "--ignoreDeprecations", "6.0"
         };
         arguments.AddRange(sourcePaths);

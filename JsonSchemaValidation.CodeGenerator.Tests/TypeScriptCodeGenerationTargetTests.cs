@@ -96,7 +96,8 @@ public sealed class TypeScriptCodeGenerationTargetTests
         Assert.Equal(GeneratedArtifactKind.Source, source.Kind);
         Assert.Contains("export function validate(data: JsonValue): boolean", source.Content);
         Assert.Equal(TsRuntime.FileName, runtime.RelativePath);
-        Assert.StartsWith("// @ts-nocheck", runtime.Content);
+        Assert.DoesNotContain("@ts-nocheck", runtime.Content);
+        Assert.Contains("export type JsonValue", runtime.Content);
     }
 
     [Fact]

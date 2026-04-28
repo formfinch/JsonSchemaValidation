@@ -12,7 +12,5 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration\JsonSchemaValidation.CodeGeneration.csproj" />
-    <!-- Transitional dependency: TsRuntime derives its source from the JavaScript runtime until #42 decides final runtime ownership. -->
-    <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.JavaScript\JsonSchemaValidation.CodeGeneration.JavaScript.csproj" />
   </ItemGroup>
 </Project>

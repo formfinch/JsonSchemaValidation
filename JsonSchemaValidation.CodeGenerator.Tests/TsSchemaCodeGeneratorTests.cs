@@ -167,11 +167,44 @@ public class TsSchemaCodeGeneratorTests
     }
 
     [Fact]
-    public void RuntimeProjection_InsertsNoCheckPragma()
+    public void RuntimeSource_IsAuthoredTypeScriptWithoutNoCheckPragma()
     {
         var source = TsRuntime.GetSource();
 
-        Assert.StartsWith("// @ts-nocheck", source);
+        Assert.DoesNotContain("@ts-nocheck", source);
         Assert.Contains("// jsv-runtime.ts", source);
+        Assert.Contains("export type JsonValue", source);
+        Assert.Contains("export class EvaluatedState", source);
+    }
+
+    [Fact]
+    public void RuntimeSource_WithTscAvailable_CompilesWithStrictSettings()
+    {
+        if (!TypeScriptCompiler.IsAvailable())
+        {
+            throw Xunit.Sdk.SkipException.ForSkip("TypeScript compiler 'tsc' is required for this test.");
+        }
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-ts-runtime-strict-test-" + Guid.NewGuid().ToString("N"));
+        var outputDir = Path.Combine(tempDir, "out");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            var runtimePath = Path.Combine(tempDir, TsRuntime.FileName);
+            File.WriteAllText(runtimePath, TsRuntime.GetSource());
+
+            var compileResult = TypeScriptCompiler.Compile(
+                [runtimePath],
+                outputDir,
+                ecmaScriptTarget: "ES2020",
+                strict: true,
+                noImplicitAny: true);
+
+            Assert.True(compileResult.Success, compileResult.Error);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
+        }
     }
 }
