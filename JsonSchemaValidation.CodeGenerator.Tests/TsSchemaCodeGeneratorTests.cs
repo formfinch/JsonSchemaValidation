@@ -21,9 +21,66 @@ public class TsSchemaCodeGeneratorTests
         Assert.Equal("validator.ts", result.FileName);
         Assert.Contains("TypeScript target", result.GeneratedCode);
         Assert.DoesNotContain("@ts-nocheck", result.GeneratedCode);
-        Assert.Contains("type JsonValue", result.GeneratedCode);
+        Assert.Contains("import type {", result.GeneratedCode);
+        Assert.Contains("JsonValue", result.GeneratedCode);
         Assert.Contains("export function validate(data: JsonValue): boolean", result.GeneratedCode);
         Assert.Contains("export default", result.GeneratedCode);
+    }
+
+    [Fact]
+    public void Generate_StatefulSchema_UsesTypedRuntimeAbiWithoutGeneratedAny()
+    {
+        var result = _generator.Generate(JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "properties": { "name": { "type": "string" } },
+              "unevaluatedProperties": false
+            }
+            """).RootElement);
+
+        Assert.True(result.Success, result.Error);
+        Assert.DoesNotContain(": any", result.GeneratedCode);
+        Assert.DoesNotContain("): any", result.GeneratedCode);
+        Assert.Contains("import { EvaluatedState, escapeJsonPointer }", result.GeneratedCode);
+        Assert.Contains("import type { FragmentValidator, JsonPointer, JsonValue }", result.GeneratedCode);
+        Assert.DoesNotContain("ValidatorRegistry", result.GeneratedCode);
+        Assert.Contains("_eval: EvaluatedState", result.GeneratedCode);
+        Assert.Contains("_loc: JsonPointer", result.GeneratedCode);
+        Assert.Contains("export const fragmentValidators: Record<string, FragmentValidator>", result.GeneratedCode);
+    }
+
+    [Fact]
+    public void Generate_DynamicScopeSchema_UsesTypedScopeRuntimeAbiWithoutGeneratedAny()
+    {
+        var result = _generator.Generate(JsonDocument.Parse("""
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$dynamicAnchor": "node",
+              "type": "object",
+              "properties": {
+                "child": { "$dynamicRef": "#node" }
+              }
+            }
+            """).RootElement);
+
+        Assert.True(result.Success, result.Error);
+        Assert.DoesNotContain(": any", result.GeneratedCode);
+        Assert.DoesNotContain("): any", result.GeneratedCode);
+        Assert.Contains("import { CompiledValidatorScope, EMPTY_EVALUATED_STATE }", result.GeneratedCode);
+        Assert.Contains("_scope: CompiledValidatorScope", result.GeneratedCode);
+        Assert.Contains("scope: CompiledValidatorScope", result.GeneratedCode);
+        Assert.Contains("EMPTY_EVALUATED_STATE", result.GeneratedCode);
+    }
+
+    [Fact]
+    public void Generate_SimpleSchema_DoesNotImportUnusedRuntimeTypes()
+    {
+        var result = _generator.Generate(JsonDocument.Parse("""{ "type": "string" }""").RootElement);
+
+        Assert.True(result.Success, result.Error);
+        Assert.Contains("import type { FragmentValidator, JsonValue }", result.GeneratedCode);
+        Assert.DoesNotContain("JsonPointer", result.GeneratedCode);
+        Assert.DoesNotContain("ValidatorRegistry", result.GeneratedCode);
     }
 
     [Fact]
@@ -195,6 +252,95 @@ public class TsSchemaCodeGeneratorTests
 
             var compileResult = TypeScriptCompiler.Compile(
                 [runtimePath],
+                outputDir,
+                ecmaScriptTarget: "ES2020",
+                strict: true,
+                noImplicitAny: true);
+
+            Assert.True(compileResult.Success, compileResult.Error);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
+        }
+    }
+
+    [Fact]
+    public void GeneratedSource_WithTscAvailable_CompilesWithStrictSettings()
+    {
+        if (!TypeScriptCompiler.IsAvailable())
+        {
+            throw Xunit.Sdk.SkipException.ForSkip("TypeScript compiler 'tsc' is required for this test.");
+        }
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-ts-generated-strict-test-" + Guid.NewGuid().ToString("N"));
+        var outputDir = Path.Combine(tempDir, "out");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            using var schema = JsonDocument.Parse("""
+                {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "properties": { "name": { "type": "string" } },
+                  "unevaluatedProperties": false
+                }
+                """);
+            var result = _generator.Generate(schema.RootElement.Clone());
+            Assert.True(result.Success, result.Error);
+
+            var validatorPath = Path.Combine(tempDir, result.FileName!);
+            var runtimePath = Path.Combine(tempDir, TsRuntime.FileName);
+            File.WriteAllText(validatorPath, result.GeneratedCode);
+            File.WriteAllText(runtimePath, TsRuntime.GetSource());
+
+            var compileResult = TypeScriptCompiler.Compile(
+                [validatorPath, runtimePath],
+                outputDir,
+                ecmaScriptTarget: "ES2020",
+                strict: true,
+                noImplicitAny: true);
+
+            Assert.True(compileResult.Success, compileResult.Error);
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
+        }
+    }
+
+    [Fact]
+    public void DynamicScopeGeneratedSource_WithTscAvailable_CompilesWithStrictSettings()
+    {
+        if (!TypeScriptCompiler.IsAvailable())
+        {
+            throw Xunit.Sdk.SkipException.ForSkip("TypeScript compiler 'tsc' is required for this test.");
+        }
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-ts-dynamic-scope-strict-test-" + Guid.NewGuid().ToString("N"));
+        var outputDir = Path.Combine(tempDir, "out");
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            using var schema = JsonDocument.Parse("""
+                {
+                  "$schema": "https://json-schema.org/draft/2020-12/schema",
+                  "$dynamicAnchor": "node",
+                  "type": "object",
+                  "properties": {
+                    "child": { "$dynamicRef": "#node" }
+                  }
+                }
+                """);
+            var result = _generator.Generate(schema.RootElement.Clone());
+            Assert.True(result.Success, result.Error);
+
+            var validatorPath = Path.Combine(tempDir, result.FileName!);
+            var runtimePath = Path.Combine(tempDir, TsRuntime.FileName);
+            File.WriteAllText(validatorPath, result.GeneratedCode);
+            File.WriteAllText(runtimePath, TsRuntime.GetSource());
+
+            var compileResult = TypeScriptCompiler.Compile(
+                [validatorPath, runtimePath],
                 outputDir,
                 ecmaScriptTarget: "ES2020",
                 strict: true,

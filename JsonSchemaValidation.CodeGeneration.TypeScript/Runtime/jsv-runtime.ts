@@ -46,8 +46,8 @@ type RegexGroups = Record<string, string | undefined>;
 type DynamicAnchorValidator = (
     data: JsonValue,
     scope: CompiledValidatorScope,
-    evaluatedStateOrLocation?: EvaluatedState | JsonPointer,
-    locationOrRegistry?: JsonPointer | ValidatorRegistry,
+    evaluatedState: EvaluatedState,
+    location?: JsonPointer,
     registry?: ValidatorRegistry
 ) => boolean;
 
@@ -226,6 +226,8 @@ export class EvaluatedState {
         this.mergeFrom(snapshot);
     }
 }
+
+export const EMPTY_EVALUATED_STATE = new EvaluatedState();
 
 export class Registry {
     private readonly _validators = new Map<string, ValidatorHandle>();
