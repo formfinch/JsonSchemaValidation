@@ -34,7 +34,9 @@ The IR option is cleaner long term, but larger. The current implementation prese
 
 `jsv-runtime.ts` is authored TypeScript. It exports the shared runtime helpers plus concrete ABI types for JSON values, validator modules, registry handles, dynamic scope, and evaluated-state tracking. The runtime source must not contain `// @ts-nocheck`.
 
-The TypeScript target assembly no longer depends on `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript` for runtime projection. Focused tests compile the runtime with `strict: true` and `noImplicitAny: true`; generated validator modules still use the broader migration compiler settings until the remaining internal `any` state/scope/registry signatures are replaced.
+The TypeScript target assembly no longer depends on `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript` for runtime projection. Focused tests compile the runtime with `strict: true` and `noImplicitAny: true`. Generated validator modules now import the runtime ABI types and compile under the same strict/noImplicitAny gate for covered state/scope/registry scenarios.
+
+`DynamicAnchorValidator` now uses the stable generated-validator shape `data, scope, evaluatedState, location, registry`. Generated scope-only dynamic-anchor delegates are marked as `ignoresEvaluatedState`; scope-only callers pass `EMPTY_EVALUATED_STATE` only to marked delegates and allocate a fresh `EvaluatedState` for unknown delegates that may need annotation state.
 
 ## Toolchain
 
@@ -69,6 +71,6 @@ Direct JS generation rejects `--ecmascript-target` to avoid implying that the di
 
 - Track unsupported or divergent cases separately instead of masking them as migration blockers.
 - By 2026-05-15, choose the deduplication strategy for the JS-family emitters: either introduce a target-neutral validation IR or promote the TS emitter to the canonical JS-family source and retire duplicated direct-JS keyword bodies behind benchmark gates.
-- Replace internal `any` state/scope/registry signatures with typed TS contracts.
-- Enable strict generated-validator compiler gates once those internal signatures are typed.
+- Expand strict generated-validator coverage beyond the current focused state/scope/registry scenarios.
+- Decide whether to add and hard-enable `noUncheckedIndexedAccess`/`exactOptionalPropertyTypes` after runtime index-safety cleanup.
 - Add benchmark acceptance thresholds once enough TS-derived JS scenarios are stable.

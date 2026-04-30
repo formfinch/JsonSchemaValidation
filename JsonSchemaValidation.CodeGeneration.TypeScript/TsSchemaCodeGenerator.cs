@@ -179,6 +179,20 @@ public sealed class TsSchemaCodeGenerator
 
             var methods = new StringBuilder();
             var runtimeImports = new SortedSet<string>(StringComparer.Ordinal);
+            var runtimeTypeImports = new SortedSet<string>(StringComparer.Ordinal)
+            {
+                "FragmentValidator",
+                "JsonValue",
+            };
+            if (requiresScopeTracking || requiresPropertyAnnotations || requiresItemAnnotations)
+            {
+                runtimeTypeImports.Add("EvaluatedState");
+                runtimeTypeImports.Add("JsonPointer");
+            }
+            if (requiresRegistryParameter)
+            {
+                runtimeTypeImports.Add("ValidatorRegistry");
+            }
             if (requiresPropertyAnnotations || requiresItemAnnotations)
             {
                 runtimeImports.Add("EvaluatedState");
@@ -205,12 +219,14 @@ public sealed class TsSchemaCodeGenerator
                     runtimeImports));
                 methods.AppendLine();
             }
+            runtimeTypeImports.ExceptWith(runtimeImports);
 
             var module = GenerateModule(
                 schemaUri,
                 rootHash,
                 methods.ToString(),
                 runtimeImports,
+                runtimeTypeImports,
                 requiresPropertyAnnotations || requiresItemAnnotations,
                 requiresScopeTracking,
                 requiresRegistryParameter,
@@ -253,15 +269,15 @@ public sealed class TsSchemaCodeGenerator
         var parameterParts = new List<string> { "v: JsonValue" };
         if (requiresScopeTracking)
         {
-            parameterParts.Add("_scope: any");
+            parameterParts.Add("_scope: CompiledValidatorScope");
         }
         if (requiresPropertyAnnotations || requiresItemAnnotations)
         {
-            parameterParts.Add("_eval: any");
+            parameterParts.Add("_eval: EvaluatedState");
         }
         if (requiresScopeTracking || requiresPropertyAnnotations || requiresItemAnnotations)
         {
-            parameterParts.Add("_loc: string");
+            parameterParts.Add("_loc: JsonPointer");
         }
         if (requiresRegistryParameter)
         {
@@ -458,6 +474,7 @@ public sealed class TsSchemaCodeGenerator
         string rootHash,
         string methods,
         SortedSet<string> runtimeImports,
+        SortedSet<string> runtimeTypeImports,
         bool requiresAnnotationTracking,
         bool requiresScopeTracking,
         bool requiresRegistry,
@@ -473,10 +490,11 @@ public sealed class TsSchemaCodeGenerator
             sb.Append("import { ");
             sb.Append(string.Join(", ", runtimeImports));
             sb.AppendLine($" }} from {TsLiteral.String(RuntimeImportSpecifier)};");
-            sb.AppendLine();
         }
 
-        sb.Append(TypeScriptPreamble());
+        sb.Append("import type { ");
+        sb.Append(string.Join(", ", runtimeTypeImports));
+        sb.AppendLine($" }} from {TsLiteral.String(RuntimeImportSpecifier)};");
         sb.AppendLine();
 
         sb.Append(methods);
@@ -495,16 +513,16 @@ public sealed class TsSchemaCodeGenerator
         {
             if (requiresRegistry)
             {
-                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: any, location = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location, registry); }}");
-                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: any, location = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location, registry); }}");
-                sb.AppendLine($"export function validateWithScopeAndState(data: JsonValue, scope: any, evaluatedState: any, location = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, scope, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: CompiledValidatorScope, location: JsonPointer = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location, registry); }}");
+                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: EvaluatedState, location: JsonPointer = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validateWithScopeAndState(data: JsonValue, scope: CompiledValidatorScope, evaluatedState: EvaluatedState, location: JsonPointer = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, scope, evaluatedState, location, registry); }}");
                 sb.AppendLine($"export function validate({exportParameters}): boolean {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\", registry); }}");
             }
             else
             {
-                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: any, location = \"\"): boolean {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location); }}");
-                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: any, location = \"\"): boolean {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location); }}");
-                sb.AppendLine($"export function validateWithScopeAndState(data: JsonValue, scope: any, evaluatedState: any, location = \"\"): boolean {{ return validate_{rootHash}(data, scope, evaluatedState, location); }}");
+                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: CompiledValidatorScope, location: JsonPointer = \"\"): boolean {{ return validate_{rootHash}(data, scope, new EvaluatedState(), location); }}");
+                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: EvaluatedState, location: JsonPointer = \"\"): boolean {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, evaluatedState, location); }}");
+                sb.AppendLine($"export function validateWithScopeAndState(data: JsonValue, scope: CompiledValidatorScope, evaluatedState: EvaluatedState, location: JsonPointer = \"\"): boolean {{ return validate_{rootHash}(data, scope, evaluatedState, location); }}");
                 sb.AppendLine($"export function validate({exportParameters}): boolean {{ return validate_{rootHash}(data, CompiledValidatorScope.empty, new EvaluatedState(), \"\"); }}");
             }
         }
@@ -512,12 +530,12 @@ public sealed class TsSchemaCodeGenerator
         {
             if (requiresRegistry)
             {
-                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: any, location = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, scope, location, registry); }}");
+                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: CompiledValidatorScope, location: JsonPointer = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, scope, location, registry); }}");
                 sb.AppendLine($"export function validate({exportParameters}): boolean {{ return validateWithScope(data, CompiledValidatorScope.empty, \"\", registry); }}");
             }
             else
             {
-                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: any, location = \"\"): boolean {{ return validate_{rootHash}(data, scope, location); }}");
+                sb.AppendLine($"export function validateWithScope(data: JsonValue, scope: CompiledValidatorScope, location: JsonPointer = \"\"): boolean {{ return validate_{rootHash}(data, scope, location); }}");
                 sb.AppendLine($"export function validate({exportParameters}): boolean {{ return validateWithScope(data, CompiledValidatorScope.empty, \"\"); }}");
             }
         }
@@ -525,12 +543,12 @@ public sealed class TsSchemaCodeGenerator
         {
             if (requiresRegistry)
             {
-                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: any, location = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, evaluatedState, location, registry); }}");
+                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: EvaluatedState, location: JsonPointer = \"\", registry: ValidatorRegistry = null): boolean {{ return validate_{rootHash}(data, evaluatedState, location, registry); }}");
                 sb.AppendLine($"export function validate({exportParameters}): boolean {{ return validateWithState(data, new EvaluatedState(), \"\", registry); }}");
             }
             else
             {
-                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: any, location = \"\"): boolean {{ return validate_{rootHash}(data, evaluatedState, location); }}");
+                sb.AppendLine($"export function validateWithState(data: JsonValue, evaluatedState: EvaluatedState, location: JsonPointer = \"\"): boolean {{ return validate_{rootHash}(data, evaluatedState, location); }}");
                 sb.AppendLine($"export function validate({exportParameters}): boolean {{ return validateWithState(data, new EvaluatedState(), \"\"); }}");
             }
         }
@@ -550,7 +568,7 @@ public sealed class TsSchemaCodeGenerator
         sb.AppendLine($"export const schemaUri = {schemaUriLiteral};");
         sb.AppendLine();
 
-        sb.AppendLine("export const fragmentValidators = {");
+        sb.AppendLine("export const fragmentValidators: Record<string, FragmentValidator> = {");
         foreach (var fragment in fragmentValidators)
         {
             sb.AppendLine($"  {TsLiteral.String(fragment.Uri)}: {{");
@@ -611,15 +629,6 @@ public sealed class TsSchemaCodeGenerator
         return sb.ToString();
     }
 
-    private static string TypeScriptPreamble()
-    {
-        return """
-            type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
-            type ValidatorRegistry = { tryGetValidator(uri: string): any } | null;
-
-            """;
-    }
-
     private static string BuildScopePushCode(
         SubschemaInfo subschemaInfo,
         bool requiresAnnotationTracking,
@@ -643,8 +652,8 @@ public sealed class TsSchemaCodeGenerator
                     ? $"(data, scope, evaluatedState, location = \"\", registry = null) => validate_{schemaHash}(data, scope, evaluatedState, location, registry)"
                     : $"(data, scope, evaluatedState, location = \"\") => validate_{schemaHash}(data, scope, evaluatedState, location)"
                 : requiresRegistry
-                    ? $"(data, scope, location = \"\", registry = null) => validate_{schemaHash}(data, scope, location, registry)"
-                    : $"(data, scope, location = \"\") => validate_{schemaHash}(data, scope, location)";
+                    ? $"Object.assign((data: JsonValue, scope: CompiledValidatorScope, _evaluatedState: EvaluatedState, location: JsonPointer = \"\", registry: ValidatorRegistry = null) => validate_{schemaHash}(data, scope, location, registry), {{ ignoresEvaluatedState: true }})"
+                    : $"Object.assign((data: JsonValue, scope: CompiledValidatorScope, _evaluatedState: EvaluatedState, location: JsonPointer = \"\") => validate_{schemaHash}(data, scope, location), {{ ignoresEvaluatedState: true }})";
             sb.AppendLine($"    {TsLiteral.String(anchorName)}: {delegateExpr},");
         }
         sb.AppendLine("  }");

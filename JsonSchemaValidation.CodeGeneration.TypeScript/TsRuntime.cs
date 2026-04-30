@@ -62,7 +62,7 @@ public static class TsRuntime
             }
             export type ValidatorHandle = ValidatorFn | FragmentValidator | ValidatorModule;
             export type ValidatorRegistry = { tryGetValidator(uri: string): ValidatorHandle | null } | null;
-            export type DynamicAnchorValidator = (data: JsonValue, scope: CompiledValidatorScope, evaluatedStateOrLocation?: EvaluatedState | JsonPointer, locationOrRegistry?: JsonPointer | ValidatorRegistry, registry?: ValidatorRegistry) => boolean;
+            export type DynamicAnchorValidator = ((data: JsonValue, scope: CompiledValidatorScope, evaluatedState: EvaluatedState, location?: JsonPointer, registry?: ValidatorRegistry) => boolean) & { ignoresEvaluatedState?: boolean };
             export type CompiledScopeEntry = {
               dynamicAnchors?: Record<string, DynamicAnchorValidator> | null;
               hasRecursiveAnchor?: boolean;
@@ -84,6 +84,8 @@ public static class TsRuntime
               isItemEvaluated(location: string, index: number): boolean;
               setEvaluatedItemsUpTo(location: string, count: number): void;
             }
+            /** Shared sentinel for generated dynamic-anchor delegates that explicitly ignore evaluated state. */
+            export const EMPTY_EVALUATED_STATE: EvaluatedState;
             export class Registry {
               registerForUri(uri: string, validator: ValidatorHandle): void;
               tryGetValidator(uri: string): ValidatorHandle | null;

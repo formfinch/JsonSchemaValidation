@@ -43,13 +43,13 @@ type SegmenterConstructor = new (
 ) => SegmenterLike;
 type IntlWithSegmenter = typeof Intl & { Segmenter?: SegmenterConstructor };
 type RegexGroups = Record<string, string | undefined>;
-type DynamicAnchorValidator = (
+export type DynamicAnchorValidator = ((
     data: JsonValue,
     scope: CompiledValidatorScope,
-    evaluatedStateOrLocation?: EvaluatedState | JsonPointer,
-    locationOrRegistry?: JsonPointer | ValidatorRegistry,
+    evaluatedState: EvaluatedState,
+    location?: JsonPointer,
     registry?: ValidatorRegistry
-) => boolean;
+) => boolean) & { ignoresEvaluatedState?: boolean };
 
 export type CompiledScopeEntry = {
     dynamicAnchors?: Record<string, DynamicAnchorValidator> | null;
@@ -226,6 +226,9 @@ export class EvaluatedState {
         this.mergeFrom(snapshot);
     }
 }
+
+// Shared sentinel for generated dynamic-anchor delegates that explicitly ignore evaluated state.
+export const EMPTY_EVALUATED_STATE = new EvaluatedState();
 
 export class Registry {
     private readonly _validators = new Map<string, ValidatorHandle>();
