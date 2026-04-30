@@ -66,10 +66,11 @@ public class TsSchemaCodeGeneratorTests
         Assert.True(result.Success, result.Error);
         Assert.DoesNotContain(": any", result.GeneratedCode);
         Assert.DoesNotContain("): any", result.GeneratedCode);
-        Assert.Contains("import { CompiledValidatorScope, EMPTY_EVALUATED_STATE }", result.GeneratedCode);
+        Assert.Contains("CompiledValidatorScope", result.GeneratedCode);
+        Assert.Contains("EMPTY_EVALUATED_STATE", result.GeneratedCode);
+        Assert.Contains("EvaluatedState", result.GeneratedCode);
         Assert.Contains("_scope: CompiledValidatorScope", result.GeneratedCode);
         Assert.Contains("scope: CompiledValidatorScope", result.GeneratedCode);
-        Assert.Contains("EMPTY_EVALUATED_STATE", result.GeneratedCode);
     }
 
     [Fact]

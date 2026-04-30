@@ -36,7 +36,7 @@ The IR option is cleaner long term, but larger. The current implementation prese
 
 The TypeScript target assembly no longer depends on `FormFinch.JsonSchemaValidation.CodeGeneration.JavaScript` for runtime projection. Focused tests compile the runtime with `strict: true` and `noImplicitAny: true`. Generated validator modules now import the runtime ABI types and compile under the same strict/noImplicitAny gate for covered state/scope/registry scenarios.
 
-`DynamicAnchorValidator` now uses the stable generated-validator shape `data, scope, evaluatedState, location, registry`. Scope-only callers pass `EMPTY_EVALUATED_STATE` when they need to call a dynamic-anchor delegate but do not track annotations themselves.
+`DynamicAnchorValidator` now uses the stable generated-validator shape `data, scope, evaluatedState, location, registry`. Generated scope-only dynamic-anchor delegates are marked as `ignoresEvaluatedState`; scope-only callers pass `EMPTY_EVALUATED_STATE` only to marked delegates and allocate a fresh `EvaluatedState` for unknown delegates that may need annotation state.
 
 ## Toolchain
 

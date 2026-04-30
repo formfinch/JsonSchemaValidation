@@ -235,8 +235,8 @@ public sealed class TsRefCodeGenerator : ITsKeywordCodeGenerator
                     ? $"(data, scope, evaluatedState, location = \"\", registry = null) => validate_{schemaHash}(data, scope, evaluatedState, location, registry)"
                     : $"(data, scope, evaluatedState, location = \"\") => validate_{schemaHash}(data, scope, evaluatedState, location)"
                 : context.RequiresRegistry
-                    ? $"(data, scope, _evaluatedState, location = \"\", registry = null) => validate_{schemaHash}(data, scope, location, registry)"
-                    : $"(data, scope, _evaluatedState, location = \"\") => validate_{schemaHash}(data, scope, location)";
+                    ? $"Object.assign((data: JsonValue, scope: CompiledValidatorScope, _evaluatedState: EvaluatedState, location: JsonPointer = \"\", registry: ValidatorRegistry = null) => validate_{schemaHash}(data, scope, location, registry), {{ ignoresEvaluatedState: true }})"
+                    : $"Object.assign((data: JsonValue, scope: CompiledValidatorScope, _evaluatedState: EvaluatedState, location: JsonPointer = \"\") => validate_{schemaHash}(data, scope, location), {{ ignoresEvaluatedState: true }})";
             sb.AppendLine($"      {TsLiteral.String(anchorName)}: {delegateExpr},");
         }
         sb.AppendLine("    }");
