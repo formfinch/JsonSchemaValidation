@@ -110,6 +110,7 @@ public sealed partial class OutputQualityReportTests
                 "TypeScript strict_profiles compile every generated schema in one tsc invocation per profile, then attribute diagnostics back to each schema by source file. The per-profile entry under strict_profiles uses status 'failed' (with remediation 'generated-code') when the row's own .ts file has errors, status 'failed' (remediation 'runtime-types') when only the shared jsv-runtime.ts has errors, status 'unavailable' when tsc could not run, and status 'passed' otherwise. Strict-profile failures do not change the row's top-level status field, which only reflects the codegen step ('generated', 'unsupported', or 'generation-failed').",
                 "quality_summary statuses: 'pass' = every scenario compiled cleanly under every strictness profile that ran. 'fail' = at least one scenario was rejected by codegen (e.g. status 'unsupported'), failed code generation, or failed a strictness profile. 'incomplete' = no failures, but at least one strictness profile could not run (e.g. tsc was not found). None of these imply anything about runtime validation correctness.",
                 "baseline_deltas.status_change appears as 'old -> new' when a row's top-level status flips between baseline and current run (e.g. 'generated -> unsupported'); a flip out of 'generated' makes numeric deltas unreliable because no validator was emitted in the new run.",
+                "baseline_deltas.strict_profile_changes lists per-profile status flips ('profile-name: old -> new') for TypeScript rows; the baseline file persists each profile's last status so regressions like 'no-unchecked-indexed-access: passed -> failed' surface alongside numeric deltas.",
                 "Helper selection correctness is tracked separately by issue #46; this report measures footprint only.",
                 "JS/TS deduplication decisions are tracked separately by issue #42.",
                 "Lint/static-analysis signals are deferred to follow-up work."
@@ -288,22 +289,9 @@ public sealed partial class OutputQualityReportTests
             var rowSourcePaths = new Dictionary<GeneratedTargetRow, string>();
             foreach (var generatedRow in typeScriptRows)
             {
-                var primaryArtifact = generatedRow.Artifacts.SingleOrDefault(artifact => artifact.Role == GeneratedArtifactRole.Primary);
-                if (primaryArtifact == null)
-                {
-                    foreach (var profile in GetStrictnessProfiles())
-                    {
-                        generatedRow.Row.StrictProfiles![profile.Name] = new StrictProfileReport
-                        {
-                            Status = "skipped",
-                            Remediation = "unknown",
-                            Diagnostics = ["No primary TypeScript artifact was emitted for this scenario."]
-                        };
-                    }
-
-                    continue;
-                }
-
+                // typeScriptRows is filtered upstream to only contain rows with a primary artifact,
+                // so Single() is the right invariant here.
+                var primaryArtifact = generatedRow.Artifacts.Single(artifact => artifact.Role == GeneratedArtifactRole.Primary);
                 var sourcePath = Path.Combine(sourceRoot, $"{generatedRow.Row.Schema}.ts");
                 File.WriteAllText(sourcePath, primaryArtifact.Content, Utf8NoBom);
                 sourcePaths.Add(sourcePath);
@@ -524,6 +512,7 @@ public sealed partial class OutputQualityReportTests
         return new MetricDeltas
         {
             StatusChange = statusChange,
+            StrictProfileChanges = ComputeStrictProfileChanges(row.StrictProfiles, baselineRow.StrictProfiles),
             ValidatorBytes = Subtract(row.ValidatorBytes, baselineRow.ValidatorBytes),
             RuntimeBytes = Subtract(row.RuntimeBytes, baselineRow.RuntimeBytes),
             TotalBytes = Subtract(row.TotalBytes, baselineRow.TotalBytes),
@@ -533,6 +522,44 @@ public sealed partial class OutputQualityReportTests
             MaxIndentationDepth = Subtract(row.MaxIndentationDepth, baselineRow.MaxIndentationDepth),
             HelperCount = Subtract(row.HelperCount, baselineRow.HelperCount)
         };
+    }
+
+    private static IReadOnlyList<string>? ComputeStrictProfileChanges(
+        IReadOnlyDictionary<string, StrictProfileReport>? current,
+        IReadOnlyDictionary<string, string>? baseline)
+    {
+        // Old baselines (pre-strict-profile baseline support) have null here, in which case there
+        // is no flip to surface — leave the field unset rather than fabricating a "missing -> X" entry.
+        if (baseline is null || baseline.Count == 0)
+        {
+            return null;
+        }
+
+        var changes = new List<string>();
+        var profileNames = new SortedSet<string>(StringComparer.Ordinal);
+        if (current is not null)
+        {
+            foreach (var name in current.Keys)
+            {
+                profileNames.Add(name);
+            }
+        }
+        foreach (var name in baseline.Keys)
+        {
+            profileNames.Add(name);
+        }
+
+        foreach (var name in profileNames)
+        {
+            var oldStatus = baseline.TryGetValue(name, out var b) ? b : "(missing)";
+            var newStatus = current is not null && current.TryGetValue(name, out var c) ? c.Status : "(missing)";
+            if (!string.Equals(oldStatus, newStatus, StringComparison.Ordinal))
+            {
+                changes.Add($"{name}: {oldStatus} -> {newStatus}");
+            }
+        }
+
+        return changes.Count == 0 ? null : changes;
     }
 
     private static string NormalizeSource(string source)
@@ -1054,7 +1081,8 @@ public sealed partial class OutputQualityReportTests
         }
 
         var hasNumericDelta = deltas.TotalBytes.HasValue || deltas.GzipBytes.HasValue || deltas.Loc.HasValue;
-        if (deltas.StatusChange is null && !hasNumericDelta)
+        var hasProfileChanges = deltas.StrictProfileChanges is { Count: > 0 };
+        if (deltas.StatusChange is null && !hasNumericDelta && !hasProfileChanges)
         {
             return "";
         }
@@ -1070,6 +1098,11 @@ public sealed partial class OutputQualityReportTests
         if (hasNumericDelta)
         {
             parts.Add($"total {FormatDelta(deltas.TotalBytes)}, gzip {FormatDelta(deltas.GzipBytes)}, loc {FormatDelta(deltas.Loc)}");
+        }
+
+        if (hasProfileChanges)
+        {
+            parts.Add($"strict_profiles {string.Join(", ", deltas.StrictProfileChanges!)}");
         }
 
         return string.Join("; ", parts);
@@ -1173,6 +1206,7 @@ public sealed partial class OutputQualityReportTests
     private sealed class MetricDeltas
     {
         public string? StatusChange { get; init; }
+        public IReadOnlyList<string>? StrictProfileChanges { get; init; }
         public int? ValidatorBytes { get; init; }
         public int? RuntimeBytes { get; init; }
         public int? TotalBytes { get; init; }
@@ -1208,7 +1242,12 @@ public sealed partial class OutputQualityReportTests
                         Loc = row.Loc,
                         FunctionCount = row.FunctionCount,
                         MaxIndentationDepth = row.MaxIndentationDepth,
-                        HelperCount = row.HelperCount
+                        HelperCount = row.HelperCount,
+                        StrictProfiles = row.StrictProfiles is { Count: > 0 }
+                            ? row.StrictProfiles
+                                .OrderBy(profile => profile.Key, StringComparer.Ordinal)
+                                .ToDictionary(profile => profile.Key, profile => profile.Value.Status, StringComparer.Ordinal)
+                            : null
                     })
                     .ToArray()
             };
@@ -1228,5 +1267,6 @@ public sealed partial class OutputQualityReportTests
         public int? FunctionCount { get; init; }
         public int? MaxIndentationDepth { get; init; }
         public int? HelperCount { get; init; }
+        public IReadOnlyDictionary<string, string>? StrictProfiles { get; init; }
     }
 }

@@ -12,7 +12,8 @@
       "loc": 74,
       "function_count": 7,
       "max_indentation_depth": 4,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -25,7 +26,8 @@
       "loc": 28,
       "function_count": 2,
       "max_indentation_depth": 1,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -38,7 +40,8 @@
       "loc": 32,
       "function_count": 4,
       "max_indentation_depth": 2,
-      "helper_count": 0
+      "helper_count": 0,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -51,7 +54,8 @@
       "loc": 27,
       "function_count": 2,
       "max_indentation_depth": 1,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -64,7 +68,8 @@
       "loc": 39,
       "function_count": 2,
       "max_indentation_depth": 5,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -77,7 +82,8 @@
       "loc": 67,
       "function_count": 5,
       "max_indentation_depth": 3,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -90,7 +96,8 @@
       "loc": 24,
       "function_count": 2,
       "max_indentation_depth": 1,
-      "helper_count": 0
+      "helper_count": 0,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -103,7 +110,8 @@
       "loc": null,
       "function_count": null,
       "max_indentation_depth": null,
-      "helper_count": null
+      "helper_count": null,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -116,7 +124,8 @@
       "loc": null,
       "function_count": null,
       "max_indentation_depth": null,
-      "helper_count": null
+      "helper_count": null,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -129,7 +138,8 @@
       "loc": 3207,
       "function_count": 236,
       "max_indentation_depth": 4,
-      "helper_count": 2
+      "helper_count": 2,
+      "strict_profiles": null
     },
     {
       "target": "javascript",
@@ -142,7 +152,8 @@
       "loc": 68,
       "function_count": 6,
       "max_indentation_depth": 3,
-      "helper_count": 2
+      "helper_count": 2,
+      "strict_profiles": null
     },
     {
       "target": "typescript",
@@ -155,7 +166,13 @@
       "loc": 68,
       "function_count": 7,
       "max_indentation_depth": 4,
-      "helper_count": 3
+      "helper_count": 3,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -168,7 +185,13 @@
       "loc": 23,
       "function_count": 2,
       "max_indentation_depth": 1,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -181,7 +204,13 @@
       "loc": 27,
       "function_count": 4,
       "max_indentation_depth": 2,
-      "helper_count": 0
+      "helper_count": 0,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -194,7 +223,13 @@
       "loc": 22,
       "function_count": 2,
       "max_indentation_depth": 1,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -207,7 +242,13 @@
       "loc": 34,
       "function_count": 2,
       "max_indentation_depth": 5,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -220,7 +261,13 @@
       "loc": 62,
       "function_count": 5,
       "max_indentation_depth": 3,
-      "helper_count": 1
+      "helper_count": 1,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -233,7 +280,13 @@
       "loc": 20,
       "function_count": 2,
       "max_indentation_depth": 1,
-      "helper_count": 0
+      "helper_count": 0,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -246,7 +299,8 @@
       "loc": null,
       "function_count": null,
       "max_indentation_depth": null,
-      "helper_count": null
+      "helper_count": null,
+      "strict_profiles": null
     },
     {
       "target": "typescript",
@@ -259,7 +313,8 @@
       "loc": null,
       "function_count": null,
       "max_indentation_depth": null,
-      "helper_count": null
+      "helper_count": null,
+      "strict_profiles": null
     },
     {
       "target": "typescript",
@@ -272,7 +327,13 @@
       "loc": 3202,
       "function_count": 236,
       "max_indentation_depth": 4,
-      "helper_count": 2
+      "helper_count": 2,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     },
     {
       "target": "typescript",
@@ -285,7 +346,13 @@
       "loc": 63,
       "function_count": 6,
       "max_indentation_depth": 3,
-      "helper_count": 2
+      "helper_count": 2,
+      "strict_profiles": {
+        "combined-extra-strict": "failed",
+        "exact-optional-property-types": "passed",
+        "no-unchecked-indexed-access": "failed",
+        "strict-no-implicit-any": "passed"
+      }
     }
   ]
 }
