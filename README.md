@@ -107,7 +107,7 @@ dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGe
 
 The report writes `artifacts/codegen-output-quality/codegen-output-quality.json` and `.md` from the `net8.0` test target, so gzip measurements have one canonical .NET runtime; the report test is skipped on `net10.0`. Metrics are normalized before measurement and compared with `benchmarks/codegen-output-quality-baseline.json`; deltas are informational only.
 
-To print the rendered markdown report directly to the test output (no need to open the file), pass the print flag and the detailed logger as plain CLI options — no shell env setup needed:
+To print the report directly to the test output (no need to open the file), pass the print flag and the detailed logger as plain CLI options — no shell env setup needed. The inline output uses aligned plain-text tables tuned for terminals (the `.md` artifact stays in proper Markdown for GitHub rendering):
 
 ```bash
 dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --filter "Category=OutputQuality" --logger "console;verbosity=detailed" -e JSV_PRINT_CODEGEN_QUALITY_REPORT=1

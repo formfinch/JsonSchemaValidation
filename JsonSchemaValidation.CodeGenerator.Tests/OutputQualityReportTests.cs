@@ -95,8 +95,8 @@ public sealed partial class OutputQualityReportTests
                 "All generated artifacts are normalized to UTF-8 text with LF line endings and one trailing newline before measurement.",
                 "gzip_bytes is computed by System.IO.Compression.GZipStream with CompressionLevel.Optimal.",
                 "function_count is a lightweight regex-based shape signal and can count function-like text in comments or strings.",
-                "TypeScript strict_profiles are batched per compiler profile, so failures apply to the generated TS batch rather than isolating one schema.",
-                "quality_summary is the headline pass/fail readout for each target. A 'fail' status means the generated code does not compile cleanly under at least one strictness profile (or codegen itself failed). It does not mean runtime validation is broken.",
+                "TypeScript strict_profiles compile every generated schema in one tsc invocation per profile, then attribute diagnostics back to each schema by source file. A row's status is 'failed' when its own .ts file has errors, with remediation 'generated-code'. A row's status is also 'failed' when only the shared jsv-runtime.ts has errors (remediation 'runtime-types') because every generated validator imports that runtime.",
+                "quality_summary statuses: 'pass' = every scenario compiled cleanly under every strictness profile that ran. 'fail' = at least one scenario failed a strictness profile (or codegen failed). 'incomplete' = no failures, but at least one strictness profile could not run (e.g. tsc was not found). None of these imply anything about runtime validation correctness.",
                 "Helper selection correctness is tracked separately by issue #46; this report measures footprint only.",
                 "JS/TS deduplication decisions are tracked separately by issue #42.",
                 "Lint/static-analysis signals are deferred to follow-up work."
@@ -132,6 +132,28 @@ public sealed partial class OutputQualityReportTests
                 JsonSerializer.Serialize(nextBaseline, jsonOptions),
                 Utf8NoBom);
         }
+
+        var jsonReportPath = Path.Combine(reportDirectory, "codegen-output-quality.json");
+        var markdownReportPath = Path.Combine(reportDirectory, "codegen-output-quality.md");
+        Assert.True(File.Exists(jsonReportPath), "Expected the JSON report to be written.");
+        Assert.True(File.Exists(markdownReportPath), "Expected the Markdown report to be written.");
+        Assert.NotEmpty(rows);
+        Assert.Contains(rows, row => row.Target == "javascript");
+        Assert.Contains(rows, row => row.Target == "typescript");
+        Assert.NotEmpty(qualitySummary);
+        Assert.All(qualitySummary, entry =>
+        {
+            Assert.Contains(entry.Status, new[] { "pass", "fail", "incomplete" });
+            Assert.Equal(group(rows, entry.Target),
+                entry.PassingScenarioCount + entry.FailingScenarioCount + entry.IncompleteScenarioCount);
+        });
+        Assert.Contains("Quality Summary", markdown);
+        Assert.Contains("Per-Schema Metrics", markdown);
+        Assert.All(rows.Where(row => row.Target == "typescript" && row.Status == "generated"),
+            row => Assert.NotNull(row.StrictProfiles));
+
+        static int group(IReadOnlyList<ReportRow> all, string target) =>
+            all.Count(row => string.Equals(row.Target, target, StringComparison.Ordinal));
     }
 
     private static async Task<GeneratedTargetRow> GenerateTargetRowAsync(
@@ -250,6 +272,7 @@ public sealed partial class OutputQualityReportTests
             File.WriteAllText(runtimePath, NormalizeSource(TsRuntime.GetSource()), Utf8NoBom);
 
             var sourcePaths = new List<string> { runtimePath };
+            var rowSourcePaths = new Dictionary<GeneratedTargetRow, string>();
             foreach (var generatedRow in typeScriptRows)
             {
                 var primaryArtifact = generatedRow.Artifacts.SingleOrDefault(artifact => artifact.Role == GeneratedArtifactRole.Primary);
@@ -271,27 +294,63 @@ public sealed partial class OutputQualityReportTests
                 var sourcePath = Path.Combine(sourceRoot, $"{generatedRow.Row.Schema}.ts");
                 File.WriteAllText(sourcePath, primaryArtifact.Content, Utf8NoBom);
                 sourcePaths.Add(sourcePath);
+                rowSourcePaths[generatedRow] = sourcePath;
             }
 
+            var relativeSourcePaths = sourcePaths
+                .Select(path => Path.GetRelativePath(tempRoot, path))
+                .ToArray();
             foreach (var profile in GetStrictnessProfiles())
             {
                 var outputDirectory = Path.Combine(tempRoot, "out", profile.Name);
                 var compileResult = TypeScriptCompiler.Compile(
-                    sourcePaths,
+                    relativeSourcePaths,
                     outputDirectory,
                     ecmaScriptTarget: "ES2020",
                     options: profile.Options,
-                    timeoutMilliseconds: 240_000);
-                var report = new StrictProfileReport
-                {
-                    Status = compileResult.Success ? "passed" : "failed",
-                    Remediation = compileResult.Success ? null : CategorizeTypeScriptFailure(compileResult),
-                    Diagnostics = BuildCompilerDiagnostics(compileResult, tempRoot)
-                };
+                    timeoutMilliseconds: 240_000,
+                    workingDirectory: tempRoot);
+                var attributedDiagnostics = AttributeTscDiagnostics(compileResult, tempRoot);
 
-                foreach (var generatedRow in typeScriptRows)
+                foreach (var (generatedRow, sourcePath) in rowSourcePaths)
                 {
-                    generatedRow.Row.StrictProfiles![profile.Name] = report;
+                    var rowFileName = Path.GetFileName(sourcePath);
+                    var rowDiagnostics = attributedDiagnostics.GetValueOrDefault(rowFileName, []);
+                    var runtimeDiagnostics = attributedDiagnostics.GetValueOrDefault(TsRuntime.FileName, []);
+
+                    string status;
+                    string? remediation;
+                    if (rowDiagnostics.Count > 0)
+                    {
+                        status = "failed";
+                        remediation = "generated-code";
+                    }
+                    else if (runtimeDiagnostics.Count > 0)
+                    {
+                        status = "failed";
+                        remediation = "runtime-types";
+                    }
+                    else if (!compileResult.Success)
+                    {
+                        status = "failed";
+                        remediation = "unknown";
+                    }
+                    else
+                    {
+                        status = "passed";
+                        remediation = null;
+                    }
+
+                    var rowReport = new List<string>();
+                    rowReport.AddRange(rowDiagnostics);
+                    rowReport.AddRange(runtimeDiagnostics.Select(line => "[shared-runtime] " + line));
+
+                    generatedRow.Row.StrictProfiles![profile.Name] = new StrictProfileReport
+                    {
+                        Status = status,
+                        Remediation = remediation,
+                        Diagnostics = TruncateDiagnostics(rowReport)
+                    };
                 }
             }
         }
@@ -299,6 +358,72 @@ public sealed partial class OutputQualityReportTests
         {
             try { Directory.Delete(tempRoot, recursive: true); } catch { /* best effort */ }
         }
+    }
+
+    private static IReadOnlyDictionary<string, IReadOnlyList<string>> AttributeTscDiagnostics(
+        TypeScriptCompilationResult result,
+        string tempRoot)
+    {
+        var attributed = new Dictionary<string, List<string>>(StringComparer.Ordinal);
+        if (result.Success)
+        {
+            return attributed.ToDictionary(
+                pair => pair.Key,
+                pair => (IReadOnlyList<string>)pair.Value,
+                StringComparer.Ordinal);
+        }
+
+        var rawText = string.Concat(
+            string.IsNullOrWhiteSpace(result.StandardError) ? "" : result.StandardError + "\n",
+            string.IsNullOrWhiteSpace(result.StandardOutput) ? "" : result.StandardOutput);
+        var normalized = NormalizeDiagnosticText(rawText, tempRoot);
+
+        string? currentFileKey = null;
+        foreach (var line in normalized.Split('\n'))
+        {
+            var trimmed = line.TrimEnd();
+            if (trimmed.Length == 0)
+            {
+                continue;
+            }
+
+            var match = TscDiagnosticHeaderRegex().Match(trimmed);
+            if (match.Success)
+            {
+                var path = match.Groups["path"].Value;
+                currentFileKey = Path.GetFileName(path);
+            }
+
+            if (currentFileKey is null)
+            {
+                continue;
+            }
+
+            if (!attributed.TryGetValue(currentFileKey, out var bucket))
+            {
+                bucket = new List<string>();
+                attributed[currentFileKey] = bucket;
+            }
+            bucket.Add(trimmed);
+        }
+
+        return attributed.ToDictionary(
+            pair => pair.Key,
+            pair => (IReadOnlyList<string>)pair.Value,
+            StringComparer.Ordinal);
+    }
+
+    private static IReadOnlyList<string> TruncateDiagnostics(IReadOnlyList<string> lines)
+    {
+        const int maxLines = 80;
+        if (lines.Count <= maxLines)
+        {
+            return lines.ToArray();
+        }
+
+        return lines.Take(maxLines)
+            .Append($"... truncated {lines.Count - maxLines} additional diagnostic lines")
+            .ToArray();
     }
 
     private static IReadOnlyList<Scenario> LoadScenarios(string repoRoot)
@@ -480,11 +605,13 @@ public sealed partial class OutputQualityReportTests
         sb.AppendLine();
         sb.AppendLine("Quality Summary");
         sb.AppendLine("---------------");
-        sb.AppendLine("FAIL = generated code does not compile cleanly under at least one strictness profile");
-        sb.AppendLine("       (or codegen itself failed). It does NOT mean runtime validation is broken.");
+        sb.AppendLine("FAIL       = at least one scenario fails a strictness profile (or codegen failed).");
+        sb.AppendLine("INCOMPLETE = no failures, but at least one strictness profile could not run (e.g. tsc unavailable).");
+        sb.AppendLine("PASS       = every scenario compiled cleanly under every strictness profile that ran.");
+        sb.AppendLine("None of these statuses imply anything about runtime validation correctness.");
         sb.AppendLine();
 
-        var summaryHeaders = new[] { "target", "status", "pass", "fail", "failing strict profiles" };
+        var summaryHeaders = new[] { "target", "status", "pass", "fail", "incomplete", "failing strict profiles" };
         var summaryRows = report.QualitySummary
             .OrderBy(entry => entry.Target, StringComparer.Ordinal)
             .Select(entry => new[]
@@ -493,10 +620,11 @@ public sealed partial class OutputQualityReportTests
                 entry.Status.ToUpperInvariant(),
                 entry.PassingScenarioCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 entry.FailingScenarioCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                entry.IncompleteScenarioCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 entry.FailingProfiles.Count == 0 ? "-" : string.Join(", ", entry.FailingProfiles)
             })
             .ToArray();
-        AppendPlainTable(sb, summaryHeaders, summaryRows, rightAlignColumns: [2, 3]);
+        AppendPlainTable(sb, summaryHeaders, summaryRows, rightAlignColumns: [2, 3, 4]);
         sb.AppendLine();
 
         sb.AppendLine("Per-Schema Metrics");
@@ -624,10 +752,10 @@ public sealed partial class OutputQualityReportTests
 
         sb.AppendLine("## Quality Summary");
         sb.AppendLine();
-        sb.AppendLine("Headline pass/fail per target. **fail** means the generated code does not compile cleanly under at least one strictness profile (or codegen itself failed). It does not mean runtime validation is broken.");
+        sb.AppendLine("Headline status per target. **FAIL** = at least one scenario fails a strictness profile (or codegen failed). **INCOMPLETE** = no failures, but at least one strictness profile could not run (e.g. `tsc` unavailable). **PASS** = every scenario compiled cleanly under every strictness profile that ran. None of these statuses imply anything about runtime validation correctness.");
         sb.AppendLine();
-        sb.AppendLine("| target | status | passing scenarios | failing scenarios | failing strict profiles |");
-        sb.AppendLine("| --- | --- | ---: | ---: | --- |");
+        sb.AppendLine("| target | status | passing scenarios | failing scenarios | incomplete scenarios | failing strict profiles |");
+        sb.AppendLine("| --- | --- | ---: | ---: | ---: | --- |");
         foreach (var entry in report.QualitySummary.OrderBy(entry => entry.Target, StringComparer.Ordinal))
         {
             var failingProfiles = entry.FailingProfiles.Count == 0
@@ -641,6 +769,8 @@ public sealed partial class OutputQualityReportTests
             sb.Append(entry.PassingScenarioCount);
             sb.Append(" | ");
             sb.Append(entry.FailingScenarioCount);
+            sb.Append(" | ");
+            sb.Append(entry.IncompleteScenarioCount);
             sb.Append(" | ");
             sb.Append(EscapeMarkdown(failingProfiles));
             sb.AppendLine(" |");
@@ -708,11 +838,14 @@ public sealed partial class OutputQualityReportTests
         {
             var passingScenarios = 0;
             var failingScenarios = 0;
+            var incompleteScenarios = 0;
             var failingProfiles = new SortedSet<string>(StringComparer.Ordinal);
+            var hasIncomplete = false;
 
             foreach (var row in group)
             {
                 var rowFailed = false;
+                var rowIncomplete = false;
 
                 if (row.Status != "generated")
                 {
@@ -724,10 +857,21 @@ public sealed partial class OutputQualityReportTests
                 {
                     foreach (var profile in row.StrictProfiles)
                     {
-                        if (profile.Value.Status == "failed")
+                        switch (profile.Value.Status)
                         {
-                            rowFailed = true;
-                            failingProfiles.Add(profile.Key);
+                            case "failed":
+                                rowFailed = true;
+                                failingProfiles.Add(profile.Key);
+                                break;
+                            case "skipped":
+                                rowFailed = true;
+                                failingProfiles.Add($"{profile.Key}:skipped");
+                                break;
+                            case "unavailable":
+                                rowIncomplete = true;
+                                hasIncomplete = true;
+                                failingProfiles.Add($"{profile.Key}:tsc-unavailable");
+                                break;
                         }
                     }
                 }
@@ -736,18 +880,37 @@ public sealed partial class OutputQualityReportTests
                 {
                     failingScenarios++;
                 }
+                else if (rowIncomplete)
+                {
+                    incompleteScenarios++;
+                }
                 else
                 {
                     passingScenarios++;
                 }
             }
 
+            string status;
+            if (failingScenarios > 0)
+            {
+                status = "fail";
+            }
+            else if (hasIncomplete)
+            {
+                status = "incomplete";
+            }
+            else
+            {
+                status = "pass";
+            }
+
             entries.Add(new QualitySummaryEntry
             {
                 Target = group.Key,
-                Status = failingScenarios == 0 ? "pass" : "fail",
+                Status = status,
                 PassingScenarioCount = passingScenarios,
                 FailingScenarioCount = failingScenarios,
+                IncompleteScenarioCount = incompleteScenarios,
                 FailingProfiles = failingProfiles.ToArray()
             });
         }
@@ -781,44 +944,6 @@ public sealed partial class OutputQualityReportTests
             Message = diagnostic.Message,
             JsonPointer = diagnostic.JsonPointer
         }).ToArray();
-    }
-
-    private static IReadOnlyList<string> BuildCompilerDiagnostics(TypeScriptCompilationResult result, string? tempRoot = null)
-    {
-        if (result.Success)
-        {
-            return [];
-        }
-
-        var lines = new[] { result.Error, result.StandardError, result.StandardOutput }
-            .Where(value => !string.IsNullOrWhiteSpace(value))
-            .SelectMany(value => NormalizeDiagnosticText(value!, tempRoot).Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
-            .ToArray();
-        const int maxLines = 80;
-        if (lines.Length <= maxLines)
-        {
-            return lines;
-        }
-
-        return lines.Take(maxLines)
-            .Append($"... truncated {lines.Length - maxLines} additional diagnostic lines")
-            .ToArray();
-    }
-
-    private static string CategorizeTypeScriptFailure(TypeScriptCompilationResult result)
-    {
-        var text = string.Join('\n', BuildCompilerDiagnostics(result));
-        if (text.Contains("jsv-runtime", StringComparison.OrdinalIgnoreCase))
-        {
-            return "runtime-types";
-        }
-
-        if (text.Contains("validator", StringComparison.OrdinalIgnoreCase))
-        {
-            return "generated-code";
-        }
-
-        return "unknown";
     }
 
     private static string NormalizeDiagnosticText(string text, string? tempRoot)
@@ -920,6 +1045,9 @@ public sealed partial class OutputQualityReportTests
     [GeneratedRegex(@"import\s+(?:type\s+)?\{\s*(?<names>[^}]+)\s*\}\s+from\s+[""'][^""']*jsv-runtime\.js[""']", RegexOptions.CultureInvariant)]
     private static partial Regex RuntimeImportRegex();
 
+    [GeneratedRegex(@"^(?<path>.+\.ts)\(\d+,\d+\):\s+error\s+TS\d+:", RegexOptions.CultureInvariant)]
+    private static partial Regex TscDiagnosticHeaderRegex();
+
     private sealed record Scenario(
         string Id,
         string SchemaJson,
@@ -949,6 +1077,7 @@ public sealed partial class OutputQualityReportTests
         public required string Status { get; init; }
         public int PassingScenarioCount { get; init; }
         public int FailingScenarioCount { get; init; }
+        public int IncompleteScenarioCount { get; init; }
         public IReadOnlyList<string> FailingProfiles { get; init; } = [];
     }
 

@@ -45,7 +45,8 @@ public static partial class TypeScriptCompiler
         string ecmaScriptTarget,
         TypeScriptCompilerOptions? options = null,
         string tscExecutable = "tsc",
-        int timeoutMilliseconds = 60_000)
+        int timeoutMilliseconds = 60_000,
+        string? workingDirectory = null)
     {
         options ??= new TypeScriptCompilerOptions();
 
@@ -106,7 +107,7 @@ public static partial class TypeScriptCompiler
                     versionResult.StandardError);
             }
 
-            var result = RunTsc(tscExecutable, arguments, workingDirectory: null, timeoutMilliseconds);
+            var result = RunTsc(tscExecutable, arguments, workingDirectory, timeoutMilliseconds);
             if (result.ExitCode == 0)
             {
                 return TypeScriptCompilationResult.Succeeded(result.StandardOutput, result.StandardError);
