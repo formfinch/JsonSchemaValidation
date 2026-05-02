@@ -97,6 +97,24 @@ if (!validator.validate(data)) { /* reject */ }
 
 Current JS/TS scope: Drafts 2020-12, 2019-09, and 4 with target capability checks before emission. See [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md#javascript-code-gen-target-jsv-codegen-generate-js) for the full list of deferred features and behavioral notes.
 
+### Local JS/TS Output Quality Report
+
+When working on the JavaScript or TypeScript code generators, run the reported-only output quality report locally:
+
+```bash
+dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --filter "Category=OutputQuality"
+```
+
+The report writes `artifacts/codegen-output-quality/codegen-output-quality.json` and `.md` from the `net8.0` test target, so gzip measurements have one canonical .NET runtime; the report test is skipped on `net10.0`. Metrics are normalized before measurement and compared with `benchmarks/codegen-output-quality-baseline.json`; deltas are informational only.
+
+To print the rendered markdown report directly to the test output (no need to open the file), pass the print flag and the detailed logger as plain CLI options — no shell env setup needed:
+
+```bash
+dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --filter "Category=OutputQuality" --logger "console;verbosity=detailed" -e JSV_PRINT_CODEGEN_QUALITY_REPORT=1
+```
+
+To accept intentional output changes, add `-e JSV_UPDATE_CODEGEN_QUALITY_BASELINE=1` to the same command and commit the baseline diff. Helper selection correctness remains tracked separately from these footprint metrics.
+
 ## Documentation
 
 - [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps

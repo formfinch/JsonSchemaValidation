@@ -43,11 +43,12 @@ public static partial class TypeScriptCompiler
         IReadOnlyList<string> sourcePaths,
         string outputDirectory,
         string ecmaScriptTarget,
+        TypeScriptCompilerOptions? options = null,
         string tscExecutable = "tsc",
-        int timeoutMilliseconds = 60_000,
-        bool strict = false,
-        bool noImplicitAny = false)
+        int timeoutMilliseconds = 60_000)
     {
+        options ??= new TypeScriptCompilerOptions();
+
         if (sourcePaths.Count == 0)
         {
             return TypeScriptCompilationResult.Failed("At least one TypeScript source path is required.");
@@ -74,8 +75,10 @@ public static partial class TypeScriptCompiler
             "--moduleResolution", "Bundler",
             "--lib", "es2022,dom",
             "--outDir", outputDirectory,
-            "--noImplicitAny", noImplicitAny ? "true" : "false",
-            "--strict", strict ? "true" : "false",
+            "--noImplicitAny", options.NoImplicitAny ? "true" : "false",
+            "--strict", options.Strict ? "true" : "false",
+            "--noUncheckedIndexedAccess", options.NoUncheckedIndexedAccess ? "true" : "false",
+            "--exactOptionalPropertyTypes", options.ExactOptionalPropertyTypes ? "true" : "false",
             "--skipLibCheck", "true",
             "--declaration", "false",
             "--sourceMap", "false",

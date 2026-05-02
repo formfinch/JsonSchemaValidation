@@ -409,7 +409,7 @@ internal static class Program
                 sourcePaths,
                 outputPath,
                 ecmaScriptTarget,
-                tscExecutable);
+                tscExecutable: tscExecutable);
             if (!compilationResult.Success)
             {
                 Console.Error.WriteLine($"TypeScript compilation failed: {compilationResult.Error}");

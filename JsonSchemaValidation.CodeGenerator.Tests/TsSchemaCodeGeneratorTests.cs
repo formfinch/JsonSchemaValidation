@@ -255,8 +255,11 @@ public class TsSchemaCodeGeneratorTests
                 [runtimePath],
                 outputDir,
                 ecmaScriptTarget: "ES2020",
-                strict: true,
-                noImplicitAny: true);
+                options: new TypeScriptCompilerOptions
+                {
+                    Strict = true,
+                    NoImplicitAny = true
+                });
 
             Assert.True(compileResult.Success, compileResult.Error);
         }
@@ -298,8 +301,11 @@ public class TsSchemaCodeGeneratorTests
                 [validatorPath, runtimePath],
                 outputDir,
                 ecmaScriptTarget: "ES2020",
-                strict: true,
-                noImplicitAny: true);
+                options: new TypeScriptCompilerOptions
+                {
+                    Strict = true,
+                    NoImplicitAny = true
+                });
 
             Assert.True(compileResult.Success, compileResult.Error);
         }
@@ -344,8 +350,11 @@ public class TsSchemaCodeGeneratorTests
                 [validatorPath, runtimePath],
                 outputDir,
                 ecmaScriptTarget: "ES2020",
-                strict: true,
-                noImplicitAny: true);
+                options: new TypeScriptCompilerOptions
+                {
+                    Strict = true,
+                    NoImplicitAny = true
+                });
 
             Assert.True(compileResult.Success, compileResult.Error);
         }
