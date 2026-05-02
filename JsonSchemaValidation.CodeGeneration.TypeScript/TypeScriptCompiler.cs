@@ -93,7 +93,7 @@ public static partial class TypeScriptCompiler
             var versionResult = RunTsc(
                 tscExecutable,
                 ["--version"],
-                workingDirectory: null,
+                workingDirectory,
                 timeoutMilliseconds: Math.Min(timeoutMilliseconds, 10_000));
             if (versionResult.ExitCode != 0 || !IsSupportedVersionOutput(versionResult.StandardOutput))
             {

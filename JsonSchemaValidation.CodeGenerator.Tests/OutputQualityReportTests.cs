@@ -16,6 +16,7 @@ public sealed partial class OutputQualityReportTests
 {
     private const string UpdateBaselineEnvironmentVariable = "JSV_UPDATE_CODEGEN_QUALITY_BASELINE";
     private const string PrintReportEnvironmentVariable = "JSV_PRINT_CODEGEN_QUALITY_REPORT";
+    private const string RunReportEnvironmentVariable = "JSV_RUN_CODEGEN_QUALITY_REPORT";
     private static readonly UTF8Encoding Utf8NoBom = new(encoderShouldEmitUTF8Identifier: false);
 
     private readonly Xunit.Abstractions.ITestOutputHelper _testOutput;
@@ -33,6 +34,17 @@ public sealed partial class OutputQualityReportTests
     [Trait("Category", "OutputQuality")]
     public async Task OutputQuality_GeneratesReportedOnlyJsAndTsMetrics()
     {
+        if (!ShouldRunReport())
+        {
+            // Opt-in by design: this test runs the JS/TS code generator, executes tsc multiple times,
+            // and writes report artifacts to the repo. It's not part of routine `dotnet test` runs.
+            // To run it locally, follow the instructions in README.md (Local JS/TS Output Quality Report)
+            // or set JSV_RUN_CODEGEN_QUALITY_REPORT=1 on the test invocation.
+            _testOutput.WriteLine(
+                "Codegen output quality report not generated: set JSV_RUN_CODEGEN_QUALITY_REPORT=1 to opt in.");
+            return;
+        }
+
         var repoRoot = FindRepositoryRoot();
         var reportDirectory = Path.Combine(repoRoot, "artifacts", "codegen-output-quality");
         var baselinePath = Path.Combine(repoRoot, "benchmarks", "codegen-output-quality-baseline.json");
@@ -611,7 +623,7 @@ public sealed partial class OutputQualityReportTests
         sb.AppendLine("None of these statuses imply anything about runtime validation correctness.");
         sb.AppendLine();
 
-        var summaryHeaders = new[] { "target", "status", "pass", "fail", "incomplete", "failing strict profiles" };
+        var summaryHeaders = new[] { "target", "status", "pass", "fail", "incomplete", "failing strict profiles", "incomplete strict profiles" };
         var summaryRows = report.QualitySummary
             .OrderBy(entry => entry.Target, StringComparer.Ordinal)
             .Select(entry => new[]
@@ -621,7 +633,8 @@ public sealed partial class OutputQualityReportTests
                 entry.PassingScenarioCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 entry.FailingScenarioCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
                 entry.IncompleteScenarioCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
-                entry.FailingProfiles.Count == 0 ? "-" : string.Join(", ", entry.FailingProfiles)
+                entry.FailingProfiles.Count == 0 ? "-" : string.Join(", ", entry.FailingProfiles),
+                entry.IncompleteProfiles.Count == 0 ? "-" : string.Join(", ", entry.IncompleteProfiles)
             })
             .ToArray();
         AppendPlainTable(sb, summaryHeaders, summaryRows, rightAlignColumns: [2, 3, 4]);
@@ -754,13 +767,16 @@ public sealed partial class OutputQualityReportTests
         sb.AppendLine();
         sb.AppendLine("Headline status per target. **FAIL** = at least one scenario fails a strictness profile (or codegen failed). **INCOMPLETE** = no failures, but at least one strictness profile could not run (e.g. `tsc` unavailable). **PASS** = every scenario compiled cleanly under every strictness profile that ran. None of these statuses imply anything about runtime validation correctness.");
         sb.AppendLine();
-        sb.AppendLine("| target | status | passing scenarios | failing scenarios | incomplete scenarios | failing strict profiles |");
-        sb.AppendLine("| --- | --- | ---: | ---: | ---: | --- |");
+        sb.AppendLine("| target | status | passing scenarios | failing scenarios | incomplete scenarios | failing strict profiles | incomplete strict profiles |");
+        sb.AppendLine("| --- | --- | ---: | ---: | ---: | --- | --- |");
         foreach (var entry in report.QualitySummary.OrderBy(entry => entry.Target, StringComparer.Ordinal))
         {
             var failingProfiles = entry.FailingProfiles.Count == 0
                 ? "—"
                 : string.Join(", ", entry.FailingProfiles);
+            var incompleteProfiles = entry.IncompleteProfiles.Count == 0
+                ? "—"
+                : string.Join(", ", entry.IncompleteProfiles);
             sb.Append("| ");
             sb.Append(EscapeMarkdown(entry.Target));
             sb.Append(" | ");
@@ -773,6 +789,8 @@ public sealed partial class OutputQualityReportTests
             sb.Append(entry.IncompleteScenarioCount);
             sb.Append(" | ");
             sb.Append(EscapeMarkdown(failingProfiles));
+            sb.Append(" | ");
+            sb.Append(EscapeMarkdown(incompleteProfiles));
             sb.AppendLine(" |");
         }
 
@@ -840,6 +858,7 @@ public sealed partial class OutputQualityReportTests
             var failingScenarios = 0;
             var incompleteScenarios = 0;
             var failingProfiles = new SortedSet<string>(StringComparer.Ordinal);
+            var incompleteProfiles = new SortedSet<string>(StringComparer.Ordinal);
             var hasIncomplete = false;
 
             foreach (var row in group)
@@ -870,7 +889,7 @@ public sealed partial class OutputQualityReportTests
                             case "unavailable":
                                 rowIncomplete = true;
                                 hasIncomplete = true;
-                                failingProfiles.Add($"{profile.Key}:tsc-unavailable");
+                                incompleteProfiles.Add($"{profile.Key}:tsc-unavailable");
                                 break;
                         }
                     }
@@ -911,7 +930,8 @@ public sealed partial class OutputQualityReportTests
                 PassingScenarioCount = passingScenarios,
                 FailingScenarioCount = failingScenarios,
                 IncompleteScenarioCount = incompleteScenarios,
-                FailingProfiles = failingProfiles.ToArray()
+                FailingProfiles = failingProfiles.ToArray(),
+                IncompleteProfiles = incompleteProfiles.ToArray()
             });
         }
 
@@ -978,6 +998,13 @@ public sealed partial class OutputQualityReportTests
     private static bool ShouldPrintReport()
     {
         var value = Environment.GetEnvironmentVariable(PrintReportEnvironmentVariable);
+        return string.Equals(value, "1", StringComparison.Ordinal) ||
+               string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool ShouldRunReport()
+    {
+        var value = Environment.GetEnvironmentVariable(RunReportEnvironmentVariable);
         return string.Equals(value, "1", StringComparison.Ordinal) ||
                string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
@@ -1079,6 +1106,7 @@ public sealed partial class OutputQualityReportTests
         public int FailingScenarioCount { get; init; }
         public int IncompleteScenarioCount { get; init; }
         public IReadOnlyList<string> FailingProfiles { get; init; } = [];
+        public IReadOnlyList<string> IncompleteProfiles { get; init; } = [];
     }
 
     private sealed class ReportRow
