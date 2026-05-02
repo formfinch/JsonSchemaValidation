@@ -43,11 +43,13 @@ public static partial class TypeScriptCompiler
         IReadOnlyList<string> sourcePaths,
         string outputDirectory,
         string ecmaScriptTarget,
+        TypeScriptCompilerOptions? options = null,
         string tscExecutable = "tsc",
         int timeoutMilliseconds = 60_000,
-        bool strict = false,
-        bool noImplicitAny = false)
+        string? workingDirectory = null)
     {
+        options ??= new TypeScriptCompilerOptions();
+
         if (sourcePaths.Count == 0)
         {
             return TypeScriptCompilationResult.Failed("At least one TypeScript source path is required.");
@@ -65,7 +67,12 @@ public static partial class TypeScriptCompiler
                 $"Invalid ECMAScript target '{ecmaScriptTarget}'. Pass a tsc-compatible target such as ES2020 or ESNext.");
         }
 
-        Directory.CreateDirectory(outputDirectory);
+        // Resolve outputDirectory against workingDirectory so the directory we create matches
+        // the location tsc will actually write to when callers pass a relative outDir.
+        var resolvedOutputDirectory = !string.IsNullOrEmpty(workingDirectory) && !Path.IsPathRooted(outputDirectory)
+            ? Path.GetFullPath(Path.Combine(workingDirectory, outputDirectory))
+            : outputDirectory;
+        Directory.CreateDirectory(resolvedOutputDirectory);
 
         var arguments = new List<string>
         {
@@ -74,8 +81,10 @@ public static partial class TypeScriptCompiler
             "--moduleResolution", "Bundler",
             "--lib", "es2022,dom",
             "--outDir", outputDirectory,
-            "--noImplicitAny", noImplicitAny ? "true" : "false",
-            "--strict", strict ? "true" : "false",
+            "--noImplicitAny", options.NoImplicitAny ? "true" : "false",
+            "--strict", options.Strict ? "true" : "false",
+            "--noUncheckedIndexedAccess", options.NoUncheckedIndexedAccess ? "true" : "false",
+            "--exactOptionalPropertyTypes", options.ExactOptionalPropertyTypes ? "true" : "false",
             "--skipLibCheck", "true",
             "--declaration", "false",
             "--sourceMap", "false",
@@ -89,7 +98,7 @@ public static partial class TypeScriptCompiler
             var versionResult = RunTsc(
                 tscExecutable,
                 ["--version"],
-                workingDirectory: null,
+                workingDirectory,
                 timeoutMilliseconds: Math.Min(timeoutMilliseconds, 10_000));
             if (versionResult.ExitCode != 0 || !IsSupportedVersionOutput(versionResult.StandardOutput))
             {
@@ -103,7 +112,7 @@ public static partial class TypeScriptCompiler
                     versionResult.StandardError);
             }
 
-            var result = RunTsc(tscExecutable, arguments, workingDirectory: null, timeoutMilliseconds);
+            var result = RunTsc(tscExecutable, arguments, workingDirectory, timeoutMilliseconds);
             if (result.ExitCode == 0)
             {
                 return TypeScriptCompilationResult.Succeeded(result.StandardOutput, result.StandardError);

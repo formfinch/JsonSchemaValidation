@@ -97,6 +97,24 @@ if (!validator.validate(data)) { /* reject */ }
 
 Current JS/TS scope: Drafts 2020-12, 2019-09, and 4 with target capability checks before emission. See [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md#javascript-code-gen-target-jsv-codegen-generate-js) for the full list of deferred features and behavioral notes.
 
+### Local JS/TS Output Quality Report
+
+When working on the JavaScript or TypeScript code generators, run the reported-only output quality report locally. The report test is opt-in: during routine `dotnet test` runs it returns early without generating any artifacts (the test still appears as `passed` and prints a notice telling you which environment variable to set) because the report executes the JS/TS code generator and several `tsc` profiles and writes report artifacts into the working tree. Enable it with `-e JSV_RUN_CODEGEN_QUALITY_REPORT=1`:
+
+```bash
+dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --filter "Category=OutputQuality" -e JSV_RUN_CODEGEN_QUALITY_REPORT=1
+```
+
+The report writes `artifacts/codegen-output-quality/codegen-output-quality.json` and `.md` from the `net8.0` test target, so gzip measurements have one canonical .NET runtime; on `net10.0` the test is skipped via `[Fact(Skip = ...)]` and produces no artifacts. Metrics are normalized before measurement and compared with `benchmarks/codegen-output-quality-baseline.json`; deltas are informational only.
+
+To print the report directly to the test output (no need to open the file), pass the print flag and the detailed logger as plain CLI options — no shell env setup needed. The inline output uses aligned plain-text tables tuned for terminals (the `.md` artifact stays in proper Markdown for GitHub rendering):
+
+```bash
+dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --filter "Category=OutputQuality" --logger "console;verbosity=detailed" -e JSV_RUN_CODEGEN_QUALITY_REPORT=1 -e JSV_PRINT_CODEGEN_QUALITY_REPORT=1
+```
+
+To accept intentional output changes, add `-e JSV_UPDATE_CODEGEN_QUALITY_BASELINE=1` to the same command and commit the baseline diff. Helper selection correctness remains tracked separately from these footprint metrics.
+
 ## Documentation
 
 - [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps
