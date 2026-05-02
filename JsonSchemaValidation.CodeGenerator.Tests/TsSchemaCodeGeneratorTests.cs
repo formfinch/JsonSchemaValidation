@@ -316,6 +316,52 @@ public class TsSchemaCodeGeneratorTests
     }
 
     [Fact]
+    public void Compile_WithTscAvailable_HonorsExtraStrictOptionsAndRelativeWorkingDirectory()
+    {
+        if (!TypeScriptCompiler.IsAvailable())
+        {
+            throw Xunit.Sdk.SkipException.ForSkip("TypeScript compiler 'tsc' is required for this test.");
+        }
+
+        var tempDir = Path.Combine(Path.GetTempPath(), "jsv-ts-extra-strict-test-" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(tempDir);
+        try
+        {
+            // Tiny source that satisfies all four strict options (no any, no missing optional bindings,
+            // no unchecked indexed access). Keeps the test focused on option forwarding, not generator output.
+            const string sourceFileName = "hello.ts";
+            const string source = """
+                export function greet(name: string): string {
+                    return "hello " + name;
+                }
+                """;
+            File.WriteAllText(Path.Combine(tempDir, sourceFileName), source);
+
+            // Pass a relative source path + a relative outDir to exercise workingDirectory plumbing and
+            // confirm resolvedOutputDirectory is created where tsc actually writes.
+            var compileResult = TypeScriptCompiler.Compile(
+                [sourceFileName],
+                "out",
+                ecmaScriptTarget: "ES2020",
+                options: new TypeScriptCompilerOptions
+                {
+                    Strict = true,
+                    NoImplicitAny = true,
+                    NoUncheckedIndexedAccess = true,
+                    ExactOptionalPropertyTypes = true
+                },
+                workingDirectory: tempDir);
+
+            Assert.True(compileResult.Success, compileResult.Error);
+            Assert.True(File.Exists(Path.Combine(tempDir, "out", "hello.js")));
+        }
+        finally
+        {
+            try { Directory.Delete(tempDir, recursive: true); } catch { /* best effort */ }
+        }
+    }
+
+    [Fact]
     public void DynamicScopeGeneratedSource_WithTscAvailable_CompilesWithStrictSettings()
     {
         if (!TypeScriptCompiler.IsAvailable())

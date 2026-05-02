@@ -108,7 +108,7 @@ public sealed partial class OutputQualityReportTests
                 "gzip_bytes is computed by System.IO.Compression.GZipStream with CompressionLevel.Optimal.",
                 "function_count is a lightweight regex-based shape signal and can count function-like text in comments or strings.",
                 "TypeScript strict_profiles compile every generated schema in one tsc invocation per profile, then attribute diagnostics back to each schema by source file. A row's status is 'failed' when its own .ts file has errors, with remediation 'generated-code'. A row's status is also 'failed' when only the shared jsv-runtime.ts has errors (remediation 'runtime-types') because every generated validator imports that runtime.",
-                "quality_summary statuses: 'pass' = every scenario compiled cleanly under every strictness profile that ran. 'fail' = at least one scenario failed a strictness profile (or codegen failed). 'incomplete' = no failures, but at least one strictness profile could not run (e.g. tsc was not found). None of these imply anything about runtime validation correctness.",
+                "quality_summary statuses: 'pass' = every scenario compiled cleanly under every strictness profile that ran. 'fail' = at least one scenario was rejected by codegen (e.g. status 'unsupported'), failed code generation, or failed a strictness profile. 'incomplete' = no failures, but at least one strictness profile could not run (e.g. tsc was not found). None of these imply anything about runtime validation correctness.",
                 "Helper selection correctness is tracked separately by issue #46; this report measures footprint only.",
                 "JS/TS deduplication decisions are tracked separately by issue #42.",
                 "Lint/static-analysis signals are deferred to follow-up work."
@@ -593,6 +593,12 @@ public sealed partial class OutputQualityReportTests
             foreach (var name in names)
             {
                 var cleaned = name;
+                if (cleaned.StartsWith("type ", StringComparison.Ordinal))
+                {
+                    // Per-specifier `type X` is a compile-time-only import; skip it.
+                    continue;
+                }
+
                 var asIndex = cleaned.IndexOf(" as ", StringComparison.Ordinal);
                 if (asIndex >= 0)
                 {
@@ -617,7 +623,7 @@ public sealed partial class OutputQualityReportTests
         sb.AppendLine();
         sb.AppendLine("Quality Summary");
         sb.AppendLine("---------------");
-        sb.AppendLine("FAIL       = at least one scenario fails a strictness profile (or codegen failed).");
+        sb.AppendLine("FAIL       = at least one scenario is rejected by codegen (e.g. unsupported), fails code generation, or fails a strictness profile.");
         sb.AppendLine("INCOMPLETE = no failures, but at least one strictness profile could not run (e.g. tsc unavailable).");
         sb.AppendLine("PASS       = every scenario compiled cleanly under every strictness profile that ran.");
         sb.AppendLine("None of these statuses imply anything about runtime validation correctness.");
@@ -765,7 +771,7 @@ public sealed partial class OutputQualityReportTests
 
         sb.AppendLine("## Quality Summary");
         sb.AppendLine();
-        sb.AppendLine("Headline status per target. **FAIL** = at least one scenario fails a strictness profile (or codegen failed). **INCOMPLETE** = no failures, but at least one strictness profile could not run (e.g. `tsc` unavailable). **PASS** = every scenario compiled cleanly under every strictness profile that ran. None of these statuses imply anything about runtime validation correctness.");
+        sb.AppendLine("Headline status per target. **FAIL** = at least one scenario is rejected by codegen (e.g. `unsupported`), fails code generation, or fails a strictness profile. **INCOMPLETE** = no failures, but at least one strictness profile could not run (e.g. `tsc` unavailable). **PASS** = every scenario compiled cleanly under every strictness profile that ran. None of these statuses imply anything about runtime validation correctness.");
         sb.AppendLine();
         sb.AppendLine("| target | status | passing scenarios | failing scenarios | incomplete scenarios | failing strict profiles | incomplete strict profiles |");
         sb.AppendLine("| --- | --- | ---: | ---: | ---: | --- | --- |");
@@ -1069,7 +1075,10 @@ public sealed partial class OutputQualityReportTests
     [GeneratedRegex(@"=>", RegexOptions.CultureInvariant)]
     private static partial Regex ArrowFunctionRegex();
 
-    [GeneratedRegex(@"import\s+(?:type\s+)?\{\s*(?<names>[^}]+)\s*\}\s+from\s+[""'][^""']*jsv-runtime\.js[""']", RegexOptions.CultureInvariant)]
+    // Match value-only `import { ... } from "...jsv-runtime.js"` (no `import type` form).
+    // The per-name parser skips specifiers prefixed with `type` so mixed imports such as
+    // `import { type JsonValue, validate } from "..."` only count `validate`.
+    [GeneratedRegex(@"import\s+\{\s*(?<names>[^}]+)\s*\}\s+from\s+[""'][^""']*jsv-runtime\.js[""']", RegexOptions.CultureInvariant)]
     private static partial Regex RuntimeImportRegex();
 
     [GeneratedRegex(@"^(?<path>.+\.ts)\(\d+,\d+\):\s+error\s+TS\d+:", RegexOptions.CultureInvariant)]

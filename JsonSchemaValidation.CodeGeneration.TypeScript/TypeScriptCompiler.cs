@@ -67,7 +67,12 @@ public static partial class TypeScriptCompiler
                 $"Invalid ECMAScript target '{ecmaScriptTarget}'. Pass a tsc-compatible target such as ES2020 or ESNext.");
         }
 
-        Directory.CreateDirectory(outputDirectory);
+        // Resolve outputDirectory against workingDirectory so the directory we create matches
+        // the location tsc will actually write to when callers pass a relative outDir.
+        var resolvedOutputDirectory = !string.IsNullOrEmpty(workingDirectory) && !Path.IsPathRooted(outputDirectory)
+            ? Path.GetFullPath(Path.Combine(workingDirectory, outputDirectory))
+            : outputDirectory;
+        Directory.CreateDirectory(resolvedOutputDirectory);
 
         var arguments = new List<string>
         {
