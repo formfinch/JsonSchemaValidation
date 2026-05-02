@@ -99,13 +99,13 @@ Current JS/TS scope: Drafts 2020-12, 2019-09, and 4 with target capability check
 
 ### Local JS/TS Output Quality Report
 
-When working on the JavaScript or TypeScript code generators, run the reported-only output quality report locally. The report test is opt-in (it is skipped during routine `dotnet test` runs because it executes the JS/TS code generator and several `tsc` profiles, and writes report artifacts into the working tree). Enable it with `-e JSV_RUN_CODEGEN_QUALITY_REPORT=1`:
+When working on the JavaScript or TypeScript code generators, run the reported-only output quality report locally. The report test is opt-in: during routine `dotnet test` runs it returns early without generating any artifacts (the test still appears as `passed` and prints a notice telling you which environment variable to set) because the report executes the JS/TS code generator and several `tsc` profiles and writes report artifacts into the working tree. Enable it with `-e JSV_RUN_CODEGEN_QUALITY_REPORT=1`:
 
 ```bash
 dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --filter "Category=OutputQuality" -e JSV_RUN_CODEGEN_QUALITY_REPORT=1
 ```
 
-The report writes `artifacts/codegen-output-quality/codegen-output-quality.json` and `.md` from the `net8.0` test target, so gzip measurements have one canonical .NET runtime; the report test is skipped on `net10.0`. Metrics are normalized before measurement and compared with `benchmarks/codegen-output-quality-baseline.json`; deltas are informational only.
+The report writes `artifacts/codegen-output-quality/codegen-output-quality.json` and `.md` from the `net8.0` test target, so gzip measurements have one canonical .NET runtime; on `net10.0` the test is skipped via `[Fact(Skip = ...)]` and produces no artifacts. Metrics are normalized before measurement and compared with `benchmarks/codegen-output-quality-baseline.json`; deltas are informational only.
 
 To print the report directly to the test output (no need to open the file), pass the print flag and the detailed logger as plain CLI options — no shell env setup needed. The inline output uses aligned plain-text tables tuned for terminals (the `.md` artifact stays in proper Markdown for GitHub rendering):
 

@@ -107,8 +107,9 @@ public sealed partial class OutputQualityReportTests
                 "All generated artifacts are normalized to UTF-8 text with LF line endings and one trailing newline before measurement.",
                 "gzip_bytes is computed by System.IO.Compression.GZipStream with CompressionLevel.Optimal.",
                 "function_count is a lightweight regex-based shape signal and can count function-like text in comments or strings.",
-                "TypeScript strict_profiles compile every generated schema in one tsc invocation per profile, then attribute diagnostics back to each schema by source file. A row's status is 'failed' when its own .ts file has errors, with remediation 'generated-code'. A row's status is also 'failed' when only the shared jsv-runtime.ts has errors (remediation 'runtime-types') because every generated validator imports that runtime.",
+                "TypeScript strict_profiles compile every generated schema in one tsc invocation per profile, then attribute diagnostics back to each schema by source file. The per-profile entry under strict_profiles uses status 'failed' (with remediation 'generated-code') when the row's own .ts file has errors, status 'failed' (remediation 'runtime-types') when only the shared jsv-runtime.ts has errors, status 'unavailable' when tsc could not run, and status 'passed' otherwise. Strict-profile failures do not change the row's top-level status field, which only reflects the codegen step ('generated', 'unsupported', or 'generation-failed').",
                 "quality_summary statuses: 'pass' = every scenario compiled cleanly under every strictness profile that ran. 'fail' = at least one scenario was rejected by codegen (e.g. status 'unsupported'), failed code generation, or failed a strictness profile. 'incomplete' = no failures, but at least one strictness profile could not run (e.g. tsc was not found). None of these imply anything about runtime validation correctness.",
+                "baseline_deltas.status_change appears as 'old -> new' when a row's top-level status flips between baseline and current run (e.g. 'generated -> unsupported'); a flip out of 'generated' makes numeric deltas unreliable because no validator was emitted in the new run.",
                 "Helper selection correctness is tracked separately by issue #46; this report measures footprint only.",
                 "JS/TS deduplication decisions are tracked separately by issue #42.",
                 "Lint/static-analysis signals are deferred to follow-up work."
@@ -516,8 +517,13 @@ public sealed partial class OutputQualityReportTests
             return null;
         }
 
+        var statusChange = string.Equals(row.Status, baselineRow.Status, StringComparison.Ordinal)
+            ? null
+            : $"{baselineRow.Status} -> {row.Status}";
+
         return new MetricDeltas
         {
+            StatusChange = statusChange,
             ValidatorBytes = Subtract(row.ValidatorBytes, baselineRow.ValidatorBytes),
             RuntimeBytes = Subtract(row.RuntimeBytes, baselineRow.RuntimeBytes),
             TotalBytes = Subtract(row.TotalBytes, baselineRow.TotalBytes),
@@ -1047,14 +1053,26 @@ public sealed partial class OutputQualityReportTests
             return "";
         }
 
-        if (!deltas.TotalBytes.HasValue &&
-            !deltas.GzipBytes.HasValue &&
-            !deltas.Loc.HasValue)
+        var hasNumericDelta = deltas.TotalBytes.HasValue || deltas.GzipBytes.HasValue || deltas.Loc.HasValue;
+        if (deltas.StatusChange is null && !hasNumericDelta)
         {
             return "";
         }
 
-        return $"total {FormatDelta(deltas.TotalBytes)}, gzip {FormatDelta(deltas.GzipBytes)}, loc {FormatDelta(deltas.Loc)}";
+        var parts = new List<string>();
+        if (deltas.StatusChange is { } statusChange)
+        {
+            // Highlight status flips (e.g. generated -> unsupported) since metric deltas alone
+            // would not surface a regression that drops a row out of code generation.
+            parts.Add($"status {statusChange}");
+        }
+
+        if (hasNumericDelta)
+        {
+            parts.Add($"total {FormatDelta(deltas.TotalBytes)}, gzip {FormatDelta(deltas.GzipBytes)}, loc {FormatDelta(deltas.Loc)}");
+        }
+
+        return string.Join("; ", parts);
     }
 
     private static string FormatDelta(int? value)
@@ -1154,6 +1172,7 @@ public sealed partial class OutputQualityReportTests
 
     private sealed class MetricDeltas
     {
+        public string? StatusChange { get; init; }
         public int? ValidatorBytes { get; init; }
         public int? RuntimeBytes { get; init; }
         public int? TotalBytes { get; init; }
