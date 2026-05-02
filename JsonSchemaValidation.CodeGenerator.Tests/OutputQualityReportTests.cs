@@ -139,6 +139,24 @@ public sealed partial class OutputQualityReportTests
 
         if (ShouldUpdateBaseline())
         {
+            // Refuse to overwrite the baseline when any strict profile could not run (e.g. tsc was
+            // unavailable). Persisting "unavailable" statuses would poison future delta comparisons
+            // because the next run with tsc available would look like a regression.
+            var unavailableProfiles = rows
+                .Where(row => row.StrictProfiles is not null)
+                .SelectMany(row => row.StrictProfiles!
+                    .Where(profile => string.Equals(profile.Value.Status, "unavailable", StringComparison.Ordinal))
+                    .Select(profile => $"{row.Target}/{row.Schema}:{profile.Key}"))
+                .ToArray();
+            if (unavailableProfiles.Length > 0)
+            {
+                throw new InvalidOperationException(
+                    "Refusing to update the baseline because the report is incomplete. " +
+                    "Strict profiles reported 'unavailable' (likely because tsc was not found). " +
+                    $"Affected: {string.Join(", ", unavailableProfiles.Take(5))}{(unavailableProfiles.Length > 5 ? ", ..." : "")}. " +
+                    "Install a TypeScript compiler 5.0+ and re-run with JSV_UPDATE_CODEGEN_QUALITY_BASELINE=1.");
+            }
+
             Directory.CreateDirectory(Path.GetDirectoryName(baselinePath)!);
             var nextBaseline = BaselineDocument.FromRows(rows);
             File.WriteAllText(
@@ -226,8 +244,13 @@ public sealed partial class OutputQualityReportTests
         var supportContent = string.Concat(artifacts
             .Where(artifact => artifact.Role != GeneratedArtifactRole.Primary)
             .Select(artifact => artifact.Content));
-        var allContent = primaryContent + supportContent;
         var helpers = ExtractRuntimeImports(primaryContent).Order(StringComparer.Ordinal).ToArray();
+
+        // Sum gzip-compressed sizes per artifact role rather than gzipping concatenated content,
+        // because the JS/TS targets emit primary and support as separate files and that is what
+        // users actually ship. Concatenated compression would benefit from cross-file dedup that
+        // does not exist on disk.
+        var gzipBytes = CountGzipBytes(primaryContent) + (supportContent.Length > 0 ? CountGzipBytes(supportContent) : 0);
 
         return new GeneratedTargetRow(new ReportRow
         {
@@ -238,7 +261,7 @@ public sealed partial class OutputQualityReportTests
             ValidatorBytes = CountUtf8Bytes(primaryContent),
             RuntimeBytes = CountUtf8Bytes(supportContent),
             TotalBytes = CountUtf8Bytes(primaryContent) + CountUtf8Bytes(supportContent),
-            GzipBytes = CountGzipBytes(allContent),
+            GzipBytes = gzipBytes,
             Loc = CountPhysicalLines(primaryContent),
             FunctionCount = CountFunctions(primaryContent),
             MaxIndentationDepth = CalculateMaxIndentationDepth(primaryContent),
