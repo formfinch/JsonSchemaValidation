@@ -1,0 +1,131 @@
+[
+    {
+        "description": "validation of nl-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "nl-phone"
+        },
+        "tests": [
+            {
+                "description": "mobile with dash",
+                "data": "06-12345678",
+                "valid": true
+            },
+            {
+                "description": "mobile compact",
+                "data": "0612345678",
+                "valid": true
+            },
+            {
+                "description": "mobile grouped",
+                "data": "06 1234 5678",
+                "valid": true
+            },
+            {
+                "description": "international",
+                "data": "+31 6 12345678",
+                "valid": true
+            },
+            {
+                "description": "international compact",
+                "data": "+31612345678",
+                "valid": true
+            },
+            {
+                "description": "international with (0)",
+                "data": "+31 (0)6 12345678",
+                "valid": true
+            },
+            {
+                "description": "international with trunk zero",
+                "data": "+31 06 12345678",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "0031 6 12345678",
+                "valid": true
+            },
+            {
+                "description": "landline with area code in parentheses",
+                "data": "(020) 123 4567",
+                "valid": true
+            },
+            {
+                "description": "landline with dots",
+                "data": "020.123.4567",
+                "valid": true
+            },
+            {
+                "description": "no prefix",
+                "data": "612345678",
+                "valid": false
+            },
+            {
+                "description": "too few digits",
+                "data": "061234567",
+                "valid": false
+            },
+            {
+                "description": "too many digits",
+                "data": "06123456789",
+                "valid": false
+            },
+            {
+                "description": "Belgian number",
+                "data": "+32 475 12 34 56",
+                "valid": false
+            },
+            {
+                "description": "00 prefix of another country",
+                "data": "0032 475 12 34 56",
+                "valid": false
+            },
+            {
+                "description": "double trunk zero",
+                "data": "+31 00 612345678",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "06-1234567a",
+                "valid": false
+            },
+            {
+                "description": "unbalanced parenthesis",
+                "data": "(06 12345678",
+                "valid": false
+            },
+            {
+                "description": "empty parentheses",
+                "data": "() 0612345678",
+                "valid": false
+            },
+            {
+                "description": "plus inside the number",
+                "data": "06+12345678",
+                "valid": false
+            },
+            {
+                "description": "plus only",
+                "data": "+",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

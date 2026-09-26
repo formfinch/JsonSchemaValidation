@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of iban",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "iban"
+        },
+        "tests": [
+            {
+                "description": "compact Dutch IBAN",
+                "data": "NL91ABNA0417164300",
+                "valid": true
+            },
+            {
+                "description": "grouped with spaces",
+                "data": "NL91 ABNA 0417 1643 00",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "nl91 abna 0417 1643 00",
+                "valid": true
+            },
+            {
+                "description": "no-break spaces",
+                "data": "NL91 ABNA 0417 1643 00",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": "  NL91ABNA0417164300 ",
+                "valid": true
+            },
+            {
+                "description": "Belgian IBAN",
+                "data": "BE68 5390 0754 7034",
+                "valid": true
+            },
+            {
+                "description": "German IBAN",
+                "data": "DE89 3704 0044 0532 0130 00",
+                "valid": true
+            },
+            {
+                "description": "British IBAN",
+                "data": "GB82 WEST 1234 5698 7654 32",
+                "valid": true
+            },
+            {
+                "description": "wrong check digits",
+                "data": "NL91ABNA0417164301",
+                "valid": false
+            },
+            {
+                "description": "too short for the country",
+                "data": "NL91ABNA041716430",
+                "valid": false
+            },
+            {
+                "description": "too long for the country",
+                "data": "NL91ABNA04171643000",
+                "valid": false
+            },
+            {
+                "description": "country not in the registry",
+                "data": "XX91ABNA0417164300",
+                "valid": false
+            },
+            {
+                "description": "dashes are not accepted",
+                "data": "NL91-ABNA-0417-1643-00",
+                "valid": false
+            },
+            {
+                "description": "letters in the check digits",
+                "data": "NLA1ABNA0417164300",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "whitespace only",
+                "data": "   ",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

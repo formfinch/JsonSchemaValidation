@@ -1,0 +1,86 @@
+[
+    {
+        "description": "validation of nl-bsn",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "nl-bsn"
+        },
+        "tests": [
+            {
+                "description": "9 digits",
+                "data": "111222333",
+                "valid": true
+            },
+            {
+                "description": "dots",
+                "data": "111.222.333",
+                "valid": true
+            },
+            {
+                "description": "dashes",
+                "data": "111-222-333",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "1112 22 333",
+                "valid": true
+            },
+            {
+                "description": "8 digits (leading zero omitted)",
+                "data": "12345672",
+                "valid": true
+            },
+            {
+                "description": "9 digits with leading zero",
+                "data": "012345672",
+                "valid": true
+            },
+            {
+                "description": "fails the elfproef",
+                "data": "123456789",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "000000000",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "1234567",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "1234567820",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "12345678a",
+                "valid": false
+            },
+            {
+                "description": "slashes are not accepted",
+                "data": "111/222/333",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

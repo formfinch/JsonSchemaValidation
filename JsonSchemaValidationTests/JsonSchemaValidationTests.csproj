@@ -28,5 +28,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="ProductionSchemas\**\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="ProductionSchemas" />
+    <None Include="TestData\**\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="TestData" />
   </ItemGroup>
 </Project>

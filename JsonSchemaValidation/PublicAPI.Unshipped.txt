@@ -114,6 +114,21 @@ FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft6.get -> bool
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft6.set -> void
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft7.get -> bool
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft7.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableExtendedFormats.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableExtendedFormats.set -> void
+FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.FormatNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsKnownFormat(string! format) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValid(string! format, string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidIban(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidBic(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidIsbn13(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidNlBsn(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidNlVat(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidNlKvk(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidNlPostcode(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidNlPhone(string! value) -> bool
+static FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators.IsValidBePhone(string! value) -> bool
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.SchemaValidationOptions() -> void
 FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup
 FormFinch.JsonSchemaValidation.DependencyInjection.ServiceProviderExtensions

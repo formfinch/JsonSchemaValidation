@@ -118,6 +118,7 @@ To accept intentional output changes, add `-e JSV_UPDATE_CODEGEN_QUALITY_BASELIN
 ## Documentation
 
 - [Known Limitations](https://github.com/formfinch/JsonSchemaValidation/blob/main/KNOWN_LIMITATIONS.md) — architectural trade-offs, platform constraints, and compiled validator gaps
+- [Extended format catalog](https://github.com/formfinch/JsonSchemaValidation/blob/main/FORMATS.md) — opt-in formats such as `iban`, `isbn-13`, `nl-bsn`, `nl-phone` (`SchemaValidationOptions.EnableExtendedFormats`)
 - [Contributing](https://github.com/formfinch/JsonSchemaValidation/blob/main/CONTRIBUTING.md) — how to report issues, submit PRs, and code standards
 - API docs are provided via XML documentation comments and IntelliSense
 - Release history is maintained in GitHub Releases
