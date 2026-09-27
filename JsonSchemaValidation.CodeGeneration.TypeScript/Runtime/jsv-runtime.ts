@@ -833,12 +833,12 @@ export function isValidUuid(v: unknown): boolean {
 // changes the value. Validators import these only when generated with
 // --extended-formats. Strings are processed per UTF-16 code unit, like the C# checks.
 
-const _extTrimChars = "  \t\r\n";
-const _extSpaces = "  ";
-const _extSpacesAndDashes = "  -";
-const _extSpacesAndDots = "  .";
-const _extSpacesDotsAndDashes = "  .-";
-const _extPhoneSeparators = "  -./";
+const _extTrimChars = " \u00A0\t\r\n";
+const _extSpaces = " \u00A0";
+const _extSpacesAndDashes = " \u00A0-";
+const _extSpacesAndDots = " \u00A0.";
+const _extSpacesDotsAndDashes = " \u00A0.-";
+const _extPhoneSeparators = " \u00A0-./";
 
 // IBAN length per country, from the SWIFT IBAN Registry.
 const _extIbanLengths: Readonly<Record<string, number>> = {
@@ -861,7 +861,7 @@ function _extIsLetter(c: string): boolean {
 }
 
 function _extIsSpace(c: string): boolean {
-    return c === " " || c === " ";
+    return c === " " || c === "\u00A0";
 }
 
 function _extUpper(c: string): string {

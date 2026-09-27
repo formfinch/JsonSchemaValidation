@@ -17,8 +17,9 @@
 //              isValidUriTemplate, isValidIri, isValidIriReference,
 //              isValidJsonPointer, isValidRelativeJsonPointer, isValidRegex,
 //              isValidUuid
-//   Extended catalog formats (additive in mvp-0; asserted only by validators
-//   generated with --extended-formats; see FORMATS.md):
+//   Extended catalog formats (added within mvp-0; imported only by validators
+//   generated with --extended-formats, which therefore need a runtime that has
+//   them; see FORMATS.md):
 //              isValidIso13616Iban, isValidIso9362Bic, isValidIso2108Isbn, isValidNlBsn,
 //              isValidNlVat, isValidNlKvk, isValidNlPostcode, isValidNlPhone, isValidBePhone
 //   Validator module shape (what emitted modules export):
@@ -909,12 +910,12 @@ export function isValidUuid(v) {
 // changes the value. Validators import these only when generated with
 // --extended-formats. Strings are processed per UTF-16 code unit, like the C# checks.
 
-const _extTrimChars = "  \t\r\n";
-const _extSpaces = "  ";
-const _extSpacesAndDashes = "  -";
-const _extSpacesAndDots = "  .";
-const _extSpacesDotsAndDashes = "  .-";
-const _extPhoneSeparators = "  -./";
+const _extTrimChars = " \u00A0\t\r\n";
+const _extSpaces = " \u00A0";
+const _extSpacesAndDashes = " \u00A0-";
+const _extSpacesAndDots = " \u00A0.";
+const _extSpacesDotsAndDashes = " \u00A0.-";
+const _extPhoneSeparators = " \u00A0-./";
 
 // IBAN length per country, from the SWIFT IBAN Registry.
 const _extIbanLengths = {
@@ -937,7 +938,7 @@ function _extIsLetter(c) {
 }
 
 function _extIsSpace(c) {
-    return c === " " || c === " ";
+    return c === " " || c === "\u00A0";
 }
 
 function _extUpper(c) {

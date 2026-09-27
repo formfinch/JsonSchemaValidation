@@ -78,14 +78,16 @@ internal static class Program
                                      tsc target for --pipeline typescript (default: ES2020).
               --tsc <path>           TypeScript compiler executable for --pipeline typescript (default: tsc).
               --assert-format       Assert supported format values for Draft 2020-12.
-              --extended-formats    Also assert extended catalog formats (e.g. nl-phone), same rule as --assert-format.
+              --extended-formats    Also assert extended catalog formats (e.g. nl-phone). Draft 2020-12 needs --assert-format.
+                                    Needs a jsv-runtime.js from this version or later.
               --no-runtime           Skip writing jsv-runtime.js (useful when runtime is already present).
 
             generate-ts options:
               -s, --schema <path>    Input schema file (required)
               -o, --output <path>    Output directory (required). Emits <schema>.ts and jsv-runtime.ts.
               --assert-format        Assert supported format values for Draft 2020-12.
-              --extended-formats     Also assert extended catalog formats (e.g. nl-phone), same rule as --assert-format.
+              --extended-formats     Also assert extended catalog formats (e.g. nl-phone). Draft 2020-12 needs --assert-format.
+                                     Needs a jsv-runtime.ts from this version or later.
               --no-runtime           Skip writing jsv-runtime.ts.
 
             generate-js supported scope:
@@ -314,6 +316,10 @@ internal static class Program
 
         Console.WriteLine($"Generating JS validator for: {schemaPath}");
         Console.WriteLine($"Output directory: {outputPath}");
+        if (extendedFormats && !formatAssertionEnabled)
+        {
+            Console.Error.WriteLine("Warning: --extended-formats without --assert-format: Draft 2020-12 schemas (the default draft) keep all formats, including extended ones, as annotations.");
+        }
 
         if (string.Equals(pipeline, "typescript", StringComparison.OrdinalIgnoreCase))
         {
@@ -524,6 +530,10 @@ internal static class Program
 
         Console.WriteLine($"Generating TS validator for: {schemaPath}");
         Console.WriteLine($"Output directory: {outputPath}");
+        if (extendedFormats && !formatAssertionEnabled)
+        {
+            Console.Error.WriteLine("Warning: --extended-formats without --assert-format: Draft 2020-12 schemas (the default draft) keep all formats, including extended ones, as annotations.");
+        }
 
         var options = new TypeScriptCodeGenerationOptions
         {

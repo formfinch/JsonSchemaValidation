@@ -169,6 +169,38 @@ public sealed class TsExtendedFormatFixture : IDisposable
     }
 }
 
+public class ExtendedFormatTsGeneratorTests
+{
+    [Fact]
+    public void GeneratedCode_ImportsCatalogFunctionOnlyWhenEnabled()
+    {
+        using var schema = JsonDocument.Parse("""{ "$schema": "https://json-schema.org/draft/2020-12/schema", "format": "nl-phone" }""");
+
+        var on = new TsSchemaCodeGenerator { FormatAssertionEnabled = true, ExtendedFormats = true }.Generate(schema.RootElement.Clone());
+        var off = new TsSchemaCodeGenerator { FormatAssertionEnabled = true }.Generate(schema.RootElement.Clone());
+
+        Assert.True(on.Success, on.Error);
+        Assert.True(off.Success, off.Error);
+        Assert.Contains("isValidNlPhone", on.GeneratedCode, StringComparison.Ordinal);
+        Assert.DoesNotContain("isValidNlPhone", off.GeneratedCode, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void DeclarationSource_DeclaresEveryRuntimeFormatFunction()
+    {
+        // Validators generated with --no-runtime compile against the hand-written .d.ts, so
+        // every exported isValid* function in jsv-runtime.ts must be declared there.
+        var exported = System.Text.RegularExpressions.Regex
+            .Matches(TsRuntime.GetSource(), @"export function (isValid\w+)\(")
+            .Select(m => m.Groups[1].Value)
+            .ToList();
+        var declarations = TsRuntime.GetDeclarationSource();
+
+        Assert.Contains("isValidNlPhone", exported);
+        Assert.All(exported, name => Assert.Contains($"export function {name}(", declarations, StringComparison.Ordinal));
+    }
+}
+
 public class ExtendedFormatTsTests : IClassFixture<TsExtendedFormatFixture>
 {
     private readonly TsExtendedFormatFixture _fixture;
