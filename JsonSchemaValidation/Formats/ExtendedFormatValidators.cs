@@ -46,7 +46,7 @@ internal static class ExtendedFormatValidators
 
     private static readonly ReadOnlyCollection<string> Names = Checks.Keys.ToList().AsReadOnly();
 
-    // IBAN length per country, from the SWIFT IBAN Registry.
+    // IBAN length per country, from the SWIFT IBAN Registry release 101 (see FORMATS.md).
     private static readonly Dictionary<string, int> IbanLengths = new(StringComparer.Ordinal)
     {
         ["AD"] = 24, ["AE"] = 23, ["AL"] = 28, ["AT"] = 20, ["AZ"] = 28, ["BA"] = 20, ["BE"] = 16,

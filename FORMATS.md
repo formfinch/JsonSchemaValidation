@@ -52,7 +52,7 @@ A passing check proves a value is well-formed. It does not prove the value exist
 
 ### `iso-13616-iban`
 
-Source: ISO 13616; country lengths from the SWIFT IBAN Registry (89 countries; checked in September 2026 against the registry table as reproduced on Wikipedia, to be re-checked against the registry release itself).
+Source: ISO 13616; country lengths from the SWIFT IBAN Registry, release 101 (89 countries). Checked in September 2026 against `iban-registry-v101.txt` as distributed in python-stdnum's `iban.dat` (lengths computed from each country's BBAN structure): all 89 countries and lengths match. When SWIFT publishes a new release, update the table in the C#, JS and TS implementations together.
 
 1. Remove spaces; upper-case.
 2. Two letters (country), two digits (check digits), then letters and digits.
