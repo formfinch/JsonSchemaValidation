@@ -48,6 +48,21 @@ jobs:
       - name: Test
         run: dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --no-build -c Release --settings JsonSchemaValidationTests/default.runsettings --logger "trx;LogFileName=test-results.trx"
 
+      # Code generation tests (C#, JS via Jint, TS via tsc + Jint). TypeScriptCompiler passes
+      # --ignoreDeprecations 6.0, so pin TypeScript 6; without tsc the TS suites skip.
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install TypeScript
+        run: |
+          npm install -g typescript@6.0.3
+          tsc --version
+
+      - name: Test code generation
+        run: dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --no-build -c Release --logger "trx;LogFileName=codegen-test-results.trx"
+
       - name: Pack
         run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release
 

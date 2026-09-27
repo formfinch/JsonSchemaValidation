@@ -78,12 +78,14 @@ internal static class Program
                                      tsc target for --pipeline typescript (default: ES2020).
               --tsc <path>           TypeScript compiler executable for --pipeline typescript (default: tsc).
               --assert-format       Assert supported format values for Draft 2020-12.
+              --extended-formats    Also assert extended catalog formats (e.g. nl-phone), same rule as --assert-format.
               --no-runtime           Skip writing jsv-runtime.js (useful when runtime is already present).
 
             generate-ts options:
               -s, --schema <path>    Input schema file (required)
               -o, --output <path>    Output directory (required). Emits <schema>.ts and jsv-runtime.ts.
               --assert-format        Assert supported format values for Draft 2020-12.
+              --extended-formats     Also assert extended catalog formats (e.g. nl-phone), same rule as --assert-format.
               --no-runtime           Skip writing jsv-runtime.ts.
 
             generate-js supported scope:
@@ -216,6 +218,7 @@ internal static class Program
         string? outputPath = null;
         var writeRuntime = true;
         var formatAssertionEnabled = false;
+        var extendedFormats = false;
         var pipeline = "direct";
         var ecmaScriptTarget = "ES2020";
         var tscExecutable = "tsc";
@@ -253,6 +256,9 @@ internal static class Program
                     break;
                 case "--assert-format":
                     formatAssertionEnabled = true;
+                    break;
+                case "--extended-formats":
+                    extendedFormats = true;
                     break;
                 case "--pipeline":
                     if (!IsOptionValue(nextArg))
@@ -317,6 +323,7 @@ internal static class Program
                 outputPath,
                 writeRuntime,
                 formatAssertionEnabled,
+                extendedFormats,
                 ecmaScriptTarget,
                 tscExecutable);
         }
@@ -341,7 +348,8 @@ internal static class Program
         {
             SourcePath = schemaPath,
             EmitSupportArtifacts = writeRuntime,
-            FormatAssertionEnabled = formatAssertionEnabled
+            FormatAssertionEnabled = formatAssertionEnabled,
+            ExtendedFormats = extendedFormats
         };
 
         return await GenerateWithTargetAsync(targets, JavaScriptTargetId, schemaPath, outputPath, options);
@@ -353,6 +361,7 @@ internal static class Program
         string outputPath,
         bool writeRuntime,
         bool formatAssertionEnabled,
+        bool extendedFormats,
         string ecmaScriptTarget,
         string tscExecutable)
     {
@@ -363,7 +372,8 @@ internal static class Program
         {
             SourcePath = schemaPath,
             EmitSupportArtifacts = writeRuntime,
-            FormatAssertionEnabled = formatAssertionEnabled
+            FormatAssertionEnabled = formatAssertionEnabled,
+            ExtendedFormats = extendedFormats
         };
 
         if (!TryCreateGenerationRequest(schemaPath, options, out var request, out var requestError))
@@ -452,6 +462,7 @@ internal static class Program
         string? outputPath = null;
         var writeRuntime = true;
         var formatAssertionEnabled = false;
+        var extendedFormats = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -485,6 +496,9 @@ internal static class Program
                 case "--assert-format":
                     formatAssertionEnabled = true;
                     break;
+                case "--extended-formats":
+                    extendedFormats = true;
+                    break;
             }
         }
 
@@ -515,7 +529,8 @@ internal static class Program
         {
             SourcePath = schemaPath,
             EmitSupportArtifacts = writeRuntime,
-            FormatAssertionEnabled = formatAssertionEnabled
+            FormatAssertionEnabled = formatAssertionEnabled,
+            ExtendedFormats = extendedFormats
         };
 
         return await GenerateWithTargetAsync(targets, TypeScriptTargetId, schemaPath, outputPath, options);

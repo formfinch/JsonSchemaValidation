@@ -21,6 +21,12 @@ public sealed class JavaScriptCodeGenerationOptions : CodeGenerationOptions
     public bool FormatAssertionEnabled { get; init; }
 
     /// <summary>
+    /// Whether formats from the extended catalog (for example <c>nl-phone</c>) are asserted.
+    /// Off by default, which leaves them as annotations.
+    /// </summary>
+    public bool ExtendedFormats { get; init; }
+
+    /// <summary>
     /// Forces annotation tracking even when unevaluated* keywords are not present.
     /// </summary>
     public bool ForceAnnotationTracking { get; init; }

@@ -119,6 +119,12 @@ public sealed class TsCodeGenerationContext
     public bool FormatAssertionEnabled { get; init; }
 
     /// <summary>
+    /// Whether formats from the extended catalog (for example <c>nl-phone</c>) are asserted,
+    /// subject to the same assertion rule as built-in formats.
+    /// </summary>
+    public bool ExtendedFormats { get; init; }
+
+    /// <summary>
     /// Whether the active metaschema enables the validation vocabulary.
     /// When false, validation-vocabulary keywords must be treated as unknown.
     /// </summary>
@@ -306,6 +312,7 @@ public sealed class TsCodeGenerationContext
             GetSubschemaInfo = GetSubschemaInfo,
             DetectedDraft = DetectedDraft,
             FormatAssertionEnabled = FormatAssertionEnabled,
+            ExtendedFormats = ExtendedFormats,
             ValidationVocabularyEnabled = ValidationVocabularyEnabled,
             RequiresRegistry = RequiresRegistry,
             RequiresScopeTracking = RequiresScopeTracking,

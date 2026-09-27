@@ -825,3 +825,277 @@ export function isValidUuid(v: unknown): boolean {
     if (!_isString(v)) return true;
     return _reUuid.test(v);
 }
+
+// ---- Extended format catalog (opt-in; see FORMATS.md) ----------------------
+//
+// Mirrors FormFinch.JsonSchemaValidation.Formats.ExtendedFormatValidators. Each check
+// accepts the documented input variants (separators, prefixes, any case) and never
+// changes the value. Validators import these only when generated with
+// --extended-formats. Strings are processed per UTF-16 code unit, like the C# checks.
+
+const _extTrimChars = "  \t\r\n";
+const _extSpaces = "  ";
+const _extSpacesAndDashes = "  -";
+const _extSpacesAndDots = "  .";
+const _extSpacesDotsAndDashes = "  .-";
+const _extPhoneSeparators = "  -./";
+
+// IBAN length per country, from the SWIFT IBAN Registry.
+const _extIbanLengths: Readonly<Record<string, number>> = {
+    AD: 24, AE: 23, AL: 28, AT: 20, AZ: 28, BA: 20, BE: 16, BG: 22, BH: 22, BI: 27, BR: 29, BY: 28,
+    CH: 21, CR: 22, CY: 28, CZ: 24, DE: 22, DJ: 27, DK: 18, DO: 28, EE: 20, EG: 29, ES: 24, FI: 18,
+    FK: 18, FO: 18, FR: 27, GB: 22, GE: 22, GI: 23, GL: 18, GR: 27, GT: 28, HN: 28, HR: 21, HU: 28,
+    IE: 22, IL: 23, IQ: 23, IS: 26, IT: 27, JO: 30, KW: 30, KZ: 20, LB: 28, LC: 32, LI: 21, LT: 20,
+    LU: 20, LV: 21, LY: 25, MC: 27, MD: 24, ME: 22, MK: 19, MN: 20, MR: 27, MT: 31, MU: 30, NI: 28,
+    NL: 18, NO: 15, OM: 23, PK: 24, PL: 28, PS: 29, PT: 25, QA: 29, RO: 24, RS: 22, RU: 33, SA: 24,
+    SC: 31, SD: 18, SE: 24, SI: 19, SK: 24, SM: 27, SO: 23, ST: 25, SV: 28, TL: 23, TN: 24, TR: 26,
+    UA: 29, VA: 22, VG: 24, XK: 20, YE: 30,
+};
+
+function _extIsDigit(c: string): boolean {
+    return c.length === 1 && c >= "0" && c <= "9";
+}
+
+function _extIsLetter(c: string): boolean {
+    return c.length === 1 && ((c >= "A" && c <= "Z") || (c >= "a" && c <= "z"));
+}
+
+function _extIsSpace(c: string): boolean {
+    return c === " " || c === " ";
+}
+
+function _extUpper(c: string): string {
+    return c >= "a" && c <= "z" ? String.fromCharCode(c.charCodeAt(0) - 32) : c;
+}
+
+function _extTrim(value: string): string {
+    let start = 0;
+    let end = value.length;
+    while (start < end && _extTrimChars.includes(value.charAt(start))) start++;
+    while (end > start && _extTrimChars.includes(value.charAt(end - 1))) end--;
+    return value.slice(start, end);
+}
+
+// Removes separators and upper-cases ASCII letters. Null on any other character or an
+// empty result.
+function _extCompact(value: string, separators: string, allowLetters: boolean): string | null {
+    const text = _extTrim(value);
+    let out = "";
+    for (let i = 0; i < text.length; i++) {
+        const c = text.charAt(i);
+        if (separators.includes(c)) continue;
+        if (!(_extIsDigit(c) || (allowLetters && _extIsLetter(c)))) return null;
+        out += _extUpper(c);
+    }
+    return out.length > 0 ? out : null;
+}
+
+// ISO 7064 mod 97-10 over an upper-case alphanumeric string; letters count as 10..35.
+function _extMod97(text: string): number {
+    let remainder = 0;
+    for (let i = 0; i < text.length; i++) {
+        const code = text.charCodeAt(i);
+        remainder = code >= 48 && code <= 57
+            ? (remainder * 10 + (code - 48)) % 97
+            : (remainder * 100 + (code - 55)) % 97;
+    }
+    return remainder;
+}
+
+function _extElfproef(nineDigits: string): boolean {
+    let sum = 0;
+    let allZero = true;
+    for (let i = 0; i < 8; i++) {
+        const d = nineDigits.charCodeAt(i) - 48;
+        sum += d * (9 - i);
+        allZero = allZero && d === 0;
+    }
+    const last = nineDigits.charCodeAt(8) - 48;
+    allZero = allZero && last === 0;
+    return !allZero && (sum - last) % 11 === 0;
+}
+
+function _extIban(value: string): boolean {
+    const iban = _extCompact(value, _extSpaces, true);
+    if (iban === null || iban.length < 5) return false;
+    if (!_extIsLetter(iban.charAt(0)) || !_extIsLetter(iban.charAt(1)) ||
+        !_extIsDigit(iban.charAt(2)) || !_extIsDigit(iban.charAt(3))) {
+        return false;
+    }
+    const country = iban.slice(0, 2);
+    if (!Object.prototype.hasOwnProperty.call(_extIbanLengths, country) || iban.length !== _extIbanLengths[country]) {
+        return false;
+    }
+    return _extMod97(iban.slice(4) + iban.slice(0, 4)) === 1;
+}
+
+function _extBic(value: string): boolean {
+    const bic = _extCompact(value, _extSpaces, true);
+    if (bic === null || (bic.length !== 8 && bic.length !== 11)) return false;
+    // Business party prefix and suffix are alphanumeric (ISO 9362:2014); the country code is letters.
+    return _extIsLetter(bic.charAt(4)) && _extIsLetter(bic.charAt(5));
+}
+
+function _extStartsWithIsbn(text: string): boolean {
+    return text.length >= 4 &&
+        _extUpper(text.charAt(0)) === "I" && _extUpper(text.charAt(1)) === "S" &&
+        _extUpper(text.charAt(2)) === "B" && _extUpper(text.charAt(3)) === "N";
+}
+
+function _extIsbn13(value: string): boolean {
+    let text = _extTrim(value);
+    if (_extStartsWithIsbn(text)) {
+        text = text.slice(4);
+        if (text.startsWith("-13")) text = text.slice(3);
+        if (text.startsWith(":")) text = text.slice(1);
+        text = _extTrim(text);
+    }
+    const isbn = _extCompact(text, _extSpacesAndDashes, false);
+    if (isbn === null || isbn.length !== 13 || !(isbn.startsWith("978") || isbn.startsWith("979"))) return false;
+    let sum = 0;
+    for (let i = 0; i < 13; i++) {
+        sum += (isbn.charCodeAt(i) - 48) * (i % 2 === 0 ? 1 : 3);
+    }
+    return sum % 10 === 0;
+}
+
+function _extNlBsn(value: string): boolean {
+    let digits = _extCompact(value, _extSpacesDotsAndDashes, false);
+    if (digits === null) return false;
+    if (digits.length === 8) digits = "0" + digits;
+    return digits.length === 9 && _extElfproef(digits);
+}
+
+function _extNlVat(value: string): boolean {
+    const vat = _extCompact(value, _extSpacesAndDots, true);
+    if (vat === null || vat.length !== 14 || vat.charAt(0) !== "N" || vat.charAt(1) !== "L" || vat.charAt(11) !== "B") {
+        return false;
+    }
+    for (let i = 2; i < 14; i++) {
+        if (i !== 11 && !_extIsDigit(vat.charAt(i))) return false;
+    }
+    // The suffix after B runs from 01 to 99; 00 is never issued.
+    if (vat.charAt(12) === "0" && vat.charAt(13) === "0") return false;
+    // Pre-2020 numbers carry an 11-check on the 9 digits; the 2020 btw-id passes mod-97.
+    return _extElfproef(vat.slice(2, 11)) || _extMod97(vat) === 1;
+}
+
+function _extNlKvk(value: string): boolean {
+    const digits = _extCompact(value, _extSpaces, false);
+    return digits !== null && digits.length === 8 && /[1-9]/.test(digits);
+}
+
+function _extNlPostcode(value: string): boolean {
+    let text = _extTrim(value);
+    if (text.length === 7 && _extIsSpace(text.charAt(4))) text = text.slice(0, 4) + text.slice(5);
+    if (text.length !== 6 || text.charAt(0) < "1" || text.charAt(0) > "9") return false;
+    for (let i = 1; i < 4; i++) {
+        if (!_extIsDigit(text.charAt(i))) return false;
+    }
+    if (!_extIsLetter(text.charAt(4)) || !_extIsLetter(text.charAt(5))) return false;
+    // SA, SD and SS are not issued.
+    const first = _extUpper(text.charAt(4));
+    const second = _extUpper(text.charAt(5));
+    return !(first === "S" && (second === "A" || second === "D" || second === "S"));
+}
+
+// Significant (national) digits of a phone number for one country calling code, or null.
+// Accepts +CC, 00CC and national 0 prefixes, an optional trunk 0 after the country code
+// (written as "(0)" or not), and separators.
+function _extParsePhone(value: string, countryCode: string): string | null {
+    const text = _extTrim(value);
+    if (text.length === 0) return null;
+    const international = text.charAt(0) === "+";
+    let digits = "";
+    let inGroup = false;
+    let groupHasDigit = false;
+    for (let i = international ? 1 : 0; i < text.length; i++) {
+        const c = text.charAt(i);
+        if (_extIsDigit(c)) {
+            digits += c;
+            groupHasDigit = true;
+        } else if (c === "(") {
+            if (inGroup) return null;
+            inGroup = true;
+            groupHasDigit = false;
+        } else if (c === ")") {
+            if (!inGroup || !groupHasDigit) return null;
+            inGroup = false;
+        } else if (!_extPhoneSeparators.includes(c)) {
+            return null;
+        }
+    }
+    if (inGroup) return null;
+
+    let rest: string;
+    if (international) {
+        if (!digits.startsWith(countryCode)) return null;
+        rest = digits.slice(countryCode.length);
+    } else if (digits.startsWith("00")) {
+        if (!digits.startsWith(countryCode, 2)) return null;
+        rest = digits.slice(2 + countryCode.length);
+    } else {
+        if (digits.length < 2 || digits.charAt(0) !== "0") return null;
+        return digits.slice(1);
+    }
+    if (rest.startsWith("0")) rest = rest.slice(1);
+    if (rest.length === 0 || rest.charAt(0) === "0") return null;
+    return rest;
+}
+
+function _extNlPhone(value: string): boolean {
+    const national = _extParsePhone(value, "31");
+    return national !== null && national.length === 9;
+}
+
+function _extBePhone(value: string): boolean {
+    const national = _extParsePhone(value, "32");
+    if (national === null) return false;
+    if (national.length === 8) return true;
+    return national.length === 9 && national.charAt(0) === "4" && national.charAt(1) >= "5";
+}
+
+export function isValidIso13616Iban(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extIban(v);
+}
+
+export function isValidIso9362Bic(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extBic(v);
+}
+
+export function isValidIso2108Isbn(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extIsbn13(v);
+}
+
+export function isValidNlBsn(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extNlBsn(v);
+}
+
+export function isValidNlVat(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extNlVat(v);
+}
+
+export function isValidNlKvk(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extNlKvk(v);
+}
+
+export function isValidNlPostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extNlPostcode(v);
+}
+
+export function isValidNlPhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extNlPhone(v);
+}
+
+export function isValidBePhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extBePhone(v);
+}

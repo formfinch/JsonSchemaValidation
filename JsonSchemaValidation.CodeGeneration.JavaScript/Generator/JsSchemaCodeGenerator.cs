@@ -41,6 +41,13 @@ public sealed class JsSchemaCodeGenerator
     public bool FormatAssertionEnabled { get; set; }
 
     /// <summary>
+    /// Whether formats from the extended catalog (for example <c>nl-phone</c>) are asserted.
+    /// They follow the same assertion rule as built-in formats for this target (Draft 2020-12
+    /// only with format assertion enabled). Off by default, which leaves them as annotations.
+    /// </summary>
+    public bool ExtendedFormats { get; set; }
+
+    /// <summary>
     /// Forces property/item annotation tracking even when the schema itself does
     /// not contain unevaluated* keywords. Useful for registry-preloaded validators
     /// that may be referenced by a caller that does track unevaluated annotations.
@@ -380,6 +387,7 @@ public sealed class JsSchemaCodeGenerator
             RequiresPropertyAnnotations = requiresPropertyAnnotations,
             RequiresItemAnnotations = requiresItemAnnotations,
             FormatAssertionEnabled = effectiveFormatAssertionEnabled,
+            ExtendedFormats = ExtendedFormats,
             ValidationVocabularyEnabled = validationVocabularyEnabled,
             RequiresScopeTracking = requiresScopeTracking,
             RequiresRegistry = requiresRegistryParameter

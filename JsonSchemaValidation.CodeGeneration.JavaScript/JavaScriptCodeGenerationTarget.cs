@@ -134,6 +134,7 @@ public sealed class JavaScriptCodeGenerationTarget : CodeGenerationTarget<JavaSc
             DefaultDraft = options.DefaultDraft,
             RuntimeImportSpecifier = options.RuntimeImportSpecifier,
             FormatAssertionEnabled = options.FormatAssertionEnabled,
+            ExtendedFormats = options.ExtendedFormats,
             AlwaysTrackAnnotations = options.ForceAnnotationTracking,
             ExternalSchemaDocuments = options.ExternalSchemaDocuments
         };

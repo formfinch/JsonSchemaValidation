@@ -59,6 +59,25 @@ public sealed class CodeGeneratorCliTests
             StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("generate-js", ".js")]
+    [InlineData("generate-ts", ".ts")]
+    public async Task GenerateJsTs_ExtendedFormatsFlagImportsCatalogFunction(string command, string extension)
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var schemaPath = workspace.WriteSchema("""{"format":"nl-phone"}""");
+        var withFlag = workspace.CreateDirectory("with-flag");
+        var withoutFlag = workspace.CreateDirectory("without-flag");
+
+        var withExit = await RunCliAsync(command, "-s", schemaPath, "-o", withFlag, "--assert-format", "--extended-formats", "--no-runtime");
+        var withoutExit = await RunCliAsync(command, "-s", schemaPath, "-o", withoutFlag, "--assert-format", "--no-runtime");
+
+        Assert.Equal(0, withExit);
+        Assert.Equal(0, withoutExit);
+        Assert.Contains("isValidNlPhone", File.ReadAllText(Assert.Single(Directory.GetFiles(withFlag, "*" + extension))), StringComparison.Ordinal);
+        Assert.DoesNotContain("isValidNlPhone", File.ReadAllText(Assert.Single(Directory.GetFiles(withoutFlag, "*" + extension))), StringComparison.Ordinal);
+    }
+
     [Fact]
     public async Task GenerateJs_WritesReturnedSourceAndRuntimeArtifacts()
     {
