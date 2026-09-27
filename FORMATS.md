@@ -15,7 +15,7 @@ var result = JsonSchemaValidator.Validate("""{"format": "nl-phone"}""", "\"06-12
 - Catalog formats assert only when format assertion is active for the schema's draft (the draft's `FormatAssertionEnabled` option, or the format-assertion vocabulary in 2019-09 and 2020-12). Otherwise they are annotations, as the specification requires.
 - Built-in format names take precedence; catalog names do not overlap with them.
 - Non-string instances are ignored, like every other format.
-- The checks are also available directly: `ExtendedFormatValidators.IsValidIban(value)`, or `ExtendedFormatValidators.IsValid("iban", value)`.
+- The catalog has no public API of its own; it is used through the `format` keyword only.
 
 Status: the runtime validator supports the catalog. Compiled C# validators and the JS/TS code generators follow (formfinch/JsonSchemaValidation#55).
 
@@ -147,9 +147,15 @@ A national number can be valid in both countries (`0475 12 34 56` is a Belgian m
 
 ## Adding a format
 
-1. Add the check to `ExtendedFormatValidators` and its name to the catalog table.
+A format belongs in the catalog only when:
+
+- **Its rule is stable.** The structure and check are fixed by a standard or statute and not expected to change. Rules that shift over time (for example which number ranges are in service) stay out.
+- **It checks form, not existence.** The check decides whether a value is well-formed from the value alone. Anything that needs reference data (does this postcode, VAT number or account exist?) is out of scope.
+
+Steps:
+
+1. Add the check to `ExtendedFormatValidators` (internal) and its name to the catalog table.
 2. Add a vector file `TestData/Formats/<name>.json` with valid inputs, invalid inputs, and the documented input variants.
 3. Document the format here: source, rule, accepted input, examples.
-4. Record the new public members in `PublicAPI.Unshipped.txt`.
 
 Names: `<iso-3166-alpha-2>-<kind>` for national formats (`nl-bsn`, `gb-vat`), no prefix for international standards (`iban`, `isbn-13`).

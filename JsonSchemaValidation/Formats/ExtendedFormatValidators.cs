@@ -20,7 +20,7 @@ namespace FormFinch.JsonSchemaValidation.Formats;
 /// is set and format assertion is active for the schema's draft.
 /// </para>
 /// </remarks>
-public static class ExtendedFormatValidators
+internal static class ExtendedFormatValidators
 {
     private static readonly Dictionary<string, Func<string, bool>> Checks = new(StringComparer.Ordinal)
     {
@@ -36,12 +36,12 @@ public static class ExtendedFormatValidators
     };
 
     // Separator sets. A space is U+0020 or a no-break space (U+00A0), which is common in pasted text.
-    private const string Spaces = "  ";
-    private const string SpacesAndDashes = "  -";
-    private const string SpacesAndDots = "  .";
-    private const string SpacesDotsAndDashes = "  .-";
+    private const string Spaces = " \u00A0";
+    private const string SpacesAndDashes = " \u00A0-";
+    private const string SpacesAndDots = " \u00A0.";
+    private const string SpacesDotsAndDashes = " \u00A0.-";
 
-    private static readonly char[] TrimChars = [' ', ' ', '\t', '\r', '\n'];
+    private static readonly char[] TrimChars = [' ', '\u00A0', '\t', '\r', '\n'];
 
     private static readonly ReadOnlyCollection<string> Names = Checks.Keys.ToList().AsReadOnly();
 
@@ -365,7 +365,7 @@ public static class ExtendedFormatValidators
 
     private static string Trim(string value) => value.Trim(TrimChars);
 
-    private static bool IsSpace(char c) => c == ' ' || c == ' ';
+    private static bool IsSpace(char c) => c == ' ' || c == '\u00A0';
 
     private static bool IsAsciiDigit(char c) => c >= '0' && c <= '9';
 

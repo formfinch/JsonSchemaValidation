@@ -60,8 +60,8 @@ namespace FormFinch.JsonSchemaValidation
         /// <remarks>
         /// Catalog formats are only asserted when format assertion is active for the schema's draft
         /// (for example <see cref="DependencyInjection.Draft202012Options.FormatAssertionEnabled"/>);
-        /// otherwise they remain annotations, like any other format. See
-        /// <see cref="Formats.ExtendedFormatValidators"/> for the list of formats.
+        /// otherwise they remain annotations, like any other format. The formats and the input
+        /// they accept are listed in <c>FORMATS.md</c> in the repository.
         /// </remarks>
         public bool EnableExtendedFormats { get; set; }
 
