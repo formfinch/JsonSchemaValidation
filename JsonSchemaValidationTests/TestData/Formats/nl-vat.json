@@ -1,0 +1,81 @@
+[
+    {
+        "description": "validation of nl-vat",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "nl-vat"
+        },
+        "tests": [
+            {
+                "description": "11-check number",
+                "data": "NL004495445B01",
+                "valid": true
+            },
+            {
+                "description": "btw-id passing mod-97",
+                "data": "NL000099998B57",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "nl004495445b01",
+                "valid": true
+            },
+            {
+                "description": "spaces and dots",
+                "data": "NL 0044.95.445.B01",
+                "valid": true
+            },
+            {
+                "description": "fails both checks",
+                "data": "NL004495446B01",
+                "valid": false
+            },
+            {
+                "description": "btw-id with wrong suffix",
+                "data": "NL000099998B58",
+                "valid": false
+            },
+            {
+                "description": "suffix 00 on a number passing the 11-check",
+                "data": "NL004495445B00",
+                "valid": false
+            },
+            {
+                "description": "missing B suffix",
+                "data": "NL004495445",
+                "valid": false
+            },
+            {
+                "description": "other letter than B",
+                "data": "NL004495445C01",
+                "valid": false
+            },
+            {
+                "description": "other country",
+                "data": "BE0123456749",
+                "valid": false
+            },
+            {
+                "description": "dashes are not accepted",
+                "data": "NL-004495445-B01",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

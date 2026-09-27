@@ -114,6 +114,8 @@ FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft6.get -> bool
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft6.set -> void
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft7.get -> bool
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableDraft7.set -> void
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableExtendedFormats.get -> bool
+FormFinch.JsonSchemaValidation.SchemaValidationOptions.EnableExtendedFormats.set -> void
 FormFinch.JsonSchemaValidation.SchemaValidationOptions.SchemaValidationOptions() -> void
 FormFinch.JsonSchemaValidation.DependencyInjection.SchemaValidationSetup
 FormFinch.JsonSchemaValidation.DependencyInjection.ServiceProviderExtensions

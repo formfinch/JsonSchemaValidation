@@ -1,0 +1,38 @@
+[
+    {
+        "description": "a Dutch or Belgian phone number",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "anyOf": [
+                {
+                    "format": "nl-phone"
+                },
+                {
+                    "format": "be-phone"
+                }
+            ]
+        },
+        "tests": [
+            {
+                "description": "Dutch mobile",
+                "data": "06-12345678",
+                "valid": true
+            },
+            {
+                "description": "Belgian mobile",
+                "data": "+32 475 12 34 56",
+                "valid": true
+            },
+            {
+                "description": "national number valid in both countries",
+                "data": "0475 12 34 56",
+                "valid": true
+            },
+            {
+                "description": "British number",
+                "data": "+44 20 7946 0958",
+                "valid": false
+            }
+        ]
+    }
+]

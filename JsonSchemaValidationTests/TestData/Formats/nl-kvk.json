@@ -1,0 +1,66 @@
+[
+    {
+        "description": "validation of nl-kvk",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "nl-kvk"
+        },
+        "tests": [
+            {
+                "description": "8 digits",
+                "data": "12345678",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "01234567",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "1234 5678",
+                "valid": true
+            },
+            {
+                "description": "7 digits",
+                "data": "1234567",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "123456789",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "00000000",
+                "valid": false
+            },
+            {
+                "description": "dashes are not accepted",
+                "data": "1234-5678",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "1234567A",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

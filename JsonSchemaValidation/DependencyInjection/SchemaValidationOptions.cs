@@ -54,6 +54,18 @@ namespace FormFinch.JsonSchemaValidation
         public bool EnableDraft3 { get; set; } = true;
 
         /// <summary>
+        /// Gets or sets a value indicating whether the extended format catalog (for example <c>iban</c>,
+        /// <c>nl-phone</c>, <c>nl-bsn</c>) is checked. Default is <see langword="false"/>.
+        /// </summary>
+        /// <remarks>
+        /// Catalog formats are only asserted when format assertion is active for the schema's draft
+        /// (for example <see cref="DependencyInjection.Draft202012Options.FormatAssertionEnabled"/>);
+        /// otherwise they remain annotations, like any other format. The formats and the input
+        /// they accept are listed in <c>FORMATS.md</c> in the repository.
+        /// </remarks>
+        public bool EnableExtendedFormats { get; set; }
+
+        /// <summary>
         /// Draft-specific options for JSON Schema Draft 2020-12.
         /// </summary>
         public Draft202012Options Draft202012 { get; set; } = new();

@@ -1,0 +1,71 @@
+[
+    {
+        "description": "validation of bic",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "bic"
+        },
+        "tests": [
+            {
+                "description": "8 characters",
+                "data": "ABNANL2A",
+                "valid": true
+            },
+            {
+                "description": "11 characters",
+                "data": "DEUTDEFF500",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "abnanl2a",
+                "valid": true
+            },
+            {
+                "description": "grouped with spaces",
+                "data": "ABNA NL 2A",
+                "valid": true
+            },
+            {
+                "description": "7 characters",
+                "data": "ABNANL2",
+                "valid": false
+            },
+            {
+                "description": "9 characters",
+                "data": "ABNANL2AX",
+                "valid": false
+            },
+            {
+                "description": "digit in bank code",
+                "data": "ABN1NL2A",
+                "valid": false
+            },
+            {
+                "description": "digit in country code",
+                "data": "ABNAN12A",
+                "valid": false
+            },
+            {
+                "description": "dashes are not accepted",
+                "data": "ABNA-NL-2A",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

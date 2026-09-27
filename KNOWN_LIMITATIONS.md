@@ -16,6 +16,10 @@ Remote schemas (`$ref` to external URIs) must be pre-registered in `SchemaReposi
 
 Compiled validators generate optimized code at runtime for faster repeated validation. They resolve references statically at compile time, which means certain dynamic features are not supported.
 
+### Extended Format Catalog
+
+The opt-in [extended format catalog](FORMATS.md) (`EnableExtendedFormats`) is supported by the runtime validator only. Compiled C# validators and the JS/TS code generators treat catalog names as unknown formats (annotation only) until they gain support (#55).
+
 ### Complex `$dynamicRef` Scenarios (Draft 2020-12)
 
 Basic `$dynamicRef` / `$dynamicAnchor` resolution works. Complex scenarios involving external schemas or multiple dynamic paths through different `$ref` chains may not resolve correctly, because full dynamic scope resolution requires runtime stack inspection.

@@ -1,0 +1,86 @@
+[
+    {
+        "description": "validation of isbn-13",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "isbn-13"
+        },
+        "tests": [
+            {
+                "description": "compact",
+                "data": "9780306406157",
+                "valid": true
+            },
+            {
+                "description": "hyphenated",
+                "data": "978-0-306-40615-7",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "978 0 306 40615 7",
+                "valid": true
+            },
+            {
+                "description": "ISBN prefix",
+                "data": "ISBN 978-0-306-40615-7",
+                "valid": true
+            },
+            {
+                "description": "ISBN-13: prefix",
+                "data": "ISBN-13: 978-0-306-40615-7",
+                "valid": true
+            },
+            {
+                "description": "lower-case prefix without space",
+                "data": "isbn:9780306406157",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "9780306406158",
+                "valid": false
+            },
+            {
+                "description": "prefix other than 978/979",
+                "data": "9770306406158",
+                "valid": false
+            },
+            {
+                "description": "12 digits",
+                "data": "978-0-306-40615",
+                "valid": false
+            },
+            {
+                "description": "ISBN-10",
+                "data": "0-306-40615-2",
+                "valid": false
+            },
+            {
+                "description": "ISBN-10 label",
+                "data": "ISBN-10: 978-0-306-40615-7",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "978-0-306-4061X-7",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

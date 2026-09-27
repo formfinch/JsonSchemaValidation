@@ -10,6 +10,7 @@ using System.Text.Json;
 using FormFinch.JsonSchemaValidation.Abstractions.Keywords;
 using FormFinch.JsonSchemaValidation.Draft6.Keywords.Format;
 using FormFinch.JsonSchemaValidation.Exceptions;
+using FormFinch.JsonSchemaValidation.Formats;
 using FormFinch.JsonSchemaValidation.Repositories;
 
 namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
@@ -79,6 +80,12 @@ namespace FormFinch.JsonSchemaValidation.Draft6.Keywords
             if (CachedAssertionValidators.TryGetValue(format, out var cachedValidator))
             {
                 return cachedValidator;
+            }
+
+            // Extended catalog format (opt-in)
+            if (ExtendedFormatResolver.TryGetValidator(_options, format, out var extendedValidator))
+            {
+                return extendedValidator;
             }
 
             // Unknown format - return annotation-only validator

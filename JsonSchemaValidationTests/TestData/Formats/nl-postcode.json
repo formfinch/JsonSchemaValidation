@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of nl-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "nl-postcode"
+        },
+        "tests": [
+            {
+                "description": "compact",
+                "data": "1234AB",
+                "valid": true
+            },
+            {
+                "description": "one space",
+                "data": "1234 AB",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "1234 ab",
+                "valid": true
+            },
+            {
+                "description": "no-break space",
+                "data": "1234 AB",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 9999ZZ ",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "0123AB",
+                "valid": false
+            },
+            {
+                "description": "SA is not issued",
+                "data": "1234SA",
+                "valid": false
+            },
+            {
+                "description": "SD is not issued",
+                "data": "1234 sd",
+                "valid": false
+            },
+            {
+                "description": "SS is not issued",
+                "data": "1234SS",
+                "valid": false
+            },
+            {
+                "description": "two spaces",
+                "data": "1234  AB",
+                "valid": false
+            },
+            {
+                "description": "dash",
+                "data": "1234-AB",
+                "valid": false
+            },
+            {
+                "description": "one letter",
+                "data": "1234A",
+                "valid": false
+            },
+            {
+                "description": "five digits",
+                "data": "12345AB",
+                "valid": false
+            },
+            {
+                "description": "digits after the letters",
+                "data": "1234AB1",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]
