@@ -4,6 +4,7 @@
 using System.Text.Json;
 using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Generator;
 using FormFinch.JsonSchemaValidation.CodeGeneration.Schema;
+using FormFinch.JsonSchemaValidation.Formats;
 
 namespace FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Keywords;
 
@@ -84,15 +85,25 @@ public sealed class FormatCodeGenerator : ICSharpKeywordCodeGenerator
             return string.Empty;
         }
 
+        var e = context.ElementVariable;
+
         // Check if format is supported for the detected draft
         if (!SupportedFormatsByDraft.TryGetValue(context.DetectedDraft, out var supportedFormats) ||
             !supportedFormats.Contains(format))
         {
+            // Opt-in extended catalog (e.g. "nl-phone"). The name is a catalog constant, so it is
+            // safe to embed as a string literal.
+            if (context.ExtendedFormats && ExtendedFormatValidators.IsKnownFormat(format))
+            {
+                return $$"""
+if (!global::FormFinch.JsonSchemaValidation.Formats.ExtendedFormats.IsValid("{{format}}", {{e}})) return false;
+""";
+            }
+
             // Format not supported for this draft - treat as annotation only (no validation)
             return string.Empty;
         }
 
-        var e = context.ElementVariable;
         var validatorMethod = GetValidatorMethod(format);
 
         return $$"""

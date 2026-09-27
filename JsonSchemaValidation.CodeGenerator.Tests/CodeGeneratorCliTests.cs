@@ -37,6 +37,29 @@ public sealed class CodeGeneratorCliTests
     }
 
     [Fact]
+    public async Task Generate_ExtendedFormatsFlagAssertsCatalogFormats()
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var schemaPath = workspace.WriteSchema("""{"format":"nl-phone"}""");
+        var withFlag = workspace.CreateDirectory("with-flag");
+        var withoutFlag = workspace.CreateDirectory("without-flag");
+
+        var withExit = await RunCliAsync("generate", "-s", schemaPath, "-o", withFlag, "-c", "Phone", "--extended-formats");
+        var withoutExit = await RunCliAsync("generate", "-s", schemaPath, "-o", withoutFlag, "-c", "Phone");
+
+        Assert.Equal(0, withExit);
+        Assert.Equal(0, withoutExit);
+        Assert.Contains(
+            "ExtendedFormats.IsValid(\"nl-phone\"",
+            File.ReadAllText(Path.Combine(withFlag, "Phone.cs")),
+            StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "ExtendedFormats",
+            File.ReadAllText(Path.Combine(withoutFlag, "Phone.cs")),
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task GenerateJs_WritesReturnedSourceAndRuntimeArtifacts()
     {
         using var workspace = TemporaryWorkspace.Create();

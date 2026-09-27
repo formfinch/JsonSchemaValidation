@@ -24,9 +24,9 @@ internal static class ExtendedFormatValidators
 {
     private static readonly Dictionary<string, Func<string, bool>> Checks = new(StringComparer.Ordinal)
     {
-        ["iban"] = IsValidIban,
-        ["bic"] = IsValidBic,
-        ["isbn-13"] = IsValidIsbn13,
+        ["iso-13616-iban"] = IsValidIban,
+        ["iso-9362-bic"] = IsValidBic,
+        ["iso-2108-isbn"] = IsValidIsbn13,
         ["nl-bsn"] = IsValidNlBsn,
         ["nl-vat"] = IsValidNlVat,
         ["nl-kvk"] = IsValidNlKvk,
@@ -67,7 +67,7 @@ internal static class ExtendedFormatValidators
     public static IReadOnlyCollection<string> FormatNames => Names;
 
     /// <summary>Returns whether <paramref name="format"/> is a format in the extended catalog.</summary>
-    /// <param name="format">The format name, e.g. <c>"iban"</c>.</param>
+    /// <param name="format">The format name, e.g. <c>"nl-phone"</c>.</param>
     /// <returns><see langword="true"/> if the catalog contains the format.</returns>
     public static bool IsKnownFormat(string format)
     {

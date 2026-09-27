@@ -15,9 +15,11 @@ var result = JsonSchemaValidator.Validate("""{"format": "nl-phone"}""", "\"06-12
 - Catalog formats assert only when format assertion is active for the schema's draft (the draft's `FormatAssertionEnabled` option, or the format-assertion vocabulary in 2019-09 and 2020-12). Otherwise they are annotations, as the specification requires.
 - Built-in format names take precedence; catalog names do not overlap with them.
 - Non-string instances are ignored, like every other format.
-- The catalog has no public API of its own; it is used through the `format` keyword only.
+- The catalog is used through the `format` keyword. Its only public member, `ExtendedFormats.IsValid(format, element)`, exists for generated validators (see below).
 
-Status: the runtime validator supports the catalog. Compiled C# validators and the JS/TS code generators follow (formfinch/JsonSchemaValidation#55).
+Compiled C# validators support the catalog when generated with `jsv-codegen generate --extended-formats` (or `CSharpCodeGenerationOptions.ExtendedFormats`). Generating with the flag is the opt-in: like the built-in formats in compiled validators, catalog formats are then always asserted, and the generated code calls `FormFinch.JsonSchemaValidation.Formats.ExtendedFormats.IsValid`. Without the flag they are annotations.
+
+Status: the runtime validator and compiled C# support the catalog. The JS/TS code generators follow (formfinch/JsonSchemaValidation#55).
 
 ## Input rules
 
@@ -36,9 +38,9 @@ A passing check proves a value is well-formed. It does not prove the value exist
 
 | Name | What | Accepted input |
 | --- | --- | --- |
-| `iban` | International Bank Account Number | any case; spaces |
-| `bic` | Business Identifier Code | any case; spaces |
-| `isbn-13` | ISBN-13 | spaces and hyphens; optional `ISBN` prefix |
+| `iso-13616-iban` | International Bank Account Number | any case; spaces |
+| `iso-9362-bic` | Business Identifier Code | any case; spaces |
+| `iso-2108-isbn` | ISBN (13 digits) | spaces and hyphens; optional `ISBN` prefix |
 | `nl-bsn` | Dutch citizen service number (BSN) | spaces, dots and hyphens |
 | `nl-vat` | Dutch VAT identification number | any case; spaces and dots |
 | `nl-kvk` | Dutch Chamber of Commerce number | spaces |
@@ -46,7 +48,7 @@ A passing check proves a value is well-formed. It does not prove the value exist
 | `nl-phone` | Dutch phone number | spaces, hyphens, dots, slashes, parentheses |
 | `be-phone` | Belgian phone number | spaces, hyphens, dots, slashes, parentheses |
 
-### `iban`
+### `iso-13616-iban`
 
 Source: ISO 13616; country lengths from the SWIFT IBAN Registry (89 countries; checked in September 2026 against the registry table as reproduced on Wikipedia, to be re-checked against the registry release itself).
 
@@ -57,7 +59,7 @@ Source: ISO 13616; country lengths from the SWIFT IBAN Registry (89 countries; c
 
 Examples: `NL91 ABNA 0417 1643 00`, `nl91abna0417164300`, `BE68 5390 0754 7034`. Not accepted: dashes, unknown country, wrong length, wrong check digits.
 
-### `bic`
+### `iso-9362-bic`
 
 Source: ISO 9362. Structure only; no directory lookup.
 
@@ -66,7 +68,7 @@ Source: ISO 9362. Structure only; no directory lookup.
 
 Examples: `ABNANL2A`, `abna nl 2a`, `DEUTDEFF500`.
 
-### `isbn-13`
+### `iso-2108-isbn`
 
 Source: ISO 2108.
 
@@ -158,4 +160,9 @@ Steps:
 2. Add a vector file `TestData/Formats/<name>.json` with valid inputs, invalid inputs, and the documented input variants.
 3. Document the format here: source, rule, accepted input, examples.
 
-Names: `<iso-3166-alpha-2>-<kind>` for national formats (`nl-bsn`, `gb-vat`), no prefix for international standards (`iban`, `isbn-13`).
+Names are `<authority>-<kind>`, where the authority is the body that defines the rule:
+
+- a country, as its ISO 3166-1 alpha-2 code: `nl-bsn`, `nl-vat`, `be-phone`, `gb-vat`;
+- a standards body and the number of the standard, for rules that are the same everywhere: `iso-13616-iban`, `iso-9362-bic`, `iso-2108-isbn`. The number names the exact rule and does not change between editions of the standard.
+
+Country codes are two letters and standards bodies are longer, so the two can never collide. A group such as "any EU VAT number" is not a format; combine the national formats with `anyOf`.

@@ -18,7 +18,7 @@ Compiled validators generate optimized code at runtime for faster repeated valid
 
 ### Extended Format Catalog
 
-The opt-in [extended format catalog](FORMATS.md) (`EnableExtendedFormats`) is supported by the runtime validator only. Compiled C# validators and the JS/TS code generators treat catalog names as unknown formats (annotation only) until they gain support (#55).
+The opt-in [extended format catalog](FORMATS.md) is supported by the runtime validator (`EnableExtendedFormats`) and by compiled C# validators generated with `--extended-formats`. A compiled validator follows the choice made at generation time: it asserts catalog formats regardless of the runtime `EnableExtendedFormats` or `FormatAssertionEnabled` settings, as it already does for built-in formats. The JS/TS code generators treat catalog names as unknown formats (annotation only) until they gain support (#55).
 
 ### Complex `$dynamicRef` Scenarios (Draft 2020-12)
 

@@ -79,7 +79,8 @@ public sealed class CSharpCodeGenerationTarget : CodeGenerationTarget<CSharpCode
         {
             DefaultDraft = options.DefaultDraft,
             ForceAnnotationTracking = options.ForceAnnotationTracking,
-            UseGeneratedRegex = options.UseGeneratedRegex
+            UseGeneratedRegex = options.UseGeneratedRegex,
+            ExtendedFormats = options.ExtendedFormats
         };
 
         var namespaceName = options.OutputHints.NamespaceName ?? "Generated";

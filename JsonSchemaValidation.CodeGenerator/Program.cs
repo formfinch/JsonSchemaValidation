@@ -68,6 +68,7 @@ internal static class Program
               -o, --output <path>     Output directory for generated code (required)
               -n, --namespace <name>  Namespace for generated classes (default: JsonSchemaValidation.Generated)
               -c, --class <name>      Class name (defaults to derived from schema $id)
+              --extended-formats      Assert formats from the extended catalog (e.g. nl-phone, iso-13616-iban)
 
             generate-js options:
               -s, --schema <path>    Input schema file (required)
@@ -130,6 +131,7 @@ internal static class Program
         string? outputPath = null;
         var namespaceName = "JsonSchemaValidation.Generated";
         string? className = null;
+        var extendedFormats = false;
 
         for (var i = 0; i < args.Length; i++)
         {
@@ -157,6 +159,9 @@ internal static class Program
                 case "--class":
                     className = nextArg;
                     i++;
+                    break;
+                case "--extended-formats":
+                    extendedFormats = true;
                     break;
             }
         }
@@ -192,6 +197,7 @@ internal static class Program
         {
             SourcePath = schemaPath,
             UseGeneratedRegex = true,
+            ExtendedFormats = extendedFormats,
             OutputHints = new CodeGenerationOutputHints
             {
                 NamespaceName = namespaceName,

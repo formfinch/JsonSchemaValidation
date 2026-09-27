@@ -1,9 +1,9 @@
 [
     {
-        "description": "validation of bic",
+        "description": "validation of iso-9362-bic",
         "schema": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "format": "bic"
+            "format": "iso-9362-bic"
         },
         "tests": [
             {
