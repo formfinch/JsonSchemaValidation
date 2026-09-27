@@ -62,6 +62,11 @@
                 "valid": false
             },
             {
+                "description": "prefix with a dotless i is not the ISBN prefix",
+                "data": "ıSBN 978-0-306-40615-7",
+                "valid": false
+            },
+            {
                 "description": "letters",
                 "data": "978-0-306-4061X-7",
                 "valid": false

@@ -130,7 +130,10 @@ internal static class ExtendedFormatValidators
         if (value is null)
             return false;
         var text = Trim(value);
-        if (text.StartsWith("ISBN", StringComparison.OrdinalIgnoreCase))
+        // ASCII-only comparison, so every runtime agrees (culture or Unicode case folding
+        // could otherwise map characters such as a dotless i onto "I").
+        if (text.Length >= 4 && ToUpperAscii(text[0]) == 'I' && ToUpperAscii(text[1]) == 'S'
+            && ToUpperAscii(text[2]) == 'B' && ToUpperAscii(text[3]) == 'N')
         {
             text = text[4..];
             if (text.StartsWith("-13", StringComparison.Ordinal))

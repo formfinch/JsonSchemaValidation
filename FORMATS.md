@@ -19,7 +19,9 @@ var result = JsonSchemaValidator.Validate("""{"format": "nl-phone"}""", "\"06-12
 
 Compiled C# validators support the catalog when generated with `jsv-codegen generate --extended-formats` (or `CSharpCodeGenerationOptions.ExtendedFormats`). Generating with the flag is the opt-in: like the built-in formats in compiled validators, catalog formats are then always asserted, and the generated code calls `FormFinch.JsonSchemaValidation.Formats.ExtendedFormats.IsValid`. Without the flag they are annotations.
 
-Status: the runtime validator and compiled C# support the catalog. The JS/TS code generators follow (formfinch/JsonSchemaValidation#55).
+The JavaScript and TypeScript generators support the catalog with `jsv-codegen generate-js --extended-formats` / `generate-ts --extended-formats` (or `ExtendedFormats` on their options). There, catalog formats follow the same rule as built-in formats in that target: Drafts 4 and 2019-09 assert them, and Draft 2020-12 asserts them only with format assertion enabled (`--assert-format`, or a metaschema whose `$vocabulary` declares format-assertion); the CLI warns when `--extended-formats` is used without `--assert-format`. Validators generated with the flag import the catalog functions, so they need a `jsv-runtime` from this version or later. The checks live in the generated `jsv-runtime.js` / `jsv-runtime.ts` (`isValidIso13616Iban`, `isValidNlPhone`, …) and mirror the C# checks; the same vectors run against every path.
+
+Status: the runtime validator, compiled C#, and the JavaScript and TypeScript generators support the catalog.
 
 ## Input rules
 
@@ -159,8 +161,9 @@ A format belongs in the catalog only when:
 Steps:
 
 1. Add the check to `ExtendedFormatValidators` (internal) and its name to the catalog table.
-2. Add a vector file `TestData/Formats/<name>.json` with valid inputs, invalid inputs, and the documented input variants.
-3. Document the format here: source, rule, accepted input, examples.
+2. Port the check to `jsv-runtime.ts` and `jsv-runtime.js` as an exported `isValid…` function, declare it in `TsRuntime.GetDeclarationSource`, and map the name in `JsFormatCodeGenerator` and `TsFormatCodeGenerator` (`MapExtendedFormatToImport`).
+3. Add a vector file `TestData/Formats/<name>.json` with valid inputs, invalid inputs, and the documented input variants. The runtime, compiled C#, JS and TS tests all run it.
+4. Document the format here: source, rule, accepted input, examples.
 
 Names are `<authority>-<kind>`, where the authority is the body that defines the rule:
 

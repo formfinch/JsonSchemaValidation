@@ -21,11 +21,13 @@ public sealed class JsValidatorHarness
 
     public JsValidatorHarness(
         bool formatAssertionEnabled = false,
-        IReadOnlyDictionary<string, string>? externalSchemaDocuments = null)
+        IReadOnlyDictionary<string, string>? externalSchemaDocuments = null,
+        bool extendedFormats = false)
     {
         _generator = new JsSchemaCodeGenerator
         {
             FormatAssertionEnabled = formatAssertionEnabled,
+            ExtendedFormats = extendedFormats,
             ExternalSchemaDocuments = externalSchemaDocuments
         };
     }

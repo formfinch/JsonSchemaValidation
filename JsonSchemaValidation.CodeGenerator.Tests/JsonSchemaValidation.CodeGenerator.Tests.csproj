@@ -28,4 +28,8 @@
     <ProjectReference Include="..\JsonSchemaValidation.CodeGeneration.TypeScript\JsonSchemaValidation.CodeGeneration.TypeScript.csproj" />
     <ProjectReference Include="..\JsonSchemaValidation\JsonSchemaValidation.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Extended format vectors are shared with JsonSchemaValidationTests (runtime and compiled C#). -->
+    <None Include="..\JsonSchemaValidationTests\TestData\Formats\*.json" CopyToOutputDirectory="PreserveNewest" LinkBase="TestData\Formats" />
+  </ItemGroup>
 </Project>

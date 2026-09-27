@@ -114,6 +114,15 @@ public static class TsRuntime
             export function isValidRelativeJsonPointer(value: unknown): boolean;
             export function isValidRegex(value: unknown): boolean;
             export function isValidUuid(value: unknown): boolean;
+            export function isValidIso13616Iban(value: unknown): boolean;
+            export function isValidIso9362Bic(value: unknown): boolean;
+            export function isValidIso2108Isbn(value: unknown): boolean;
+            export function isValidNlBsn(value: unknown): boolean;
+            export function isValidNlVat(value: unknown): boolean;
+            export function isValidNlKvk(value: unknown): boolean;
+            export function isValidNlPostcode(value: unknown): boolean;
+            export function isValidNlPhone(value: unknown): boolean;
+            export function isValidBePhone(value: unknown): boolean;
             """;
     }
 }

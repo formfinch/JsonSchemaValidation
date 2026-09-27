@@ -61,14 +61,8 @@ public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
         var format = formatElem.GetString();
         if (string.IsNullOrEmpty(format)) return string.Empty;
 
-        if (!SupportedFormatsByDraft.TryGetValue(context.DetectedDraft, out var supported) ||
-            !supported.Contains(format))
-        {
-            return string.Empty; // annotation-only for this draft
-        }
-
-        var importName = MapFormatToImport(format);
-        if (importName == null) return string.Empty;
+        var importName = ResolveImport(context, format);
+        if (importName == null) return string.Empty; // annotation-only for this draft
         var v = context.ElementExpr;
         return $"if (!{importName}({v})) return false;";
     }
@@ -84,14 +78,42 @@ public sealed class JsFormatCodeGenerator : IJsKeywordCodeGenerator
         var format = formatElem.GetString();
         if (string.IsNullOrEmpty(format)) yield break;
 
-        if (!SupportedFormatsByDraft.TryGetValue(context.DetectedDraft, out var supported) ||
-            !supported.Contains(format))
-        {
-            yield break;
-        }
-        var importName = MapFormatToImport(format);
+        var importName = ResolveImport(context, format);
         if (importName != null) yield return importName;
     }
+
+    /// <summary>
+    /// Runtime function for a format: a built-in format supported for the draft, or, when
+    /// extended formats are enabled, an extended catalog format. Built-in names win.
+    /// </summary>
+    private static string? ResolveImport(JsCodeGenerationContext context, string format)
+    {
+        if (SupportedFormatsByDraft.TryGetValue(context.DetectedDraft, out var supported) &&
+            supported.Contains(format))
+        {
+            return MapFormatToImport(format);
+        }
+
+        return context.ExtendedFormats ? MapExtendedFormatToImport(format) : null;
+    }
+
+    /// <summary>
+    /// Extended catalog formats (see FORMATS.md). Must list every catalog name; the shared
+    /// format vectors fail for any name missing here.
+    /// </summary>
+    private static string? MapExtendedFormatToImport(string format) => format switch
+    {
+        "iso-13616-iban" => "isValidIso13616Iban",
+        "iso-9362-bic" => "isValidIso9362Bic",
+        "iso-2108-isbn" => "isValidIso2108Isbn",
+        "nl-bsn" => "isValidNlBsn",
+        "nl-vat" => "isValidNlVat",
+        "nl-kvk" => "isValidNlKvk",
+        "nl-postcode" => "isValidNlPostcode",
+        "nl-phone" => "isValidNlPhone",
+        "be-phone" => "isValidBePhone",
+        _ => null,
+    };
 
     private static bool ShouldAssertFormat(JsCodeGenerationContext context)
     {

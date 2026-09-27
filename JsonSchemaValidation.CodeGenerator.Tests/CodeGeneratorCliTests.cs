@@ -59,6 +59,35 @@ public sealed class CodeGeneratorCliTests
             StringComparison.Ordinal);
     }
 
+    [Theory]
+    [InlineData("generate-js", ".js", "--no-runtime")]
+    [InlineData("generate-ts", ".ts", "--no-runtime")]
+    // The TypeScript pipeline compiles with tsc: against jsv-runtime.ts, or with --no-runtime
+    // against the hand-written jsv-runtime.d.ts.
+    [InlineData("generate-js", ".js", "--pipeline typescript")]
+    [InlineData("generate-js", ".js", "--pipeline typescript --no-runtime")]
+    public async Task GenerateJsTs_ExtendedFormatsFlagImportsCatalogFunction(string command, string extension, string extraArgs)
+    {
+        using var workspace = TemporaryWorkspace.Create();
+        var schemaPath = workspace.WriteSchema("""{"format":"nl-phone"}""");
+        var withFlag = workspace.CreateDirectory("with-flag");
+        var withoutFlag = workspace.CreateDirectory("without-flag");
+        var extra = extraArgs.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+        var withExit = await RunCliAsync([command, "-s", schemaPath, "-o", withFlag, "--assert-format", "--extended-formats", .. extra]);
+        var withoutExit = await RunCliAsync([command, "-s", schemaPath, "-o", withoutFlag, "--assert-format", .. extra]);
+
+        Assert.Equal(0, withExit);
+        Assert.Equal(0, withoutExit);
+        Assert.Contains("isValidNlPhone", File.ReadAllText(ValidatorFile(withFlag, extension)), StringComparison.Ordinal);
+        Assert.DoesNotContain("isValidNlPhone", File.ReadAllText(ValidatorFile(withoutFlag, extension)), StringComparison.Ordinal);
+    }
+
+    private static string ValidatorFile(string directory, string extension) =>
+        Assert.Single(
+            Directory.GetFiles(directory, "*" + extension),
+            path => !Path.GetFileName(path).StartsWith("jsv-runtime", StringComparison.OrdinalIgnoreCase));
+
     [Fact]
     public async Task GenerateJs_WritesReturnedSourceAndRuntimeArtifacts()
     {
