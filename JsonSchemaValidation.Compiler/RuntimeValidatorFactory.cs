@@ -44,11 +44,13 @@ internal sealed class RuntimeValidatorFactory : IDisposable
     /// <param name="registry">The registry for resolving external $ref dependencies.</param>
     /// <param name="forceAnnotationTracking">Force annotation tracking even without unevaluated* keywords.</param>
     /// <param name="defaultDraft">Default draft version when schema has no $schema. If null, defaults to Draft 2020-12.</param>
-    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry, bool forceAnnotationTracking = false, SchemaDraft? defaultDraft = null)
+    /// <param name="extendedFormats">Assert formats from the extended catalog (for example <c>nl-phone</c>).</param>
+    public RuntimeValidatorFactory(ICompiledValidatorRegistry? registry, bool forceAnnotationTracking = false, SchemaDraft? defaultDraft = null, bool extendedFormats = false)
     {
         _registry = registry;
         _codeGenerator.ForceAnnotationTracking = forceAnnotationTracking;
         _codeGenerator.DefaultDraft = defaultDraft;
+        _codeGenerator.ExtendedFormats = extendedFormats;
     }
 
     /// <summary>

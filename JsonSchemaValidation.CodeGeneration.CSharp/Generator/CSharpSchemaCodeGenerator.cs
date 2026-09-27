@@ -41,6 +41,13 @@ public sealed class CSharpSchemaCodeGenerator
     public bool ForceAnnotationTracking { get; set; }
 
     /// <summary>
+    /// Whether formats from the extended catalog (for example <c>nl-phone</c>) are asserted.
+    /// Off by default, which leaves them as annotations like any other unsupported format.
+    /// Generated code then calls <c>FormFinch.JsonSchemaValidation.Formats.ExtendedFormats</c>.
+    /// </summary>
+    public bool ExtendedFormats { get; set; }
+
+    /// <summary>
     /// The default draft version to use when a schema doesn't have an explicit $schema keyword.
     /// If null, defaults to Draft 2020-12.
     /// Set this when compiling schemas from a known draft version (e.g., from test suites).
@@ -446,6 +453,7 @@ public sealed class CSharpSchemaCodeGenerator
             RequiresPropertyAnnotations = requiresPropertyAnnotations,
             RequiresItemAnnotations = requiresItemAnnotations,
             UseGeneratedRegex = UseGeneratedRegex,
+            ExtendedFormats = ExtendedFormats,
             DetectedDraft = detectedDraft,
             RequiresScopeTracking = requiresScopeTracking
         };

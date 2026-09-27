@@ -1,9 +1,9 @@
 [
     {
-        "description": "validation of iban",
+        "description": "validation of iso-13616-iban",
         "schema": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "format": "iban"
+            "format": "iso-13616-iban"
         },
         "tests": [
             {

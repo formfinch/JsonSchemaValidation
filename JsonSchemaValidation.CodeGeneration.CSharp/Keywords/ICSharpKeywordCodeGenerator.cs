@@ -195,6 +195,12 @@ public sealed class CSharpCodeGenerationContext
     public bool UseGeneratedRegex { get; init; } = true;
 
     /// <summary>
+    /// Whether formats from the extended catalog (for example <c>nl-phone</c>) are asserted.
+    /// When false they are annotations, like any other unsupported format.
+    /// </summary>
+    public bool ExtendedFormats { get; init; }
+
+    /// <summary>
     /// The detected JSON Schema draft version for this schema.
     /// Used to determine which format validators are supported.
     /// </summary>

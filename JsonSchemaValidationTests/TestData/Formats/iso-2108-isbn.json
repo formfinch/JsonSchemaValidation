@@ -1,9 +1,9 @@
 [
     {
-        "description": "validation of isbn-13",
+        "description": "validation of iso-2108-isbn",
         "schema": {
             "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "format": "isbn-13"
+            "format": "iso-2108-isbn"
         },
         "tests": [
             {

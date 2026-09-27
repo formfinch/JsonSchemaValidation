@@ -90,7 +90,7 @@ public class ExtendedFormatTests
         options.Draft7.FormatAssertionEnabled = true;
         options.Draft201909.FormatAssertionEnabled = true;
         options.Draft202012.FormatAssertionEnabled = true;
-        var schema = $$"""{"$schema": "{{draft}}", "format": "iban"}""";
+        var schema = $$"""{"$schema": "{{draft}}", "format": "iso-13616-iban"}""";
 
         Assert.True(JsonSchemaValidator.Validate(schema, "\"NL91 ABNA 0417 1643 00\"", options).Valid);
         Assert.False(JsonSchemaValidator.Validate(schema, "\"NL91 ABNA 0417 1643 01\"", options).Valid);
