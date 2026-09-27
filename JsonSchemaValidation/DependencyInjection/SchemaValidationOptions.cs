@@ -54,7 +54,7 @@ namespace FormFinch.JsonSchemaValidation
         public bool EnableDraft3 { get; set; } = true;
 
         /// <summary>
-        /// Gets or sets a value indicating whether the extended format catalog (for example <c>iban</c>,
+        /// Gets or sets a value indicating whether the extended format catalog (for example <c>iso-13616-iban</c>,
         /// <c>nl-phone</c>, <c>nl-bsn</c>) is checked. Default is <see langword="false"/>.
         /// </summary>
         /// <remarks>

@@ -61,16 +61,18 @@ Examples: `NL91 ABNA 0417 1643 00`, `nl91abna0417164300`, `BE68 5390 0754 7034`.
 
 ### `iso-9362-bic`
 
-Source: ISO 9362. Structure only; no directory lookup.
+Source: ISO 9362:2014 and later. Structure only; no directory lookup.
 
 1. Remove spaces; upper-case.
-2. 8 or 11 characters: 4 letters (institution), 2 letters (country), 2 letters or digits (location), optionally 3 letters or digits (branch).
+2. 8 or 11 characters: 4 letters or digits (business party prefix), 2 letters (country code), 2 letters or digits (business party suffix), optionally 3 letters or digits (branch).
+
+Editions before 2014 required the first four characters to be letters; the 2014 edition allows digits there, so this format accepts both.
 
 Examples: `ABNANL2A`, `abna nl 2a`, `DEUTDEFF500`.
 
 ### `iso-2108-isbn`
 
-Source: ISO 2108.
+Source: ISO 2108:2005 and later, which define the 13-digit ISBN. The 10-digit ISBN of earlier editions is not accepted.
 
 1. Optional prefix, any case: `ISBN`, optionally followed by `-13`, optionally followed by `:`, then optional whitespace.
 2. Remove spaces and hyphens.
@@ -163,6 +165,6 @@ Steps:
 Names are `<authority>-<kind>`, where the authority is the body that defines the rule:
 
 - a country, as its ISO 3166-1 alpha-2 code: `nl-bsn`, `nl-vat`, `be-phone`, `gb-vat`;
-- a standards body and the number of the standard, for rules that are the same everywhere: `iso-13616-iban`, `iso-9362-bic`, `iso-2108-isbn`. The number names the exact rule and does not change between editions of the standard.
+- a standards body and the number of the standard, for rules that are the same everywhere: `iso-13616-iban`, `iso-9362-bic`, `iso-2108-isbn`. The number identifies the standard; its section in this document states which edition's rule the format implements.
 
 Country codes are two letters and standards bodies are longer, so the two can never collide. A group such as "any EU VAT number" is not a format; combine the national formats with `anyOf`.

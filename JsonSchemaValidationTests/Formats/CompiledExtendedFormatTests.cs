@@ -2,6 +2,8 @@
 // Licensed under the PolyForm Noncommercial License 1.0.0.
 // See LICENSE file in the project root for full license information.
 using System.Text.Json;
+using FormFinch.JsonSchemaValidation.CodeGeneration.Abstractions;
+using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp;
 using FormFinch.JsonSchemaValidation.CodeGeneration.CSharp.Generator;
 using FormFinch.JsonSchemaValidation.Compiler;
 using FormFinch.JsonSchemaValidation.Formats;
@@ -51,6 +53,46 @@ public class CompiledExtendedFormatTests
         Assert.True(off.Success, off.Error);
         Assert.Contains("global::FormFinch.JsonSchemaValidation.Formats.ExtendedFormats.IsValid(\"nl-phone\"", on.GeneratedCode, StringComparison.Ordinal);
         Assert.DoesNotContain("ExtendedFormats", off.GeneratedCode, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task CodeGenerationTarget_MapsExtendedFormatsOption(bool extendedFormats)
+    {
+        using var schema = JsonDocument.Parse("""{"$schema": "https://json-schema.org/draft/2020-12/schema", "format": "iso-13616-iban"}""");
+        var request = new CodeGenerationRequest
+        {
+            Schema = schema.RootElement,
+            Options = new CSharpCodeGenerationOptions
+            {
+                ExtendedFormats = extendedFormats,
+                OutputHints = new CodeGenerationOutputHints { NamespaceName = "Generated", TypeName = "Iban" },
+            },
+        };
+
+        var result = await new CSharpCodeGenerationTarget().GenerateAsync(request);
+
+        Assert.True(result.Success);
+        var code = Assert.Single(result.Artifacts).Content;
+        Assert.Equal(extendedFormats, code.Contains("ExtendedFormats.IsValid(\"iso-13616-iban\"", StringComparison.Ordinal));
+    }
+
+    [Theory]
+    [InlineData("http://json-schema.org/draft-03/schema#")]
+    [InlineData("http://json-schema.org/draft-04/schema#")]
+    [InlineData("http://json-schema.org/draft-06/schema#")]
+    [InlineData("http://json-schema.org/draft-07/schema#")]
+    [InlineData("https://json-schema.org/draft/2019-09/schema")]
+    [InlineData("https://json-schema.org/draft/2020-12/schema")]
+    public void EveryDraft_CompiledValidatorAssertsCatalogFormats(string draft)
+    {
+        var validator = WithCatalog.Compile($$"""{"$schema": "{{draft}}", "format": "iso-13616-iban"}""");
+        using var valid = JsonDocument.Parse("\"NL91 ABNA 0417 1643 00\"");
+        using var invalid = JsonDocument.Parse("\"NL91 ABNA 0417 1643 01\"");
+
+        Assert.True(validator.IsValid(valid.RootElement));
+        Assert.False(validator.IsValid(invalid.RootElement));
     }
 
     [Fact]

@@ -16,8 +16,9 @@ namespace FormFinch.JsonSchemaValidation.Formats;
 /// changes the value; it only decides whether the value is acceptable.
 /// </para>
 /// <para>
-/// Schema validation uses these checks only when <see cref="SchemaValidationOptions.EnableExtendedFormats"/>
-/// is set and format assertion is active for the schema's draft.
+/// The runtime validator uses these checks when <see cref="SchemaValidationOptions.EnableExtendedFormats"/>
+/// is set and format assertion is active for the schema's draft. Compiled validators generated with
+/// extended formats enabled reach them through <see cref="ExtendedFormats.IsValid"/>.
 /// </para>
 /// </remarks>
 internal static class ExtendedFormatValidators
@@ -107,7 +108,7 @@ internal static class ExtendedFormatValidators
         return Mod97(string.Concat(iban.AsSpan(4), iban.AsSpan(0, 4))) == 1;
     }
 
-    /// <summary>Business Identifier Code (ISO 9362): 8 or 11 characters.</summary>
+    /// <summary>Business Identifier Code (ISO 9362:2014 and later): 8 or 11 characters.</summary>
     /// <param name="value">The string to check. Any case; spaces allowed.</param>
     /// <returns><see langword="true"/> if the value is a structurally valid BIC.</returns>
     public static bool IsValidBic(string value)
@@ -116,12 +117,9 @@ internal static class ExtendedFormatValidators
             return false;
         if (bic.Length != 8 && bic.Length != 11)
             return false;
-        for (int i = 0; i < 6; i++)
-        {
-            if (!IsAsciiLetter(bic[i]))
-                return false;
-        }
-        return true;
+        // Business party prefix (4) and suffix/branch are alphanumeric, which TryCompact already
+        // guarantees; only the country code (positions 5-6) must be letters.
+        return IsAsciiLetter(bic[4]) && IsAsciiLetter(bic[5]);
     }
 
     /// <summary>ISBN-13: 978/979 prefix and mod-10 check digit.</summary>

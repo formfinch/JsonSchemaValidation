@@ -37,9 +37,14 @@
                 "valid": false
             },
             {
-                "description": "digit in bank code",
+                "description": "digit in business party prefix (ISO 9362:2014)",
                 "data": "ABN1NL2A",
-                "valid": false
+                "valid": true
+            },
+            {
+                "description": "all-digit business party prefix",
+                "data": "1234NL2A",
+                "valid": true
             },
             {
                 "description": "digit in country code",
