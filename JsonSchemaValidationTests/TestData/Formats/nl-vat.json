@@ -37,6 +37,11 @@
                 "valid": false
             },
             {
+                "description": "suffix 00 on a number passing the 11-check",
+                "data": "NL004495445B00",
+                "valid": false
+            },
+            {
                 "description": "missing B suffix",
                 "data": "NL004495445",
                 "valid": false

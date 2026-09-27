@@ -165,7 +165,7 @@ internal static class ExtendedFormatValidators
         return digits.Length == 9 && PassesElfproef(digits);
     }
 
-    /// <summary>Dutch VAT identification number: <c>NL</c> + 9 digits + <c>B</c> + 2 digits, 11-check or mod-97.</summary>
+    /// <summary>Dutch VAT identification number: <c>NL</c> + 9 digits + <c>B</c> + 01–99, 11-check or mod-97.</summary>
     /// <param name="value">The string to check. Any case; spaces and dots allowed.</param>
     /// <returns><see langword="true"/> if the value is a valid Dutch VAT number.</returns>
     public static bool IsValidNlVat(string value)
@@ -179,6 +179,9 @@ internal static class ExtendedFormatValidators
             if (i != 11 && !IsAsciiDigit(vat[i]))
                 return false;
         }
+        // The suffix after B runs from 01 to 99; 00 is never issued.
+        if (vat[12] == '0' && vat[13] == '0')
+            return false;
         // Numbers issued before 2020 carry an 11-check on the 9 digits; the btw-id issued to
         // sole proprietors since 2020 passes mod-97 over the whole identifier instead.
         return PassesElfproef(vat.Substring(2, 9)) || Mod97(vat) == 1;

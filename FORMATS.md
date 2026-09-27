@@ -84,7 +84,7 @@ Source: Dutch BSN rules (elfproef / 11-check).
 1. Remove spaces, dots and hyphens.
 2. 8 or 9 digits; an 8-digit value is read with a leading `0`.
 3. Not all zeros.
-4. `9·d1 + 8·d2 + 7·d3 + 6·d4 + 5·d5 + 4·d6 + 3·d7 + 2·d8 − 1·d9` is divisible by 11.
+4. `9*d1 + 8*d2 + 7*d3 + 6*d4 + 5*d5 + 4*d6 + 3*d7 + 2*d8 - 1*d9` is divisible by 11 (d1 is the first digit).
 
 Examples: `111222333`, `111.222.333`, `12345672`.
 
@@ -93,7 +93,7 @@ Examples: `111222333`, `111.222.333`, `12345672`.
 Source: Belastingdienst VAT identification number (btw-identificatienummer).
 
 1. Remove spaces and dots; upper-case.
-2. `NL`, 9 digits, `B`, 2 digits.
+2. `NL`, 9 digits, `B`, 2 digits from `01` to `99` (`00` is never issued).
 3. Valid when **either**:
    - the 9 digits pass the 11-check of `nl-bsn` (numbers issued before 2020), **or**
    - the whole identifier passes ISO 7064 mod 97-10 with letters read as 10–35 (the btw-id issued to sole proprietors since 2020).
