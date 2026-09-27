@@ -179,7 +179,9 @@ public sealed class TsRefCodeGenerator : ITsKeywordCodeGenerator
 
     private static bool TryResolveUri(TsCodeGenerationContext context, string refValue, out Uri targetUri)
     {
-        if (Uri.TryCreate(refValue, UriKind.Absolute, out var absoluteUri))
+        // Linux parses "/path" as an absolute file:// URI; JSON Schema URIs are never file:,
+        // so such a reference is relative and resolves against the base URI below.
+        if (Uri.TryCreate(refValue, UriKind.Absolute, out var absoluteUri) && !absoluteUri.IsFile)
         {
             targetUri = absoluteUri;
             return true;
