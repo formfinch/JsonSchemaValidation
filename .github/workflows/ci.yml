@@ -48,7 +48,7 @@ jobs:
         run: dotnet build --no-restore -c Release
 
       - name: Test
-        run: dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --no-build -c Release --settings JsonSchemaValidationTests/default.runsettings --logger "trx;LogFileName=test-results.trx"
+        run: dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --no-build -c Release --settings JsonSchemaValidationTests/default.runsettings --logger "trx;LogFilePrefix=test-results"
 
       - name: Pack
         run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release
@@ -58,7 +58,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: test-results
-          path: '**/test-results.trx'
+          path: '**/test-results_*.trx'
           retention-days: 7
 
   codegen-tests:
@@ -100,12 +100,12 @@ jobs:
           tsc --version
 
       - name: Test code generation
-        run: dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --no-build -c Release --logger "trx;LogFileName=codegen-test-results.trx"
+        run: dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --no-build -c Release --logger "trx;LogFilePrefix=codegen-test-results"
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: codegen-test-results
-          path: '**/codegen-test-results.trx'
+          path: '**/codegen-test-results_*.trx'
           retention-days: 7
