@@ -18,6 +18,8 @@ env:
   DOTNET_CLI_TELEMETRY_OPTOUT: true
   CI: true
 
+# The two test suites run in parallel jobs. Public repo, so the extra job costs
+# nothing, and wall time drops from build+141s+135s to roughly build+141s.
 jobs:
   build-and-test:
     name: Build, Test & Pack
@@ -48,6 +50,43 @@ jobs:
       - name: Test
         run: dotnet test JsonSchemaValidationTests/JsonSchemaValidationTests.csproj --no-build -c Release --settings JsonSchemaValidationTests/default.runsettings --logger "trx;LogFileName=test-results.trx"
 
+      - name: Pack
+        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: '**/test-results.trx'
+          retention-days: 7
+
+  codegen-tests:
+    name: Code generation tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup .NET 8.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Setup .NET 10.0
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Restore
+        run: dotnet restore --source https://api.nuget.org/v3/index.json
+
+      - name: Build
+        run: dotnet build --no-restore -c Release
+
       # Code generation tests (C#, JS via Jint, TS via tsc + Jint). The TS tests need tsc and
       # fail without it. TypeScriptCompiler passes --ignoreDeprecations 6.0, so pin TypeScript 6.
       - name: Setup Node.js
@@ -63,13 +102,10 @@ jobs:
       - name: Test code generation
         run: dotnet test JsonSchemaValidation.CodeGenerator.Tests/JsonSchemaValidation.CodeGenerator.Tests.csproj --no-build -c Release --logger "trx;LogFileName=codegen-test-results.trx"
 
-      - name: Pack
-        run: dotnet pack JsonSchemaValidation/JsonSchemaValidation.csproj --no-build -c Release
-
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: test-results
-          path: '**/*test-results.trx'
+          name: codegen-test-results
+          path: '**/codegen-test-results.trx'
           retention-days: 7
