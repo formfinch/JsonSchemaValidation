@@ -1,0 +1,141 @@
+[
+    {
+        "description": "validation of gb-plate",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-plate"
+        },
+        "tests": [
+            {
+                "description": "current format",
+                "data": "AB12 CDE",
+                "valid": true
+            },
+            {
+                "description": "lower case, compact",
+                "data": "ab12cde",
+                "valid": true
+            },
+            {
+                "description": "extra space",
+                "data": "AB 12 CDE",
+                "valid": true
+            },
+            {
+                "description": "prefix format",
+                "data": "A123 BCD",
+                "valid": true
+            },
+            {
+                "description": "prefix format, 1 digit",
+                "data": "A1 BCD",
+                "valid": true
+            },
+            {
+                "description": "suffix format",
+                "data": "ABC 123D",
+                "valid": true
+            },
+            {
+                "description": "suffix format, 1 digit",
+                "data": "ABC 1D",
+                "valid": true
+            },
+            {
+                "description": "dateless, shortest",
+                "data": "A 1",
+                "valid": true
+            },
+            {
+                "description": "dateless, Northern Ireland style",
+                "data": "ABC 1234",
+                "valid": true
+            },
+            {
+                "description": "dateless, number first",
+                "data": "1 A",
+                "valid": true
+            },
+            {
+                "description": "dateless, number first",
+                "data": "1234 ABC",
+                "valid": true
+            },
+            {
+                "description": "Q plate",
+                "data": "Q123 ABC",
+                "valid": true
+            },
+            {
+                "description": "8 characters",
+                "data": "AB12 CDEF",
+                "valid": false
+            },
+            {
+                "description": "I in the memory tag",
+                "data": "IB12 CDE",
+                "valid": false
+            },
+            {
+                "description": "Q in the random letters",
+                "data": "AB12 CQE",
+                "valid": false
+            },
+            {
+                "description": "Z in the memory tag",
+                "data": "ZB12 CDE",
+                "valid": false
+            },
+            {
+                "description": "leading 0",
+                "data": "A0 BCD",
+                "valid": false
+            },
+            {
+                "description": "4 letters",
+                "data": "ABCD 123",
+                "valid": false
+            },
+            {
+                "description": "digits only",
+                "data": "12345",
+                "valid": false
+            },
+            {
+                "description": "letters only",
+                "data": "ABCDEF",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "AB-12-CDE",
+                "valid": false
+            },
+            {
+                "description": "diplomatic format",
+                "data": "123 D 456",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "A 12345",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

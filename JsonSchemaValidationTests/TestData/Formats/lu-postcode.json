@@ -1,0 +1,91 @@
+[
+    {
+        "description": "validation of lu-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "lu-postcode"
+        },
+        "tests": [
+            {
+                "description": "Luxembourg city",
+                "data": "1009",
+                "valid": true
+            },
+            {
+                "description": "4 digits",
+                "data": "2975",
+                "valid": true
+            },
+            {
+                "description": "country prefix",
+                "data": "L-1009",
+                "valid": true
+            },
+            {
+                "description": "lower-case prefix",
+                "data": "l-2975",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 9999 ",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "0999",
+                "valid": false
+            },
+            {
+                "description": "prefix without hyphen",
+                "data": "L1009",
+                "valid": false
+            },
+            {
+                "description": "space instead of hyphen",
+                "data": "L 1009",
+                "valid": false
+            },
+            {
+                "description": "wrong prefix",
+                "data": "LU-1009",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "10090",
+                "valid": false
+            },
+            {
+                "description": "prefix only",
+                "data": "L-",
+                "valid": false
+            },
+            {
+                "description": "wrong country prefix",
+                "data": "D-1009",
+                "valid": false
+            },
+            {
+                "description": "inner space",
+                "data": "1 009",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

@@ -1,0 +1,111 @@
+[
+    {
+        "description": "validation of de-id-card",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-id-card"
+        },
+        "tests": [
+            {
+                "description": "specimen, 9 characters",
+                "data": "T22000129",
+                "valid": true
+            },
+            {
+                "description": "specimen with check digit",
+                "data": "T220001293",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "L01X00T47",
+                "valid": true
+            },
+            {
+                "description": "computed with check digit",
+                "data": "L01X00T471",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "t22000129",
+                "valid": true
+            },
+            {
+                "description": "synthetic",
+                "data": "LZ6311T47",
+                "valid": true
+            },
+            {
+                "description": "synthetic with check digit",
+                "data": "LZ6311T475",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "T220 00129",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "T220001294",
+                "valid": false
+            },
+            {
+                "description": "8 characters",
+                "data": "T2200012",
+                "valid": false
+            },
+            {
+                "description": "11 characters",
+                "data": "T2200012934",
+                "valid": false
+            },
+            {
+                "description": "A is not in the alphabet",
+                "data": "A22000129",
+                "valid": false
+            },
+            {
+                "description": "letter O",
+                "data": "T22O00129",
+                "valid": false
+            },
+            {
+                "description": "B is not in the alphabet",
+                "data": "L01X00T4B",
+                "valid": false
+            },
+            {
+                "description": "MRZ filler",
+                "data": "T22000129<",
+                "valid": false
+            },
+            {
+                "description": "letter as the 10th character",
+                "data": "T22000129X",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "L01X-00T47",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

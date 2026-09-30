@@ -1,0 +1,121 @@
+[
+    {
+        "description": "validation of gb-upn",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-upn"
+        },
+        "tests": [
+            {
+                "description": "DfE worked example",
+                "data": "H801200001001",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "h801200001001",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "H 801 2000 01 001",
+                "valid": true
+            },
+            {
+                "description": "DfE temporary UPN example",
+                "data": "X00180001701A",
+                "valid": true
+            },
+            {
+                "description": "synthetic",
+                "data": "R999999926001",
+                "valid": true
+            },
+            {
+                "description": "synthetic",
+                "data": "F999999926002",
+                "valid": true
+            },
+            {
+                "description": "synthetic",
+                "data": "X999999925123",
+                "valid": true
+            },
+            {
+                "description": "synthetic",
+                "data": "H999999924999",
+                "valid": true
+            },
+            {
+                "description": "synthetic temporary UPN",
+                "data": "Q99999992601A",
+                "valid": true
+            },
+            {
+                "description": "synthetic temporary UPN",
+                "data": "B99999992601Z",
+                "valid": true
+            },
+            {
+                "description": "wrong check letter",
+                "data": "A801200001001",
+                "valid": false
+            },
+            {
+                "description": "12 characters",
+                "data": "H80120000100",
+                "valid": false
+            },
+            {
+                "description": "14 characters",
+                "data": "H8012000010011",
+                "valid": false
+            },
+            {
+                "description": "I is never a check letter",
+                "data": "I801200001001",
+                "valid": false
+            },
+            {
+                "description": "letter among the digits",
+                "data": "H80120000A001",
+                "valid": false
+            },
+            {
+                "description": "I as the temporary letter",
+                "data": "H80120000100I",
+                "valid": false
+            },
+            {
+                "description": "O as the temporary letter",
+                "data": "X00180001701O",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "H801-2000-01-001",
+                "valid": false
+            },
+            {
+                "description": "S is never a check letter",
+                "data": "S999999926001",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

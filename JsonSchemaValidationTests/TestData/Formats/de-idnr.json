@@ -1,0 +1,126 @@
+[
+    {
+        "description": "validation of de-idnr",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-idnr"
+        },
+        "tests": [
+            {
+                "description": "ITZBund example, one digit twice",
+                "data": "86095742719",
+                "valid": true
+            },
+            {
+                "description": "ITZBund example, one digit twice",
+                "data": "47036892816",
+                "valid": true
+            },
+            {
+                "description": "ITZBund example, one digit three times, two adjacent",
+                "data": "65929970489",
+                "valid": true
+            },
+            {
+                "description": "ITZBund example, one digit three times",
+                "data": "57549285017",
+                "valid": true
+            },
+            {
+                "description": "ITZBund example, one digit three times",
+                "data": "25768131411",
+                "valid": true
+            },
+            {
+                "description": "repeated digit adjacent",
+                "data": "11234567890",
+                "valid": true
+            },
+            {
+                "description": "repeated digit adjacent",
+                "data": "12345678995",
+                "valid": true
+            },
+            {
+                "description": "printed grouping",
+                "data": "86 095 742 719",
+                "valid": true
+            },
+            {
+                "description": "slashes",
+                "data": "86/095/742/719",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "98765432198",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "86095742718",
+                "valid": false
+            },
+            {
+                "description": "leading zero (test number)",
+                "data": "02476291358",
+                "valid": false
+            },
+            {
+                "description": "digit three times in a row",
+                "data": "11123456786",
+                "valid": false
+            },
+            {
+                "description": "digit three times in a row",
+                "data": "65929990485",
+                "valid": false
+            },
+            {
+                "description": "no repeated digit",
+                "data": "32658701495",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "1123456789",
+                "valid": false
+            },
+            {
+                "description": "12 digits",
+                "data": "112345678901",
+                "valid": false
+            },
+            {
+                "description": "digit four times",
+                "data": "11112345678",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "8609574271X",
+                "valid": false
+            },
+            {
+                "description": "underscores",
+                "data": "86_095_742_719",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

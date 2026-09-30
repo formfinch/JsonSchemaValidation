@@ -1,0 +1,121 @@
+[
+    {
+        "description": "validation of itu-e164-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "itu-e164-phone"
+        },
+        "tests": [
+            {
+                "description": "spaced international number",
+                "data": "+44 20 7946 0123",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "+442079460123",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "0044 20 7946 0123",
+                "valid": true
+            },
+            {
+                "description": "(0) trunk group is ignored",
+                "data": "+44 (0)20 7946 0123",
+                "valid": true
+            },
+            {
+                "description": "Dutch mobile",
+                "data": "+31 6 12345678",
+                "valid": true
+            },
+            {
+                "description": "area code in parentheses",
+                "data": "+1 (555) 010-0123",
+                "valid": true
+            },
+            {
+                "description": "7 digits, the minimum",
+                "data": "+683 4002",
+                "valid": true
+            },
+            {
+                "description": "15 digits, the maximum; country code not checked",
+                "data": "+999 12345678901",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " +32 475 12 34 56 ",
+                "valid": true
+            },
+            {
+                "description": "no international prefix",
+                "data": "020 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "country code starts with 0",
+                "data": "+0 123 4567",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "+683 400",
+                "valid": false
+            },
+            {
+                "description": "16 digits",
+                "data": "+1234567890123456",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "+44 20 7946 0123 ext 5",
+                "valid": false
+            },
+            {
+                "description": "(0) before the country code counts as a leading 0",
+                "data": "+(0)44 20 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "not a 00 prefix",
+                "data": "0 44 20 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "unbalanced parenthesis",
+                "data": "+44 (20 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "double plus",
+                "data": "++44 20 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "nested parentheses",
+                "data": "+44 ((20)) 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

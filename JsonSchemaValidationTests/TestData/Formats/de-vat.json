@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of de-vat",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-vat"
+        },
+        "tests": [
+            {
+                "description": "python-stdnum example",
+                "data": "DE136695976",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "de136695976",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "DE 136 695 976",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "DE123456788",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "DE812345673",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "DE999999995",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " DE271828180 ",
+                "valid": true
+            },
+            {
+                "description": "no DE",
+                "data": "136695976",
+                "valid": false
+            },
+            {
+                "description": "wrong check digit",
+                "data": "DE136695978",
+                "valid": false
+            },
+            {
+                "description": "8 digits",
+                "data": "DE12345678",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "DE1234567888",
+                "valid": false
+            },
+            {
+                "description": "leading zero",
+                "data": "DE036695976",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "DE-136695976",
+                "valid": false
+            },
+            {
+                "description": "wrong country",
+                "data": "AT136695976",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "DE13669597X",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

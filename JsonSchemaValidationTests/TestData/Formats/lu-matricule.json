@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of lu-matricule",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "lu-matricule"
+        },
+        "tests": [
+            {
+                "description": "computed",
+                "data": "1900010100152",
+                "valid": true
+            },
+            {
+                "description": "printed grouping",
+                "data": "1900 0101 001 52",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "1893061512355",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "1999123199938",
+                "valid": true
+            },
+            {
+                "description": "29 February",
+                "data": "2000022900011",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "1950 0101 500 57",
+                "valid": true
+            },
+            {
+                "description": "dots",
+                "data": "1900.0101.999.02",
+                "valid": true
+            },
+            {
+                "description": "wrong Verhoeff digit",
+                "data": "1900010100153",
+                "valid": false
+            },
+            {
+                "description": "wrong Luhn digit",
+                "data": "1900010100142",
+                "valid": false
+            },
+            {
+                "description": "check digits swapped",
+                "data": "1900010100125",
+                "valid": false
+            },
+            {
+                "description": "12 digits",
+                "data": "190001010015",
+                "valid": false
+            },
+            {
+                "description": "14 digits",
+                "data": "19000101001520",
+                "valid": false
+            },
+            {
+                "description": "11-digit legacy form",
+                "data": "19000101001",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "1900010100152X",
+                "valid": false
+            },
+            {
+                "description": "check digits fail",
+                "data": "1111111111111",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

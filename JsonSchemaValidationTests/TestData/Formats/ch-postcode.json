@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of ch-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-postcode"
+        },
+        "tests": [
+            {
+                "description": "Zurich",
+                "data": "8000",
+                "valid": true
+            },
+            {
+                "description": "lowest",
+                "data": "1000",
+                "valid": true
+            },
+            {
+                "description": "highest in use",
+                "data": "9658",
+                "valid": true
+            },
+            {
+                "description": "Bern",
+                "data": "3000",
+                "valid": true
+            },
+            {
+                "description": "country prefix",
+                "data": "CH-8000",
+                "valid": true
+            },
+            {
+                "description": "lower-case prefix",
+                "data": "ch-8000",
+                "valid": true
+            },
+            {
+                "description": "Liechtenstein code, surrounding whitespace",
+                "data": " 9490 ",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "0800",
+                "valid": false
+            },
+            {
+                "description": "3 digits",
+                "data": "800",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "80000",
+                "valid": false
+            },
+            {
+                "description": "space instead of hyphen",
+                "data": "CH 8000",
+                "valid": false
+            },
+            {
+                "description": "prefix without hyphen",
+                "data": "CH8000",
+                "valid": false
+            },
+            {
+                "description": "inner space",
+                "data": "8 000",
+                "valid": false
+            },
+            {
+                "description": "leading zero after the prefix",
+                "data": "CH-0800",
+                "valid": false
+            },
+            {
+                "description": "wrong prefix",
+                "data": "L-8000",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

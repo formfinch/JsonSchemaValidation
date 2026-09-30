@@ -1,0 +1,116 @@
+[
+    {
+        "description": "validation of at-plate",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-plate"
+        },
+        "tests": [
+            {
+                "description": "Vienna",
+                "data": "W 12345 A",
+                "valid": true
+            },
+            {
+                "description": "hyphen",
+                "data": "W-1234 AB",
+                "valid": true
+            },
+            {
+                "description": "2-letter district",
+                "data": "GU 123 AB",
+                "valid": true
+            },
+            {
+                "description": "short number, 3 letters",
+                "data": "KO 1 ABC",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "g 12 xy",
+                "valid": true
+            },
+            {
+                "description": "Wunschkennzeichen",
+                "data": "W TEST 1",
+                "valid": true
+            },
+            {
+                "description": "Wunschkennzeichen",
+                "data": "GM NDEN 1",
+                "valid": true
+            },
+            {
+                "description": "authority plate",
+                "data": "BP 12345",
+                "valid": true
+            },
+            {
+                "description": "federal plate",
+                "data": "A 1000",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "W 01234 A",
+                "valid": false
+            },
+            {
+                "description": "Q",
+                "data": "W 12 QA",
+                "valid": false
+            },
+            {
+                "description": "umlaut",
+                "data": "W ÄB 1",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "W 123456 A",
+                "valid": false
+            },
+            {
+                "description": "4 letters after the number",
+                "data": "W 12 ABCD",
+                "valid": false
+            },
+            {
+                "description": "no digits",
+                "data": "WAB",
+                "valid": false
+            },
+            {
+                "description": "no district",
+                "data": "12345 AB",
+                "valid": false
+            },
+            {
+                "description": "dots",
+                "data": "W.123.AB",
+                "valid": false
+            },
+            {
+                "description": "9 characters",
+                "data": "WU-ABCDE 12",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

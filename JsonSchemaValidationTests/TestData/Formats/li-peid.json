@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of li-peid",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "li-peid"
+        },
+        "tests": [
+            {
+                "description": "7 digits",
+                "data": "1234567",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "01234567",
+                "valid": true
+            },
+            {
+                "description": "leading zeros",
+                "data": "0001234567",
+                "valid": true
+            },
+            {
+                "description": "dots",
+                "data": "2.580.073",
+                "valid": true
+            },
+            {
+                "description": "4 significant digits",
+                "data": "1234",
+                "valid": true
+            },
+            {
+                "description": "12 digits",
+                "data": "123456789012",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "12 345 678",
+                "valid": true
+            },
+            {
+                "description": "3 digits",
+                "data": "123",
+                "valid": false
+            },
+            {
+                "description": "1 significant digit",
+                "data": "0001",
+                "valid": false
+            },
+            {
+                "description": "13 digits",
+                "data": "1234567890123",
+                "valid": false
+            },
+            {
+                "description": "13 digits with leading zeros",
+                "data": "0000001234567",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "12-34567",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "FF01339050",
+                "valid": false
+            },
+            {
+                "description": "letters in the middle",
+                "data": "568ABC91345",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

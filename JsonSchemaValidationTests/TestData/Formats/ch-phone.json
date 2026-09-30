@@ -1,0 +1,136 @@
+[
+    {
+        "description": "validation of ch-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-phone"
+        },
+        "tests": [
+            {
+                "description": "mobile, national",
+                "data": "078 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "international",
+                "data": "+41 78 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "0041 78 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "(0) trunk",
+                "data": "+41 (0)78 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "trunk without parentheses",
+                "data": "+41 078 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "landline",
+                "data": "044 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "slash and dots",
+                "data": "044/123.45.67",
+                "valid": true
+            },
+            {
+                "description": "area code in parentheses",
+                "data": "(044) 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "freephone",
+                "data": "0800 123 456",
+                "valid": true
+            },
+            {
+                "description": "corporate network",
+                "data": "058 123 45 67",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " +41781234567 ",
+                "valid": true
+            },
+            {
+                "description": "8 digits",
+                "data": "078 123 45 6",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "078 123 45 678",
+                "valid": false
+            },
+            {
+                "description": "wrong country code",
+                "data": "+31 6 12345678",
+                "valid": false
+            },
+            {
+                "description": "significant number starts with 1",
+                "data": "0041 0 12 345 678",
+                "valid": false
+            },
+            {
+                "description": "short number",
+                "data": "112",
+                "valid": false
+            },
+            {
+                "description": "starts with 1",
+                "data": "0112345678",
+                "valid": false
+            },
+            {
+                "description": "unbalanced parenthesis",
+                "data": "+41 (78 123 45 67",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "078 123 45 67 ext 1",
+                "valid": false
+            },
+            {
+                "description": "voicemail number, 12 digits",
+                "data": "086 012 345 678 9",
+                "valid": false
+            },
+            {
+                "description": "nested parentheses",
+                "data": "+41 ((0)78) 123 45 67",
+                "valid": false
+            },
+            {
+                "description": "underscores",
+                "data": "078_123_45_67",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

@@ -1,0 +1,111 @@
+[
+    {
+        "description": "validation of de-kvnr",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-kvnr"
+        },
+        "tests": [
+            {
+                "description": "official example",
+                "data": "A000500015",
+                "valid": true
+            },
+            {
+                "description": "official example",
+                "data": "C000500021",
+                "valid": true
+            },
+            {
+                "description": "published example",
+                "data": "A123456780",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "a123456780",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "A 123 456 780",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "Z987654321",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "M111111119",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "B000000004",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "X121212120",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "A123456781",
+                "valid": false
+            },
+            {
+                "description": "no letter",
+                "data": "1123456780",
+                "valid": false
+            },
+            {
+                "description": "9 characters",
+                "data": "A12345678",
+                "valid": false
+            },
+            {
+                "description": "11 characters",
+                "data": "A1234567801",
+                "valid": false
+            },
+            {
+                "description": "two letters",
+                "data": "AA23456780",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "A-123-456-780",
+                "valid": false
+            },
+            {
+                "description": "umlaut",
+                "data": "Ä123456780",
+                "valid": false
+            },
+            {
+                "description": "letter O as the check digit",
+                "data": "A12345678O",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

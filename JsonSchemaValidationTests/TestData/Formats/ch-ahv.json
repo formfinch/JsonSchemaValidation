@@ -1,0 +1,106 @@
+[
+    {
+        "description": "validation of ch-ahv",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-ahv"
+        },
+        "tests": [
+            {
+                "description": "specimen",
+                "data": "756.1234.5678.97",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "7561234567897",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "756 1234 5678 97",
+                "valid": true
+            },
+            {
+                "description": "published example",
+                "data": "756.9217.0769.85",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "756.0000.0000.19",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "756.5555.5555.57",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "756.0123.4567.86",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 756.9999.9999.91 ",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "756.1234.5678.98",
+                "valid": false
+            },
+            {
+                "description": "wrong prefix",
+                "data": "757.1234.5678.96",
+                "valid": false
+            },
+            {
+                "description": "12 digits",
+                "data": "756.1234.5678.9",
+                "valid": false
+            },
+            {
+                "description": "14 digits",
+                "data": "756.1234.5678.970",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "756-1234-5678-97",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "CHE.1234.5678.97",
+                "valid": false
+            },
+            {
+                "description": "no 756 prefix",
+                "data": "123.4567.8910.19",
+                "valid": false
+            },
+            {
+                "description": "letter check digit",
+                "data": "756.1234.5678.9X",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

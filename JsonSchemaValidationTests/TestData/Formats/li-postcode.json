@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of li-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "li-postcode"
+        },
+        "tests": [
+            {
+                "description": "Nendeln, lowest",
+                "data": "9485",
+                "valid": true
+            },
+            {
+                "description": "Vaduz",
+                "data": "9490",
+                "valid": true
+            },
+            {
+                "description": "Schaan",
+                "data": "9494",
+                "valid": true
+            },
+            {
+                "description": "Planken, highest",
+                "data": "9498",
+                "valid": true
+            },
+            {
+                "description": "Schaan",
+                "data": "9489",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 9496 ",
+                "valid": true
+            },
+            {
+                "description": "below the range",
+                "data": "9484",
+                "valid": false
+            },
+            {
+                "description": "above the range",
+                "data": "9499",
+                "valid": false
+            },
+            {
+                "description": "Swiss postcode",
+                "data": "8000",
+                "valid": false
+            },
+            {
+                "description": "country prefix",
+                "data": "FL-9490",
+                "valid": false
+            },
+            {
+                "description": "place name",
+                "data": "9490 Vaduz",
+                "valid": false
+            },
+            {
+                "description": "3 digits",
+                "data": "949",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "94900",
+                "valid": false
+            },
+            {
+                "description": "inner space",
+                "data": "94 90",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

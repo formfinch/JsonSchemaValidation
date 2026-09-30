@@ -1,0 +1,111 @@
+[
+    {
+        "description": "validation of at-svnr",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-svnr"
+        },
+        "tests": [
+            {
+                "description": "published example",
+                "data": "1237 010180",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "1237010180",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "1002010100",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "9991311299",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "4568150675",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "7890010770",
+                "valid": true
+            },
+            {
+                "description": "day 32 overflow date",
+                "data": "3218320190",
+                "valid": true
+            },
+            {
+                "description": "month 13 overflow date",
+                "data": "5551011390",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "2004290200",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "2237 010180",
+                "valid": false
+            },
+            {
+                "description": "wrong check digit",
+                "data": "1238010180",
+                "valid": false
+            },
+            {
+                "description": "remainder 10 is never issued",
+                "data": "1000010180",
+                "valid": false
+            },
+            {
+                "description": "serial starts with 0",
+                "data": "0237010180",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "123701018",
+                "valid": false
+            },
+            {
+                "description": "11 digits",
+                "data": "12370101800",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "1237-010180",
+                "valid": false
+            },
+            {
+                "description": "letter O",
+                "data": "1237 01018O",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

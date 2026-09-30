@@ -1,0 +1,86 @@
+[
+    {
+        "description": "validation of lu-rcs",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "lu-rcs"
+        },
+        "tests": [
+            {
+                "description": "commercial company",
+                "data": "B123456",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "B 123456",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "b123456",
+                "valid": true
+            },
+            {
+                "description": "association",
+                "data": "F123",
+                "valid": true
+            },
+            {
+                "description": "sole trader",
+                "data": "A12345",
+                "valid": true
+            },
+            {
+                "description": "1 digit",
+                "data": "G1",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "B0123456",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "B1234567",
+                "valid": false
+            },
+            {
+                "description": "no letter",
+                "data": "123456",
+                "valid": false
+            },
+            {
+                "description": "two letters",
+                "data": "BB123456",
+                "valid": false
+            },
+            {
+                "description": "no number",
+                "data": "B",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "B-123456",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

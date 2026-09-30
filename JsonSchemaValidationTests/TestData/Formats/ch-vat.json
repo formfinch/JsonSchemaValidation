@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of ch-vat",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-vat"
+        },
+        "tests": [
+            {
+                "description": "German suffix",
+                "data": "CHE-109.322.551 MWST",
+                "valid": true
+            },
+            {
+                "description": "French suffix",
+                "data": "CHE-109.322.551 TVA",
+                "valid": true
+            },
+            {
+                "description": "Italian suffix",
+                "data": "CHE-107.787.577 IVA",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "CHE109322551MWST",
+                "valid": true
+            },
+            {
+                "description": "lower-case suffix",
+                "data": "CHE-100.155.212 mwst",
+                "valid": true
+            },
+            {
+                "description": "no suffix",
+                "data": "CHE-109.322.551",
+                "valid": true
+            },
+            {
+                "description": "mixed case",
+                "data": "CHE 109 322 551 MwSt",
+                "valid": true
+            },
+            {
+                "description": "English suffix",
+                "data": "CHE-109.322.551 VAT",
+                "valid": false
+            },
+            {
+                "description": "Romansh suffix",
+                "data": "CHE-109.322.551 TPV",
+                "valid": false
+            },
+            {
+                "description": "register marker",
+                "data": "CHE-109.322.551 HR MWST",
+                "valid": false
+            },
+            {
+                "description": "wrong check digit",
+                "data": "CHE-109.322.552 MWST",
+                "valid": false
+            },
+            {
+                "description": "no CHE",
+                "data": "109.322.551 MWST",
+                "valid": false
+            },
+            {
+                "description": "suffix first",
+                "data": "MWST CHE-109.322.551",
+                "valid": false
+            },
+            {
+                "description": "truncated suffix",
+                "data": "CHE-109.322.551 MWS",
+                "valid": false
+            },
+            {
+                "description": "check value 10 is never issued",
+                "data": "CHE-444.444.440 MWST",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

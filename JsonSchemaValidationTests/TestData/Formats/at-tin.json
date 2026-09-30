@@ -1,0 +1,126 @@
+[
+    {
+        "description": "validation of at-tin",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-tin"
+        },
+        "tests": [
+            {
+                "description": "published example",
+                "data": "59-119/9013",
+                "valid": true
+            },
+            {
+                "description": "published example",
+                "data": "90-123/4567",
+                "valid": true
+            },
+            {
+                "description": "published example",
+                "data": "98-123/4560",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "12-345/6782",
+                "valid": true
+            },
+            {
+                "description": "space form",
+                "data": "12 345/6782",
+                "valid": true
+            },
+            {
+                "description": "space form",
+                "data": "12 3456782",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "123456782",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "10-000/0009",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "99-999/9998",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "03-000/0004",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "46-111/1114",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "98-765/4324",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "59-119/9012",
+                "valid": false
+            },
+            {
+                "description": "wrong check digit",
+                "data": "12-345/6783",
+                "valid": false
+            },
+            {
+                "description": "8 digits",
+                "data": "12-345/678",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "12-345/67820",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "000000000",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "X12345678",
+                "valid": false
+            },
+            {
+                "description": "dots",
+                "data": "12.345.6782",
+                "valid": false
+            },
+            {
+                "description": "underscore",
+                "data": "12_345/6782",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

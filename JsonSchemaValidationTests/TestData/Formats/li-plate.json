@@ -1,0 +1,91 @@
+[
+    {
+        "description": "validation of li-plate",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "li-plate"
+        },
+        "tests": [
+            {
+                "description": "5 digits",
+                "data": "FL 12345",
+                "valid": true
+            },
+            {
+                "description": "hyphen, 1 digit",
+                "data": "FL-1",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "fl 7",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "FL12345",
+                "valid": true
+            },
+            {
+                "description": "4 digits",
+                "data": "FL 2000",
+                "valid": true
+            },
+            {
+                "description": "short-term series",
+                "data": "FL 50123",
+                "valid": true
+            },
+            {
+                "description": "6 digits",
+                "data": "FL 123456",
+                "valid": false
+            },
+            {
+                "description": "leading zero",
+                "data": "FL 01234",
+                "valid": false
+            },
+            {
+                "description": "no number",
+                "data": "FL",
+                "valid": false
+            },
+            {
+                "description": "wrong code",
+                "data": "LI 1234",
+                "valid": false
+            },
+            {
+                "description": "suffix letter",
+                "data": "FL 1234 U",
+                "valid": false
+            },
+            {
+                "description": "letter in the number",
+                "data": "FL A123",
+                "valid": false
+            },
+            {
+                "description": "no FL",
+                "data": "12345",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

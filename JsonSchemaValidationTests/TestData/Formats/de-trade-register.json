@@ -1,0 +1,131 @@
+[
+    {
+        "description": "validation of de-trade-register",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-trade-register"
+        },
+        "tests": [
+            {
+                "description": "HRB",
+                "data": "HRB 12345",
+                "valid": true
+            },
+            {
+                "description": "HRA, one digit",
+                "data": "HRA 1",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "hrb 12345",
+                "valid": true
+            },
+            {
+                "description": "no space",
+                "data": "HRB12345",
+                "valid": true
+            },
+            {
+                "description": "court suffix",
+                "data": "HRB 12345 B",
+                "valid": true
+            },
+            {
+                "description": "two-letter court suffix",
+                "data": "HRB 1234 HL",
+                "valid": true
+            },
+            {
+                "description": "cooperative register",
+                "data": "GnR 123",
+                "valid": true
+            },
+            {
+                "description": "association register",
+                "data": "VR 4711",
+                "valid": true
+            },
+            {
+                "description": "partnership register",
+                "data": "PR 815",
+                "valid": true
+            },
+            {
+                "description": "Gesellschaftsregister (2024)",
+                "data": "GsR 42",
+                "valid": true
+            },
+            {
+                "description": "6 digits",
+                "data": "HRB 999999",
+                "valid": true
+            },
+            {
+                "description": "unknown register type",
+                "data": "HRC 12345",
+                "valid": false
+            },
+            {
+                "description": "leading zero",
+                "data": "HRB 012345",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "HRB 1234567",
+                "valid": false
+            },
+            {
+                "description": "no number",
+                "data": "HRB",
+                "valid": false
+            },
+            {
+                "description": "no register type",
+                "data": "12345",
+                "valid": false
+            },
+            {
+                "description": "4-letter suffix",
+                "data": "HRB 12345 BBBB",
+                "valid": false
+            },
+            {
+                "description": "court name included",
+                "data": "Amtsgericht Berlin HRB 12345",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "HRB-12345",
+                "valid": false
+            },
+            {
+                "description": "non-ASCII suffix",
+                "data": "HRB 12345 Ö",
+                "valid": false
+            },
+            {
+                "description": "dot",
+                "data": "HRB 12.345",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

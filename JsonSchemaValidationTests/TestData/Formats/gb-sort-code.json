@@ -1,0 +1,91 @@
+[
+    {
+        "description": "validation of gb-sort-code",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-sort-code"
+        },
+        "tests": [
+            {
+                "description": "hyphens",
+                "data": "12-34-56",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "123456",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "12 34 56",
+                "valid": true
+            },
+            {
+                "description": "trailing zeros",
+                "data": "20-00-00",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "01-23-45",
+                "valid": true
+            },
+            {
+                "description": "all nines",
+                "data": "99 99 99",
+                "valid": true
+            },
+            {
+                "description": "5 digits",
+                "data": "12-34-5",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "1234567",
+                "valid": false
+            },
+            {
+                "description": "dots",
+                "data": "12.34.56",
+                "valid": false
+            },
+            {
+                "description": "slashes",
+                "data": "12/34/56",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "00-00-00",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "AB-12-34",
+                "valid": false
+            },
+            {
+                "description": "underscores",
+                "data": "12_34_56",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

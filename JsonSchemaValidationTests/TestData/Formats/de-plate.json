@@ -1,0 +1,171 @@
+[
+    {
+        "description": "validation of de-plate",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-plate"
+        },
+        "tests": [
+            {
+                "description": "standard",
+                "data": "B-AB 123",
+                "valid": true
+            },
+            {
+                "description": "space as the district boundary",
+                "data": "B AB 123",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "BAB123",
+                "valid": true
+            },
+            {
+                "description": "shortest",
+                "data": "M-X 1",
+                "valid": true
+            },
+            {
+                "description": "8 characters",
+                "data": "HH-AB 1234",
+                "valid": true
+            },
+            {
+                "description": "umlaut in the district",
+                "data": "KÜN-AB 12",
+                "valid": true
+            },
+            {
+                "description": "umlaut in the district",
+                "data": "LÖ-A 1",
+                "valid": true
+            },
+            {
+                "description": "lower case with umlaut",
+                "data": "lö-a 1",
+                "valid": true
+            },
+            {
+                "description": "3-letter district",
+                "data": "BAD-Z 999",
+                "valid": true
+            },
+            {
+                "description": "electric vehicle suffix",
+                "data": "B-AB 123E",
+                "valid": true
+            },
+            {
+                "description": "historic vehicle suffix, spaced",
+                "data": "B-AB 123 H",
+                "valid": true
+            },
+            {
+                "description": "historic vehicle suffix",
+                "data": "M-AB 12H",
+                "valid": true
+            },
+            {
+                "description": "3-letter district, 2 letters",
+                "data": "WES-AB 1",
+                "valid": true
+            },
+            {
+                "description": "7 characters and suffix",
+                "data": "B-AB 1234 E",
+                "valid": true
+            },
+            {
+                "description": "compact with umlaut",
+                "data": "KÜNAB12",
+                "valid": true
+            },
+            {
+                "description": "8 characters and suffix",
+                "data": "BAD-AB 123 E",
+                "valid": false
+            },
+            {
+                "description": "9 characters",
+                "data": "BAD-AB 1234",
+                "valid": false
+            },
+            {
+                "description": "3 letters after the district",
+                "data": "B-ABC 123",
+                "valid": false
+            },
+            {
+                "description": "leading zero",
+                "data": "B-AB 0123",
+                "valid": false
+            },
+            {
+                "description": "no number",
+                "data": "B-AB",
+                "valid": false
+            },
+            {
+                "description": "no letters after the district",
+                "data": "B-123",
+                "valid": false
+            },
+            {
+                "description": "4-letter district",
+                "data": "ABCD-A 1",
+                "valid": false
+            },
+            {
+                "description": "umlaut after the district",
+                "data": "B-ÄB 12",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "B-AB 12345",
+                "valid": false
+            },
+            {
+                "description": "underscore",
+                "data": "B_AB 123",
+                "valid": false
+            },
+            {
+                "description": "unknown suffix",
+                "data": "B-AB 123X",
+                "valid": false
+            },
+            {
+                "description": "two suffixes",
+                "data": "B-AB 12 EH",
+                "valid": false
+            },
+            {
+                "description": "two boundaries",
+                "data": "B-A-B 12",
+                "valid": false
+            },
+            {
+                "description": "hyphen before the suffix",
+                "data": "B-AB 12-E",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

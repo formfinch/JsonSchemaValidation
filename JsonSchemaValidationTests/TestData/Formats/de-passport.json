@@ -1,0 +1,76 @@
+[
+    {
+        "description": "validation of de-passport",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-passport"
+        },
+        "tests": [
+            {
+                "description": "specimen, 9 characters",
+                "data": "C01X00T47",
+                "valid": true
+            },
+            {
+                "description": "specimen with check digit",
+                "data": "C01X00T478",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "c01x00t47",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "C01X 00T47",
+                "valid": true
+            },
+            {
+                "description": "synthetic with check digit",
+                "data": "LZ6311T475",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "C01X00T479",
+                "valid": false
+            },
+            {
+                "description": "8 characters",
+                "data": "C01X00T4",
+                "valid": false
+            },
+            {
+                "description": "11 characters",
+                "data": "C01X00T4788",
+                "valid": false
+            },
+            {
+                "description": "B is not in the alphabet",
+                "data": "B01X00T47",
+                "valid": false
+            },
+            {
+                "description": "MRZ filler",
+                "data": "C01X00T4<",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

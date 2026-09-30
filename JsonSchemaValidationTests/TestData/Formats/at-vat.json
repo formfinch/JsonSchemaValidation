@@ -1,0 +1,121 @@
+[
+    {
+        "description": "validation of at-vat",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-vat"
+        },
+        "tests": [
+            {
+                "description": "computed",
+                "data": "ATU12345675",
+                "valid": true
+            },
+            {
+                "description": "published example",
+                "data": "ATU13585627",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "atu12345675",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "ATU 1234 5675",
+                "valid": true
+            },
+            {
+                "description": "space after AT",
+                "data": "AT U13585627",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "ATU10000005",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "ATU99999993",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "ATU76543215",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "ATU24680245",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "ATU13579135",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "ATU12345676",
+                "valid": false
+            },
+            {
+                "description": "wrong check digit",
+                "data": "ATU13585626",
+                "valid": false
+            },
+            {
+                "description": "no AT",
+                "data": "U12345675",
+                "valid": false
+            },
+            {
+                "description": "no U",
+                "data": "AT12345675",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "ATU1234567",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "ATU123456750",
+                "valid": false
+            },
+            {
+                "description": "wrong country",
+                "data": "DEU12345675",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "ATU1234567A",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "ATU-12345675",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

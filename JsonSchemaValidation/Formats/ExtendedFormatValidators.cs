@@ -3,6 +3,7 @@
 // See LICENSE file in the project root for full license information.
 using System.Collections.ObjectModel;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace FormFinch.JsonSchemaValidation.Formats;
 
@@ -21,7 +22,7 @@ namespace FormFinch.JsonSchemaValidation.Formats;
 /// extended formats enabled reach them through <see cref="ExtendedFormats.IsValid"/>.
 /// </para>
 /// </remarks>
-internal static class ExtendedFormatValidators
+internal static partial class ExtendedFormatValidators
 {
     private static readonly Dictionary<string, Func<string, bool>> Checks = new(StringComparer.Ordinal)
     {
@@ -34,6 +35,59 @@ internal static class ExtendedFormatValidators
         ["nl-postcode"] = IsValidNlPostcode,
         ["nl-phone"] = IsValidNlPhone,
         ["be-phone"] = IsValidBePhone,
+        ["be-postcode"] = IsValidBePostcode,
+        ["nl-plate"] = IsValidNlPlate,
+        ["itu-e164-phone"] = IsValidE164Phone,
+        ["gb-phone"] = IsValidGbPhone,
+        ["gb-postcode"] = IsValidGbPostcode,
+        ["gb-nhs"] = IsValidGbNhs,
+        ["gb-vat"] = IsValidGbVat,
+        ["gb-crn"] = IsValidGbCrn,
+        ["gb-sort-code"] = IsValidGbSortCode,
+        ["gb-account-number"] = IsValidGbAccountNumber,
+        ["gb-nino"] = IsValidGbNino,
+        ["gb-upn"] = IsValidGbUpn,
+        ["gb-plate"] = IsValidGbPlate,
+        ["de-phone"] = IsValidDePhone,
+        ["de-postcode"] = IsValidDePostcode,
+        ["de-vat"] = IsValidDeVat,
+        ["de-idnr"] = IsValidDeIdnr,
+        ["de-stnr"] = IsValidDeStnr,
+        ["de-trade-register"] = IsValidDeTradeRegister,
+        ["de-leitweg"] = IsValidDeLeitweg,
+        ["de-rvnr"] = IsValidDeRvnr,
+        ["de-kvnr"] = IsValidDeKvnr,
+        ["de-id-card"] = IsValidDeIdCard,
+        ["de-passport"] = IsValidDePassport,
+        ["de-wkn"] = IsValidDeWkn,
+        ["de-plate"] = IsValidDePlate,
+        ["at-phone"] = IsValidAtPhone,
+        ["at-postcode"] = IsValidAtPostcode,
+        ["at-vat"] = IsValidAtVat,
+        ["at-svnr"] = IsValidAtSvnr,
+        ["at-fn"] = IsValidAtFn,
+        ["at-tin"] = IsValidAtTin,
+        ["at-plate"] = IsValidAtPlate,
+        ["at-passport"] = IsValidAtPassport,
+        ["li-phone"] = IsValidLiPhone,
+        ["li-postcode"] = IsValidLiPostcode,
+        ["li-peid"] = IsValidLiPeid,
+        ["li-plate"] = IsValidLiPlate,
+        ["ch-phone"] = IsValidChPhone,
+        ["ch-postcode"] = IsValidChPostcode,
+        ["ch-uid"] = IsValidChUid,
+        ["ch-vat"] = IsValidChVat,
+        ["ch-ahv"] = IsValidChAhv,
+        ["ch-qr-reference"] = IsValidChQrReference,
+        ["ch-qr-iban"] = IsValidChQrIban,
+        ["ch-plate"] = IsValidChPlate,
+        ["ch-passport"] = IsValidChPassport,
+        ["lu-phone"] = IsValidLuPhone,
+        ["lu-postcode"] = IsValidLuPostcode,
+        ["lu-vat"] = IsValidLuVat,
+        ["lu-matricule"] = IsValidLuMatricule,
+        ["lu-rcs"] = IsValidLuRcs,
+        ["lu-plate"] = IsValidLuPlate,
     };
 
     // Separator sets. A space is U+0020 or a no-break space (U+00A0), which is common in pasted text.
@@ -243,19 +297,68 @@ internal static class ExtendedFormatValidators
     }
 
     // Reads a phone number for the given country calling code and returns the significant
-    // (national) digits without trunk prefix. Accepts +CC, 00CC and national 0 prefixes, an
-    // optional trunk 0 after the country code (written as "(0)" or not), and separators.
-    private static bool TryParsePhone(string value, string countryCode, out string national)
+    // (national) digits without trunk prefix. Accepts +CC, 00CC and national prefixes and
+    // separators. With a trunk prefix (the default), a national number starts with 0 and an
+    // optional trunk 0 may follow the country code (written as "(0)" or not). Countries
+    // without a trunk prefix (Liechtenstein, Luxembourg) write national numbers bare.
+    private static bool TryParsePhone(string value, string countryCode, out string national, bool trunkPrefix = true)
     {
         national = string.Empty;
+        if (!TryReadPhoneDigits(value, out var international, out var all))
+            return false;
+
+        string rest;
+        if (international)
+        {
+            if (!all.StartsWith(countryCode, StringComparison.Ordinal))
+                return false;
+            rest = all[countryCode.Length..];
+        }
+        else if (all.StartsWith("00", StringComparison.Ordinal))
+        {
+            if (!all.AsSpan(2).StartsWith(countryCode, StringComparison.Ordinal))
+                return false;
+            rest = all[(2 + countryCode.Length)..];
+        }
+        else if (trunkPrefix)
+        {
+            if (all.Length < 2 || all[0] != '0')
+                return false;
+            national = all[1..];
+            return true;
+        }
+        else
+        {
+            if (all.Length == 0 || all[0] == '0')
+                return false;
+            national = all;
+            return true;
+        }
+
+        // Optional trunk prefix after the country code: "+31 (0)6 ..." or "+31 06 ...".
+        if (trunkPrefix && rest.StartsWith('0'))
+            rest = rest[1..];
+        if (rest.Length == 0 || rest[0] == '0')
+            return false;
+        national = rest;
+        return true;
+    }
+
+    // Collects the digits of a phone number: a leading "+" (reported as international), digits,
+    // separators (space, hyphen, dot, slash) and balanced, non-nested parentheses that contain
+    // at least one digit.
+    private static bool TryReadPhoneDigits(string value, out bool international, out string digits)
+    {
+        international = false;
+        digits = string.Empty;
         if (value is null)
             return false;
         var text = Trim(value);
         if (text.Length == 0)
             return false;
 
-        bool international = text[0] == '+';
-        var digits = new StringBuilder(text.Length);
+        international = text[0] == '+';
+        var builder = new StringBuilder(text.Length);
         bool inGroup = false;
         bool groupHasDigit = false;
         for (int i = international ? 1 : 0; i < text.Length; i++)
@@ -263,7 +366,7 @@ internal static class ExtendedFormatValidators
             char c = text[i];
             if (IsAsciiDigit(c))
             {
-                digits.Append(c);
+                builder.Append(c);
                 groupHasDigit = true;
             }
             else if (c == '(')
@@ -279,44 +382,18 @@ internal static class ExtendedFormatValidators
                     return false;
                 inGroup = false;
             }
-            else if (!(IsSpace(c) || c == '-' || c == '.' || c == '/'))
+            else if (!IsPhoneSeparator(c))
             {
                 return false;
             }
         }
         if (inGroup)
             return false;
-
-        var all = digits.ToString();
-        string rest;
-        if (international)
-        {
-            if (!all.StartsWith(countryCode, StringComparison.Ordinal))
-                return false;
-            rest = all[countryCode.Length..];
-        }
-        else if (all.StartsWith("00", StringComparison.Ordinal))
-        {
-            if (!all.AsSpan(2).StartsWith(countryCode, StringComparison.Ordinal))
-                return false;
-            rest = all[(2 + countryCode.Length)..];
-        }
-        else
-        {
-            if (all.Length < 2 || all[0] != '0')
-                return false;
-            national = all[1..];
-            return true;
-        }
-
-        // Optional trunk prefix after the country code: "+31 (0)6 ..." or "+31 06 ...".
-        if (rest.StartsWith('0'))
-            rest = rest[1..];
-        if (rest.Length == 0 || rest[0] == '0')
-            return false;
-        national = rest;
+        digits = builder.ToString();
         return true;
     }
+
+    private static bool IsPhoneSeparator(char c) => IsSpace(c) || c == '-' || c == '.' || c == '/';
 
     private static bool PassesElfproef(string nineDigits)
     {
@@ -331,6 +408,35 @@ internal static class ExtendedFormatValidators
         int last = nineDigits[8] - '0';
         allZero &= last == 0;
         return !allZero && (sum - last) % 11 == 0;
+    }
+
+    // Shape patterns for plates, postcodes and similar. They only ever see compacted, upper-cased
+    // ASCII values, so they behave the same as the JavaScript copies in jsv-runtime.
+    // NonBacktracking keeps matching linear in the input length.
+    private static Regex ShapeRegex(string pattern) =>
+        new(pattern, RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
+
+    // True when every character of the string is an ASCII digit.
+    private static bool IsAllDigits(string text)
+    {
+        foreach (char c in text)
+        {
+            if (!IsAsciiDigit(c))
+                return false;
+        }
+        return true;
+    }
+
+    // True when every character of a non-empty digit string is '0'.
+    private static bool IsAllZeros(string digits) => !digits.AsSpan().ContainsAnyExcept('0');
+
+    // Letter/digit pattern of a compacted value: each ASCII letter becomes 'L', each digit 'D'.
+    private static string Shape(string compact)
+    {
+        var builder = new StringBuilder(compact.Length);
+        foreach (char c in compact)
+            builder.Append(IsAsciiDigit(c) ? 'D' : 'L');
+        return builder.ToString();
     }
 
     // ISO 7064 mod 97-10 over an upper-case alphanumeric string; letters count as 10..35.

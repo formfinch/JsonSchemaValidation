@@ -1,0 +1,131 @@
+[
+    {
+        "description": "validation of de-stnr",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-stnr"
+        },
+        "tests": [
+            {
+                "description": "ELSTER format, Baden-Wuerttemberg",
+                "data": "2866081508156",
+                "valid": true
+            },
+            {
+                "description": "ELSTER format, Bavaria",
+                "data": "9198081508152",
+                "valid": true
+            },
+            {
+                "description": "ELSTER format, North Rhine-Westphalia",
+                "data": "5400081508159",
+                "valid": true
+            },
+            {
+                "description": "ELSTER format, Berlin",
+                "data": "1197081508154",
+                "valid": true
+            },
+            {
+                "description": "printed, 10 digits",
+                "data": "98/815/08152",
+                "valid": true
+            },
+            {
+                "description": "printed, 11 digits",
+                "data": "400/8150/8159",
+                "valid": true
+            },
+            {
+                "description": "printed with spaces",
+                "data": "053 815 08158",
+                "valid": true
+            },
+            {
+                "description": "bare 10 digits",
+                "data": "5381508152",
+                "valid": true
+            },
+            {
+                "description": "bare 10 digits",
+                "data": "2181508150",
+                "valid": true
+            },
+            {
+                "description": "5th digit is not 0",
+                "data": "2866181508156",
+                "valid": false
+            },
+            {
+                "description": "Bezirk 000",
+                "data": "2866000008156",
+                "valid": false
+            },
+            {
+                "description": "NRW Bezirk 0999",
+                "data": "5400009998159",
+                "valid": false
+            },
+            {
+                "description": "no Land prefix",
+                "data": "0000081508150",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "98/815/0815",
+                "valid": false
+            },
+            {
+                "description": "12 digits",
+                "data": "123456789012",
+                "valid": false
+            },
+            {
+                "description": "14 digits",
+                "data": "12345678901234",
+                "valid": false
+            },
+            {
+                "description": "letter O",
+                "data": "98/815/O8152",
+                "valid": false
+            },
+            {
+                "description": "prefix 33 is not a Land",
+                "data": "3398081508157",
+                "valid": false
+            },
+            {
+                "description": "Brandenburg Bezirk below 100",
+                "data": "3098005008157",
+                "valid": false
+            },
+            {
+                "description": "NRW UUUP of 0009 or lower",
+                "data": "5400081500009",
+                "valid": false
+            },
+            {
+                "description": "Bavaria 999/9999/9",
+                "data": "9198099999999",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

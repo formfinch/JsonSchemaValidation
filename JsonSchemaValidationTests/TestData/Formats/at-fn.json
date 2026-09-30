@@ -1,0 +1,121 @@
+[
+    {
+        "description": "validation of at-fn",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-fn"
+        },
+        "tests": [
+            {
+                "description": "computed",
+                "data": "FN 123456d",
+                "valid": true
+            },
+            {
+                "description": "no prefix",
+                "data": "123456d",
+                "valid": true
+            },
+            {
+                "description": "any case",
+                "data": "fn 123456D",
+                "valid": true
+            },
+            {
+                "description": "5 digits",
+                "data": "FN 12345f",
+                "valid": true
+            },
+            {
+                "description": "1 digit",
+                "data": "FN 1b",
+                "valid": true
+            },
+            {
+                "description": "number mod 17 is 0",
+                "data": "FN 17a",
+                "valid": true
+            },
+            {
+                "description": "last check letter",
+                "data": "FN 16z",
+                "valid": true
+            },
+            {
+                "description": "6 digits, maximum",
+                "data": "FN 999999m",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "FN 100000i",
+                "valid": true
+            },
+            {
+                "description": "published example without space",
+                "data": "FN122119m",
+                "valid": true
+            },
+            {
+                "description": "wrong check letter",
+                "data": "FN 123456a",
+                "valid": false
+            },
+            {
+                "description": "c is never a check letter",
+                "data": "FN 123456c",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "FN 1234567b",
+                "valid": false
+            },
+            {
+                "description": "leading zero",
+                "data": "FN 012345f",
+                "valid": false
+            },
+            {
+                "description": "no check letter",
+                "data": "FN 123456",
+                "valid": false
+            },
+            {
+                "description": "letter first",
+                "data": "m123123",
+                "valid": false
+            },
+            {
+                "description": "wrong prefix",
+                "data": "FB 123456d",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "FN 123456-d",
+                "valid": false
+            },
+            {
+                "description": "two letters",
+                "data": "FN 123456dd",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

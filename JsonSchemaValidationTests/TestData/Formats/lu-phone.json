@@ -1,0 +1,126 @@
+[
+    {
+        "description": "validation of lu-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "lu-phone"
+        },
+        "tests": [
+            {
+                "description": "mobile",
+                "data": "+352 621 123 456",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "00352 621 123 456",
+                "valid": true
+            },
+            {
+                "description": "national mobile",
+                "data": "621 123 456",
+                "valid": true
+            },
+            {
+                "description": "slash and dot",
+                "data": "621/123.456",
+                "valid": true
+            },
+            {
+                "description": "fixed line, 8 digits",
+                "data": "+352 26 12 34 56",
+                "valid": true
+            },
+            {
+                "description": "fixed line, national",
+                "data": "26 12 34 56",
+                "valid": true
+            },
+            {
+                "description": "4-digit fixed number",
+                "data": "+352 4711",
+                "valid": true
+            },
+            {
+                "description": "freephone",
+                "data": "800 12 345",
+                "valid": true
+            },
+            {
+                "description": "10-digit number",
+                "data": "+352 20 12 34 56 78",
+                "valid": true
+            },
+            {
+                "description": "there is no trunk 0",
+                "data": "0621 123 456",
+                "valid": false
+            },
+            {
+                "description": "trunk in parentheses",
+                "data": "+352 (0)621 123 456",
+                "valid": false
+            },
+            {
+                "description": "trunk after the country code",
+                "data": "+352 0621 123 456",
+                "valid": false
+            },
+            {
+                "description": "mobile with 8 digits",
+                "data": "621 123 45",
+                "valid": false
+            },
+            {
+                "description": "mobile with 10 digits",
+                "data": "621 123 4567",
+                "valid": false
+            },
+            {
+                "description": "short and starts with 1",
+                "data": "123",
+                "valid": false
+            },
+            {
+                "description": "starts with 1",
+                "data": "+352 12 34 56",
+                "valid": false
+            },
+            {
+                "description": "12 digits",
+                "data": "26 12 34 56 78 901",
+                "valid": false
+            },
+            {
+                "description": "Belgian number",
+                "data": "+32 471 12 34 56",
+                "valid": false
+            },
+            {
+                "description": "no significant number",
+                "data": "+352",
+                "valid": false
+            },
+            {
+                "description": "plus inside parentheses",
+                "data": "(+352) 621 123 456",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

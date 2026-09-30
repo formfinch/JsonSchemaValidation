@@ -1,0 +1,106 @@
+[
+    {
+        "description": "validation of li-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "li-phone"
+        },
+        "tests": [
+            {
+                "description": "fixed line",
+                "data": "+423 234 56 78",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "00423 234 56 78",
+                "valid": true
+            },
+            {
+                "description": "national, no prefix",
+                "data": "234 56 78",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "2345678",
+                "valid": true
+            },
+            {
+                "description": "mobile",
+                "data": "+423 790 12 34",
+                "valid": true
+            },
+            {
+                "description": "9-digit mobile",
+                "data": "+423 660 123 456",
+                "valid": true
+            },
+            {
+                "description": "national 9-digit mobile",
+                "data": "660 123 456",
+                "valid": true
+            },
+            {
+                "description": "toll-free",
+                "data": "+423 800 12 34",
+                "valid": true
+            },
+            {
+                "description": "there is no trunk 0",
+                "data": "+423 (0)234 56 78",
+                "valid": false
+            },
+            {
+                "description": "leading 0",
+                "data": "0234 56 78",
+                "valid": false
+            },
+            {
+                "description": "leading 1 is for access codes",
+                "data": "+423 123 45 67",
+                "valid": false
+            },
+            {
+                "description": "6x must have 9 digits",
+                "data": "+423 634 56 78",
+                "valid": false
+            },
+            {
+                "description": "7x must have 7 digits",
+                "data": "+423 790 123 456",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "+423 234 567",
+                "valid": false
+            },
+            {
+                "description": "8 digits",
+                "data": "00423 2345 678 9",
+                "valid": false
+            },
+            {
+                "description": "Swiss country code",
+                "data": "+41 234 56 78",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]
