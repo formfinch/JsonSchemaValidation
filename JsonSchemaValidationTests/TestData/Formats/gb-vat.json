@@ -82,6 +82,16 @@
                 "valid": true
             },
             {
+                "description": "government department with Northern Ireland prefix",
+                "data": "XIGD001",
+                "valid": true
+            },
+            {
+                "description": "health authority with Northern Ireland prefix",
+                "data": "XIHA500",
+                "valid": true
+            },
+            {
                 "description": "9755 series at 100",
                 "data": "GB 100 0000 34",
                 "valid": true

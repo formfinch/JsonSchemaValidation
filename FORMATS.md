@@ -267,7 +267,7 @@ Examples: `999 000 0018`, `999-000-0018`, `999 999 9999`. Not accepted: `999 000
 Sources: HMRC VAT registration numbers; the 9755 series (from November 2009); python-stdnum `gb/vat`.
 
 1. Remove spaces, dots and hyphens; upper-case. An optional `GB` or `XI` prefix is removed.
-2. `GD` + 000–499 (government departments) or `HA` + 500–999 (health authorities) is valid.
+2. `GD` + 000–499 (government departments) or `HA` + 500–999 (health authorities) is valid. These forms also exist with the `XI` prefix (the VIES format list for Northern Ireland includes `XIGD` and `XIHA`).
 3. Otherwise 9 or 12 digits (a branch trader adds 3 digits, which are not checked). The first 7 digits are not all zeros.
 4. Weights 8, 7, 6, 5, 4, 3, 2, 10, 1 on the first 9 digits; the sum mod 97 is 0, or 42 when the first digit is not 0 (9755 series: 55 is added before mod 97).
 
