@@ -1,0 +1,151 @@
+[
+    {
+        "description": "validation of gb-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-postcode"
+        },
+        "tests": [
+            {
+                "description": "AA9A outward code",
+                "data": "SW1A 1AA",
+                "valid": true
+            },
+            {
+                "description": "lower case, no space",
+                "data": "sw1a1aa",
+                "valid": true
+            },
+            {
+                "description": "AA9A outward code",
+                "data": "EC1A 1BB",
+                "valid": true
+            },
+            {
+                "description": "A9A outward code",
+                "data": "W1A 0AX",
+                "valid": true
+            },
+            {
+                "description": "A9 outward code",
+                "data": "M1 1AE",
+                "valid": true
+            },
+            {
+                "description": "A99 outward code",
+                "data": "B33 8TH",
+                "valid": true
+            },
+            {
+                "description": "AA9 outward code",
+                "data": "CR2 6XH",
+                "valid": true
+            },
+            {
+                "description": "AA99 outward code",
+                "data": "DN55 1PT",
+                "valid": true
+            },
+            {
+                "description": "Girobank special",
+                "data": "GIR 0AA",
+                "valid": true
+            },
+            {
+                "description": "special, lower case, no space",
+                "data": "gir0aa",
+                "valid": true
+            },
+            {
+                "description": "no-break spaces and surrounding whitespace",
+                "data": " M1 1AE ",
+                "valid": true
+            },
+            {
+                "description": "two spaces",
+                "data": "SW1A  1AA",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "SW1A-1AA",
+                "valid": false
+            },
+            {
+                "description": "Q in position 1",
+                "data": "Q1 1AA",
+                "valid": false
+            },
+            {
+                "description": "J in position 2",
+                "data": "AJ1 1AA",
+                "valid": false
+            },
+            {
+                "description": "I in the A9A letter slot",
+                "data": "A1I 1AA",
+                "valid": false
+            },
+            {
+                "description": "C in the AA9A letter slot",
+                "data": "AB1C 1AA",
+                "valid": false
+            },
+            {
+                "description": "C in the inward code",
+                "data": "M1 1AC",
+                "valid": false
+            },
+            {
+                "description": "C in the inward code",
+                "data": "M1 1CA",
+                "valid": false
+            },
+            {
+                "description": "wrong shape",
+                "data": "M11AE1",
+                "valid": false
+            },
+            {
+                "description": "BFPO number is not a postcode",
+                "data": "BFPO 123",
+                "valid": false
+            },
+            {
+                "description": "overseas territory code",
+                "data": "ASCN 1ZZ",
+                "valid": false
+            },
+            {
+                "description": "outward code only",
+                "data": "M1",
+                "valid": false
+            },
+            {
+                "description": "too long",
+                "data": "SW1A 1AAA",
+                "valid": false
+            },
+            {
+                "description": "space inside the outward code",
+                "data": "S W1A 1AA",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

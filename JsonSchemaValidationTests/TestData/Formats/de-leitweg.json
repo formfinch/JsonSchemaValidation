@@ -1,0 +1,141 @@
+[
+    {
+        "description": "validation of de-leitweg",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-leitweg"
+        },
+        "tests": [
+            {
+                "description": "specification example",
+                "data": "04011000-1234512345-06",
+                "valid": true
+            },
+            {
+                "description": "federal Leitweg-ID",
+                "data": "991-03730-19",
+                "valid": true
+            },
+            {
+                "description": "federal Leitweg-ID",
+                "data": "992-90009-96",
+                "valid": true
+            },
+            {
+                "description": "Grobadressierung only",
+                "data": "99-92",
+                "valid": true
+            },
+            {
+                "description": "letters in the Feinadressierung",
+                "data": "11-BEZIRKSAMT7-88",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "11-bezirksamt7-88",
+                "valid": true
+            },
+            {
+                "description": "8-digit Grobadressierung",
+                "data": "05315000-ABC-84",
+                "valid": true
+            },
+            {
+                "description": "12-digit Grobadressierung",
+                "data": "057660004004-X1-54",
+                "valid": true
+            },
+            {
+                "description": "2-digit Grobadressierung",
+                "data": "09-L1-13",
+                "valid": true
+            },
+            {
+                "description": "3-digit Grobadressierung",
+                "data": "160-A-83",
+                "valid": true
+            },
+            {
+                "description": "5-digit Grobadressierung",
+                "data": "14612-RECHNUNG-25",
+                "valid": true
+            },
+            {
+                "description": "wrong check digits",
+                "data": "04011000-1234512345-07",
+                "valid": false
+            },
+            {
+                "description": "space",
+                "data": "0401100012345123450 6",
+                "valid": false
+            },
+            {
+                "description": "hyphens missing",
+                "data": "04011000123451234506",
+                "valid": false
+            },
+            {
+                "description": "wrong check digits",
+                "data": "992-90009-97",
+                "valid": false
+            },
+            {
+                "description": "unknown Land",
+                "data": "55-55-20",
+                "valid": false
+            },
+            {
+                "description": "1-digit Grobadressierung",
+                "data": "1-03730-19",
+                "valid": false
+            },
+            {
+                "description": "Grobadressierung length 4",
+                "data": "0401-ABC-00",
+                "valid": false
+            },
+            {
+                "description": "one check digit",
+                "data": "04011000-1234512345-6",
+                "valid": false
+            },
+            {
+                "description": "empty Feinadressierung",
+                "data": "04011000--06",
+                "valid": false
+            },
+            {
+                "description": "underscore",
+                "data": "04011000-ABC_1-06",
+                "valid": false
+            },
+            {
+                "description": "spaces around hyphens",
+                "data": "04011000 - 1234512345 - 06",
+                "valid": false
+            },
+            {
+                "description": "13-digit Grobadressierung",
+                "data": "0401100001234-ABC-00",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

@@ -1,0 +1,81 @@
+[
+    {
+        "description": "validation of ch-passport",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-passport"
+        },
+        "tests": [
+            {
+                "description": "letter and 7 digits",
+                "data": "X1234567",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "x1234567",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "X123 4567",
+                "valid": true
+            },
+            {
+                "description": "letters and digits",
+                "data": "K1N23A45",
+                "valid": true
+            },
+            {
+                "description": "leading zeros",
+                "data": "S0000001",
+                "valid": true
+            },
+            {
+                "description": "7 characters",
+                "data": "X123456",
+                "valid": false
+            },
+            {
+                "description": "9 characters",
+                "data": "X12345678",
+                "valid": false
+            },
+            {
+                "description": "digits only",
+                "data": "12345678",
+                "valid": false
+            },
+            {
+                "description": "I is not used",
+                "data": "I1234567",
+                "valid": false
+            },
+            {
+                "description": "O is not used",
+                "data": "X12O4567",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "X-1234567",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

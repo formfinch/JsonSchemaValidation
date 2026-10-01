@@ -1,0 +1,116 @@
+[
+    {
+        "description": "validation of ch-uid",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-uid"
+        },
+        "tests": [
+            {
+                "description": "eCH example",
+                "data": "CHE-109.322.551",
+                "valid": true
+            },
+            {
+                "description": "published example",
+                "data": "CHE-100.155.212",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "CHE109322551",
+                "valid": true
+            },
+            {
+                "description": "lower case, spaces",
+                "data": "che 109 322 551",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "CHE-107.787.577",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "CHE-111.111.118",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "CHE-999.999.996",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "CHE-000.000.017",
+                "valid": true
+            },
+            {
+                "description": "no CHE",
+                "data": "109.322.551",
+                "valid": false
+            },
+            {
+                "description": "wrong check digit",
+                "data": "CHE-109.322.552",
+                "valid": false
+            },
+            {
+                "description": "check value 10 is never issued",
+                "data": "CHE-444.444.440",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "CHE-000.000.000",
+                "valid": false
+            },
+            {
+                "description": "VAT suffix",
+                "data": "CHE-109.322.551 MWST",
+                "valid": false
+            },
+            {
+                "description": "administrative prefix",
+                "data": "ADM-109.322.551",
+                "valid": false
+            },
+            {
+                "description": "CH instead of CHE",
+                "data": "CH-109.322.551",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "CHE-10A.322.551",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "CHE-109.322.5510",
+                "valid": false
+            },
+            {
+                "description": "underscore",
+                "data": "CHE_109322551",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

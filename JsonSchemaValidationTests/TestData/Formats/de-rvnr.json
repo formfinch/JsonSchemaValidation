@@ -1,0 +1,111 @@
+[
+    {
+        "description": "validation of de-rvnr",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-rvnr"
+        },
+        "tests": [
+            {
+                "description": "published example",
+                "data": "15070649C103",
+                "valid": true
+            },
+            {
+                "description": "printed spacing",
+                "data": "15 070649 C 103",
+                "valid": true
+            },
+            {
+                "description": "lower-case letter",
+                "data": "15070649c103",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "12010180A509",
+                "valid": true
+            },
+            {
+                "description": "historic area number",
+                "data": "65311299Z017",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "25150770M492",
+                "valid": true
+            },
+            {
+                "description": "29 February",
+                "data": "02290296B992",
+                "valid": true
+            },
+            {
+                "description": "serial 00",
+                "data": "89010100X000",
+                "valid": true
+            },
+            {
+                "description": "day 32 offset",
+                "data": "13320480K120",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "15070649C104",
+                "valid": false
+            },
+            {
+                "description": "letter missing",
+                "data": "15070649 103",
+                "valid": false
+            },
+            {
+                "description": "digit instead of letter",
+                "data": "150706491103",
+                "valid": false
+            },
+            {
+                "description": "letter in the serial",
+                "data": "15070649CC03",
+                "valid": false
+            },
+            {
+                "description": "11 characters",
+                "data": "15070649C10",
+                "valid": false
+            },
+            {
+                "description": "13 characters",
+                "data": "15070649C1033",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "15-070649-C-103",
+                "valid": false
+            },
+            {
+                "description": "umlaut",
+                "data": "15070649Ä103",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

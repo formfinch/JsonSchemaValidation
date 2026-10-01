@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of at-passport",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-passport"
+        },
+        "tests": [
+            {
+                "description": "format before December 2023",
+                "data": "P1234567",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "P 1234567",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "p1234567",
+                "valid": true
+            },
+            {
+                "description": "format before December 2023",
+                "data": "U7654321",
+                "valid": true
+            },
+            {
+                "description": "format since December 2023",
+                "data": "AB1234567",
+                "valid": true
+            },
+            {
+                "description": "new format with spaces",
+                "data": "ab 123 4567",
+                "valid": true
+            },
+            {
+                "description": "leading zeros in the digits",
+                "data": "XY0000001",
+                "valid": true
+            },
+            {
+                "description": "no letter",
+                "data": "1234567",
+                "valid": false
+            },
+            {
+                "description": "digits only",
+                "data": "12345678",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "P123456",
+                "valid": false
+            },
+            {
+                "description": "8 digits",
+                "data": "P12345678",
+                "valid": false
+            },
+            {
+                "description": "3 letters",
+                "data": "ABC1234567",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "P-1234567",
+                "valid": false
+            },
+            {
+                "description": "non-ASCII letter",
+                "data": "Ä1234567",
+                "valid": false
+            },
+            {
+                "description": "letter not first",
+                "data": "1P234567",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

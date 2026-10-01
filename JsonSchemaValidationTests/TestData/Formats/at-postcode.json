@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of at-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-postcode"
+        },
+        "tests": [
+            {
+                "description": "Vienna",
+                "data": "1010",
+                "valid": true
+            },
+            {
+                "description": "Graz",
+                "data": "8010",
+                "valid": true
+            },
+            {
+                "description": "highest code",
+                "data": "9992",
+                "valid": true
+            },
+            {
+                "description": "Jungholz",
+                "data": "6691",
+                "valid": true
+            },
+            {
+                "description": "Lofer",
+                "data": "5090",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 4020 ",
+                "valid": true
+            },
+            {
+                "description": "structurally valid",
+                "data": "1234",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "0123",
+                "valid": false
+            },
+            {
+                "description": "3 digits",
+                "data": "101",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "10100",
+                "valid": false
+            },
+            {
+                "description": "country prefix",
+                "data": "A-1010",
+                "valid": false
+            },
+            {
+                "description": "place name",
+                "data": "1010 Wien",
+                "valid": false
+            },
+            {
+                "description": "inner space",
+                "data": "10 10",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "ABCD",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

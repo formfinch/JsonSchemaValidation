@@ -1,0 +1,136 @@
+[
+    {
+        "description": "validation of gb-crn",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-crn"
+        },
+        "tests": [
+            {
+                "description": "England and Wales, leading zero",
+                "data": "01234567",
+                "valid": true
+            },
+            {
+                "description": "England and Wales",
+                "data": "12345678",
+                "valid": true
+            },
+            {
+                "description": "Scotland",
+                "data": "SC123456",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "sc123456",
+                "valid": true
+            },
+            {
+                "description": "Northern Ireland",
+                "data": "NI123456",
+                "valid": true
+            },
+            {
+                "description": "LLP",
+                "data": "OC123456",
+                "valid": true
+            },
+            {
+                "description": "Scottish LLP",
+                "data": "SO123456",
+                "valid": true
+            },
+            {
+                "description": "limited partnership",
+                "data": "LP123456",
+                "valid": true
+            },
+            {
+                "description": "pre-partition Northern Ireland",
+                "data": "R0123456",
+                "valid": true
+            },
+            {
+                "description": "overseas company",
+                "data": "FC123456",
+                "valid": true
+            },
+            {
+                "description": "overseas entity",
+                "data": "OE123456",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "SC 123456",
+                "valid": true
+            },
+            {
+                "description": "7 digits",
+                "data": "1234567",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "123456789",
+                "valid": false
+            },
+            {
+                "description": "unknown prefix",
+                "data": "XX123456",
+                "valid": false
+            },
+            {
+                "description": "5 digits after the prefix",
+                "data": "SC12345",
+                "valid": false
+            },
+            {
+                "description": "9 characters",
+                "data": "SC1234567",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "00000000",
+                "valid": false
+            },
+            {
+                "description": "zero number after the prefix",
+                "data": "SC000000",
+                "valid": false
+            },
+            {
+                "description": "hyphen is not a separator",
+                "data": "SC-123456",
+                "valid": false
+            },
+            {
+                "description": "one-letter prefix",
+                "data": "S1234567",
+                "valid": false
+            },
+            {
+                "description": "only R0 is a prefix",
+                "data": "R1234567",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

@@ -999,10 +999,10 @@ function _extNlPostcode(value: string): boolean {
     return !(first === "S" && (second === "A" || second === "D" || second === "S"));
 }
 
-// Significant (national) digits of a phone number for one country calling code, or null.
-// Accepts +CC, 00CC and national 0 prefixes, an optional trunk 0 after the country code
-// (written as "(0)" or not), and separators.
-function _extParsePhone(value: string, countryCode: string): string | null {
+// Digits of a phone number and whether it starts with "+", or null. Accepts digits,
+// separators (space, hyphen, dot, slash) and balanced, non-nested parentheses that
+// contain at least one digit.
+function _extReadPhoneDigits(value: string): { international: boolean; digits: string } | null {
     const text = _extTrim(value);
     if (text.length === 0) return null;
     const international = text.charAt(0) === "+";
@@ -1026,19 +1026,33 @@ function _extParsePhone(value: string, countryCode: string): string | null {
         }
     }
     if (inGroup) return null;
+    return { international, digits };
+}
 
+// Significant (national) digits of a phone number for one country calling code, or null.
+// Accepts +CC, 00CC and national prefixes and separators. With a trunk prefix (the
+// default), a national number starts with 0 and an optional trunk 0 may follow the
+// country code (written as "(0)" or not). Countries without a trunk prefix (Liechtenstein,
+// Luxembourg) write national numbers bare.
+function _extParsePhone(value: string, countryCode: string, trunkPrefix = true): string | null {
+    const read = _extReadPhoneDigits(value);
+    if (read === null) return null;
+    const digits = read.digits;
     let rest: string;
-    if (international) {
+    if (read.international) {
         if (!digits.startsWith(countryCode)) return null;
         rest = digits.slice(countryCode.length);
     } else if (digits.startsWith("00")) {
         if (!digits.startsWith(countryCode, 2)) return null;
         rest = digits.slice(2 + countryCode.length);
-    } else {
+    } else if (trunkPrefix) {
         if (digits.length < 2 || digits.charAt(0) !== "0") return null;
         return digits.slice(1);
+    } else {
+        if (digits.length === 0 || digits.charAt(0) === "0") return null;
+        return digits;
     }
-    if (rest.startsWith("0")) rest = rest.slice(1);
+    if (trunkPrefix && rest.startsWith("0")) rest = rest.slice(1);
     if (rest.length === 0 || rest.charAt(0) === "0") return null;
     return rest;
 }
@@ -1053,6 +1067,605 @@ function _extBePhone(value: string): boolean {
     if (national === null) return false;
     if (national.length === 8) return true;
     return national.length === 9 && national.charAt(0) === "4" && national.charAt(1) >= "5";
+}
+
+// Letter/digit pattern of a compacted value: each ASCII letter becomes "L", each digit "D".
+function _extShape(compact: string): string {
+    let out = "";
+    for (let i = 0; i < compact.length; i++) out += _extIsDigit(compact.charAt(i)) ? "D" : "L";
+    return out;
+}
+
+function _extAllDigits(text: string): boolean {
+    for (let i = 0; i < text.length; i++) {
+        if (!_extIsDigit(text.charAt(i))) return false;
+    }
+    return true;
+}
+
+function _extAllZeros(digits: string): boolean {
+    return !/[1-9]/.test(digits);
+}
+
+function _extE164Phone(value: string): boolean {
+    const text = _extTrim(value);
+    let start: number;
+    if (text.startsWith("+")) start = 1;
+    else if (text.startsWith("00")) start = 2;
+    else return false;
+    let digits = "";
+    let inGroup = false;
+    let groupStart = 0;
+    let groups = 0;
+    for (let i = start; i < text.length; i++) {
+        const c = text.charAt(i);
+        if (_extIsDigit(c)) {
+            digits += c;
+        } else if (c === "(") {
+            if (inGroup) return false;
+            inGroup = true;
+            groupStart = digits.length;
+            groups++;
+        } else if (c === ")") {
+            if (!inGroup || digits.length === groupStart) return false;
+            inGroup = false;
+            // A first group written "(0)" after the country code is a trunk prefix, not a digit.
+            if (groups === 1 && groupStart > 0 && digits.length === groupStart + 1 && digits.charAt(groupStart) === "0") {
+                digits = digits.slice(0, groupStart);
+            }
+        } else if (!_extPhoneSeparators.includes(c)) {
+            return false;
+        }
+    }
+    if (inGroup) return false;
+    return digits.length >= 7 && digits.length <= 15 && digits.charAt(0) !== "0";
+}
+
+function _extBePostcode(value: string): boolean {
+    return /^[1-9][0-9]{3}$/.test(_extTrim(value));
+}
+
+// RDW sidecodes 1-14 as letter (L) / digit (D) patterns.
+const _extNlPlateSidecodes = [
+    "LLDDDD", "DDDDLL", "DDLLDD", "LLDDLL", "LLLLDD", "DDLLLL", "DDLLLD",
+    "DLLLDD", "LLDDDL", "LDDDLL", "LLLDDL", "LDDLLL", "DLLDDD", "DDDLLD",
+];
+
+function _extNlPlate(value: string): boolean {
+    const plate = _extCompact(value, _extSpacesAndDashes, true);
+    return plate !== null && plate.length === 6 && _extNlPlateSidecodes.includes(_extShape(plate));
+}
+
+function _extGbPhone(value: string): boolean {
+    const national = _extParsePhone(value, "44");
+    if (national === null) return false;
+    if (national.length === 10) return "1235789".includes(national.charAt(0));
+    if (national.length === 9) {
+        // 9-digit numbers exist only in the mixed 01xxx(x) areas (not 011x or 01x1) and legacy 0800.
+        return national.charAt(0) === "1"
+            ? national.charAt(1) !== "1" && national.charAt(2) !== "1"
+            : national.startsWith("800");
+    }
+    return false;
+}
+
+const _extGbPostcodePattern = /^(?:[A-PR-UWYZ][0-9][0-9]?|[A-PR-UWYZ][A-HK-Y][0-9][0-9]?|[A-PR-UWYZ][0-9][ABCDEFGHJKPSTUW]|[A-PR-UWYZ][A-HK-Y][0-9][ABEHMNPRVWXY])[0-9][ABD-HJLNP-UW-Z]{2}$/;
+
+function _extGbPostcode(value: string): boolean {
+    let text = _extTrim(value);
+    if (text.length >= 6 && _extIsSpace(text.charAt(text.length - 4))) {
+        text = text.slice(0, text.length - 4) + text.slice(text.length - 3);
+    }
+    const postcode = _extCompact(text, "", true);
+    return postcode !== null && (postcode === "GIR0AA" || _extGbPostcodePattern.test(postcode));
+}
+
+function _extGbNhs(value: string): boolean {
+    const digits = _extCompact(value, _extSpacesAndDashes, false);
+    if (digits === null || digits.length !== 10 || _extAllZeros(digits)) return false;
+    // Weights 10..2 on the first nine digits and 1 on the check digit; a check value of 10
+    // is never issued, and no single digit satisfies it.
+    let sum = 0;
+    for (let i = 0; i < 10; i++) sum += (10 - i) * (digits.charCodeAt(i) - 48);
+    return sum % 11 === 0;
+}
+
+function _extGbVat(value: string): boolean {
+    let vat = _extCompact(value, _extSpacesDotsAndDashes, true);
+    if (vat === null) return false;
+    if (vat.startsWith("GB") || vat.startsWith("XI")) vat = vat.slice(2);
+    if (vat.length === 5 && (vat.startsWith("GD") || vat.startsWith("HA"))) {
+        const rest = vat.slice(2);
+        if (!_extAllDigits(rest)) return false;
+        const n = parseInt(rest, 10);
+        // Government departments GD000-GD499, health authorities HA500-HA999.
+        return vat.charAt(0) === "G" ? n < 500 : n >= 500;
+    }
+    if ((vat.length !== 9 && vat.length !== 12) || !_extAllDigits(vat)) return false;
+    if (_extAllZeros(vat.slice(0, 7))) return false;
+    const weights = [8, 7, 6, 5, 4, 3, 2, 10, 1];
+    let sum = 0;
+    for (let i = 0; i < 9; i++) sum += weights[i] * (vat.charCodeAt(i) - 48);
+    const remainder = sum % 97;
+    // Classic mod 97, or the 9755 series (55 added before mod 97) for numbers from 100 upwards.
+    return remainder === 0 || (remainder === 42 && vat.charAt(0) !== "0");
+}
+
+// Companies House company number prefixes (see FORMATS.md, gb-crn).
+const _extGbCrnPrefixes = [
+    "AC", "ZC", "FC", "GE", "LP", "OC", "SE", "SA", "SZ", "SF", "GS", "SL", "SO", "SC",
+    "ES", "NA", "NZ", "NF", "GN", "NL", "NC", "R0", "NI", "EN", "IP", "SP", "IC", "SI",
+    "NP", "NV", "RC", "SR", "NR", "NO", "BR", "CE", "CS", "OE", "PC", "SG",
+];
+
+function _extGbCrn(value: string): boolean {
+    const crn = _extCompact(value, _extSpaces, true);
+    if (crn === null || crn.length !== 8) return false;
+    if (_extAllDigits(crn)) return !_extAllZeros(crn);
+    const number = crn.slice(2);
+    return _extGbCrnPrefixes.includes(crn.slice(0, 2)) && _extAllDigits(number) && !_extAllZeros(number);
+}
+
+function _extGbSortCode(value: string): boolean {
+    const digits = _extCompact(value, _extSpacesAndDashes, false);
+    return digits !== null && digits.length === 6 && !_extAllZeros(digits);
+}
+
+function _extGbAccountNumber(value: string): boolean {
+    const digits = _extCompact(value, _extSpacesAndDashes, false);
+    return digits !== null && digits.length === 8 && !_extAllZeros(digits);
+}
+
+const _extGbNinoPattern = /^[A-CEGHJ-PR-TW-Z][A-CEGHJ-NPR-TW-Z][0-9]{6}[A-D]?$/;
+const _extGbNinoExcludedPrefixes = ["BG", "GB", "KN", "NK", "NT", "TN", "ZZ"];
+
+function _extGbNino(value: string): boolean {
+    const nino = _extCompact(value, _extSpaces, true);
+    return nino !== null && _extGbNinoPattern.test(nino) && !_extGbNinoExcludedPrefixes.includes(nino.slice(0, 2));
+}
+
+// DfE UPN check alphabet: A-Z without I, O and S.
+const _extGbUpnAlphabet = "ABCDEFGHJKLMNPQRTUVWXYZ";
+
+function _extGbUpn(value: string): boolean {
+    const upn = _extCompact(value, _extSpaces, true);
+    if (upn === null || upn.length !== 13) return false;
+    if (!_extGbUpnAlphabet.includes(upn.charAt(0)) || !_extAllDigits(upn.slice(1, 12))) return false;
+    const last = upn.charAt(12);
+    if (!_extIsDigit(last) && !_extGbUpnAlphabet.includes(last)) return false;
+    let sum = 0;
+    for (let i = 1; i < 13; i++) {
+        const c = upn.charAt(i);
+        const charValue = _extIsDigit(c) ? c.charCodeAt(0) - 48 : _extGbUpnAlphabet.indexOf(c);
+        sum += (i + 1) * charValue;
+    }
+    return _extGbUpnAlphabet.charAt(sum % 23) === upn.charAt(0);
+}
+
+const _extGbPlatePattern = /^(?:[A-HJ-PR-Y]{2}[0-9]{2}[A-HJ-PR-Z]{3}|[A-Z][1-9][0-9]{0,2}[A-Z]{3}|[A-Z]{3}[1-9][0-9]{0,2}[A-Z]|[A-Z]{1,3}[1-9][0-9]{0,3}|[1-9][0-9]{0,3}[A-Z]{1,3})$/;
+
+function _extGbPlate(value: string): boolean {
+    const plate = _extCompact(value, _extSpaces, true);
+    return plate !== null && plate.length <= 7 && _extGbPlatePattern.test(plate);
+}
+
+const _extSpacesDotsDashesAndSlashes = "  .-/";
+const _extSpacesDashesAndSlashes = "  -/";
+
+// ISO 7064 MOD 11,10 over a digit string whose last digit is the check digit.
+function _extMod1110(digits: string): boolean {
+    let product = 10;
+    for (let i = 0; i < digits.length - 1; i++) {
+        let sum = (digits.charCodeAt(i) - 48 + product) % 10;
+        if (sum === 0) sum = 10;
+        product = (sum * 2) % 11;
+    }
+    let check = 11 - product;
+    if (check === 10) check = 0;
+    return check === digits.charCodeAt(digits.length - 1) - 48;
+}
+
+// Sum of the digit sums of digit x weight products, mod 10.
+function _extDigitSumCheck(digits: string, weights: number[]): number {
+    let sum = 0;
+    for (let i = 0; i < weights.length; i++) {
+        const product = (digits.charCodeAt(i) - 48) * weights[i];
+        sum += Math.floor(product / 10) + (product % 10);
+    }
+    return sum % 10;
+}
+
+function _extDePhone(value: string): boolean {
+    const national = _extParsePhone(value, "49");
+    if (national === null) return false;
+    if (national.startsWith("15")) return national.length === 11;
+    if (/^(?:16[023]|17)/.test(national)) return national.length === 10 || national.length === 11;
+    return national.length >= 6 && national.length <= 13;
+}
+
+function _extDePostcode(value: string): boolean {
+    const text = _extTrim(value);
+    return text.length === 5 && _extAllDigits(text) && !text.startsWith("00");
+}
+
+function _extDeVat(value: string): boolean {
+    const vat = _extCompact(value, _extSpaces, true);
+    if (vat === null || vat.length !== 11 || !vat.startsWith("DE")) return false;
+    const digits = vat.slice(2);
+    return _extAllDigits(digits) && digits.charAt(0) !== "0" && _extMod1110(digits);
+}
+
+function _extDeIdnr(value: string): boolean {
+    const idnr = _extCompact(value, _extSpacesDotsDashesAndSlashes, false);
+    if (idnr === null || idnr.length !== 11 || idnr.charAt(0) === "0") return false;
+    // Among the first 10 digits exactly one digit value occurs twice or three times; a
+    // tripled digit may not stand three in a row.
+    const counts = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < 10; i++) counts[idnr.charCodeAt(i) - 48]++;
+    let repeated = -1;
+    for (let d = 0; d < 10; d++) {
+        if (counts[d] > 3) return false;
+        if (counts[d] > 1) {
+            if (repeated >= 0) return false;
+            repeated = d;
+        }
+    }
+    if (repeated < 0) return false;
+    if (counts[repeated] === 3) {
+        const triple = String(repeated).repeat(3);
+        if (idnr.slice(0, 10).includes(triple)) return false;
+    }
+    return _extMod1110(idnr);
+}
+
+function _extDeStnr(value: string): boolean {
+    const stnr = _extCompact(value, _extSpacesDashesAndSlashes, false);
+    if (stnr === null) return false;
+    if (stnr.length === 10 || stnr.length === 11) return true;
+    if (stnr.length !== 13 || stnr.charAt(4) !== "0") return false;
+    if (!/^(?:10|11|21|22|23|24|26|27|28|30|31|32|40|41|5[0-9]|9[0-9])/.test(stnr)) return false;
+    const nrw = stnr.charAt(0) === "5";
+    const bezirk = nrw ? stnr.slice(5, 9) : stnr.slice(5, 8);
+    if (["000", "998", "999", "0000", "0998", "0999"].includes(bezirk)) return false;
+    if (/^(?:9|30|40|10|32|31|41)/.test(stnr) && parseInt(bezirk, 10) < 100) return false;
+    if (nrw && parseInt(stnr.slice(9, 13), 10) <= 9) return false;
+    return !(stnr.charAt(0) === "9" && stnr.slice(5) === "99999999");
+}
+
+function _extDeTradeRegister(value: string): boolean {
+    const number = _extCompact(value, _extSpaces, true);
+    return number !== null && /^(?:HRA|HRB|GNR|GSR|PR|VR)[1-9][0-9]{0,5}[A-Z]{0,3}$/.test(number);
+}
+
+const _extDeLeitwegGrobLengths = [2, 3, 5, 8, 9, 12];
+
+function _extDeLeitweg(value: string): boolean {
+    const text = _extTrim(value);
+    let upper = "";
+    for (let i = 0; i < text.length; i++) upper += _extUpper(text.charAt(i));
+    const match = /^([0-9]{2,12})(?:-([0-9A-Z]{1,30}))?-([0-9]{2})$/.exec(upper);
+    if (match === null) return false;
+    const grob = match[1];
+    if (!_extDeLeitwegGrobLengths.includes(grob.length)) return false;
+    const land = parseInt(grob.slice(0, 2), 10);
+    if (!((land >= 1 && land <= 16) || land === 99)) return false;
+    return _extMod97(grob + (match[2] ?? "") + match[3]) === 1;
+}
+
+function _extDeRvnr(value: string): boolean {
+    const rvnr = _extCompact(value, _extSpaces, true);
+    if (rvnr === null || rvnr.length !== 12 || !_extAllDigits(rvnr.slice(0, 8)) ||
+        !_extIsLetter(rvnr.charAt(8)) || !_extAllDigits(rvnr.slice(9))) {
+        return false;
+    }
+    // The letter becomes its two-digit alphabet position (A=01 ... Z=26).
+    const letter = String(rvnr.charCodeAt(8) - 64).padStart(2, "0");
+    const digits = rvnr.slice(0, 8) + letter + rvnr.slice(9, 11);
+    return _extDigitSumCheck(digits, [2, 1, 2, 5, 7, 1, 2, 1, 2, 1, 2, 1]) === rvnr.charCodeAt(11) - 48;
+}
+
+function _extDeKvnr(value: string): boolean {
+    const kvnr = _extCompact(value, _extSpaces, true);
+    if (kvnr === null || kvnr.length !== 10 || !_extIsLetter(kvnr.charAt(0)) || !_extAllDigits(kvnr.slice(1))) {
+        return false;
+    }
+    const digits = String(kvnr.charCodeAt(0) - 64).padStart(2, "0") + kvnr.slice(1, 9);
+    return _extDigitSumCheck(digits, [1, 2, 1, 2, 1, 2, 1, 2, 1, 2]) === kvnr.charCodeAt(9) - 48;
+}
+
+// German ID card and passport numbers: 9 characters from the document alphabet and an
+// optional ICAO 9303 check digit (weights 7, 3, 1; letters count as 10..35).
+function _extDeDocumentNumber(value: string): boolean {
+    const number = _extCompact(value, _extSpaces, true);
+    if (number === null || !/^[0-9CFGHJKLMNPRTVWXYZ]{9}[0-9]?$/.test(number)) return false;
+    if (number.length === 9) return true;
+    const weights = [7, 3, 1];
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        const c = number.charAt(i);
+        const charValue = _extIsDigit(c) ? c.charCodeAt(0) - 48 : c.charCodeAt(0) - 55;
+        sum += charValue * weights[i % 3];
+    }
+    return sum % 10 === number.charCodeAt(9) - 48;
+}
+
+function _extDeWkn(value: string): boolean {
+    const wkn = _extCompact(value, _extSpaces, true);
+    return wkn !== null && /^[0-9A-HJ-NP-Z]{6}$/.test(wkn);
+}
+
+// District 1-3 letters (umlauts allowed), Erkennung 1-2 letters without umlauts.
+function _extIsDePlateSplit(district: string, erkennung: string): boolean {
+    return district.length >= 1 && district.length <= 3 &&
+        erkennung.length >= 1 && erkennung.length <= 2 && /^[A-Z]+$/.test(erkennung);
+}
+
+function _extDePlate(value: string): boolean {
+    const text = _extTrim(value);
+    let upper = "";
+    for (let i = 0; i < text.length; i++) {
+        const c = text.charAt(i);
+        upper += c === "ä" ? "Ä" : c === "ö" ? "Ö" : c === "ü" ? "Ü" : _extUpper(c);
+    }
+    const match = /^([A-ZÄÖÜ]+(?:[  -]+[A-ZÄÖÜ]+)*)[  -]*([1-9][0-9]{0,3})(?:[  ]*([EH]))?$/.exec(upper);
+    if (match === null) return false;
+    const groups = match[1].split(/[  -]+/);
+    let validSplit = false;
+    if (groups.length === 1) {
+        const run = groups[0];
+        for (let k = 1; k <= 3 && k < run.length; k++) {
+            if (_extIsDePlateSplit(run.slice(0, k), run.slice(k))) validSplit = true;
+        }
+    } else if (groups.length === 2) {
+        validSplit = _extIsDePlateSplit(groups[0], groups[1]);
+    }
+    if (!validSplit) return false;
+    const count = groups.join("").length + match[2].length;
+    return match[3] !== undefined ? count <= 7 : count <= 8;
+}
+
+// Four digits, the first not 0, with no separators (Austria, Belgium, Liechtenstein).
+function _extFourDigitPostcode(value: string): boolean {
+    return /^[1-9][0-9]{3}$/.test(_extTrim(value));
+}
+
+// Luhn doubling: twice the digit, minus 9 when above 9.
+function _extDoubleDigit(digit: number): number {
+    return digit * 2 > 9 ? digit * 2 - 9 : digit * 2;
+}
+
+function _extAtPhone(value: string): boolean {
+    const national = _extParsePhone(value, "43");
+    return national !== null && national.length >= 5 && national.length <= 13;
+}
+
+function _extAtVat(value: string): boolean {
+    const vat = _extCompact(value, _extSpaces, true);
+    if (vat === null || vat.length !== 11 || !vat.startsWith("ATU") || !_extAllDigits(vat.slice(3))) return false;
+    // Digits 1, 3, 5, 7 count as-is; 2, 4, 6 are doubled with 9 subtracted above 9.
+    let sum = 0;
+    for (let i = 0; i < 7; i++) {
+        const d = vat.charCodeAt(3 + i) - 48;
+        sum += i % 2 === 0 ? d : _extDoubleDigit(d);
+    }
+    return (10 - ((sum + 4) % 10)) % 10 === vat.charCodeAt(10) - 48;
+}
+
+function _extAtSvnr(value: string): boolean {
+    const svnr = _extCompact(value, _extSpaces, false);
+    if (svnr === null || svnr.length !== 10 || svnr.charAt(0) === "0") return false;
+    const weights = [3, 7, 9, 0, 5, 8, 4, 2, 1, 6];
+    let sum = 0;
+    for (let i = 0; i < 10; i++) sum += weights[i] * (svnr.charCodeAt(i) - 48);
+    const check = sum % 11;
+    // A remainder of 10 is never issued.
+    return check < 10 && check === svnr.charCodeAt(3) - 48;
+}
+
+// Firmenbuchnummer check letters, indexed by the number mod 17.
+const _extAtFnCheckLetters = "ABDFGHIKMPSTVWXYZ";
+
+function _extAtFn(value: string): boolean {
+    let fn = _extCompact(value, _extSpaces, true);
+    if (fn === null) return false;
+    if (fn.startsWith("FN")) fn = fn.slice(2);
+    if (!/^[1-9][0-9]{0,5}[A-Z]$/.test(fn)) return false;
+    const number = parseInt(fn.slice(0, fn.length - 1), 10);
+    return _extAtFnCheckLetters.charAt(number % 17) === fn.charAt(fn.length - 1);
+}
+
+function _extAtTin(value: string): boolean {
+    const tin = _extCompact(value, _extSpacesDashesAndSlashes, false);
+    if (tin === null || tin.length !== 9 || _extAllZeros(tin)) return false;
+    let sum = 0;
+    for (let i = 0; i < 8; i++) {
+        const d = tin.charCodeAt(i) - 48;
+        sum += i % 2 === 0 ? d : _extDoubleDigit(d);
+    }
+    return (10 - (sum % 10)) % 10 === tin.charCodeAt(8) - 48;
+}
+
+function _extAtPlate(value: string): boolean {
+    const plate = _extCompact(value, _extSpacesAndDashes, true);
+    return plate !== null && plate.length <= 8 &&
+        /^(?:[A-PR-Z]{1,2}[1-9][0-9]{0,4}[A-PR-Z]{1,3}|[A-PR-Z]{1,7}[1-9][0-9]{0,4})$/.test(plate);
+}
+
+function _extAtPassport(value: string): boolean {
+    const passport = _extCompact(value, _extSpaces, true);
+    return passport !== null && /^[A-Z]{1,2}[0-9]{7}$/.test(passport);
+}
+
+function _extLiPhone(value: string): boolean {
+    const national = _extParsePhone(value, "423", false);
+    if (national === null) return false;
+    if (national.length === 7) return "234789".includes(national.charAt(0));
+    if (national.length === 9) return "56".includes(national.charAt(0));
+    return false;
+}
+
+function _extLiPostcode(value: string): boolean {
+    if (!_extFourDigitPostcode(value)) return false;
+    const code = parseInt(_extTrim(value), 10);
+    return code >= 9485 && code <= 9498;
+}
+
+function _extLiPeid(value: string): boolean {
+    const peid = _extCompact(value, _extSpacesAndDots, false);
+    return peid !== null && peid.length <= 12 && peid.replace(/^0+/, "").length >= 4;
+}
+
+function _extLiPlate(value: string): boolean {
+    const plate = _extCompact(value, _extSpacesAndDashes, true);
+    return plate !== null && /^FL[1-9][0-9]{0,4}$/.test(plate);
+}
+
+// ISO 3166-2:CH canton codes, as used on licence plates.
+const _extChCantons = [
+    "AG", "AI", "AR", "BE", "BL", "BS", "FR", "GE", "GL", "GR", "JU", "LU", "NE", "NW",
+    "OW", "SG", "SH", "SO", "SZ", "TG", "TI", "UR", "VD", "VS", "ZG", "ZH",
+];
+
+// Recursive mod 10 carry table (Swiss QR reference, formerly ESR).
+const _extChQrReferenceTable = [0, 9, 4, 6, 8, 2, 7, 1, 3, 5];
+
+// Verhoeff dihedral group and permutation tables.
+const _extVerhoeffD = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 2, 3, 4, 0, 6, 7, 8, 9, 5],
+    [2, 3, 4, 0, 1, 7, 8, 9, 5, 6], [3, 4, 0, 1, 2, 8, 9, 5, 6, 7],
+    [4, 0, 1, 2, 3, 9, 5, 6, 7, 8], [5, 9, 8, 7, 6, 0, 4, 3, 2, 1],
+    [6, 5, 9, 8, 7, 1, 0, 4, 3, 2], [7, 6, 5, 9, 8, 2, 1, 0, 4, 3],
+    [8, 7, 6, 5, 9, 3, 2, 1, 0, 4], [9, 8, 7, 6, 5, 4, 3, 2, 1, 0],
+];
+
+const _extVerhoeffP = [
+    [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], [1, 5, 7, 6, 2, 8, 3, 0, 9, 4],
+    [5, 8, 0, 3, 7, 9, 6, 1, 4, 2], [8, 9, 1, 6, 0, 4, 3, 5, 2, 7],
+    [9, 4, 5, 3, 1, 2, 6, 8, 7, 0], [4, 2, 8, 6, 5, 7, 3, 9, 0, 1],
+    [2, 7, 9, 3, 8, 0, 6, 4, 1, 5], [7, 0, 4, 6, 9, 1, 3, 2, 5, 8],
+];
+
+// UID digits: weights 5 4 3 2 7 6 5 4, check (11 - sum mod 11) mod 11; 10 is never issued.
+function _extChUidCheck(digits: string): boolean {
+    if (digits.length !== 9 || !_extAllDigits(digits) || _extAllZeros(digits)) return false;
+    const weights = [5, 4, 3, 2, 7, 6, 5, 4];
+    let sum = 0;
+    for (let i = 0; i < 8; i++) sum += weights[i] * (digits.charCodeAt(i) - 48);
+    const check = (11 - (sum % 11)) % 11;
+    return check !== 10 && check === digits.charCodeAt(8) - 48;
+}
+
+// Four digits, the first not 0, optionally preceded by a country prefix such as "CH-" (any case).
+function _extPrefixedFourDigitPostcode(value: string, prefix: string): boolean {
+    let text = _extTrim(value);
+    if (text.length === prefix.length + 4) {
+        for (let i = 0; i < prefix.length; i++) {
+            if (_extUpper(text.charAt(i)) !== prefix.charAt(i)) return false;
+        }
+        text = text.slice(prefix.length);
+    }
+    return /^[1-9][0-9]{3}$/.test(text);
+}
+
+function _extLuhn(digits: string): boolean {
+    let sum = 0;
+    for (let p = 0; p < digits.length; p++) {
+        const d = digits.charCodeAt(digits.length - 1 - p) - 48;
+        sum += p % 2 === 1 ? _extDoubleDigit(d) : d;
+    }
+    return sum % 10 === 0;
+}
+
+function _extVerhoeff(digits: string): boolean {
+    let c = 0;
+    for (let p = 0; p < digits.length; p++) {
+        c = _extVerhoeffD[c][_extVerhoeffP[p % 8][digits.charCodeAt(digits.length - 1 - p) - 48]];
+    }
+    return c === 0;
+}
+
+function _extChPhone(value: string): boolean {
+    const national = _extParsePhone(value, "41");
+    return national !== null && national.length === 9 && national.charAt(0) >= "2";
+}
+
+function _extChUid(value: string): boolean {
+    const uid = _extCompact(value, _extSpacesDotsAndDashes, true);
+    return uid !== null && uid.length === 12 && uid.startsWith("CHE") && _extChUidCheck(uid.slice(3));
+}
+
+function _extChVat(value: string): boolean {
+    const vat = _extCompact(value, _extSpacesDotsAndDashes, true);
+    if (vat === null || vat.length < 12 || !vat.startsWith("CHE")) return false;
+    return ["", "MWST", "TVA", "IVA"].includes(vat.slice(12)) && _extChUidCheck(vat.slice(3, 12));
+}
+
+function _extChAhv(value: string): boolean {
+    const ahv = _extCompact(value, _extSpacesAndDots, false);
+    if (ahv === null || ahv.length !== 13 || !ahv.startsWith("756")) return false;
+    let sum = 0;
+    for (let i = 0; i < 13; i++) sum += (ahv.charCodeAt(i) - 48) * (i % 2 === 0 ? 1 : 3);
+    return sum % 10 === 0;
+}
+
+function _extChQrReference(value: string): boolean {
+    const reference = _extCompact(value, _extSpaces, false);
+    if (reference === null || reference.length !== 27 || _extAllZeros(reference)) return false;
+    let carry = 0;
+    for (let i = 0; i < 26; i++) carry = _extChQrReferenceTable[(carry + reference.charCodeAt(i) - 48) % 10];
+    return (10 - carry) % 10 === reference.charCodeAt(26) - 48;
+}
+
+function _extChQrIban(value: string): boolean {
+    if (!_extIban(value)) return false;
+    const iban = _extCompact(value, _extSpaces, true);
+    if (iban === null || !(iban.startsWith("CH") || iban.startsWith("LI"))) return false;
+    const iid = iban.slice(4, 9);
+    return _extAllDigits(iid) && iid >= "30000" && iid <= "31999";
+}
+
+function _extChPlate(value: string): boolean {
+    const plate = _extCompact(value, _extSpacesDotsAndDashes, true);
+    if (plate === null || plate.length < 3 || plate.length > 8) return false;
+    const number = plate.slice(2);
+    return _extChCantons.includes(plate.slice(0, 2)) && _extAllDigits(number) && number.charAt(0) !== "0";
+}
+
+function _extChPassport(value: string): boolean {
+    const number = _extCompact(value, _extSpaces, true);
+    return number !== null && /^[A-HJ-NP-Z][0-9A-HJ-NP-Z]{7}$/.test(number);
+}
+
+function _extLuPhone(value: string): boolean {
+    const national = _extParsePhone(value, "352", false);
+    if (national === null || national.charAt(0) < "2") return false;
+    return national.charAt(0) === "6" ? national.length === 9 : national.length >= 4 && national.length <= 11;
+}
+
+function _extLuVat(value: string): boolean {
+    const vat = _extCompact(value, _extSpacesDotsAndDashes, true);
+    if (vat === null || vat.length !== 10 || !vat.startsWith("LU")) return false;
+    const digits = vat.slice(2);
+    if (!_extAllDigits(digits) || _extAllZeros(digits)) return false;
+    return parseInt(digits.slice(0, 6), 10) % 89 === parseInt(digits.slice(6), 10);
+}
+
+function _extLuMatricule(value: string): boolean {
+    const matricule = _extCompact(value, _extSpacesDotsAndDashes, false);
+    if (matricule === null || matricule.length !== 13) return false;
+    // Both check digits are computed over the same first 11 digits.
+    const body = matricule.slice(0, 11);
+    return _extLuhn(body + matricule.charAt(11)) && _extVerhoeff(body + matricule.charAt(12));
+}
+
+function _extLuRcs(value: string): boolean {
+    const rcs = _extCompact(value, _extSpaces, true);
+    return rcs !== null && /^[A-Z][1-9][0-9]{0,5}$/.test(rcs);
+}
+
+function _extLuPlate(value: string): boolean {
+    const plate = _extCompact(value, _extSpacesAndDashes, true);
+    return plate !== null && /^(?:[A-HJ-NP-Z]{2}[0-9]{4}|[A-HJ-NP-Z]{2}[0-9]{2}|[0-9]{4,5})$/.test(plate);
 }
 
 export function isValidIso13616Iban(v: unknown): boolean {
@@ -1098,4 +1711,269 @@ export function isValidNlPhone(v: unknown): boolean {
 export function isValidBePhone(v: unknown): boolean {
     if (!_isString(v)) return true;
     return _extBePhone(v);
+}
+
+export function isValidItuE164Phone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extE164Phone(v);
+}
+
+export function isValidBePostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extBePostcode(v);
+}
+
+export function isValidNlPlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extNlPlate(v);
+}
+
+export function isValidGbPhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbPhone(v);
+}
+
+export function isValidGbPostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbPostcode(v);
+}
+
+export function isValidGbNhs(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbNhs(v);
+}
+
+export function isValidGbVat(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbVat(v);
+}
+
+export function isValidGbCrn(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbCrn(v);
+}
+
+export function isValidGbSortCode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbSortCode(v);
+}
+
+export function isValidGbAccountNumber(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbAccountNumber(v);
+}
+
+export function isValidGbNino(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbNino(v);
+}
+
+export function isValidGbUpn(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbUpn(v);
+}
+
+export function isValidGbPlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extGbPlate(v);
+}
+
+export function isValidDePhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDePhone(v);
+}
+
+export function isValidDePostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDePostcode(v);
+}
+
+export function isValidDeVat(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeVat(v);
+}
+
+export function isValidDeIdnr(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeIdnr(v);
+}
+
+export function isValidDeStnr(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeStnr(v);
+}
+
+export function isValidDeTradeRegister(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeTradeRegister(v);
+}
+
+export function isValidDeLeitweg(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeLeitweg(v);
+}
+
+export function isValidDeRvnr(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeRvnr(v);
+}
+
+export function isValidDeKvnr(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeKvnr(v);
+}
+
+export function isValidDeIdCard(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeDocumentNumber(v);
+}
+
+export function isValidDePassport(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeDocumentNumber(v);
+}
+
+export function isValidDeWkn(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDeWkn(v);
+}
+
+export function isValidDePlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extDePlate(v);
+}
+
+export function isValidAtPhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtPhone(v);
+}
+
+export function isValidAtPostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extFourDigitPostcode(v);
+}
+
+export function isValidAtVat(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtVat(v);
+}
+
+export function isValidAtSvnr(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtSvnr(v);
+}
+
+export function isValidAtFn(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtFn(v);
+}
+
+export function isValidAtTin(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtTin(v);
+}
+
+export function isValidAtPlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtPlate(v);
+}
+
+export function isValidAtPassport(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extAtPassport(v);
+}
+
+export function isValidLiPhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLiPhone(v);
+}
+
+export function isValidLiPostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLiPostcode(v);
+}
+
+export function isValidLiPeid(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLiPeid(v);
+}
+
+export function isValidLiPlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLiPlate(v);
+}
+
+export function isValidChPhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChPhone(v);
+}
+
+export function isValidChPostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extPrefixedFourDigitPostcode(v, "CH-");
+}
+
+export function isValidChUid(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChUid(v);
+}
+
+export function isValidChVat(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChVat(v);
+}
+
+export function isValidChAhv(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChAhv(v);
+}
+
+export function isValidChQrReference(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChQrReference(v);
+}
+
+export function isValidChQrIban(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChQrIban(v);
+}
+
+export function isValidChPlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChPlate(v);
+}
+
+export function isValidChPassport(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extChPassport(v);
+}
+
+export function isValidLuPhone(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLuPhone(v);
+}
+
+export function isValidLuPostcode(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extPrefixedFourDigitPostcode(v, "L-");
+}
+
+export function isValidLuVat(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLuVat(v);
+}
+
+export function isValidLuMatricule(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLuMatricule(v);
+}
+
+export function isValidLuRcs(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLuRcs(v);
+}
+
+export function isValidLuPlate(v: unknown): boolean {
+    if (!_isString(v)) return true;
+    return _extLuPlate(v);
 }

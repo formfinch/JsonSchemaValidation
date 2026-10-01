@@ -1,0 +1,136 @@
+[
+    {
+        "description": "validation of at-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "at-phone"
+        },
+        "tests": [
+            {
+                "description": "mobile, national",
+                "data": "0664 1234567",
+                "valid": true
+            },
+            {
+                "description": "international",
+                "data": "+43 664 1234567",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "0043 664 1234567",
+                "valid": true
+            },
+            {
+                "description": "(0) trunk",
+                "data": "+43 (0)664 1234567",
+                "valid": true
+            },
+            {
+                "description": "slash separator",
+                "data": "0664/123 45 67",
+                "valid": true
+            },
+            {
+                "description": "Vienna, area code in parentheses",
+                "data": "(01) 234 56 78",
+                "valid": true
+            },
+            {
+                "description": "Vienna, international",
+                "data": "+43 1 234 5678",
+                "valid": true
+            },
+            {
+                "description": "Graz, 6-digit subscriber",
+                "data": "0316 123456",
+                "valid": true
+            },
+            {
+                "description": "Innsbruck, hyphen",
+                "data": "0512-123456",
+                "valid": true
+            },
+            {
+                "description": "toll-free",
+                "data": "0800 123 456",
+                "valid": true
+            },
+            {
+                "description": "5 digits, the minimum",
+                "data": "01 4000",
+                "valid": true
+            },
+            {
+                "description": "13 digits, the maximum",
+                "data": "0732 1234 5678 90",
+                "valid": true
+            },
+            {
+                "description": "no prefix",
+                "data": "664 1234567",
+                "valid": false
+            },
+            {
+                "description": "00 followed by another country code",
+                "data": "00664 1234567",
+                "valid": false
+            },
+            {
+                "description": "wrong country code",
+                "data": "+49 664 1234567",
+                "valid": false
+            },
+            {
+                "description": "4 significant digits",
+                "data": "+43 0 1 234",
+                "valid": false
+            },
+            {
+                "description": "4 significant digits",
+                "data": "01 234",
+                "valid": false
+            },
+            {
+                "description": "14 digits",
+                "data": "0664 12345678901",
+                "valid": false
+            },
+            {
+                "description": "letters",
+                "data": "0664 123 4567 ext 2",
+                "valid": false
+            },
+            {
+                "description": "underscore",
+                "data": "0664_1234567",
+                "valid": false
+            },
+            {
+                "description": "unbalanced parenthesis",
+                "data": "+43 664 (1234567",
+                "valid": false
+            },
+            {
+                "description": "nested parentheses",
+                "data": "((01)) 234",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

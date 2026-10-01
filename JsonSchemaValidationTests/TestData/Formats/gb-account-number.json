@@ -1,0 +1,91 @@
+[
+    {
+        "description": "validation of gb-account-number",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-account-number"
+        },
+        "tests": [
+            {
+                "description": "8 digits",
+                "data": "12345678",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "1234 5678",
+                "valid": true
+            },
+            {
+                "description": "hyphen",
+                "data": "0123-4567",
+                "valid": true
+            },
+            {
+                "description": "zero-padded",
+                "data": "00012345",
+                "valid": true
+            },
+            {
+                "description": "all nines",
+                "data": "99999999",
+                "valid": true
+            },
+            {
+                "description": "8 digits",
+                "data": "87654321",
+                "valid": true
+            },
+            {
+                "description": "7 digits",
+                "data": "1234567",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "123456789",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "123456",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "1234567890",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "00000000",
+                "valid": false
+            },
+            {
+                "description": "dot",
+                "data": "1234.5678",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "1234567A",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

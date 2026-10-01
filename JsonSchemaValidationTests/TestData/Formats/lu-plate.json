@@ -1,0 +1,106 @@
+[
+    {
+        "description": "validation of lu-plate",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "lu-plate"
+        },
+        "tests": [
+            {
+                "description": "2 letters and 4 digits",
+                "data": "AB 1234",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "ab1234",
+                "valid": true
+            },
+            {
+                "description": "hyphen",
+                "data": "XY-3456",
+                "valid": true
+            },
+            {
+                "description": "leading zeros",
+                "data": "ZZ 0001",
+                "valid": true
+            },
+            {
+                "description": "moped plate",
+                "data": "AB 12",
+                "valid": true
+            },
+            {
+                "description": "4 digits",
+                "data": "1234",
+                "valid": true
+            },
+            {
+                "description": "5 digits",
+                "data": "12345",
+                "valid": true
+            },
+            {
+                "description": "2 letters and 4 digits",
+                "data": "PX 9999",
+                "valid": true
+            },
+            {
+                "description": "contains I",
+                "data": "AI 1234",
+                "valid": false
+            },
+            {
+                "description": "contains O",
+                "data": "OB 1234",
+                "valid": false
+            },
+            {
+                "description": "3 digits",
+                "data": "AB 123",
+                "valid": false
+            },
+            {
+                "description": "5 digits after letters",
+                "data": "AB 12345",
+                "valid": false
+            },
+            {
+                "description": "3 digits only",
+                "data": "123",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "123456",
+                "valid": false
+            },
+            {
+                "description": "3 letters",
+                "data": "ABC 123",
+                "valid": false
+            },
+            {
+                "description": "1 letter",
+                "data": "A 1234",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

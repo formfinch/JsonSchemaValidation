@@ -1,0 +1,151 @@
+[
+    {
+        "description": "validation of de-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-phone"
+        },
+        "tests": [
+            {
+                "description": "Berlin, national",
+                "data": "030 12345678",
+                "valid": true
+            },
+            {
+                "description": "international",
+                "data": "+49 30 12345678",
+                "valid": true
+            },
+            {
+                "description": "00 prefix",
+                "data": "0049 30 12345678",
+                "valid": true
+            },
+            {
+                "description": "(0) trunk",
+                "data": "+49 (0)30 1234567",
+                "valid": true
+            },
+            {
+                "description": "space after the (0) trunk",
+                "data": "+49 (0) 30 1234567",
+                "valid": true
+            },
+            {
+                "description": "area code in parentheses, hyphen before the extension",
+                "data": "(030) 123 456-78",
+                "valid": true
+            },
+            {
+                "description": "15x mobile, 11 digits",
+                "data": "0151 23456789",
+                "valid": true
+            },
+            {
+                "description": "mobile, international",
+                "data": "+49 1512 3456789",
+                "valid": true
+            },
+            {
+                "description": "17x mobile, 10 digits",
+                "data": "0171/1234567",
+                "valid": true
+            },
+            {
+                "description": "17x mobile, 11 digits",
+                "data": "0176-12345678",
+                "valid": true
+            },
+            {
+                "description": "dots",
+                "data": "089.1234567",
+                "valid": true
+            },
+            {
+                "description": "freephone",
+                "data": "0800 1234567",
+                "valid": true
+            },
+            {
+                "description": "5-digit area code",
+                "data": "03322 12345",
+                "valid": true
+            },
+            {
+                "description": "switchboard extension",
+                "data": "+49 (0)89 123456-0",
+                "valid": true
+            },
+            {
+                "description": "no prefix",
+                "data": "30 12345678",
+                "valid": false
+            },
+            {
+                "description": "wrong country code",
+                "data": "+31 30 12345678",
+                "valid": false
+            },
+            {
+                "description": "significant number starts with 0",
+                "data": "+49 0 0301234567",
+                "valid": false
+            },
+            {
+                "description": "5 digits, too short",
+                "data": "0 12345",
+                "valid": false
+            },
+            {
+                "description": "15x mobile with 10 digits",
+                "data": "0151 2345678",
+                "valid": false
+            },
+            {
+                "description": "mobile too long",
+                "data": "0171 123456789012",
+                "valid": false
+            },
+            {
+                "description": "15 digits",
+                "data": "030 1234567890123",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "030 12a45678",
+                "valid": false
+            },
+            {
+                "description": "unbalanced parentheses",
+                "data": "030 (12) (34",
+                "valid": false
+            },
+            {
+                "description": "empty parentheses",
+                "data": "030 ()1234567",
+                "valid": false
+            },
+            {
+                "description": "00 followed by another country",
+                "data": "0030 12345678",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

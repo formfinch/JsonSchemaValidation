@@ -1,0 +1,106 @@
+[
+    {
+        "description": "validation of lu-vat",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "lu-vat"
+        },
+        "tests": [
+            {
+                "description": "published example",
+                "data": "LU15027442",
+                "valid": true
+            },
+            {
+                "description": "spaces",
+                "data": "LU 150 274 42",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "lu15027442",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "LU 1234 5613",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "LU99999984",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "LU00000101",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "LU10000053",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "LU24681013",
+                "valid": true
+            },
+            {
+                "description": "no LU",
+                "data": "15027442",
+                "valid": false
+            },
+            {
+                "description": "wrong check digits",
+                "data": "LU15027443",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "LU00000000",
+                "valid": false
+            },
+            {
+                "description": "7 digits",
+                "data": "LU1502744",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "LU150274420",
+                "valid": false
+            },
+            {
+                "description": "wrong country",
+                "data": "BE15027442",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "LU1502744A",
+                "valid": false
+            },
+            {
+                "description": "suffix",
+                "data": "LU15027442B01",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

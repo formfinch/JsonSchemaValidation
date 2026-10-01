@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of de-wkn",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-wkn"
+        },
+        "tests": [
+            {
+                "description": "numeric",
+                "data": "514000",
+                "valid": true
+            },
+            {
+                "description": "alphanumeric",
+                "data": "A0MNRK",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "a0mnrk",
+                "valid": true
+            },
+            {
+                "description": "alphanumeric",
+                "data": "A1EWWW",
+                "valid": true
+            },
+            {
+                "description": "alphanumeric",
+                "data": "SKWM02",
+                "valid": true
+            },
+            {
+                "description": "numeric",
+                "data": "840400",
+                "valid": true
+            },
+            {
+                "description": "space",
+                "data": "A0D 85Q",
+                "valid": true
+            },
+            {
+                "description": "letter O",
+                "data": "AOMNRK",
+                "valid": false
+            },
+            {
+                "description": "5 characters",
+                "data": "A0MNR",
+                "valid": false
+            },
+            {
+                "description": "7 characters",
+                "data": "A0MNRK1",
+                "valid": false
+            },
+            {
+                "description": "letter I",
+                "data": "A0MNRI",
+                "valid": false
+            },
+            {
+                "description": "hyphen",
+                "data": "A0-MNRK",
+                "valid": false
+            },
+            {
+                "description": "an ISIN",
+                "data": "DE0005140008",
+                "valid": false
+            },
+            {
+                "description": "symbol",
+                "data": "A0MNR!",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

@@ -1,0 +1,111 @@
+[
+    {
+        "description": "validation of ch-qr-iban",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-qr-iban"
+        },
+        "tests": [
+            {
+                "description": "SIX sample",
+                "data": "CH44 3199 9123 0008 8901 2",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "CH4431999123000889012",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "ch44 3199 9123 0008 8901 2",
+                "valid": true
+            },
+            {
+                "description": "SIX sample",
+                "data": "CH64 3196 1000 0044 2155 7",
+                "valid": true
+            },
+            {
+                "description": "institution 30000, lower bound",
+                "data": "CH31 3000 0000 0000 0000 1",
+                "valid": true
+            },
+            {
+                "description": "institution 31999, upper bound",
+                "data": "CH18 3199 9000 0000 0000 1",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "CH57 3000 0123 4567 8901 2",
+                "valid": true
+            },
+            {
+                "description": "Liechtenstein",
+                "data": "LI44 3000 0000 0000 0000 1",
+                "valid": true
+            },
+            {
+                "description": "Liechtenstein with letters",
+                "data": "LI23 3199 9000 0000 0ABC 1",
+                "valid": true
+            },
+            {
+                "description": "regular IBAN",
+                "data": "CH58 0079 1123 0008 8901 2",
+                "valid": false
+            },
+            {
+                "description": "institution 29999",
+                "data": "CH23 2999 9000 0000 0000 1",
+                "valid": false
+            },
+            {
+                "description": "institution 32000",
+                "data": "CH26 3200 0000 0000 0000 1",
+                "valid": false
+            },
+            {
+                "description": "IBAN check fails",
+                "data": "CH44 3199 9123 0008 8901 7",
+                "valid": false
+            },
+            {
+                "description": "other country",
+                "data": "DE89 3704 0044 0532 0130 00",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "CH44-3199-9123-0008-8901-2",
+                "valid": false
+            },
+            {
+                "description": "too short",
+                "data": "CH44 3199 9123 0008 8901",
+                "valid": false
+            },
+            {
+                "description": "IBAN check fails",
+                "data": "CH31 3000 0000 0000 0000 2",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

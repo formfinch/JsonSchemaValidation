@@ -1,0 +1,116 @@
+[
+    {
+        "description": "validation of gb-nhs",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-nhs"
+        },
+        "tests": [
+            {
+                "description": "3-3-4 grouping",
+                "data": "999 000 0018",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "9990000018",
+                "valid": true
+            },
+            {
+                "description": "hyphens",
+                "data": "999-000-0018",
+                "valid": true
+            },
+            {
+                "description": "test range",
+                "data": "999 012 3454",
+                "valid": true
+            },
+            {
+                "description": "test range",
+                "data": "999 765 4323",
+                "valid": true
+            },
+            {
+                "description": "well-known test number",
+                "data": "999 999 9999",
+                "valid": true
+            },
+            {
+                "description": "test range",
+                "data": "999 100 0003",
+                "valid": true
+            },
+            {
+                "description": "test range",
+                "data": "999 200 0031",
+                "valid": true
+            },
+            {
+                "description": "test range",
+                "data": "999 300 0027",
+                "valid": true
+            },
+            {
+                "description": "test range",
+                "data": "999 400 0012",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "999 000 0019",
+                "valid": false
+            },
+            {
+                "description": "check value 10 is never issued",
+                "data": "999 000 0000",
+                "valid": false
+            },
+            {
+                "description": "check value 10 is never issued",
+                "data": "999 123 4560",
+                "valid": false
+            },
+            {
+                "description": "11 digits",
+                "data": "99900000018",
+                "valid": false
+            },
+            {
+                "description": "9 digits",
+                "data": "999000001",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "000 000 0000",
+                "valid": false
+            },
+            {
+                "description": "dots are not a separator",
+                "data": "999.000.0018",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "999 000 001A",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

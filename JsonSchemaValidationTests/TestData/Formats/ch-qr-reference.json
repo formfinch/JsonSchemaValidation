@@ -1,0 +1,101 @@
+[
+    {
+        "description": "validation of ch-qr-reference",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-qr-reference"
+        },
+        "tests": [
+            {
+                "description": "SIX example",
+                "data": "21 00000 00003 13947 14300 09017",
+                "valid": true
+            },
+            {
+                "description": "compact",
+                "data": "210000000003139471430009017",
+                "valid": true
+            },
+            {
+                "description": "SIX sample",
+                "data": "00 00082 07791 22585 74212 86694",
+                "valid": true
+            },
+            {
+                "description": "leading zeros",
+                "data": "00 00000 00000 00000 00000 00011",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "12 34567 89012 34567 89012 34567",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "99 99999 99999 99999 99999 99992",
+                "valid": true
+            },
+            {
+                "description": "computed",
+                "data": "11 11111 11111 11111 11111 11110",
+                "valid": true
+            },
+            {
+                "description": "wrong check digit",
+                "data": "21 00000 00003 13947 14300 09016",
+                "valid": false
+            },
+            {
+                "description": "all zeros",
+                "data": "000000000000000000000000000",
+                "valid": false
+            },
+            {
+                "description": "leading zeros left out",
+                "data": "18 78583",
+                "valid": false
+            },
+            {
+                "description": "28 digits",
+                "data": "2100000000031394714300090170",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "21-00000-00003-13947-14300-09017",
+                "valid": false
+            },
+            {
+                "description": "creditor reference",
+                "data": "RF18 5390 0754 7034",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "21000000000313947143000901T",
+                "valid": false
+            },
+            {
+                "description": "digit changed",
+                "data": "10 00000 00003 13947 14300 09017",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

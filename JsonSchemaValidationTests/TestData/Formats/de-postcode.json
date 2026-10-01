@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of de-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "de-postcode"
+        },
+        "tests": [
+            {
+                "description": "Berlin",
+                "data": "10115",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "01067",
+                "valid": true
+            },
+            {
+                "description": "high code",
+                "data": "99998",
+                "valid": true
+            },
+            {
+                "description": "Munich",
+                "data": "80331",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 20095 ",
+                "valid": true
+            },
+            {
+                "description": "lowest code",
+                "data": "01001",
+                "valid": true
+            },
+            {
+                "description": "Leitregion 00 does not exist",
+                "data": "00123",
+                "valid": false
+            },
+            {
+                "description": "4 digits",
+                "data": "1011",
+                "valid": false
+            },
+            {
+                "description": "6 digits",
+                "data": "101150",
+                "valid": false
+            },
+            {
+                "description": "country prefix",
+                "data": "D-10115",
+                "valid": false
+            },
+            {
+                "description": "inner space",
+                "data": "10 115",
+                "valid": false
+            },
+            {
+                "description": "letter O",
+                "data": "1O115",
+                "valid": false
+            },
+            {
+                "description": "trailing hyphen",
+                "data": "10115-",
+                "valid": false
+            },
+            {
+                "description": "country prefix without hyphen",
+                "data": "DE10115",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

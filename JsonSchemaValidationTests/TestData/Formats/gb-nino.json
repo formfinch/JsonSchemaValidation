@@ -1,0 +1,141 @@
+[
+    {
+        "description": "validation of gb-nino",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-nino"
+        },
+        "tests": [
+            {
+                "description": "grouped 2-2-2-2-1",
+                "data": "AB 12 34 56 C",
+                "valid": true
+            },
+            {
+                "description": "lower case, compact",
+                "data": "ab123456c",
+                "valid": true
+            },
+            {
+                "description": "no suffix",
+                "data": "AB123456",
+                "valid": true
+            },
+            {
+                "description": "suffix A",
+                "data": "JG 10 32 45 A",
+                "valid": true
+            },
+            {
+                "description": "suffix D",
+                "data": "CE 00 00 00 D",
+                "valid": true
+            },
+            {
+                "description": "O allowed as the first letter",
+                "data": "OA 12 34 56 B",
+                "valid": true
+            },
+            {
+                "description": "Z allowed as the first letter",
+                "data": "ZY 65 43 21 A",
+                "valid": true
+            },
+            {
+                "description": "compact with suffix",
+                "data": "WX123456D",
+                "valid": true
+            },
+            {
+                "description": "no suffix, grouped",
+                "data": "HJ 99 88 77",
+                "valid": true
+            },
+            {
+                "description": "GOV.UK placeholder; Q is never used",
+                "data": "QQ 12 34 56 C",
+                "valid": false
+            },
+            {
+                "description": "D as the first letter",
+                "data": "DA 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "F as the second letter",
+                "data": "AF 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "O as the second letter",
+                "data": "AO 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "prefix BG is not used",
+                "data": "BG 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "prefix GB is not used",
+                "data": "GB 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "prefix NK is not used",
+                "data": "NK 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "prefix KN is not used",
+                "data": "KN 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "temporary prefix TN",
+                "data": "TN 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "prefix NT is not used",
+                "data": "NT 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "prefix ZZ is not used",
+                "data": "ZZ 12 34 56 A",
+                "valid": false
+            },
+            {
+                "description": "suffix E",
+                "data": "AB 12 34 56 E",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "AB 12 34 5 C",
+                "valid": false
+            },
+            {
+                "description": "hyphens",
+                "data": "AB-12-34-56-C",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

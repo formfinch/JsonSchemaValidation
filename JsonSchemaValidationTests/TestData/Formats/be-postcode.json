@@ -1,0 +1,96 @@
+[
+    {
+        "description": "validation of be-postcode",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "be-postcode"
+        },
+        "tests": [
+            {
+                "description": "lowest issued code",
+                "data": "1000",
+                "valid": true
+            },
+            {
+                "description": "highest issued code",
+                "data": "9992",
+                "valid": true
+            },
+            {
+                "description": "Antwerpen",
+                "data": "2000",
+                "valid": true
+            },
+            {
+                "description": "surrounding whitespace",
+                "data": " 8500 ",
+                "valid": true
+            },
+            {
+                "description": "structural maximum",
+                "data": "9999",
+                "valid": true
+            },
+            {
+                "description": "Elsene",
+                "data": "1050",
+                "valid": true
+            },
+            {
+                "description": "leading zero",
+                "data": "0999",
+                "valid": false
+            },
+            {
+                "description": "3 digits",
+                "data": "999",
+                "valid": false
+            },
+            {
+                "description": "5 digits",
+                "data": "10000",
+                "valid": false
+            },
+            {
+                "description": "country prefix",
+                "data": "B-1000",
+                "valid": false
+            },
+            {
+                "description": "inner space",
+                "data": "1 000",
+                "valid": false
+            },
+            {
+                "description": "dot",
+                "data": "10.00",
+                "valid": false
+            },
+            {
+                "description": "country prefix without hyphen",
+                "data": "BE1000",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "100A",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

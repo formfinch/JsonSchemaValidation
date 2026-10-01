@@ -1,0 +1,161 @@
+[
+    {
+        "description": "validation of gb-phone",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-phone"
+        },
+        "tests": [
+            {
+                "description": "drama range, no specific area",
+                "data": "01632 960123",
+                "valid": true
+            },
+            {
+                "description": "international",
+                "data": "+44 1632 960123",
+                "valid": true
+            },
+            {
+                "description": "00 prefix with (0) trunk",
+                "data": "0044 (0)1632 960123",
+                "valid": true
+            },
+            {
+                "description": "London drama range",
+                "data": "020 7946 0123",
+                "valid": true
+            },
+            {
+                "description": "international with (0) trunk",
+                "data": "+44 (0)20 7946 0123",
+                "valid": true
+            },
+            {
+                "description": "area code in parentheses, hyphen",
+                "data": "(020) 7946-0123",
+                "valid": true
+            },
+            {
+                "description": "mobile drama range",
+                "data": "07700 900123",
+                "valid": true
+            },
+            {
+                "description": "compact international mobile",
+                "data": "+447700900123",
+                "valid": true
+            },
+            {
+                "description": "Leeds drama range",
+                "data": "0113 496 0123",
+                "valid": true
+            },
+            {
+                "description": "Northern Ireland drama range",
+                "data": "028 9649 6123",
+                "valid": true
+            },
+            {
+                "description": "freephone drama range",
+                "data": "08081 570123",
+                "valid": true
+            },
+            {
+                "description": "UK-wide drama range",
+                "data": "03069 990123",
+                "valid": true
+            },
+            {
+                "description": "premium-rate drama range",
+                "data": "0909 879 0123",
+                "valid": true
+            },
+            {
+                "description": "9-digit geographic number",
+                "data": "01632 96012",
+                "valid": true
+            },
+            {
+                "description": "8 significant digits",
+                "data": "01632 9601",
+                "valid": false
+            },
+            {
+                "description": "11 significant digits",
+                "data": "020 7946 01234",
+                "valid": false
+            },
+            {
+                "description": "9-digit mobile",
+                "data": "07700 90012",
+                "valid": false
+            },
+            {
+                "description": "another country's code",
+                "data": "+31 20 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "too short",
+                "data": "+44 20 7946 012",
+                "valid": false
+            },
+            {
+                "description": "04 range is unused",
+                "data": "0400 900123",
+                "valid": false
+            },
+            {
+                "description": "06 range is unused",
+                "data": "0600 900123",
+                "valid": false
+            },
+            {
+                "description": "9 digits in a 01x1 city area",
+                "data": "0121 496 012",
+                "valid": false
+            },
+            {
+                "description": "withdrawn 0500 range",
+                "data": "0500 900 123",
+                "valid": false
+            },
+            {
+                "description": "letter",
+                "data": "07700 900123 x1",
+                "valid": false
+            },
+            {
+                "description": "unbalanced parenthesis",
+                "data": "+44 (07700 900123",
+                "valid": false
+            },
+            {
+                "description": "no prefix",
+                "data": "7700 900123",
+                "valid": false
+            },
+            {
+                "description": "double trunk 0",
+                "data": "+44 0 0 20 7946 0123",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

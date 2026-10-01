@@ -1,0 +1,171 @@
+[
+    {
+        "description": "validation of gb-vat",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "gb-vat"
+        },
+        "tests": [
+            {
+                "description": "mod 97",
+                "data": "GB 123 4567 82",
+                "valid": true
+            },
+            {
+                "description": "no country prefix",
+                "data": "123456782",
+                "valid": true
+            },
+            {
+                "description": "lower case",
+                "data": "gb123456782",
+                "valid": true
+            },
+            {
+                "description": "9755 series",
+                "data": "GB 123 4567 27",
+                "valid": true
+            },
+            {
+                "description": "dots",
+                "data": "GB 765.4321.26",
+                "valid": true
+            },
+            {
+                "description": "widely used test number",
+                "data": "GB999999973",
+                "valid": true
+            },
+            {
+                "description": "9755 series",
+                "data": "GB 999 9999 18",
+                "valid": true
+            },
+            {
+                "description": "mod 97 below 100",
+                "data": "GB 001 2345 47",
+                "valid": true
+            },
+            {
+                "description": "branch trader",
+                "data": "GB 123 4567 82 001",
+                "valid": true
+            },
+            {
+                "description": "Northern Ireland prefix",
+                "data": "XI 123 4567 82",
+                "valid": true
+            },
+            {
+                "description": "hyphens",
+                "data": "GB-123-4567-82",
+                "valid": true
+            },
+            {
+                "description": "government department",
+                "data": "GBGD001",
+                "valid": true
+            },
+            {
+                "description": "government department, top of range",
+                "data": "GD499",
+                "valid": true
+            },
+            {
+                "description": "health authority",
+                "data": "GBHA500",
+                "valid": true
+            },
+            {
+                "description": "health authority, top of range",
+                "data": "HA999",
+                "valid": true
+            },
+            {
+                "description": "government department with Northern Ireland prefix",
+                "data": "XIGD001",
+                "valid": true
+            },
+            {
+                "description": "health authority with Northern Ireland prefix",
+                "data": "XIHA500",
+                "valid": true
+            },
+            {
+                "description": "9755 series at 100",
+                "data": "GB 100 0000 34",
+                "valid": true
+            },
+            {
+                "description": "wrong check digits",
+                "data": "GB 123 4567 83",
+                "valid": false
+            },
+            {
+                "description": "9755 series below 100",
+                "data": "GB 001 2345 89",
+                "valid": false
+            },
+            {
+                "description": "first 7 digits all zero",
+                "data": "GB 000 0000 00",
+                "valid": false
+            },
+            {
+                "description": "8 digits",
+                "data": "GB12345678",
+                "valid": false
+            },
+            {
+                "description": "10 digits",
+                "data": "GB1234567820",
+                "valid": false
+            },
+            {
+                "description": "GD out of range",
+                "data": "GBGD500",
+                "valid": false
+            },
+            {
+                "description": "HA out of range",
+                "data": "GBHA499",
+                "valid": false
+            },
+            {
+                "description": "GD with 2 digits",
+                "data": "GBGD01",
+                "valid": false
+            },
+            {
+                "description": "wrong prefix",
+                "data": "NL 123 4567 82",
+                "valid": false
+            },
+            {
+                "description": "11 digits",
+                "data": "GB 123 4567 82 01",
+                "valid": false
+            },
+            {
+                "description": "slash is not a separator",
+                "data": "GB/123456782",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]

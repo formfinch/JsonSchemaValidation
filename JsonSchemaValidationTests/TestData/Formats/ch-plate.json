@@ -1,0 +1,116 @@
+[
+    {
+        "description": "validation of ch-plate",
+        "schema": {
+            "$schema": "https://json-schema.org/draft/2020-12/schema",
+            "format": "ch-plate"
+        },
+        "tests": [
+            {
+                "description": "Zurich, 6 digits",
+                "data": "ZH 123456",
+                "valid": true
+            },
+            {
+                "description": "1 digit",
+                "data": "ZH 1",
+                "valid": true
+            },
+            {
+                "description": "lower case with spaces",
+                "data": "zh 123 456",
+                "valid": true
+            },
+            {
+                "description": "Bern",
+                "data": "BE 12345",
+                "valid": true
+            },
+            {
+                "description": "hyphen",
+                "data": "GE-1234",
+                "valid": true
+            },
+            {
+                "description": "Appenzell Innerrhoden",
+                "data": "AI 99",
+                "valid": true
+            },
+            {
+                "description": "Jura",
+                "data": "JU 12 345",
+                "valid": true
+            },
+            {
+                "description": "dot",
+                "data": "VS.123456",
+                "valid": true
+            },
+            {
+                "description": "7 digits",
+                "data": "ZH 1234567",
+                "valid": false
+            },
+            {
+                "description": "leading zero",
+                "data": "ZH 012345",
+                "valid": false
+            },
+            {
+                "description": "unknown canton",
+                "data": "XX 123",
+                "valid": false
+            },
+            {
+                "description": "Liechtenstein",
+                "data": "FL 12345",
+                "valid": false
+            },
+            {
+                "description": "no number",
+                "data": "ZH",
+                "valid": false
+            },
+            {
+                "description": "federal plate",
+                "data": "A 12345",
+                "valid": false
+            },
+            {
+                "description": "military plate",
+                "data": "M 12345",
+                "valid": false
+            },
+            {
+                "description": "suffix letter",
+                "data": "ZH 1234 U",
+                "valid": false
+            },
+            {
+                "description": "letter in the number",
+                "data": "ZH 12a45",
+                "valid": false
+            },
+            {
+                "description": "diplomatic plate",
+                "data": "CD 12345",
+                "valid": false
+            },
+            {
+                "description": "empty string",
+                "data": "",
+                "valid": false
+            },
+            {
+                "description": "non-string instances are ignored",
+                "data": 12345,
+                "valid": true
+            },
+            {
+                "description": "null is ignored",
+                "data": null,
+                "valid": true
+            }
+        ]
+    }
+]
